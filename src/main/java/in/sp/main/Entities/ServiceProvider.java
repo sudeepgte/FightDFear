@@ -91,6 +91,8 @@ public class ServiceProvider {
     private String city;
     private String state;
     private String pincode;
+    @Column(length = 80)
+    private String country = "India";
     private Double latitude;
     private Double longitude;
     private String audience;
@@ -325,6 +327,8 @@ public class ServiceProvider {
     public void setState(String state) { this.state = state; }
     public String getPincode() { return pincode; }
     public void setPincode(String pincode) { this.pincode = pincode; }
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
     public Double getLatitude() { return latitude; }
     public void setLatitude(Double latitude) { this.latitude = latitude; }
     public Double getLongitude() { return longitude; }

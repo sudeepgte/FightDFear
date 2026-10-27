@@ -50,6 +50,7 @@ public class Doctor {
     @Column(length = 4000)
     private String locationText;
     private String clinicAddress;
+    private String country;
     private String city;
     private String state;
     private String pincode;
@@ -206,6 +207,9 @@ public class Doctor {
 
     public String getClinicAddress() { return clinicAddress; }
     public void setClinicAddress(String clinicAddress) { this.clinicAddress = clinicAddress; }
+
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
 
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }

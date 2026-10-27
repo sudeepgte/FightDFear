@@ -10,4 +10,6 @@ import java.util.List;
 public interface CreatorNotificationRepository extends JpaRepository<CreatorNotification, Long> {
     List<CreatorNotification> findByUser_IdOrderByCreatedAtDesc(Long userId);
     int countByUser_IdAndIsReadFalse(Long userId);
+    boolean existsByUser_IdAndSender_IdAndType(Long userId, Long senderId, String type);
+    boolean existsByUser_IdAndSender_IdAndTypeAndVideoId(Long userId, Long senderId, String type, Long videoId);
 }

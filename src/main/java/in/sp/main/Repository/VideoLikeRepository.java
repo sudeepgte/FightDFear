@@ -35,4 +35,7 @@ public interface VideoLikeRepository extends JpaRepository<VideoLike, Long> {
 
 	// Bulk delete all likes on a user's videos
 	void deleteByVideo_User_Id(Long userId);
+
+	@org.springframework.data.jpa.repository.Query("SELECT vl FROM VideoLike vl LEFT JOIN FETCH vl.user LEFT JOIN FETCH vl.video WHERE vl.video.user.id = :userId AND vl.user.id != :userId ORDER BY vl.id DESC")
+	java.util.List<VideoLike> findRecentLikesOnUserVideos(@org.springframework.data.repository.query.Param("userId") Long userId);
 }

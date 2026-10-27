@@ -307,6 +307,9 @@ public class SecurityConfig {
                                 || path.equals("/login")
                                 || path.startsWith("/auth/")
                                 || path.startsWith("/api/auth/")
+                                || path.startsWith("/api/chat/")
+                                || path.startsWith("/video/")
+                                || path.startsWith("/creator-hub/")
                                 || path.endsWith("/login")
                                 || path.endsWith("/loginAdmin")
                                 || path.endsWith("/register");

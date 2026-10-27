@@ -62,6 +62,9 @@ public class LawyerController {
     private PasswordService passwordService;
 
     @Autowired
+    private in.sp.main.Service.ServiceProviderProfileService providerProfileService;
+
+    @Autowired
     private OtpVerificationService otpVerificationService;
 
     private void validateDocumentUpload(MultipartFile file) {
@@ -112,7 +115,7 @@ public class LawyerController {
         p.setEmail(email);
         p.setPassword(passwordService.encode(password));
         p.setCategory(ProviderCategory.WOMEN_LAWYER);
-        p.setVerificationStatus(VerificationStatus.VERIFIED);
+        p.setVerificationStatus(VerificationStatus.PENDING);
         p.setRating(0.0);
         p.setIdentityDocumentPath("web-pending");
         p.setPartnerProfileStatus(in.sp.main.Entities.PartnerProfileStatus.REGISTERED);
@@ -237,6 +240,7 @@ public class LawyerController {
     @PostMapping("/profile/update")
     public String updateLawyerProfile(@RequestParam String fullName,
                                       @RequestParam String phone,
+                                      @RequestParam(required = false) String country,
                                       @RequestParam(required = false) String designation,
                                       @RequestParam(required = false) String barCouncilId,
                                       @RequestParam(required = false) String address,
@@ -267,6 +271,7 @@ public class LawyerController {
                 existing.setAddress(address != null ? address.trim() : "");
                 existing.setCity(city != null ? city.trim() : "");
                 existing.setState(state != null ? state.trim() : "");
+                if (country != null && !country.isBlank()) existing.setCountry(country.trim());
                 existing.setPincode(pincode != null ? pincode.trim() : "");
                 existing.setPracticeAreas(practiceAreas != null ? practiceAreas.trim() : "");
                 existing.setAudience(audience != null ? audience.trim() : "");
@@ -300,6 +305,7 @@ public class LawyerController {
                     }
                 }
                 
+                existing.setProfileCompletionPct(providerProfileService.calculateCompletionPct(existing));
                 providerRepo.save(existing);
                 session.setAttribute("loggedLawyer", existing);
                 ra.addFlashAttribute("message", "Profile updated successfully!");
@@ -348,6 +354,8 @@ public class LawyerController {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
         if (p == null) return "redirect:/lawyer/login";
         p = providerRepo.findById(p.getId()).orElse(p);
+        p = providerProfileService.refreshCompletion(p);
+        session.setAttribute("loggedLawyer", p);
         model.addAttribute("lawyer", p);
         return "lawyer/profileCompletion";
     }
@@ -355,6 +363,7 @@ public class LawyerController {
     @PostMapping("/profile-completion/save")
     public String saveProfileCompletion(@RequestParam String fullName,
                                       @RequestParam String phone,
+                                      @RequestParam(required = false) String country,
                                       @RequestParam(required = false) String designation,
                                       @RequestParam(required = false) String whatsappNumber,
                                       @RequestParam(required = false) String barCouncilId,
@@ -366,6 +375,7 @@ public class LawyerController {
                                       @RequestParam(required = false) String closeTime,
                                       @RequestParam(required = false) String bio,
                                       @RequestParam(required = false) String serviceMode,
+                                      @RequestParam(required = false) Integer durationMinutes,
                                       @RequestParam(required = false) Integer experienceYears,
                                       @RequestParam(required = false) String languages,
                                       @RequestParam(required = false) String audience,
@@ -396,6 +406,7 @@ public class LawyerController {
             existing.setBarCouncilId(barCouncilId != null ? barCouncilId.trim() : "");
             existing.setCity(city != null ? city.trim() : "");
             existing.setState(state != null ? state.trim() : "");
+            existing.setCountry(country != null && !country.isBlank() ? country.trim() : "India");
             existing.setPracticeAreas(practiceAreas != null ? practiceAreas.trim() : "");
             existing.setOpenDays(openDays != null ? openDays.trim() : "");
             
@@ -409,6 +420,7 @@ public class LawyerController {
             
             existing.setBio(bio != null ? bio.trim() : "");
             existing.setServiceMode(serviceMode != null ? serviceMode.trim() : "");
+            existing.setDurationMinutes(durationMinutes != null ? durationMinutes : 60);
             if (experienceYears != null) existing.setExperienceYears(experienceYears);
             existing.setLanguages(languages != null ? languages.trim() : "");
             
@@ -457,9 +469,16 @@ public class LawyerController {
                 // Ignore or log
             }
             
-            existing.setProfileCompletionPct(100);
-            if (existing.getPartnerProfileStatus() != in.sp.main.Entities.PartnerProfileStatus.APPROVED) {
-                existing.setPartnerProfileStatus(in.sp.main.Entities.PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+            int completionPct = providerProfileService.calculateCompletionPct(existing);
+            existing.setProfileCompletionPct(completionPct);
+            if (completionPct >= 90) {
+                if (existing.getPartnerProfileStatus() != in.sp.main.Entities.PartnerProfileStatus.APPROVED) {
+                    existing.setPartnerProfileStatus(in.sp.main.Entities.PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+                }
+            } else {
+                if (existing.getPartnerProfileStatus() != in.sp.main.Entities.PartnerProfileStatus.APPROVED) {
+                    existing.setPartnerProfileStatus(in.sp.main.Entities.PartnerProfileStatus.PROFILE_INCOMPLETE);
+                }
             }
             
             providerRepo.save(existing);

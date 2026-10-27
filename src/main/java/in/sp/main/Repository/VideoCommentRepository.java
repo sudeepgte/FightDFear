@@ -26,5 +26,7 @@ public interface VideoCommentRepository extends JpaRepository<VideoComment, Long
 
 	// Bulk delete all comments on a user's videos
 	void deleteByVideo_User_Id(Long userId);
-	
+
+	@Query("SELECT c FROM VideoComment c LEFT JOIN FETCH c.user LEFT JOIN FETCH c.video WHERE c.video.user.id = :userId AND c.user.id != :userId ORDER BY c.id DESC")
+	List<VideoComment> findRecentCommentsOnUserVideos(@Param("userId") Long userId);
 }

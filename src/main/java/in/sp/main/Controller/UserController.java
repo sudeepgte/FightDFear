@@ -142,6 +142,9 @@ public class UserController {
     @Autowired
     private in.sp.main.Service.OtpVerificationService otpVerificationService;
 
+    @Autowired
+    private in.sp.main.Repository.EmergencyContactRepository emergencyContactRepository;
+
     @org.springframework.beans.factory.annotation.Value("${otp.expiration-minutes:10}")
     private int otpExpirationMinutes;
 
@@ -296,6 +299,8 @@ public class UserController {
     @RequestMapping(value = "/register", method = RequestMethod.GET)
     public String registerPage(Model model) {
         model.addAttribute("user", new User());
+        String key = (googleMapsApiKey != null && !googleMapsApiKey.isBlank()) ? googleMapsApiKey.trim() : "";
+        model.addAttribute("googleMapsApiKey", key);
         return "user";
     }
 
@@ -320,6 +325,10 @@ public class UserController {
             String city = trimParam(request.getParameter("city"));
             String dob = trimParam(request.getParameter("dob"));
             String genderRaw = trimParam(request.getParameter("gender"));
+            String ecName = trimParam(request.getParameter("emergencyContactName"));
+            String ecPhone = trimParam(request.getParameter("emergencyContactPhone"));
+            String ecEmail = trimParam(request.getParameter("emergencyContactEmail"));
+            String whatsappNumber = trimParam(request.getParameter("whatsappNumber"));
 
             if (acceptedTerms == null || !("true".equalsIgnoreCase(acceptedTerms) || "on".equalsIgnoreCase(acceptedTerms))) {
                 model.addAttribute("error", "You must accept the Terms & Conditions and Privacy Policy to register.");
@@ -330,10 +339,18 @@ public class UserController {
                 model.addAttribute("error", "Full name is required.");
                 return "user";
             }
+            if (fullName.length() < 2 || fullName.length() > 70) {
+                model.addAttribute("error", "Full name must be between 2 and 70 characters.");
+                return "user";
+            }
 
             String emailErr = in.sp.main.Util.MobileValidation.requireEmail(emailRaw);
             if (emailErr != null) {
                 model.addAttribute("error", emailErr);
+                return "user";
+            }
+            if (emailRaw.length() > 100) {
+                model.addAttribute("error", "Email address must not exceed 100 characters.");
                 return "user";
             }
             String normEmail = in.sp.main.Util.MobileValidation.normalizeEmail(emailRaw);
@@ -349,6 +366,10 @@ public class UserController {
                 model.addAttribute("error", passErr);
                 return "user";
             }
+            if (password.length() > 64) {
+                model.addAttribute("error", "Password must not exceed 64 characters.");
+                return "user";
+            }
             String confirmErr = in.sp.main.Util.MobileValidation.requireConfirm(password, confirmPassword);
             if (confirmErr != null) {
                 model.addAttribute("error", confirmErr);
@@ -357,6 +378,10 @@ public class UserController {
 
             if (city.isEmpty()) {
                 model.addAttribute("error", "City / Location is required.");
+                return "user";
+            }
+            if (city.length() < 2 || city.length() > 150) {
+                model.addAttribute("error", "City / Location must be between 2 and 150 characters.");
                 return "user";
             }
 
@@ -380,6 +405,32 @@ public class UserController {
                     return "user";
                 }
             }
+
+            String ecNameErr = in.sp.main.Util.MobileValidation.requireEmergencyContactName(ecName);
+            if (ecNameErr != null) {
+                model.addAttribute("error", ecNameErr);
+                return "user";
+            }
+
+            String ecPhoneErr = in.sp.main.Util.MobileValidation.requireEmergencyContactPhone(ecPhone);
+            if (ecPhoneErr != null) {
+                model.addAttribute("error", ecPhoneErr);
+                return "user";
+            }
+
+            String ecEmailErr = in.sp.main.Util.MobileValidation.requireEmergencyContactEmail(ecEmail);
+            if (ecEmailErr != null) {
+                model.addAttribute("error", ecEmailErr);
+                return "user";
+            }
+            String normEcEmail = in.sp.main.Util.MobileValidation.normalizeEmail(ecEmail);
+
+            String whatsappErr = in.sp.main.Util.MobileValidation.requireWhatsappNumber(whatsappNumber);
+            if (whatsappErr != null) {
+                model.addAttribute("error", whatsappErr);
+                return "user";
+            }
+            String normWhatsapp = in.sp.main.Util.MobileValidation.normalizeWhatsappNumber(whatsappNumber);
 
             if (userRepository.findByEmail(normEmail).isPresent()) {
                 redirectAttributes.addFlashAttribute("error", "Email already registered. Please sign in.");
@@ -415,8 +466,18 @@ public class UserController {
             user.setVerificationStatus(VerificationStatus.VERIFIED);
             user.setIdentityDocument("web-member|lang:English");
             user.setGender(in.sp.main.Util.MobileValidation.parseWomenMemberGender(genderRaw));
+            user.setWhatsappNumber(normWhatsapp);
+
+            EmergencyContact contact = new EmergencyContact();
+            contact.setName(ecName);
+            contact.setPhone(ecPhone);
+            contact.setEmail(normEcEmail);
+            contact.setRelation("Emergency Contact");
+            contact.setUser(user);
+            user.setEmergencyContacts(java.util.List.of(contact));
 
             userService.createUser(user);
+            emergencyContactRepository.save(contact);
 
             otpVerificationService.consumeVerifiedOtp(normEmail,
                     in.sp.main.Entities.OtpPurpose.USER_REGISTER, otpExpirationMinutes);
@@ -538,7 +599,10 @@ public class UserController {
         if (sessionUser == null && sessionAdmin == null) {
             return "redirect:/login";
         }
-        User user = userService.getUserById(userId);
+        User user = userService.getUserByIdForProfileForm(userId);
+        if (user == null) {
+            user = userService.getUserById(userId);
+        }
         if (user == null) {
             return "redirect:/login";
         }
@@ -548,6 +612,7 @@ public class UserController {
 
         model.addAttribute("user", user);
         model.addAttribute("completionPercentage", completionPercentage);
+        model.addAttribute("missingItems", missingProfileItems(user));
         model.addAttribute("isOwner", sessionUser != null && sessionUser.getId().equals(userId));
         
         // Instagram-style counts
@@ -579,7 +644,7 @@ public class UserController {
             String url = fileUploadService.saveFile(file);
             currentUser.setProfilePhoto(url);
             userRepository.save(currentUser);
-            User fresh = userRepository.findById(currentUser.getId()).orElse(currentUser);
+            User fresh = userRepository.findByIdWithProfileDetails(currentUser.getId()).orElse(currentUser);
             session.setAttribute("user", fresh);
             result.put("success", true);
             result.put("url", url);
@@ -612,24 +677,19 @@ public class UserController {
             score += 10;
         }
 
-        // 4. Address or City (15%)
+        // 4. Address or City (10%)
         boolean hasLocation = (user.getHomeAddress() != null && !user.getHomeAddress().isBlank())
                 || (user.getCity() != null && !user.getCity().isBlank());
         if (hasLocation) {
-            score += 15;
-        }
-
-        // 5. Date of Birth or Age (10%)
-        if ((user.getDob() != null && !user.getDob().isBlank()) || user.getAge() != null) {
             score += 10;
         }
 
-        // 6. Gender (10%)
+        // 5. Gender (10%)
         if (user.getGender() != null) {
             score += 10;
         }
 
-        // 7. Emergency Contacts (20%) - Essential for safety
+        // 6. Emergency Contacts (15%) - Essential for safety
         boolean hasEmergencyContact = false;
         try {
             if (user.getEmergencyContacts() != null && !user.getEmergencyContacts().isEmpty()) {
@@ -638,11 +698,29 @@ public class UserController {
         } catch (Exception ignored) {
             // Lazy collection handling
         }
+        if (!hasEmergencyContact && user.getId() != null) {
+            try {
+                List<EmergencyContact> contacts = emergencyContactRepository.findByUserId(user.getId());
+                if (contacts != null && !contacts.isEmpty()) {
+                    hasEmergencyContact = true;
+                }
+            } catch (Exception ignored) {}
+        }
         if (hasEmergencyContact) {
-            score += 20;
+            score += 15;
         }
 
-        // 8. Profile Photo (15%) - REQUIRED TO REACH 100%
+        // 7. Emergency WhatsApp Number (15%) - Live location dispatch in danger
+        if (user.getWhatsappNumber() != null && !user.getWhatsappNumber().isBlank()) {
+            score += 15;
+        }
+
+        // 8. Date of Birth or Age (5%)
+        if ((user.getDob() != null && !user.getDob().isBlank()) || user.getAge() != null) {
+            score += 5;
+        }
+
+        // 9. Profile Photo (15%) - REQUIRED TO REACH 100%
         boolean hasPhoto = user.getProfilePhoto() != null && !user.getProfilePhoto().isBlank();
         if (hasPhoto) {
             score += 15;
@@ -665,19 +743,36 @@ public class UserController {
         if (user.getPhoneNumber() == null || user.getPhoneNumber().isBlank()) missing.add("Phone number");
         if ((user.getHomeAddress() == null || user.getHomeAddress().isBlank())
                 && (user.getCity() == null || user.getCity().isBlank())) {
-            missing.add("Location / address");
+            missing.add("Location / city");
         }
+        if (user.getGender() == null) missing.add("Gender");
+
+        boolean hasEmergencyContact = false;
+        try {
+            if (user.getEmergencyContacts() != null && !user.getEmergencyContacts().isEmpty()) {
+                hasEmergencyContact = true;
+            }
+        } catch (Exception ignored) {}
+        if (!hasEmergencyContact && user.getId() != null) {
+            try {
+                List<EmergencyContact> contacts = emergencyContactRepository.findByUserId(user.getId());
+                if (contacts != null && !contacts.isEmpty()) {
+                    hasEmergencyContact = true;
+                }
+            } catch (Exception ignored) {}
+        }
+        if (!hasEmergencyContact) {
+            missing.add("Emergency contact");
+        }
+
+        if (user.getWhatsappNumber() == null || user.getWhatsappNumber().isBlank()) {
+            missing.add("Emergency WhatsApp number");
+        }
+
         if ((user.getDob() == null || user.getDob().isBlank()) && user.getAge() == null) {
             missing.add("Date of birth");
         }
-        if (user.getGender() == null) missing.add("Gender");
-        try {
-            if (user.getEmergencyContacts() == null || user.getEmergencyContacts().isEmpty()) {
-                missing.add("Emergency contact");
-            }
-        } catch (Exception ignored) {
-            missing.add("Emergency contact");
-        }
+
         if (user.getProfilePhoto() == null || user.getProfilePhoto().isBlank()) {
             missing.add("Profile photo");
         }
@@ -738,7 +833,7 @@ public class UserController {
         }
 
         // Refresh user from DB so profile completion reflects latest fields
-        User fresh = userService.getUserById(loggedInUser.getId());
+        User fresh = userService.getUserByIdForProfileForm(loggedInUser.getId());
         final User currentUser = fresh != null ? fresh : loggedInUser;
         if (fresh != null) {
             session.setAttribute("user", fresh);
@@ -969,8 +1064,10 @@ public class UserController {
                              @RequestParam(value = "confirmSave", required = false) String confirmSave,
                              @RequestParam(value = "identityFile", required = false) MultipartFile identityFile,
                              @RequestParam(value = "image", required = false) MultipartFile image,
+                             @RequestParam(value = "whatsappNumber", required = false) String whatsappNumber,
                              @RequestParam(value = "emergencyContactName", required = false) String emergencyContactName,
                              @RequestParam(value = "emergencyContactPhone", required = false) String emergencyContactPhone,
+                             @RequestParam(value = "emergencyContactEmail", required = false) String emergencyContactEmail,
                              @RequestParam(value = "emergencyContactRelation", required = false) String emergencyContactRelation,
                              @RequestParam(value = "workCollegeAddress", required = false) String workCollegeAddress,
                              @RequestParam(value = "bloodGroup", required = false) String bloodGroup,
@@ -1031,6 +1128,12 @@ public class UserController {
             existingUser.setCity(city.trim());
         }
 
+        if (whatsappNumber != null && !whatsappNumber.isBlank()) {
+            existingUser.setWhatsappNumber(in.sp.main.Util.MobileValidation.normalizeWhatsappNumber(whatsappNumber));
+        } else {
+            existingUser.setWhatsappNumber(null);
+        }
+
         if (gender != null && !gender.isBlank()) {
             try {
                 Gender g = Gender.valueOf(gender.toUpperCase());
@@ -1074,6 +1177,12 @@ public class UserController {
             primaryContact.setName(emergencyContactName.trim());
             primaryContact.setPhone(emergencyContactPhone.trim());
             primaryContact.setRelation(emergencyContactRelation != null ? emergencyContactRelation.trim() : "Other");
+            if (emergencyContactEmail != null && !emergencyContactEmail.isBlank()) {
+                primaryContact.setEmail(emergencyContactEmail.trim());
+            } else {
+                primaryContact.setEmail(null);
+            }
+            emergencyContactRepository.save(primaryContact);
         }
 
         // Create/Update Medical Details
@@ -1103,7 +1212,7 @@ public class UserController {
         }
 
         userService.updateUser(id, existingUser);
-        User savedUser = userService.getUserById(id);
+        User savedUser = userService.getUserByIdForProfileForm(id);
         session.setAttribute("user", savedUser != null ? savedUser : existingUser);
         redirectAttributes.addFlashAttribute("success", "Profile updated successfully.");
         return "redirect:/users/profile/" + id;

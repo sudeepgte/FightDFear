@@ -75,26 +75,63 @@ public class SalonProfileService {
     }
 
     public int calculateCompletionPct(Salon salon) {
+        if (salon == null) return 0;
         int filled = 0;
-        int total = 14;
-        if (!PartnerLifecycleSupport.blank(salon.getName())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getSalonType())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getContactPerson())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getPhone())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getCity())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getState())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getPincode())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getCategoriesOffered())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getAudience())) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getOpenDays())) filled++;
-        if (salon.getOpenTime() != null) filled++;
-        if (salon.getCloseTime() != null) filled++;
-        if (!PartnerLifecycleSupport.blank(salon.getBio())) filled++;
+        final int total = 20;
+
+        // Basic Information (8 milestones)
+        if (salon.getName() != null && salon.getName().trim().length() >= 3) filled++;
+        if ((salon.getSalonType() != null && !salon.getSalonType().isBlank())
+                || (salon.getSalonCategory() != null && !salon.getSalonCategory().isBlank())) filled++;
+        if (salon.getBio() != null && salon.getBio().trim().length() >= 10) filled++;
+        if (salon.getPhone() != null && salon.getPhone().trim().matches("^[6-9]\\d{9}$")) filled++;
+        if (salon.getEmail() != null && salon.getEmail().trim().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) filled++;
+        if (salon.getAddress() != null && salon.getAddress().trim().length() >= 5) filled++;
+        if (salon.getState() != null && !salon.getState().isBlank()) filled++;
+        if (salon.getCity() != null && !salon.getCity().isBlank()) filled++;
+
+        // Salon Details (4 milestones)
+        if (salon.getSalonCategory() != null && !salon.getSalonCategory().isBlank()) filled++;
+        int currentYear = java.time.Year.now().getValue();
+        if (salon.getEstablishedYear() != null && salon.getEstablishedYear() >= 1900 && salon.getEstablishedYear() <= currentYear) filled++;
+        if (salon.getTotalChairs() != null && salon.getTotalChairs() >= 1) filled++;
+        if (salon.getSalonSizeSqFt() != null && salon.getSalonSizeSqFt() >= 50) filled++;
+
+        // Services (1 milestone)
         List<Service1> services = salon.getId() == null
                 ? List.of()
                 : serviceRepository.findBySalonId(salon.getId());
         if (services != null && !services.isEmpty()) filled++;
-        return (int) Math.round(100.0 * filled / total);
+
+        // Photos (2 milestones)
+        if (salon.getProfileImageUrl() != null && !salon.getProfileImageUrl().isBlank() && !salon.getProfileImageUrl().contains("ui-avatars")) filled++;
+        if ((salon.getCoverImageUrl() != null && !salon.getCoverImageUrl().isBlank())
+                || (salon.getInteriorImagesJson() != null && !salon.getInteriorImagesJson().isBlank() && !salon.getInteriorImagesJson().equals("[]"))) filled++;
+
+        // Facilities (1 milestone)
+        if (Boolean.TRUE.equals(salon.getHasAc()) || Boolean.TRUE.equals(salon.getHasWifi())
+                || Boolean.TRUE.equals(salon.getHasParking()) || Boolean.TRUE.equals(salon.getHasPowerBackup())) filled++;
+
+        // Documents (2 milestones)
+        int docsCount = 0;
+        if (salon.getBusinessRegistrationUrl() != null && !salon.getBusinessRegistrationUrl().isBlank()) docsCount++;
+        if (salon.getSalonLicenseUrl() != null && !salon.getSalonLicenseUrl().isBlank()) docsCount++;
+        if (salon.getGstCertificateUrl() != null && !salon.getGstCertificateUrl().isBlank()) docsCount++;
+        if (salon.getHygieneCertificateUrl() != null && !salon.getHygieneCertificateUrl().isBlank()) docsCount++;
+        if (salon.getFireSafetyUrl() != null && !salon.getFireSafetyUrl().isBlank()) docsCount++;
+        if (docsCount >= 1) filled++;
+        if (docsCount >= 2) filled++;
+
+        // Social Media (1 milestone)
+        String smJson = salon.getSocialMediaJson();
+        boolean hasSocial = (smJson != null && !smJson.isBlank() && !smJson.contains("\"instagram\":\"\""))
+                || (salon.getWebsite() != null && !salon.getWebsite().isBlank());
+        if (hasSocial) filled++;
+
+        // Preferences (1 milestone)
+        if (salon.getPreferencesJson() != null && !salon.getPreferencesJson().isBlank() && !salon.getPreferencesJson().equals("{}")) filled++;
+
+        return Math.min(100, (int) Math.round((100.0 * filled) / total));
     }
 
     @Transactional

@@ -190,7 +190,7 @@
             <a href="${pageContext.request.contextPath}/creator-hub/profile" title="Profile" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-user"></i> <span class="desktop-only">Profile</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/feed" title="CreatorHub" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-clapperboard"></i> <span class="desktop-only">CreatorHub</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span></a>
-            <a href="${pageContext.request.contextPath}/creator-hub/coins" title="Coins" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/notifications" title="Notifications" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-bell"></i> <span class="desktop-only">Notifications</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span></a>
 
         </div>
@@ -208,10 +208,7 @@
             <a href="${pageContext.request.contextPath}/creator-hub/chat" class="ls-item">
                 <i class="fa-regular fa-comment-dots"></i> Chat
             </a>
-            <a href="${pageContext.request.contextPath}/creator-hub/coins" class="ls-item">
-            <i class="fa-solid fa-coins"></i> Coins
-        </a>
-            <a href="#" onclick="toggleNotifPanel()" class="ls-item">
+            <a href="${pageContext.request.contextPath}/creator-hub/notifications" class="ls-item">
                 <i class="fa-regular fa-bell"></i> Notifications
                 <c:if test="${unreadNotifCount > 0}"><span class="ls-badge">${unreadNotifCount}</span></c:if>
             </a>
@@ -250,9 +247,9 @@
                 <div class="feed-post">
                     <!-- Header -->
                     <div class="fp-header">
-                        <div class="fp-user">
-                            <img src="${not empty item.user.profilePhoto ? item.user.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}">
-                            ${not empty item.user.creatorHandle ? item.user.creatorHandle : item.user.fullName}
+                        <div class="fp-user" onclick="window.location.href='${pageContext.request.contextPath}/creator-hub/creator/${item.user.id}'" style="cursor:pointer;" title="View ${item.user.fullName}'s Profile">
+                            <img src="${not empty item.user.profilePhoto ? item.user.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
+                            <span>${not empty item.user.creatorHandle ? item.user.creatorHandle : item.user.fullName}</span>
                         </div>
                         <c:if test="${item.user.id == currentUser.id}">
                             <i class="fa-solid fa-trash" style="color:var(--accent); cursor:pointer;" onclick="deleteFeedPost(${item.id})" title="Delete Post"></i>
@@ -369,32 +366,59 @@
             currentCommentVideoId = id;
             replyToParentId = null;
             document.getElementById('commentsModal').style.display = 'flex';
-            document.getElementById('commentsList').innerHTML = '<div style="text-align:center;padding:20px;">Loading...</div>';
+            document.getElementById('commentsList').innerHTML = '<div style="text-align:center;padding:24px;color:var(--sub);"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading comments...</div>';
             
             fetch('${pageContext.request.contextPath}/creator-hub/comments-api?videoId=' + id)
             .then(r => r.json())
             .then(data => {
                 const list = document.getElementById('commentsList');
                 list.innerHTML = '';
-                if(data.length === 0) {
-                    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--sub);">No comments yet. Be the first!</div>';
+                if(!data || data.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--sub);"><i class="fa-regular fa-comment-dots" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.6;"></i>No comments yet. Start the conversation!</div>';
                     return;
                 }
                 data.forEach(c => {
                     const div = document.createElement('div');
-                    div.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;';
-                    div.innerHTML = '<img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">'
-                        + '<div><div style="font-size:14px;"><strong>' + (c.username||'User') + '</strong> ' + c.text + '</div>'
-                        + '<div style="font-size:12px;color:var(--sub);margin-top:4px;cursor:pointer;" onclick="setReply(' + c.id + ',\'' + (c.username||'User') + '\')">Reply</div>';
+                    div.style.cssText = 'display:flex;gap:12px;margin-bottom:18px;align-items:flex-start;';
+                    const avatarSrc = c.avatar || '${pageContext.request.contextPath}/assets/img/default-avatar.png';
+                    const authorName = c.username || 'User';
+                    const timeAgo = c.timeAgo || '';
+                    
+                    let html = '<img src="' + avatarSrc + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">'
+                        + '<div style="flex:1;">'
+                        + '<div style="background:var(--bg);padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;">'
+                        + '<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px;">' + authorName + '</div>'
+                        + '<div style="font-size:14px;color:#334155;word-break:break-word;">' + c.text + '</div>'
+                        + '</div>'
+                        + '<div style="display:flex;gap:16px;align-items:center;font-size:12px;color:var(--sub);margin-top:4px;padding-left:4px;">'
+                        + '<span>' + timeAgo + '</span>'
+                        + '<span style="font-weight:600;cursor:pointer;color:var(--accent);" onclick="setReply(' + c.id + ',\'' + authorName.replace(/'/g, "\\'") + '\')">Reply</span>'
+                        + '</div>';
+                        
                     // Render replies
                     if(c.replies && c.replies.length > 0) {
                         c.replies.forEach(r => {
-                            div.innerHTML += '<div style="display:flex;gap:10px;margin-top:10px;margin-left:20px;"><img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" style="width:28px;height:28px;border-radius:50%;"><div style="font-size:13px;"><strong>' + (r.username||'User') + '</strong> ' + r.text + '</div></div>';
+                            const rAvatar = r.avatar || '${pageContext.request.contextPath}/assets/img/default-avatar.png';
+                            const rName = r.username || 'User';
+                            const rTime = r.timeAgo || '';
+                            html += '<div style="display:flex;gap:10px;margin-top:10px;margin-left:24px;align-items:flex-start;">'
+                                + '<img src="' + rAvatar + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">'
+                                + '<div style="flex:1;">'
+                                + '<div style="background:var(--bg);padding:8px 12px;border-radius:12px;display:inline-block;max-width:100%;">'
+                                + '<div style="font-size:12px;font-weight:700;color:var(--dark);margin-bottom:2px;">' + rName + '</div>'
+                                + '<div style="font-size:13px;color:#334155;word-break:break-word;">' + r.text + '</div>'
+                                + '</div>'
+                                + '<div style="font-size:11px;color:var(--sub);margin-top:2px;padding-left:4px;">' + rTime + '</div>'
+                                + '</div></div>';
                         });
                     }
-                    div.innerHTML += '</div>';
+                    html += '</div>';
+                    div.innerHTML = html;
                     list.appendChild(div);
                 });
+            })
+            .catch(err => {
+                document.getElementById('commentsList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--accent);">Failed to load comments.</div>';
             });
         }
 
@@ -412,18 +436,51 @@
         function submitComment() {
             const input = document.getElementById('commentInput');
             const text = input.value.trim();
-            if(!text) return;
+            if(!text || !currentCommentVideoId) return;
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
             let fd = new FormData();
             fd.append('videoId', currentCommentVideoId);
             fd.append('commentText', text);
             if(replyToParentId) fd.append('parentId', replyToParentId);
-            fetch('${pageContext.request.contextPath}/video/comment', { method: 'POST', body: fd })
+            if(csrfToken) fd.append('_csrf', csrfToken);
+
+            const headers = {};
+            if(csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('${pageContext.request.contextPath}/creator-hub/comment', { 
+                method: 'POST', 
+                headers: headers,
+                body: fd 
+            })
             .then(r => r.json())
-            .then(() => { input.value = ''; replyToParentId = null; openComments(currentCommentVideoId); });
+            .then(res => {
+                if(res.error) {
+                    alert(res.error === 'NOT_LOGGED_IN' ? 'Please log in to comment.' : res.error);
+                    return;
+                }
+                input.value = '';
+                replyToParentId = null;
+                openComments(currentCommentVideoId);
+            })
+            .catch(err => {
+                console.warn('Direct creator-hub comment fallback to /video/comment', err);
+                fetch('${pageContext.request.contextPath}/video/comment', { method: 'POST', headers: headers, body: fd })
+                .then(r => r.json())
+                .then(() => {
+                    input.value = '';
+                    replyToParentId = null;
+                    openComments(currentCommentVideoId);
+                });
+            });
         }
 
         function toggleChatPanel() { window.location.href = '${pageContext.request.contextPath}/creator-hub/chat'; }
-        function toggleNotifPanel() {}
+        function toggleNotifPanel() { window.location.href = '${pageContext.request.contextPath}/creator-hub/notifications'; }
     </script>
 
     <!-- COMMENTS MODAL MOVED TO END OF FILE -->

@@ -101,11 +101,11 @@ public class CentreProfileService {
         if (!blank(centre.getName())) filled++;
         if (!blank(centre.getCentreType())) filled++;
         if (!blank(centre.getContactPerson())) filled++;
-        if (!blank(centre.getPhoneNumber())) filled++;
+        if (!blank(centre.getPhoneNumber()) && centre.getPhoneNumber().trim().matches("\\d{10}")) filled++;
         if (!blank(centre.getLocation()) || !blank(centre.getArea())) filled++;
         if (!blank(centre.getCity())) filled++;
         if (!blank(centre.getState())) filled++;
-        if (!blank(centre.getPincode())) filled++;
+        if (!blank(centre.getPincode()) && centre.getPincode().trim().matches("\\d{6}")) filled++;
         if (!blank(centre.getStylesTaught())) filled++;
         if (!blank(centre.getAudience())) filled++;
         if (centre.getAvailableDays() != null && !centre.getAvailableDays().isEmpty()) filled++;

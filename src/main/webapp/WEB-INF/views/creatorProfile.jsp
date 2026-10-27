@@ -207,6 +207,17 @@
 
     <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
 
+    <header class="ch-sub-header" style="position:sticky; top:80px; width:100%; height:60px; background:#fff; border-bottom:1px solid rgba(255,255,255,0.1); z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
+        <div style="font-weight:700; font-size:20px; color:var(--primary-accent); display:flex; align-items:center; gap:12px;"><span><i class="fa-solid fa-clapperboard"></i> Creator Hub</span></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <a href="${pageContext.request.contextPath}/creator-hub/profile" title="Profile" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-regular fa-user"></i> <span class="d-none d-sm-inline">Profile</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/feed" title="CreatorHub" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-solid fa-clapperboard"></i> <span class="d-none d-sm-inline">CreatorHub</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="d-none d-sm-inline">Chat</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/notifications" title="Notifications" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-regular fa-bell"></i> <span class="d-none d-sm-inline">Notifications</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:#0F172A; text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="d-none d-sm-inline">Settings</span></a>
+        </div>
+    </header>
+
     <div id="wrapper">
         <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
         <div id="page-content-wrapper">
@@ -233,10 +244,10 @@
                             <div class="profile-pic-container">
                                 <c:choose>
                                     <c:when test="${not empty creator.profilePhoto}">
-                                        <img src="${creator.profilePhoto}" class="profile-pic" alt="avatar">
+                                        <img src="${creator.profilePhoto}" class="profile-pic" alt="avatar" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
                                     </c:when>
                                     <c:otherwise>
-                                        <img src="/assets/img/default-avatar.png" class="profile-pic" alt="avatar">
+                                        <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="profile-pic" alt="avatar">
                                     </c:otherwise>
                                 </c:choose>
                             </div>
@@ -277,6 +288,11 @@
                                     <button class="btn rounded-pill px-4 py-2 font-weight-bold ${isFollowing ? 'btn-danger' : (isRequested ? 'btn-secondary' : 'btn-outline-danger')}" id="followBtn" onclick="followCreator(${creator.id})">
                                         ${isFollowing ? 'Following' : (isRequested ? 'Requested' : 'Follow')}
                                     </button>
+
+                                    <!-- Message Button -->
+                                    <a href="${pageContext.request.contextPath}/creator-hub/chat?peerId=${creator.id}" class="btn btn-outline-light rounded-pill px-4 py-2 font-weight-bold" style="border: 1px solid rgba(255,255,255,0.2);">
+                                        <i class="fa-regular fa-comment-dots me-2"></i>Message
+                                    </a>
                                     
                                     <!-- Tip Button -->
                                     <button class="btn btn-outline-warning rounded-pill px-4 py-2" data-bs-toggle="modal" data-bs-target="#tipModal">

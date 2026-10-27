@@ -253,38 +253,36 @@
             <div class="nav-item" onclick="switchTab('profile', this)">
                 <i class="bi bi-person"></i> My Profile
             </div>
-            <c:if test="${lawyer.partnerProfileStatus == 'APPROVED'}">
-                <div class="nav-item" onclick="switchTab('appointments', this)">
-                    <i class="bi bi-calendar-event"></i> Appointments
-                </div>
-                <div class="nav-item" onclick="switchTab('consultations', this)">
-                    <i class="bi bi-chat-dots"></i> Consultations
-                </div>
-                <div class="nav-item" onclick="switchTab('clients', this)">
-                    <i class="bi bi-people"></i> My Clients
-                </div>
-                <div class="nav-item" onclick="switchTab('earnings', this)">
-                    <i class="bi bi-wallet2"></i> Earnings
-                </div>
-                <div class="nav-item" onclick="switchTab('reviews', this)">
-                    <i class="bi bi-star"></i> Reviews
-                </div>
-                <div class="nav-item" onclick="switchTab('documents', this)">
-                    <i class="bi bi-file-earmark-text"></i> Documents
-                </div>
-                <div class="nav-item" onclick="switchTab('availability', this)">
-                    <i class="bi bi-clock"></i> Availability
-                </div>
-                <div class="nav-item" onclick="switchTab('gallery', this)">
-                    <i class="bi bi-images"></i> Gallery
-                </div>
-                <div class="nav-item" onclick="switchTab('bank', this)">
-                    <i class="bi bi-bank"></i> Bank & Payments
-                </div>
-                <div class="nav-item" onclick="switchTab('settings', this)">
-                    <i class="bi bi-gear"></i> Settings
-                </div>
-            </c:if>
+            <div class="nav-item" onclick="switchTab('appointments', this)">
+                <i class="bi bi-calendar-event"></i> Appointments
+            </div>
+            <div class="nav-item" onclick="switchTab('consultations', this)">
+                <i class="bi bi-chat-dots"></i> Consultations
+            </div>
+            <div class="nav-item" onclick="switchTab('clients', this)">
+                <i class="bi bi-people"></i> My Clients
+            </div>
+            <div class="nav-item" onclick="switchTab('earnings', this)">
+                <i class="bi bi-wallet2"></i> Earnings
+            </div>
+            <div class="nav-item" onclick="switchTab('reviews', this)">
+                <i class="bi bi-star"></i> Reviews
+            </div>
+            <div class="nav-item" onclick="switchTab('documents', this)">
+                <i class="bi bi-file-earmark-text"></i> Documents
+            </div>
+            <div class="nav-item" onclick="switchTab('availability', this)">
+                <i class="bi bi-clock"></i> Availability
+            </div>
+            <div class="nav-item" onclick="switchTab('gallery', this)">
+                <i class="bi bi-images"></i> Gallery
+            </div>
+            <div class="nav-item" onclick="switchTab('bank', this)">
+                <i class="bi bi-bank"></i> Bank & Payments
+            </div>
+            <div class="nav-item" onclick="switchTab('settings', this)">
+                <i class="bi bi-gear"></i> Settings
+            </div>
             <a href="${pageContext.request.contextPath}/logout" class="logout-btn" onclick="return confirm('Are you sure you want to logout?');">
                 <i class="bi bi-box-arrow-right"></i> Logout
             </a>
@@ -355,144 +353,133 @@
                         <h1>Welcome back, <span class="name">${lawyer.fullName}</span> <c:if test="${isVerified}"><i class="bi bi-patch-check-fill"></i></c:if></h1>
                         <p>Here's what's happening with your legal practice today.</p>
                     </div>
-                    <c:if test="${lawyer.partnerProfileStatus == 'APPROVED'}">
-                        <button class="btn-primary" onclick="openAvailabilityModal()">
-                            <i class="bi bi-plus-lg"></i> Add Availability
-                        </button>
-                    </c:if>
+                    <button class="btn-primary" onclick="openAvailabilityModal()">
+                        <i class="bi bi-plus-lg"></i> Add Availability
+                    </button>
                 </div>
 
                 <c:choose>
-                    <c:when test="${lawyer.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}">
-                        <div class="action-banner" style="margin-bottom: 30px; background: #FFFBEB; border: 1px solid #FDE68A;">
-                            <div class="action-icon" style="background: #FEF3C7; color: #D97706;"><i class="bi bi-hourglass-split"></i></div>
-                            <div class="action-content">
-                                <h3 style="color: #92400E;">Profile Under Admin Review</h3>
-                                <p style="color: #B45309;">Your profile is currently being reviewed by our admin team. Please wait for approval.</p>
-                            </div>
-                        </div>
-                    </c:when>
                     <c:when test="${lawyer.partnerProfileStatus == 'APPROVED'}">
-                        <div class="action-banner" style="margin-bottom: 30px; background: #F0FDF4; border: 1px solid #BBF7D0;">
+                        <div class="action-banner success" style="margin-bottom: 30px; background: #F0FDF4; border: 1.5px solid #BBF7D0;">
                             <div class="action-icon" style="background: #DCFCE7; color: #16A34A;"><i class="bi bi-patch-check-fill"></i></div>
                             <div class="action-content">
-                                <h3 style="color: #166534;">Profile Approved</h3>
-                                <p style="color: #15803D;">Your profile has been approved!</p>
+                                <h3 style="color: #166534;">Profile Approved & Verified</h3>
+                                <p style="color: #15803D;">Your lawyer profile has been approved! You can receive consultations and manage practice operations.</p>
                             </div>
                         </div>
                     </c:when>
                     <c:otherwise>
-                        <div class="action-banner" style="margin-bottom: 30px;">
-                            <div class="action-icon"><i class="bi bi-person-lines-fill"></i></div>
-                            <div class="action-content">
-                                <h3>Complete Your Profile</h3>
-                                <p>Your profile is incomplete. Please fill it to 100% and submit it for admin verification.</p>
+                        <div class="action-banner" style="margin-bottom: 30px; background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 16px; padding: 20px 24px;">
+                            <div style="display:flex; align-items:center; gap:16px; flex:1;">
+                                <div class="action-icon" style="background: #FEF3C7; color: #D97706; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;"><i class="bi bi-hourglass-split"></i></div>
+                                <div class="action-content" style="flex:1; margin-left:0;">
+                                    <h3 style="color: #92400E; font-size: 1.15rem; font-weight: 700; margin-bottom: 4px;">Your Profile is Under Review</h3>
+                                    <p style="color: #B45309; font-size: 0.9rem; margin: 0; line-height: 1.5;">Your profile is currently under review by our admin team. All features and sections are accessible for viewing and updating. Booking activations and payouts will be fully unlocked once verified.</p>
+                                </div>
                             </div>
-                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-upload" style="text-decoration:none;">Update Profile</a>
+                            <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-upload" style="text-decoration:none; white-space:nowrap; margin-left:16px;">Update Details</a>
                         </div>
                     </c:otherwise>
                 </c:choose>
 
-                <c:if test="${lawyer.partnerProfileStatus == 'APPROVED'}">
-                    <div class="stats-grid">
+                <div class="stats-grid">
 
-                        <div class="stat-card" onclick="switchTab('cases', document.querySelectorAll('.nav-item')[1])">
-                            <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
-                            <div class="stat-info">
-                                <h2>${activeCasesCount}</h2>
-                                <p>Active Cases</p>
-                                <span>Ongoing legal matters</span>
-                            </div>
-                        </div>
-                        <div class="stat-card" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">
-                            <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-calendar-check"></i></div>
-                            <div class="stat-info">
-                                <h2>${upcomingAptCount}</h2>
-                                <p>Upcoming Appointments</p>
-                                <span>Next 7 days</span>
-                            </div>
-                        </div>
-                        <div class="stat-card" onclick="switchTab('consultations', document.querySelectorAll('.nav-item')[3])">
-                            <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-chat-dots"></i></div>
-                            <div class="stat-info">
-                                <h2>${consultsCount}</h2>
-                                <p>Consultations</p>
-                                <span>This month</span>
-                            </div>
-                        </div>
-                        <div class="stat-card" onclick="switchTab('earnings', document.querySelectorAll('.nav-item')[4])">
-                            <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-cash-stack"></i></div>
-                            <div class="stat-info">
-                                <h2>₹<fmt:formatNumber type="number" maxFractionDigits="0" value="${earnings}" /></h2>
-                                <p>Earnings</p>
-                                <span>This month</span>
-                            </div>
+                    <div class="stat-card" onclick="switchTab('cases', document.querySelectorAll('.nav-item')[1])">
+                        <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
+                        <div class="stat-info">
+                            <h2>${activeCasesCount}</h2>
+                            <p>Active Cases</p>
+                            <span>Ongoing legal matters</span>
                         </div>
                     </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h3><i class="bi bi-calendar4-week"></i> Upcoming Appointments</h3>
-                            <a href="javascript:void(0)" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">View All <i class="bi bi-chevron-right"></i></a>
+                    <div class="stat-card" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">
+                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-calendar-check"></i></div>
+                        <div class="stat-info">
+                            <h2>${upcomingAptCount}</h2>
+                            <p>Upcoming Appointments</p>
+                            <span>Next 7 days</span>
                         </div>
-                        <div class="apt-list">
-                            <c:set var="hasUpcoming" value="false" />
-                            <c:forEach var="b" items="${bookings}" end="3">
-                                <c:if test="${b.status == 'PENDING' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
-                                    <c:set var="hasUpcoming" value="true" />
-                                    <div class="apt-item">
-                                        <div class="apt-date">
-                                            <fmt:parseDate value="${b.requestedTime}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
-                                            <span class="day"><fmt:formatDate pattern="dd" value="${parsedDate}" /></span>
-                                            <span class="month"><fmt:formatDate pattern="MMM" value="${parsedDate}" /></span>
-                                        </div>
-                                        <div class="apt-info">
-                                            <h4>${not empty b.user ? b.user.fullName : 'Client Consultation'} <span style="font-size:0.8rem; color:var(--secondary);">#${b.id}</span></h4>
-                                            <p>
-                                                <span><fmt:formatDate pattern="hh:mm a" value="${parsedDate}" /></span>
-                                                <span><i class="bi bi-camera-video"></i> ${not empty lawyer.serviceMode ? lawyer.serviceMode : 'Video Call'}</span>
-                                            </p>
-                                        </div>
-                                        <div class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'badge-confirmed' : 'badge-upcoming'}">
-                                            ${b.status == 'PENDING' ? 'Upcoming' : 'Confirmed'}
-                                        </div>
+                    </div>
+                    <div class="stat-card" onclick="switchTab('consultations', document.querySelectorAll('.nav-item')[3])">
+                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-chat-dots"></i></div>
+                        <div class="stat-info">
+                            <h2>${consultsCount}</h2>
+                            <p>Consultations</p>
+                            <span>This month</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" onclick="switchTab('earnings', document.querySelectorAll('.nav-item')[4])">
+                        <div class="stat-icon" style="background:#FFE4E6;"><i class="bi bi-cash-stack"></i></div>
+                        <div class="stat-info">
+                            <h2>₹<fmt:formatNumber type="number" maxFractionDigits="0" value="${earnings}" /></h2>
+                            <p>Earnings</p>
+                            <span>This month</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="bi bi-calendar4-week"></i> Upcoming Appointments</h3>
+                        <a href="javascript:void(0)" onclick="switchTab('appointments', document.querySelectorAll('.nav-item')[2])">View All <i class="bi bi-chevron-right"></i></a>
+                    </div>
+                    <div class="apt-list">
+                        <c:set var="hasUpcoming" value="false" />
+                        <c:forEach var="b" items="${bookings}" end="3">
+                            <c:if test="${b.status == 'PENDING' || b.status == 'CONFIRMED' || b.status == 'PAID'}">
+                                <c:set var="hasUpcoming" value="true" />
+                                <div class="apt-item">
+                                    <div class="apt-date">
+                                        <fmt:parseDate value="${b.requestedTime}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
+                                        <span class="day"><fmt:formatDate pattern="dd" value="${parsedDate}" /></span>
+                                        <span class="month"><fmt:formatDate pattern="MMM" value="${parsedDate}" /></span>
                                     </div>
-                                </c:if>
-                            </c:forEach>
-                            <c:if test="${not hasUpcoming}">
-                                <p style="color: var(--secondary); font-size: 0.9rem; text-align:center; padding: 20px;">No upcoming appointments.</p>
+                                    <div class="apt-info">
+                                        <h4>${not empty b.user ? b.user.fullName : 'Client Consultation'} <span style="font-size:0.8rem; color:var(--secondary);">#${b.id}</span></h4>
+                                        <p>
+                                            <span><fmt:formatDate pattern="hh:mm a" value="${parsedDate}" /></span>
+                                            <span><i class="bi bi-camera-video"></i> ${not empty lawyer.serviceMode ? lawyer.serviceMode : 'Video Call'}</span>
+                                        </p>
+                                    </div>
+                                    <div class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'badge-confirmed' : 'badge-upcoming'}">
+                                        ${b.status == 'PENDING' ? 'Upcoming' : 'Confirmed'}
+                                    </div>
+                                </div>
                             </c:if>
-                        </div>
+                        </c:forEach>
+                        <c:if test="${not hasUpcoming}">
+                            <p style="color: var(--secondary); font-size: 0.9rem; text-align:center; padding: 20px;">No upcoming appointments.</p>
+                        </c:if>
                     </div>
+                </div>
 
-                    <c:choose>
-                        <c:when test="${not isVerified}">
-                            <div class="action-banner">
-                                <div class="action-icon"><i class="bi bi-shield-exclamation"></i></div>
-                                <div class="action-content">
-                                    <h3>Action Required</h3>
-                                    <p>Please upload your Bar Council ID proof to complete your profile verification.</p>
-                                </div>
-                                <form id="uploadDocForm" action="${pageContext.request.contextPath}/lawyer/profile/upload-doc${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" style="display:none;">
-                                    <c:if test="${not empty _csrf}">
-                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
-                                    </c:if>
-                                    <input type="file" id="barCouncilDoc" name="document" accept="image/*,.pdf" onchange="document.getElementById('uploadDocForm').submit();">
-                                </form>
-                                <button class="btn-upload" onclick="document.getElementById('barCouncilDoc').click();">Upload Now</button>
+                <c:choose>
+                    <c:when test="${not isVerified}">
+                        <div class="action-banner">
+                            <div class="action-icon"><i class="bi bi-shield-exclamation"></i></div>
+                            <div class="action-content">
+                                <h3>Action Required</h3>
+                                <p>Please upload your Bar Council ID proof to complete your profile verification.</p>
                             </div>
-                        </c:when>
-                        <c:otherwise>
-                            <div class="action-banner success">
-                                <div class="action-icon"><i class="bi bi-shield-check"></i></div>
-                                <div class="action-content">
-                                    <h3>Verification Complete</h3>
-                                    <p>Your profile is fully verified. You can now accept client consultations.</p>
-                                </div>
+                            <form id="uploadDocForm" action="${pageContext.request.contextPath}/lawyer/profile/upload-doc${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" style="display:none;">
+                                <c:if test="${not empty _csrf}">
+                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                                </c:if>
+                                <input type="file" id="barCouncilDoc" name="document" accept="image/*,.pdf" onchange="document.getElementById('uploadDocForm').submit();">
+                            </form>
+                            <button class="btn-upload" onclick="document.getElementById('barCouncilDoc').click();">Upload Now</button>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="action-banner success">
+                            <div class="action-icon"><i class="bi bi-shield-check"></i></div>
+                            <div class="action-content">
+                                <h3>Verification Complete</h3>
+                                <p>Your profile is fully verified. You can now accept client consultations.</p>
                             </div>
-                        </c:otherwise>
-                    </c:choose>
-                </c:if>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
             </div>
 
             <!-- Profile Tab -->
@@ -1030,14 +1017,14 @@
                             <div style="font-weight:600; color:var(--text);">Password</div>
                             <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Change your password to keep your account secure.</div>
                         </div>
-                        <button style="padding:8px 16px; border-radius:8px; border:1px solid var(--primary); background:transparent; color:var(--primary); font-weight:600; cursor:pointer;">Update Password</button>
+                        <button onclick="if(!isProfileApproved) { showUnderReviewAlert('Password changes are restricted while your profile is under review.'); return false; }" style="padding:8px 16px; border-radius:8px; border:1px solid var(--primary); background:transparent; color:var(--primary); font-weight:600; cursor:pointer;">Update Password</button>
                     </div>
                     <div style="display:flex; justify-content: space-between; align-items:center; padding: 15px 0;">
                         <div>
                             <div style="font-weight:600; color:var(--text);">Two-Factor Authentication</div>
                             <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Add an extra layer of security to your account.</div>
                         </div>
-                        <div style="width: 40px; height: 20px; background: var(--border); border-radius: 20px; position: relative; cursor: pointer;">
+                        <div onclick="if(!isProfileApproved) { showUnderReviewAlert('Security toggles are disabled while your profile is under review.'); return false; }" style="width: 40px; height: 20px; background: var(--border); border-radius: 20px; position: relative; cursor: pointer;">
                             <div style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                         </div>
                     </div>
@@ -1053,7 +1040,7 @@
                             <div style="font-weight:600; color:var(--text);">Email Notifications</div>
                             <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Receive updates and appointment details via email.</div>
                         </div>
-                        <div style="width: 40px; height: 20px; background: var(--primary); border-radius: 20px; position: relative; cursor: pointer;">
+                        <div onclick="if(!isProfileApproved) { showUnderReviewAlert('Notification preferences will be active once your profile is verified.'); return false; }" style="width: 40px; height: 20px; background: var(--primary); border-radius: 20px; position: relative; cursor: pointer;">
                             <div style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; right: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                         </div>
                     </div>
@@ -1062,7 +1049,7 @@
                             <div style="font-weight:600; color:var(--text);">SMS Alerts</div>
                             <div style="font-size:0.85rem; color:var(--secondary); margin-top:4px;">Receive immediate SMS alerts for bookings.</div>
                         </div>
-                        <div style="width: 40px; height: 20px; background: var(--primary); border-radius: 20px; position: relative; cursor: pointer;">
+                        <div onclick="if(!isProfileApproved) { showUnderReviewAlert('SMS preferences will be active once your profile is verified.'); return false; }" style="width: 40px; height: 20px; background: var(--primary); border-radius: 20px; position: relative; cursor: pointer;">
                             <div style="width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; right: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);"></div>
                         </div>
                     </div>
@@ -1080,7 +1067,7 @@
                 <button class="close-modal" onclick="closeAvailabilityModal()"><i class="bi bi-x"></i></button>
             </div>
             <form action="${pageContext.request.contextPath}/lawyer/profile/update" method="post">
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <input type="hidden" name="fullName" value="${lawyer.fullName}">
                 <input type="hidden" name="phone" value="${lawyer.phone}">
                 <div class="form-group">
@@ -1109,12 +1096,51 @@
         </div>
     </div>
 
+    <!-- Profile Under Review Modal -->
+    <div class="modal" id="underReviewModal">
+        <div class="modal-content" style="max-width: 480px; text-align: center; padding: 32px 28px; border-radius: 20px;">
+            <div style="width: 68px; height: 68px; background: #FFFBEB; border: 2px solid #FDE68A; color: #D97706; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 18px;">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <h3 style="color: #1E1B4B; font-size: 1.3rem; font-weight: 800; margin-bottom: 10px;">Profile Under Review</h3>
+            <p style="color: #64748B; font-size: 0.92rem; line-height: 1.6; margin-bottom: 24px;" id="underReviewMsg">
+                Your lawyer profile is currently under review by our admin team. This action will be unlocked once your verification is approved.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-primary" style="text-decoration: none; padding: 10px 20px;">
+                    <i class="bi bi-pencil-square"></i> Review Profile
+                </a>
+                <button type="button" class="btn-primary" style="background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; padding: 10px 20px;" onclick="closeUnderReviewModal()">
+                    Got It
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        const isProfileApproved = ${lawyer.partnerProfileStatus == 'APPROVED'};
+
+        function showUnderReviewAlert(customMessage) {
+            if (customMessage) {
+                document.getElementById('underReviewMsg').innerText = customMessage;
+            } else {
+                document.getElementById('underReviewMsg').innerText = "Your lawyer profile is currently under review by our admin team. This action will be unlocked once your verification is approved.";
+            }
+            document.getElementById('underReviewModal').classList.add('active');
+        }
+
+        function closeUnderReviewModal() {
+            document.getElementById('underReviewModal').classList.remove('active');
+        }
+
         function switchTab(tabId, el) {
             document.querySelectorAll('.tab-section').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            document.getElementById(tabId + '-tab').classList.add('active');
+            const target = document.getElementById(tabId + '-tab');
+            if (target) {
+                target.classList.add('active');
+            }
             if (el) el.classList.add('active');
             
             if(window.innerWidth <= 768) {
@@ -1132,6 +1158,10 @@
         }
 
         function openAvailabilityModal() {
+            if (!isProfileApproved) {
+                showUnderReviewAlert("Availability scheduling will be enabled once your profile is verified and approved by admin.");
+                return;
+            }
             document.getElementById('availabilityModal').classList.add('active');
         }
 
@@ -1140,6 +1170,10 @@
         }
 
         function updateStatus(id, newStatus) {
+            if (!isProfileApproved) {
+                showUnderReviewAlert("Client and appointment management actions will be enabled once your lawyer profile is approved by admin.");
+                return;
+            }
             if(!confirm("Are you sure you want to change the status to " + newStatus + "?")) return;
             
             const formData = new FormData();

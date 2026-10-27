@@ -33,6 +33,7 @@ public class SOSRequest {
     private int contactsPending;
     private int volunteersAlerted;
     private String audioRecordingPath;
+    private String videoRecordingPath;
 
     private boolean isEscalated = false;
     private boolean isAutoCallTriggered = false;
@@ -202,5 +203,13 @@ public class SOSRequest {
         if (contactResponses != null) {
             this.contactResponses.addAll(contactResponses);
         }
+    }
+
+    public String getVideoRecordingPath() {
+        return videoRecordingPath;
+    }
+
+    public void setVideoRecordingPath(String videoRecordingPath) {
+        this.videoRecordingPath = videoRecordingPath;
     }
 }

@@ -112,6 +112,45 @@
       color: #fff;
       text-decoration: none;
       font-size: 1.15rem;
+      position: relative;
+    }
+    .action-btn-circle.hero-action-disabled {
+      opacity: 0.75;
+      cursor: pointer;
+      border: 1.5px dashed rgba(255, 255, 255, 0.6) !important;
+      transition: all 0.25s ease;
+      outline: none;
+    }
+    .action-btn-circle.hero-action-disabled:hover {
+      opacity: 1;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    }
+    .action-lock-badge {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      background: #0F172A;
+      color: #F8FAFC;
+      border: 1.5px solid #FFFFFF;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.62rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      line-height: 1;
+    }
+    @keyframes pulseBooking {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.65); }
+      70% { box-shadow: 0 0 0 16px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+    .booking-card-highlight {
+      animation: pulseBooking 1.4s ease-in-out 3;
+      border: 2px solid #F43F5E !important;
     }
 
     .text-primary, .bi-patch-check-fill.text-primary { color: #F43F5E !important; }
@@ -469,9 +508,27 @@
           </div>
         </div>
         <div class="col-md-auto mt-4 mt-md-0 d-flex flex-wrap align-items-center gap-3 justify-content-md-end">
-          <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}" class="action-btn-circle hero-action bg-white text-danger" title="Chat" style="color:#F43F5E !important;"><i class="bi bi-chat-dots-fill"></i></a>
-          <a href="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}" class="action-btn-circle hero-action bg-primary" title="Voice Call"><i class="bi bi-telephone-fill"></i></a>
-          <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}" class="action-btn-circle hero-action bg-success" title="Video Call"><i class="bi bi-camera-video-fill"></i></a>
+          <c:choose>
+            <c:when test="${hasBookedAppointment}">
+              <a href="${pageContext.request.contextPath}/doctors/chat/${doctor.id}" class="action-btn-circle hero-action bg-white text-danger" title="Chat" style="color:#F43F5E !important;"><i class="bi bi-chat-dots-fill"></i></a>
+              <a href="${pageContext.request.contextPath}/doctors/voice-call/${doctor.id}" class="action-btn-circle hero-action bg-primary" title="Voice Call"><i class="bi bi-telephone-fill"></i></a>
+              <a href="${pageContext.request.contextPath}/doctors/video-call/${doctor.id}" class="action-btn-circle hero-action bg-success" title="Video Call"><i class="bi bi-camera-video-fill"></i></a>
+            </c:when>
+            <c:otherwise>
+              <button type="button" class="action-btn-circle hero-action hero-action-disabled bg-white text-danger" title="Book an appointment to enable Chat" onclick="handleDisabledConsultAction('Chat')" style="color:#F43F5E !important;">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span class="action-lock-badge" title="Locked"><i class="bi bi-lock-fill"></i></span>
+              </button>
+              <button type="button" class="action-btn-circle hero-action hero-action-disabled bg-primary" title="Book an appointment to enable Voice Call" onclick="handleDisabledConsultAction('Voice Call')">
+                <i class="bi bi-telephone-fill"></i>
+                <span class="action-lock-badge" title="Locked"><i class="bi bi-lock-fill"></i></span>
+              </button>
+              <button type="button" class="action-btn-circle hero-action hero-action-disabled bg-success" title="Book an appointment to enable Video Call" onclick="handleDisabledConsultAction('Video Call')">
+                <i class="bi bi-camera-video-fill"></i>
+                <span class="action-lock-badge" title="Locked"><i class="bi bi-lock-fill"></i></span>
+              </button>
+            </c:otherwise>
+          </c:choose>
           <div class="hero-fee">
             <span class="text-white-50 d-block mb-1" style="font-size:0.75rem;">Consultation</span>
             <h2 class="fw-bold text-white mb-0" id="headerFeeDisplay">₹${doctor.consultationFee != null ? doctor.consultationFee : 0}</h2>
@@ -748,6 +805,58 @@
             <button type="submit" class="btn btn-accent w-100 py-3 rounded-4 fw-800">Post Review</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Book Appointment to Enable Consultations -->
+  <div class="modal fade" id="appointmentRequiredModal" tabindex="-1" aria-labelledby="appointmentRequiredModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+        <div class="modal-header border-0 pb-0 text-white" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);">
+          <div class="d-flex align-items-center gap-3 py-2">
+            <div class="rounded-circle d-flex align-items-center justify-content-center bg-danger bg-opacity-25 border border-danger border-opacity-50" style="width:42px;height:42px;flex-shrink:0;">
+              <i class="bi bi-calendar-check-fill text-danger fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold mb-0 text-white" id="appointmentRequiredModalLabel">Book an Appointment to Enable</h5>
+              <small class="text-white-50" id="disabledActionName">Direct Consultation</small>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="text-center py-2">
+            <div class="mb-3 d-inline-flex align-items-center justify-content-center rounded-circle" style="width:64px;height:64px;background:#FFF1F2;color:#F43F5E;">
+              <i class="bi bi-lock-fill fs-2"></i>
+            </div>
+            <h6 class="fw-bold mb-2 text-dark">Appointment Required</h6>
+            <p class="text-muted mb-3" style="font-size:0.92rem;line-height:1.5;">
+              <strong id="disabledActionModalType">Call / Chat</strong> with <strong>Dr. ${doctor.fullName}</strong> is currently locked.
+              Please book an appointment to enable and begin your consultation.
+            </p>
+          </div>
+          <div class="p-3 rounded-3 mb-3" style="background:#F8FAFC;border:1px dashed #CBD5E1;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-bold">Doctor:</span>
+              <span class="small fw-bold text-dark">Dr. ${doctor.fullName}</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="small text-muted fw-bold">Specialization:</span>
+              <span class="small fw-bold text-dark">${not empty doctor.specialization ? doctor.specialization : 'General Practitioner'}</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="small text-muted fw-bold">Status:</span>
+              <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>No Active Booking</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex justify-content-between">
+          <button type="button" class="btn btn-light rounded-3 px-3 fw-bold text-muted" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn text-white rounded-3 px-4 fw-bold shadow-sm" style="background:#F43F5E;" onclick="scrollToBookingForm()">
+            <i class="bi bi-calendar-plus me-1"></i> Book Appointment Now
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1355,7 +1464,45 @@
       });
       syncFeeUi();
 
+      <c:if test="${param.error == 'booking_required'}">
+      setTimeout(function() {
+        handleDisabledConsultAction('Consultation');
+      }, 350);
+      </c:if>
+
     });
+
+    function handleDisabledConsultAction(actionType) {
+      var actionTitle = actionType || 'Consultation';
+      var typeEl = document.getElementById('disabledActionModalType');
+      var nameEl = document.getElementById('disabledActionName');
+      if (typeEl) typeEl.textContent = actionTitle;
+      if (nameEl) nameEl.textContent = actionTitle + ' consultation is locked';
+
+      var modalEl = document.getElementById('appointmentRequiredModal');
+      if (modalEl && window.bootstrap) {
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+      } else {
+        alert('Please book an appointment with Dr. ' + "${doctor.fullName}" + ' to enable ' + actionTitle + '.');
+        scrollToBookingForm();
+      }
+    }
+
+    function scrollToBookingForm() {
+      var modalEl = document.getElementById('appointmentRequiredModal');
+      if (modalEl && window.bootstrap) {
+        var instance = bootstrap.Modal.getInstance(modalEl);
+        if (instance) instance.hide();
+      }
+      var bookingCard = document.querySelector('.booking-sticky-card');
+      if (bookingCard) {
+        bookingCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        bookingCard.classList.add('booking-card-highlight');
+        setTimeout(function() {
+          bookingCard.classList.remove('booking-card-highlight');
+        }, 3000);
+      }
+    }
   </script>
   </div>
 </div>

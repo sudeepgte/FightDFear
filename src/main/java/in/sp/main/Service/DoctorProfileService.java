@@ -113,7 +113,14 @@ public class DoctorProfileService {
             doctor.setQualification(blankToNull(asString(body.get("qualification"))));
         }
         if (body.containsKey("medicalRegNumber")) {
-            doctor.setMedicalRegNumber(blankToNull(asString(body.get("medicalRegNumber"))));
+            String reg = blankToNull(asString(body.get("medicalRegNumber")));
+            if (reg != null) {
+                reg = reg.trim();
+                if (reg.length() < 3 || reg.length() > 60 || !reg.matches("^[a-zA-Z0-9\\/\\-.\\s]{3,60}$")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enter a valid medical registration number (3-60 alphanumeric characters)");
+                }
+            }
+            doctor.setMedicalRegNumber(reg);
         }
         if (body.containsKey("experienceYears")) {
             Integer years = asInteger(body.get("experienceYears"), "Years of experience");
@@ -127,6 +134,9 @@ public class DoctorProfileService {
         }
         if (body.containsKey("clinicAddress")) {
             doctor.setClinicAddress(blankToNull(asString(body.get("clinicAddress"))));
+        }
+        if (body.containsKey("country")) {
+            doctor.setCountry(blankToNull(asString(body.get("country"))));
         }
         if (body.containsKey("city")) {
             doctor.setCity(blankToNull(asString(body.get("city"))));
@@ -247,6 +257,7 @@ public class DoctorProfileService {
         d.setExperienceYears(source.getExperienceYears());
         d.setHospitalName(source.getHospitalName());
         d.setClinicAddress(source.getClinicAddress());
+        d.setCountry(source.getCountry());
         d.setCity(source.getCity());
         d.setState(source.getState());
         d.setPincode(source.getPincode());
@@ -284,6 +295,7 @@ public class DoctorProfileService {
         map.put("experienceYears", doctor.getExperienceYears());
         map.put("hospitalName", doctor.getHospitalName());
         map.put("clinicAddress", doctor.getClinicAddress());
+        map.put("country", doctor.getCountry());
         map.put("city", doctor.getCity());
         map.put("state", doctor.getState());
         map.put("pincode", doctor.getPincode());
@@ -311,25 +323,55 @@ public class DoctorProfileService {
         return map;
     }
 
-        public int calculateCompletionPct(Doctor doctor) {
+    public int calculateCompletionPct(Doctor doctor) {
         if (doctor == null) {
             return 0;
         }
         int filled = 0;
-        int total = 10;
+        int total = 20;
 
+        // 1. Profile photo
         if (isRealDocument(doctor.getProfilePhotoPath())) filled++;
+        // 2. Doctor full name
         if (notBlank(doctor.getFullName())) filled++;
+        // 3. Phone
         if (notBlank(doctor.getPhone())) filled++;
+        // 4. Gender
         if (doctor.getGender() != null) filled++;
+        // 5. Specialization
         if (notBlank(doctor.getSpecialization())) filled++;
+        // 6. Qualification
         if (notBlank(doctor.getQualification())) filled++;
+        // 7. Medical registration number
         if (notBlank(doctor.getMedicalRegNumber())) filled++;
-        if (doctor.getExperienceYears() != null && doctor.getExperienceYears() >= 0) filled++;
-        if (doctor.getConsultationFee() != null && doctor.getConsultationFee() >= 0) filled++;
+        // 8. Experience years (valid integer 0 to 50)
+        if (doctor.getExperienceYears() != null && doctor.getExperienceYears() >= 0 && doctor.getExperienceYears() <= 50) filled++;
+        // 9. Hospital / clinic name
         if (notBlank(doctor.getHospitalName())) filled++;
+        // 10. Clinic address
+        if (notBlank(doctor.getClinicAddress())) filled++;
+        // 11. City
+        if (notBlank(doctor.getCity())) filled++;
+        // 12. State
+        if (notBlank(doctor.getState())) filled++;
+        // 13. Pincode
+        if (isValidPincode(doctor.getPincode())) filled++;
+        // 14. Consultation modes
+        if (notBlank(doctor.getConsultationModes()) || doctor.getConsultationType() != null) filled++;
+        // 15. Available days
+        if (notBlank(doctor.getAvailableDays())) filled++;
+        // 16. Working start time
+        if (notBlank(doctor.getStartTime())) filled++;
+        // 17. Languages
+        if (notBlank(doctor.getLanguages())) filled++;
+        // 18. Consultation fee
+        if (doctor.getConsultationFee() != null && doctor.getConsultationFee() >= 0) filled++;
+        // 19. Documents (at least 1 document uploaded: license or degree or ID)
+        if (isRealDocument(doctor.getMedicalLicensePath()) || isRealDocument(doctor.getDegreeCertificatePath()) || isRealDocument(doctor.getIdProofPath()) || isRealDocument(doctor.getIdentityDocumentPath())) filled++;
+        // 20. Payout details (UPI ID or Bank Details)
+        if (notBlank(doctor.getUpiId()) || notBlank(doctor.getBankDetails())) filled++;
 
-        return (int) Math.round(100.0 * filled / total);
+        return Math.min(100, (int) Math.round((100.0 * filled) / total));
     }
 
     public List<String> missingItems(Doctor doctor) {
@@ -342,8 +384,12 @@ public class DoctorProfileService {
         if (isBlank(doctor.getFullName())) missing.add("1.1 Doctor name");
         if (isBlank(doctor.getSpecialization())) missing.add("1.2 Specialization");
         if (isBlank(doctor.getQualification())) missing.add("1.3 Qualification");
-        if (isBlank(doctor.getMedicalRegNumber())) missing.add("1.4 Medical registration number");
-        if (doctor.getExperienceYears() == null) missing.add("1.5 Years of experience");
+        if (isBlank(doctor.getMedicalRegNumber()) || !doctor.getMedicalRegNumber().trim().matches("^[a-zA-Z0-9\\/\\-.\\s]{3,60}$")) {
+            missing.add("1.4 Medical registration number (3-60 alphanumeric characters)");
+        }
+        if (doctor.getExperienceYears() == null || doctor.getExperienceYears() < 0 || doctor.getExperienceYears() > 50) {
+            missing.add("1.5 Years of experience (0-50)");
+        }
         if (isBlank(doctor.getHospitalName())) missing.add("2.1 Hospital / clinic name");
         if (isBlank(doctor.getClinicAddress()) || isBlank(doctor.getCity())) missing.add("2.2 Clinic address and city");
         if (isBlank(doctor.getState())) missing.add("2.4 State");
@@ -380,6 +426,7 @@ public class DoctorProfileService {
         payload.put("experienceYears", doctor.getExperienceYears());
         payload.put("hospitalName", doctor.getHospitalName());
         payload.put("clinicAddress", doctor.getClinicAddress());
+        payload.put("country", doctor.getCountry());
         payload.put("city", doctor.getCity());
         payload.put("state", doctor.getState());
         payload.put("pincode", doctor.getPincode());

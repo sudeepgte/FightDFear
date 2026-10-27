@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,203 +9,54 @@
   <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>
-    <c:choose>
-        <c:when test="${selectedCategory == 'WOMEN_PRODUCTS'}">Women Products Verification - Fight D Fear Admin</c:when>
-        <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Women Lawyer Verification - Fight D Fear Admin</c:when>
-        <c:when test="${selectedCategory == 'FITNESS_ZUMBA'}">Fitness & Zumba Verification - Fight D Fear Admin</c:when>
-        <c:otherwise>Service Partner Verification - Fight D Fear Admin</c:otherwise>
-    </c:choose>
-  </title>
-  
-  <!-- Bootstrap 5 & FontAwesome -->
+  <title>${selectedCategory == 'WOMEN_LAWYER' ? 'Women Lawyer Verification' : 'Provider Verification'} - Fight D Fear Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Shared Admin Portal Stylesheet (Doctor Verification Theme) -->
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
-  
   <style>
-    * { box-sizing: border-box; }
     body.ap-page { margin: 0; }
     .topbar { display: none !important; }
-    .layout { display: flex; min-height: 100vh; overflow: hidden; width: 100vw; max-width: 100%; }
-    .main { flex: 1; min-width: 0; background: var(--ap-bg, #F8FAFC); overflow-x: hidden; }
+    .layout { display: flex; min-height: 100vh; }
+    .main { flex: 1; min-width: 0; background: var(--ap-bg); }
     .dv-actions { display: flex; gap: 6px; align-items: center; }
     .dv-more {
-      width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--ap-border, #E2E8F0);
-      background: #fff; color: var(--ap-muted, #64748B); display: inline-flex; align-items: center; justify-content: center;
-      text-decoration: none !important;
-      transition: all 0.2s;
+      width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--ap-border);
+      background: #fff; color: var(--ap-muted); display: inline-flex; align-items: center; justify-content: center;
+      text-decoration: none;
     }
-    .dv-more:hover { color: var(--ap-accent, #F43F5E); border-color: #FDA4AF; }
+    .dv-more:hover { color: var(--ap-accent); border-color: #FDA4AF; }
     .dv-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
     @media (max-width: 992px) { .dv-bottom-grid { grid-template-columns: 1fr; } }
-    
-    /* Action Buttons */
-    .btn-approve-sm {
-      background-color: #16A34A;
-      color: white;
-      padding: 5px 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      transition: all 0.2s;
-    }
-    .btn-approve-sm:hover { background-color: #15803D; color: white; transform: translateY(-1px); }
-
-    .btn-reject-sm {
-      background-color: #DC2626;
-      color: white;
-      padding: 5px 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      transition: all 0.2s;
-    }
-    .btn-reject-sm:hover { background-color: #B91C1C; color: white; transform: translateY(-1px); }
-
-    .btn-view-profile {
-      background-color: #3B82F6;
-      color: white;
-      padding: 5px 12px;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      transition: all 0.2s;
-      text-decoration: none !important;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .btn-view-profile:hover { background-color: #2563EB; color: white; transform: translateY(-1px); }
-
-    .btn-view-doc {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: #FFF1F3; 
-      color: #F43F5E; 
-      border: 1px solid #FFE4E6;
-      padding: 5px 12px; 
-      border-radius: 8px; 
-      font-size: 0.8rem; 
-      font-weight: 700;
-      text-decoration: none !important; 
-      transition: all 0.2s ease;
-    }
-    .btn-view-doc:hover { background: #F43F5E; color: #fff; border-color: #F43F5E; }
-
-    /* Interactive Row Hover */
-    .lawyer-row { cursor: pointer; transition: background-color 0.15s ease; }
-    .lawyer-row:hover { background-color: #FFF7F8 !important; }
-    .lawyer-row.selected { background-color: #FFF1F3 !important; }
-
-    /* Mobile Provider Card */
-    .fl-mobile-card {
-      background: #FFFFFF;
-      border: 1px solid #E2E8F0;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 14px;
-      box-shadow: 0 1px 3px rgba(15,23,42,.03);
-    }
-    .fl-mobile-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: #64748B;
-      margin-bottom: 2px;
-    }
-    .fl-mobile-val {
-      font-size: 0.88rem;
-      color: #0F172A;
-      margin-bottom: 8px;
-      word-break: break-word;
-    }
-
-    /* Global Layout Fixes */
-    .ap-split, .dv-bottom-grid { width: 100%; box-sizing: border-box; }
-    .ap-panel { width: 100%; box-sizing: border-box; }
-    .ap-table-wrap, .table-responsive { width: 100%; overflow-x: auto; box-sizing: border-box; -webkit-overflow-scrolling: touch; }
-    .table, .ap-table { min-width: 600px; }
-
-    /* ==========================================
-       TABLET & MOBILE RESPONSIVE
-       ========================================== */
-    @media (max-width: 992px) {
-      .ap-main-inner { padding: 16px; width: 100%; box-sizing: border-box; overflow-x: hidden; }
-      .ap-filter-row { flex-direction: row; flex-wrap: wrap; align-items: center; width: 100%; padding: 12px; box-sizing: border-box; }
-      .ap-filter-row .grow { flex: 1 1 100%; min-width: 100% !important; }
-      .ap-filter-row > div:not(.grow) { flex: 1 1 45%; min-width: 0 !important; max-width: 50%; overflow: hidden; }
-      .ap-filter-row .ap-input, .ap-filter-row .ap-select { width: 100%; max-width: 100%; box-sizing: border-box; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
-      .ap-filter-row .ap-btn { flex: 1 1 auto; width: auto; justify-content: center; }
-      .mobile-back-btn { display: inline-flex !important; }
-      .ap-tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
-    }
-
-    @media (max-width: 480px) {
-      body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
-      .ap-topbar { padding: 10px 16px; flex-wrap: wrap; gap: 10px; width: 100%; box-sizing: border-box; }
-      .ap-search { width: 100%; max-width: none !important; }
-      .ap-page-head { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .dv-bottom-grid { display: flex; flex-direction: column; }
-      .fl-mobile-card { width: 100%; padding: 12px; }
-      .dv-actions { flex-direction: column; width: 100%; gap: 8px; }
-      .dv-actions .btn-approve-sm, .dv-actions .btn-reject-sm, .dv-actions .btn-view-doc { width: 100%; text-align: center; justify-content: center; }
-    }
   </style>
 </head>
 <body class="ap-page">
 
-<!-- Dynamic Counts Setup -->
-<c:set var="activeFilter" value="${empty param.filter ? 'pending' : param.filter}"/>
-<c:set var="pendingCount" value="${not empty pending ? fn:length(pending) : 0}"/>
-<c:set var="approvedCount" value="${not empty verified ? fn:length(verified) : 0}"/>
-<c:set var="rejectedCount" value="${not empty rejected ? fn:length(rejected) : 0}"/>
-<c:set var="reverificationCount" value="0"/>
-<c:set var="changesRequestedCount" value="0"/>
-<c:set var="totalLawyers" value="${pendingCount + approvedCount + rejectedCount}"/>
+<c:set var="activeFilter" value="${empty filter ? 'pending' : filter}"/>
+<c:set var="totalCount" value="${pendingCount + reverificationCount + changesRequestedCount + approvedCount + rejectedCount}"/>
 
-<!-- Strict non-empty Search Query detection -->
-<c:set var="rawQ" value="${param.q}"/>
-<c:set var="searchQuery" value="${not empty rawQ ? fn:trim(rawQ) : ''}"/>
-
-<!-- Select active list based on activeFilter or search parameter q -->
 <c:choose>
-  <c:when test="${not empty searchQuery}">
+  <c:when test="${not empty q}"><c:set var="activeList" value="${searchResults}"/></c:when>
+  <c:when test="${activeFilter == 'reverification'}"><c:set var="activeList" value="${reverification}"/></c:when>
+  <c:when test="${activeFilter == 'changes_requested'}"><c:set var="activeList" value="${changesRequested}"/></c:when>
+  <c:when test="${activeFilter == 'approved'}"><c:set var="activeList" value="${approved}"/></c:when>
+  <c:when test="${activeFilter == 'rejected'}"><c:set var="activeList" value="${rejected}"/></c:when>
+  <c:when test="${activeFilter == 'all'}">
     <c:set var="activeList" value="${pending}"/>
   </c:when>
-  <c:when test="${activeFilter == 'approved'}"><c:set var="activeList" value="${verified}"/></c:when>
-  <c:when test="${activeFilter == 'rejected'}"><c:set var="activeList" value="${rejected}"/></c:when>
-  <c:when test="${activeFilter == 'all'}"><c:set var="activeList" value="${verified}"/></c:when>
   <c:otherwise><c:set var="activeList" value="${pending}"/></c:otherwise>
 </c:choose>
 
-<!-- Sidebar Overlay -->
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-
 <div class="layout">
-  <!-- Shared Navigation Sidebar -->
   <%@ include file="globalAdminMenu.jsp" %>
 
-  <!-- Main Content Dashboard -->
-  <main class="main w-100">
-    <!-- Topbar Header -->
+  <main class="main">
     <div class="ap-topbar">
       <div class="ap-topbar-left">
         <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="Open menu"><i class="fas fa-bars"></i></button>
         <div class="ap-search" style="max-width:360px;">
           <i class="fas fa-search"></i>
-          <input type="search" id="apHeaderSearch" placeholder="Search anything... Ctrl + K" aria-label="Search">
+          <input type="search" id="apHeaderSearch" placeholder="Search anything..." aria-label="Search">
           <span class="ap-kbd">Ctrl + K</span>
         </div>
       </div>
@@ -231,24 +83,28 @@
     </div>
 
     <div class="ap-main-inner">
-      <!-- Breadcrumbs -->
       <nav class="ap-crumb">
-        <a href="javascript:history.back()" class="mobile-back-btn d-md-none" style="display: none; color: var(--ap-accent, #F43F5E); font-weight: bold; margin-right: 8px;">
-          <i class="fas fa-arrow-left"></i>
-        </a>
         <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
         <span class="sep">&gt;</span>
-        <a href="${pageContext.request.contextPath}/admin/pending-providers?category=WOMEN_LAWYER">Service Partners</a>
-        <span class="sep">&gt;</span>
-        <span>
+        <a href="${pageContext.request.contextPath}/admin/pending-providers${not empty selectedCategory ? '?category='.concat(selectedCategory) : ''}">
           <c:choose>
             <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Women Lawyer Verification</c:when>
             <c:otherwise>Provider Verification</c:otherwise>
           </c:choose>
+        </a>
+        <span class="sep">&gt;</span>
+        <span>
+          <c:choose>
+            <c:when test="${activeFilter == 'reverification'}">Re-verification</c:when>
+            <c:when test="${activeFilter == 'changes_requested'}">Changes Requested</c:when>
+            <c:when test="${activeFilter == 'approved'}">Approved ${selectedCategory == 'WOMEN_LAWYER' ? 'Lawyers' : 'Providers'}</c:when>
+            <c:when test="${activeFilter == 'rejected'}">Rejected ${selectedCategory == 'WOMEN_LAWYER' ? 'Lawyers' : 'Providers'}</c:when>
+            <c:when test="${not empty q}">Search Results</c:when>
+            <c:otherwise>Pending ${selectedCategory == 'WOMEN_LAWYER' ? 'Lawyers' : 'Providers'}</c:otherwise>
+          </c:choose>
         </span>
       </nav>
 
-      <!-- Page Header -->
       <div class="ap-page-head">
         <div class="ap-page-ico">
           <c:choose>
@@ -259,27 +115,23 @@
         <div>
           <h1>
             <c:choose>
-                <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Women Lawyer Verification</c:when>
-                <c:otherwise>Service Partner Verification</c:otherwise>
+              <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Women Lawyer Verification</c:when>
+              <c:otherwise>Provider Verification</c:otherwise>
             </c:choose>
           </h1>
           <p>
             <c:choose>
               <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Review and verify women lawyer profiles before they appear on the platform</c:when>
-              <c:otherwise>Review and verify service partners registered from mobile / web</c:otherwise>
+              <c:otherwise>Review and verify service partner profiles before they appear on the platform</c:otherwise>
             </c:choose>
           </p>
         </div>
       </div>
 
       <c:if test="${not empty message}">
-        <div class="alert alert-info alert-dismissible fade show mb-3" style="border-radius:12px;" role="alert">
-          <i class="fas fa-info-circle me-2"></i> <c:out value="${message}"/>
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <div class="alert alert-info mb-3" style="border-radius:12px;"><i class="fas fa-info-circle me-1"></i><c:out value="${message}"/></div>
       </c:if>
 
-      <!-- 6 Statistic Cards Grid -->
       <div class="ap-stats">
         <div class="ap-stat amber">
           <div class="ico"><i class="fas fa-clock"></i></div>
@@ -303,12 +155,7 @@
           <div class="ico"><i class="fas fa-check-circle"></i></div>
           <div class="val">${approvedCount}</div>
           <div class="lbl">Approved</div>
-          <div class="sub">
-            <c:choose>
-              <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Verified lawyers</c:when>
-              <c:otherwise>Verified providers</c:otherwise>
-            </c:choose>
-          </div>
+          <div class="sub">Verified ${selectedCategory == 'WOMEN_LAWYER' ? 'lawyers' : 'providers'}</div>
         </div>
         <div class="ap-stat rose">
           <div class="ico"><i class="fas fa-times-circle"></i></div>
@@ -317,69 +164,68 @@
           <div class="sub">Not approved</div>
         </div>
         <div class="ap-stat neutral">
-          <div class="ico"><i class="fas fa-gavel"></i></div>
-          <div class="val">${totalLawyers}</div>
-          <div class="lbl">
-            <c:choose>
-              <c:when test="${selectedCategory == 'WOMEN_LAWYER'}">Total Lawyers</c:when>
-              <c:otherwise>Total Partners</c:otherwise>
-            </c:choose>
-          </div>
+          <div class="ico"><i class="fas ${selectedCategory == 'WOMEN_LAWYER' ? 'fa-gavel' : 'fa-store'}"></i></div>
+          <div class="val">${totalCount}</div>
+          <div class="lbl">Total ${selectedCategory == 'WOMEN_LAWYER' ? 'Lawyers' : 'Partners'}</div>
           <div class="sub">Across queues</div>
         </div>
       </div>
 
-      <!-- Horizontal Search and Filter Bar -->
       <form method="get" action="${pageContext.request.contextPath}/admin/pending-providers" class="ap-filter-row" id="lawyerFilterForm">
-        <input type="hidden" name="category" value="${selectedCategory}">
+        <c:if test="${not empty selectedCategory}">
+          <input type="hidden" name="category" value="${selectedCategory}">
+        </c:if>
         <div class="grow">
           <input type="text" id="lawyerSearchInput" name="q" class="ap-input"
                  placeholder="Search by name, email, phone, practice areas, bar ID or location..."
-                 value="${not empty searchQuery ? searchQuery : ''}">
+                 value="${not empty q ? q : ''}">
         </div>
         <div style="min-width:180px;">
           <select id="specClientFilter" class="ap-select" aria-label="Practice areas filter">
-            <option value="">All Categories</option>
+            <option value="">All Categories / Practice Areas</option>
           </select>
         </div>
         <div style="min-width:180px;">
           <select name="filter" class="ap-select">
             <option value="pending" ${activeFilter == 'pending' ? 'selected' : ''}>Pending queue</option>
+            <option value="reverification" ${activeFilter == 'reverification' ? 'selected' : ''}>Re-verification</option>
+            <option value="changes_requested" ${activeFilter == 'changes_requested' ? 'selected' : ''}>Changes Requested</option>
             <option value="approved" ${activeFilter == 'approved' ? 'selected' : ''}>Approved</option>
             <option value="rejected" ${activeFilter == 'rejected' ? 'selected' : ''}>Rejected</option>
             <option value="all" ${activeFilter == 'all' ? 'selected' : ''}>All (search scope)</option>
           </select>
         </div>
         <button type="submit" class="ap-btn ap-btn-primary"><i class="fas fa-filter"></i> Search / Filter</button>
-        <c:if test="${not empty searchQuery}">
-          <a href="${pageContext.request.contextPath}/admin/pending-providers?category=${selectedCategory}" class="ap-btn ap-btn-ghost"><i class="fas fa-times"></i> Clear</a>
+        <c:if test="${not empty q}">
+          <a href="${pageContext.request.contextPath}/admin/pending-providers${not empty selectedCategory ? '?category='.concat(selectedCategory) : ''}" class="ap-btn ap-btn-ghost"><i class="fas fa-times"></i> Clear</a>
         </c:if>
       </form>
 
-      <!-- Main Split Section (Table + Preview Panel) -->
       <div class="ap-split">
         <section class="ap-panel">
-          <!-- Status Tabs -->
           <div class="ap-tabs">
-            <a class="ap-tab ${activeFilter == 'pending' && empty searchQuery ? 'active' : ''}" href="?category=${selectedCategory}&filter=pending">Pending (${pendingCount})</a>
-            <a class="ap-tab ${activeFilter == 'reverification' ? 'active' : ''}" href="?category=${selectedCategory}&filter=reverification">Re-verification (${reverificationCount})</a>
-            <a class="ap-tab ${activeFilter == 'changes_requested' ? 'active' : ''}" href="?category=${selectedCategory}&filter=changes_requested">Changes Requested (${changesRequestedCount})</a>
-            <a class="ap-tab ${activeFilter == 'approved' && empty searchQuery ? 'active' : ''}" href="?category=${selectedCategory}&filter=approved">Approved (${approvedCount})</a>
-            <a class="ap-tab ${activeFilter == 'rejected' && empty searchQuery ? 'active' : ''}" href="?category=${selectedCategory}&filter=rejected">Rejected (${rejectedCount})</a>
+            <a class="ap-tab ${activeFilter == 'pending' && empty q ? 'active' : ''}" href="?${not empty selectedCategory ? 'category='.concat(selectedCategory).concat('&') : ''}filter=pending">Pending (${pendingCount})</a>
+            <a class="ap-tab ${activeFilter == 'reverification' && empty q ? 'active' : ''}" href="?${not empty selectedCategory ? 'category='.concat(selectedCategory).concat('&') : ''}filter=reverification">Re-verification (${reverificationCount})</a>
+            <a class="ap-tab ${activeFilter == 'changes_requested' && empty q ? 'active' : ''}" href="?${not empty selectedCategory ? 'category='.concat(selectedCategory).concat('&') : ''}filter=changes_requested">Changes Requested (${changesRequestedCount})</a>
+            <a class="ap-tab ${activeFilter == 'approved' && empty q ? 'active' : ''}" href="?${not empty selectedCategory ? 'category='.concat(selectedCategory).concat('&') : ''}filter=approved">Approved (${approvedCount})</a>
+            <a class="ap-tab ${activeFilter == 'rejected' && empty q ? 'active' : ''}" href="?${not empty selectedCategory ? 'category='.concat(selectedCategory).concat('&') : ''}filter=rejected">Rejected (${rejectedCount})</a>
           </div>
 
-          <c:if test="${not empty searchQuery}">
+          <c:if test="${not empty q}">
             <div style="padding:12px 16px;background:#F8FAFC;border-bottom:1px solid var(--ap-border);font-size:0.86rem;color:var(--ap-muted);">
-              Showing results for "<strong><c:out value="${searchQuery}"/></strong>"
+              Showing results for "<strong><c:out value="${q}"/></strong>"
+              <c:choose>
+                <c:when test="${not empty searchResults}"> - ${fn:length(searchResults)} ${selectedCategory == 'WOMEN_LAWYER' ? 'lawyer(s)' : 'provider(s)'}</c:when>
+                <c:otherwise> - No ${selectedCategory == 'WOMEN_LAWYER' ? 'lawyers' : 'providers'} found</c:otherwise>
+              </c:choose>
             </div>
           </c:if>
 
-          <!-- Desktop Table View -->
-          <div class="ap-table-wrap d-none d-md-block">
+          <div class="ap-table-wrap">
             <table class="ap-table" id="lawyerQueueTable">
               <thead>
                 <tr>
-                  <th>Lawyer</th>
+                  <th>${selectedCategory == 'WOMEN_LAWYER' ? 'Lawyer' : 'Provider'}</th>
                   <th>Practice Areas</th>
                   <th>Location</th>
                   <th>Exp / Fee</th>
@@ -391,24 +237,43 @@
               <c:choose>
                 <c:when test="${not empty activeList}">
                   <c:forEach var="p" items="${activeList}" varStatus="st">
+                    <c:set var="stKey" value="${p.partnerProfileStatus != null ? p.partnerProfileStatus.name() : (p.verificationStatus != null ? p.verificationStatus.name() : 'PENDING')}"/>
+                    <c:set var="photo" value="${not empty p.profilePhoto ? p.profilePhoto : p.profileImageUrl}"/>
+                    <c:set var="photoOk" value="${not empty photo && photo != 'web-pending' && photo != 'mobile-pending' && !fn:startsWith(photo, 'mobile:')}"/>
+                    <c:set var="idDoc" value="${p.identityDocumentPath}"/>
+                    <c:set var="idDocOk" value="${not empty idDoc && idDoc != 'web-pending' && idDoc != 'mobile-pending'}"/>
+                    <c:set var="chamberDoc" value="${p.galleryPhotos}"/>
+                    <c:set var="chamberDocOk" value="${not empty chamberDoc && chamberDoc != 'web-pending' && chamberDoc != 'mobile-pending'}"/>
+                    <c:set var="pct" value="${p.profileCompletionPct != null ? p.profileCompletionPct : (stKey == 'APPROVED' ? 100 : 0)}"/>
+                    <c:set var="locText" value="${not empty p.city ? p.city : (not empty p.locationText ? p.locationText : '')}"/>
+                    <c:if test="${not empty p.city && not empty p.state}"><c:set var="locText" value="${p.city}, ${p.state}"/></c:if>
+                    <c:if test="${empty p.city && not empty p.state}"><c:set var="locText" value="${p.state}"/></c:if>
+                    <c:set var="practiceText" value="${not empty p.practiceAreas ? p.practiceAreas : (p.category != null ? p.category.displayName : '-')}"/>
                     <tr class="lawyer-row ${st.first ? 'selected' : ''}"
                         data-id="${p.id}"
                         data-name="<c:out value='${p.fullName}'/>"
                         data-email="<c:out value='${p.email}'/>"
                         data-phone="<c:out value='${p.phone}'/>"
-                        data-category="<c:out value='${p.category}'/>"
-                        data-location="<c:out value='${p.locationText}'/>"
-                        data-practice="<c:out value='${p.practiceAreas}'/>"
+                        data-practice="<c:out value='${practiceText}'/>"
                         data-barid="<c:out value='${p.barCouncilId}'/>"
                         data-exp="${p.experienceYears}"
                         data-fee="${p.consultationFee}"
-                        data-bio="<c:out value='${p.description}'/>"
-                        data-iddoc="<c:out value='${p.identityDocumentPath}'/>"
-                        data-status="<c:out value='${p.verificationStatus}'/>">
+                        data-loc="<c:out value='${locText}'/>"
+                        data-status="<c:out value='${stKey}'/>"
+                        data-pct="${pct}"
+                        data-photo="<c:out value='${photo}'/>"
+                        data-photo-ok="${photoOk ? '1' : '0'}"
+                        data-doc-id="${idDocOk ? '1' : '0'}"
+                        data-doc-chamber="${chamberDocOk ? '1' : '0'}">
                       <td>
                         <div class="ap-doc">
                           <span class="av">
-                            ${fn:substring(p.fullName,0,1)}
+                            <c:choose>
+                              <c:when test="${photoOk}">
+                                <img src="${fn:startsWith(photo,'http') ? photo : pageContext.request.contextPath.concat(photo)}" alt="">
+                              </c:when>
+                              <c:otherwise>${fn:substring(p.fullName,0,1)}</c:otherwise>
+                            </c:choose>
                           </span>
                           <span style="min-width:0;">
                             <div class="nm" title="<c:out value='${p.fullName}'/>"><c:out value="${p.fullName}"/></div>
@@ -418,43 +283,47 @@
                         </div>
                       </td>
                       <td>
-                        <span class="ap-clip" title="<c:out value='${p.practiceAreas}'/>"><c:out value="${not empty p.practiceAreas ? p.practiceAreas : '-'}"/></span>
-                        <div class="ap-muted" style="font-size:0.78rem;">Bar ID: <c:out value="${not empty p.barCouncilId ? p.barCouncilId : '-'}"/></div>
+                        <span class="ap-clip" title="<c:out value='${practiceText}'/>"><c:out value="${practiceText}"/></span>
+                        <c:if test="${not empty p.barCouncilId}">
+                          <div class="ap-muted" style="font-size:0.78rem;">Bar ID: <c:out value="${p.barCouncilId}"/></div>
+                        </c:if>
                       </td>
                       <td>
-                        <span class="ap-clip" title="<c:out value='${p.locationText}'/>"><c:out value="${not empty p.locationText ? p.locationText : '-'}"/></span>
+                        <span class="ap-clip" title="<c:out value='${locText}'/>">
+                          <c:choose>
+                            <c:when test="${not empty locText}"><c:out value="${locText}"/></c:when>
+                            <c:otherwise>-</c:otherwise>
+                          </c:choose>
+                        </span>
                       </td>
                       <td>
-                        <div style="font-size:0.84rem;font-weight:600;">${p.experienceYears != null ? p.experienceYears : '-'} yrs</div>
-                        <div class="ap-muted" style="font-size:0.78rem;">${p.consultationFee != null ? 'Rs '.concat(p.consultationFee) : '-'}</div>
+                        <div style="font-size:0.84rem;font-weight:600;">
+                          <c:choose>
+                            <c:when test="${p.experienceYears != null}">${p.experienceYears} yrs exp.</c:when>
+                            <c:otherwise>-</c:otherwise>
+                          </c:choose>
+                        </div>
+                        <div class="ap-muted" style="font-size:0.78rem;">
+                          <c:choose>
+                            <c:when test="${p.consultationFee != null}">Rs <fmt:formatNumber value="${p.consultationFee}" pattern="#,##0"/></c:when>
+                            <c:otherwise>-</c:otherwise>
+                          </c:choose>
+                        </div>
                       </td>
                       <td>
                         <c:choose>
-                          <c:when test="${p.verificationStatus == 'VERIFIED' || p.verificationStatus == 'APPROVED'}">
-                            <span class="ap-badge ap-badge-approved">VERIFIED</span>
-                          </c:when>
-                          <c:when test="${p.verificationStatus == 'REJECTED'}">
-                            <span class="ap-badge ap-badge-rejected">REJECTED</span>
-                          </c:when>
-                          <c:otherwise>
-                            <span class="ap-badge ap-badge-pending">PENDING</span>
-                          </c:otherwise>
+                          <c:when test="${stKey == 'APPROVED' || stKey == 'VERIFIED'}"><span class="ap-badge ap-badge-approved">APPROVED</span></c:when>
+                          <c:when test="${stKey == 'REJECTED'}"><span class="ap-badge ap-badge-rejected">REJECTED</span></c:when>
+                          <c:when test="${stKey == 'CHANGES_REQUESTED'}"><span class="ap-badge ap-badge-changes">CHANGES_REQUESTED</span></c:when>
+                          <c:when test="${stKey == 'PROFILE_INCOMPLETE'}"><span class="ap-badge ap-badge-incomplete">PROFILE_INCOMPLETE</span></c:when>
+                          <c:when test="${stKey == 'RE_VERIFICATION'}"><span class="ap-badge ap-badge-reverify">RE-VERIFY</span></c:when>
+                          <c:otherwise><span class="ap-badge ap-badge-pending"><c:out value="${stKey}"/></span></c:otherwise>
                         </c:choose>
                       </td>
                       <td onclick="event.stopPropagation();">
                         <div class="dv-actions">
-                          <a class="btn-view-profile" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="View Profile"><i class="fas fa-eye"></i></a>
-                          <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0 p-0">
-                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                            <button class="btn-approve-sm" type="submit" title="Verify"><i class="fas fa-check"></i></button>
-                          </form>
-                          <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/reject" method="post" class="m-0 p-0">
-                            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                            <button class="btn-reject-sm" type="submit" title="Reject"><i class="fas fa-times"></i></button>
-                          </form>
-                          <c:if test="${not empty p.identityDocumentPath && p.identityDocumentPath != 'web-pending'}">
-                            <a class="btn-view-doc" href="${pageContext.request.contextPath}${p.identityDocumentPath}" target="_blank" title="View Document"><i class="fas fa-id-card"></i> ID</a>
-                          </c:if>
+                          <a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile"><i class="fas fa-eye"></i> View</a>
+                          <a class="dv-more" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="Review"><i class="fas fa-ellipsis-v"></i></a>
                         </div>
                       </td>
                     </tr>
@@ -462,191 +331,82 @@
                 </c:when>
                 <c:otherwise>
                   <tr>
-                    <td colspan="6">
-                      <div class="ap-empty py-5">
-                        <i class="fas fa-inbox fa-2x mb-2 d-block text-secondary" style="opacity:.35;"></i>
-                        No lawyers in this queue.
-                      </div>
-                    </td>
+                    <td colspan="6"><div class="ap-empty"><i class="fas fa-inbox fa-2x mb-2 d-block" style="opacity:.35;"></i>No ${selectedCategory == 'WOMEN_LAWYER' ? 'lawyers' : 'providers'} in this queue.</div></td>
                   </tr>
                 </c:otherwise>
               </c:choose>
               </tbody>
             </table>
           </div>
-
-          <!-- Mobile Cards View (< 768px) -->
-          <div class="p-3 d-block d-md-none">
-            <c:choose>
-              <c:when test="${not empty activeList}">
-                <c:forEach var="p" items="${activeList}">
-                  <div class="fl-mobile-card">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                      <h6 class="fw-bold mb-0 text-dark" style="font-size:1rem;">${p.fullName}</h6>
-                      <c:choose>
-                        <c:when test="${p.verificationStatus == 'VERIFIED' || p.verificationStatus == 'APPROVED'}">
-                          <span class="ap-badge ap-badge-approved">VERIFIED</span>
-                        </c:when>
-                        <c:when test="${p.verificationStatus == 'REJECTED'}">
-                          <span class="ap-badge ap-badge-rejected">REJECTED</span>
-                        </c:when>
-                        <c:otherwise>
-                          <span class="ap-badge ap-badge-pending">PENDING</span>
-                        </c:otherwise>
-                      </c:choose>
-                    </div>
-
-                    <div class="fl-mobile-label">Contact Details</div>
-                    <div class="fl-mobile-val">
-                      <i class="fas fa-envelope me-1 text-muted"></i> ${p.email}<br>
-                      <i class="fas fa-phone me-1 text-muted"></i> ${p.phone}
-                    </div>
-
-                    <div class="row g-2 mb-2">
-                      <div class="col-6">
-                        <div class="fl-mobile-label">Location</div>
-                        <div class="fl-mobile-val mb-0">${p.locationText}</div>
-                      </div>
-                      <div class="col-6">
-                        <div class="fl-mobile-label">Category</div>
-                        <div class="fl-mobile-val mb-0"><span class="badge bg-light text-dark border">${p.category}</span></div>
-                      </div>
-                    </div>
-
-                    <div class="p-2.5 mb-2 rounded bg-light border" style="font-size:0.84rem;">
-                      <div class="mb-1"><strong>Practice Areas:</strong> ${empty p.practiceAreas ? '—' : p.practiceAreas}</div>
-                      <div class="mb-1"><strong>Bar ID:</strong> ${empty p.barCouncilId ? '—' : p.barCouncilId}</div>
-                      <div class="mb-1">
-                        <strong>Experience / Fee:</strong> 
-                        ${p.experienceYears != null ? p.experienceYears : '—'} yrs / Rs ${p.consultationFee != null ? p.consultationFee : '—'}
-                      </div>
-                      <div><strong>Bio:</strong> ${empty p.description ? '—' : p.description}</div>
-                    </div>
-
-                    <div class="d-flex align-items-center justify-content-between pt-2 border-top gap-2">
-                      <div>
-                        <c:choose>
-                            <c:when test="${not empty p.identityDocumentPath && p.identityDocumentPath != 'web-pending'}">
-                                <a href="${pageContext.request.contextPath}${p.identityDocumentPath}" target="_blank" class="btn-view-doc py-1 px-3">
-                                  <i class="fas fa-id-card me-1"></i> View ID
-                                </a>
-                            </c:when>
-                            <c:otherwise><span class="text-muted small">No ID</span></c:otherwise>
-                        </c:choose>
-                      </div>
-
-                      <div class="d-flex align-items-center gap-2">
-                          <a class="btn-view-profile py-1 px-3" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile" title="View Profile"><i class="fas fa-eye me-1"></i> View</a>
-                          <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/verify" method="post" class="m-0 p-0">
-                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                              <button class="btn-approve-sm py-1 px-3" type="submit" title="Verify"><i class="fas fa-check me-1"></i> Approve</button>
-                          </form>
-                          <form action="${pageContext.request.contextPath}/admin/providers/${p.id}/reject" method="post" class="m-0 p-0">
-                              <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                              <button class="btn-reject-sm py-1 px-3" type="submit" title="Reject"><i class="fas fa-times me-1"></i> Reject</button>
-                          </form>
-                      </div>
-                    </div>
-                  </div>
-                </c:forEach>
-              </c:when>
-              <c:otherwise>
-                <div class="ap-empty py-5 text-center">
-                  <i class="fas fa-inbox fa-2x mb-2 d-block text-secondary" style="opacity:0.35;"></i>
-                  <p class="mb-0 fw-medium text-secondary">No lawyers in this queue.</p>
-                </div>
-              </c:otherwise>
-            </c:choose>
-          </div>
         </section>
 
-        <!-- Right Side Preview Panel -->
         <aside class="ap-panel ap-preview" id="lawyerPreview">
           <div class="ap-panel-bd">
-            <div id="previewEmpty" class="ap-empty" style="display:none;padding:40px 10px;">Select a lawyer to preview</div>
+            <div id="previewEmpty" class="ap-empty" style="display:none;">Select a ${selectedCategory == 'WOMEN_LAWYER' ? 'lawyer' : 'provider'} to preview</div>
             <div id="previewBody">
-              <div class="hero mb-3">
-                <span class="av" id="pvAv" style="width:48px;height:48px;font-size:1.2rem;background:#FFF1F3;color:#F43F5E;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">L</span>
-                <div style="min-width:0;flex:1;">
-                  <h3 id="pvName" style="font-size:1.1rem;font-weight:800;color:#0F172A;margin-bottom:2px;">-</h3>
-                  <div style="margin:4px 0;"><span class="ap-badge ap-badge-pending" id="pvStatus">PENDING</span></div>
-                  <div class="line small text-muted" id="pvEmail">-</div>
-                  <div class="line small text-muted" id="pvPhone">-</div>
+              <div class="hero">
+                <span class="av" id="pvAv">L</span>
+                <div style="min-width:0;">
+                  <h3 id="pvName">-</h3>
+                  <div style="margin:6px 0;"><span class="ap-badge ap-badge-pending" id="pvStatus">PENDING</span></div>
+                  <div class="line" id="pvEmail">-</div>
+                  <div class="line" id="pvPhone">-</div>
+                  <div class="line" id="pvPractice">-</div>
                 </div>
               </div>
 
-              <div class="p-3 rounded bg-light border mb-3" style="font-size:0.84rem;">
-                <div class="mb-1"><strong>Practice Areas:</strong> <span id="pvPractice">-</span></div>
-                <div class="mb-1"><strong>Bar ID:</strong> <span id="pvBarId">-</span></div>
-                <div class="mb-1"><strong>Experience / Fee:</strong> <span id="pvExpFee">-</span></div>
-                <div class="mb-1"><strong>Location:</strong> <span id="pvLocation">-</span></div>
-                <div><strong>Bio:</strong> <span id="pvBio">-</span></div>
+              <div class="ap-progress-label">
+                <span>Profile Completion</span>
+                <span id="pvPctLabel">0%</span>
+              </div>
+              <div class="ap-progress"><span id="pvPctBar" style="width:0%"></span></div>
+
+              <div style="font-size:0.78rem;font-weight:700;margin-bottom:8px;color:var(--ap-muted);">DOCUMENTS</div>
+              <div class="ap-doc-list">
+                <div class="ap-doc-item"><span>Profile Photo</span><span id="pvDocPhoto" class="st-miss">Not uploaded</span></div>
+                <div class="ap-doc-item"><span>Bar Council ID / Proof</span><span id="pvDocId" class="st-miss">Not uploaded</span></div>
+                <div class="ap-doc-item"><span>Office / Chamber Photo</span><span id="pvDocChamber" class="st-miss">Not uploaded</span></div>
+                <div class="ap-doc-item"><span>Bar Registration No.</span><span id="pvDocBarNo" class="st-miss">Not provided</span></div>
               </div>
 
-              <div class="mb-3" id="pvDocWrap">
-                <a id="pvIdDocBtn" class="btn-view-doc w-100 justify-content-center py-2" href="#" target="_blank">
-                  <i class="fas fa-id-card me-1"></i> View Identity Document
-                </a>
-              </div>
-
-              <div class="d-flex gap-2">
-                <form id="pvApproveForm" action="#" method="post" class="flex-grow-1">
-                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                  <button type="submit" class="btn-approve-sm w-100 py-2 fs-6"><i class="fas fa-check me-1"></i> Approve</button>
-                </form>
-                <form id="pvRejectForm" action="#" method="post" class="flex-grow-1">
-                  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                  <button type="submit" class="btn-reject-sm w-100 py-2 fs-6"><i class="fas fa-times me-1"></i> Reject</button>
-                </form>
-              </div>
+              <a id="pvReview" class="ap-btn ap-btn-primary" style="width:100%;justify-content:center;" href="#">
+                Review Application <i class="fas fa-arrow-right"></i>
+              </a>
+              <a id="pvViewAll" class="ap-btn ap-btn-ghost" style="width:100%;justify-content:center;margin-top:8px;" href="#">
+                View full profile
+              </a>
             </div>
           </div>
         </aside>
       </div>
 
-      <!-- Lower Dashboard Section: Verified Lawyers & Rejected Lawyers Cards -->
       <div class="dv-bottom-grid">
-        <!-- Card 1: Verified / Approved Lawyers -->
         <section class="ap-panel">
-          <div class="ap-panel-hd d-flex align-items-center justify-content-between p-3 border-bottom" style="background:#FFF1F3;">
-            <div class="d-flex align-items-center gap-2">
-              <i class="fas fa-check-circle text-success fs-5"></i>
-              <h2 class="fs-6 fw-bold mb-0 text-dark">Approved / Verified Lawyers (${approvedCount})</h2>
-            </div>
-            <a href="?category=${selectedCategory}&filter=approved" style="color:var(--ap-accent, #F43F5E);font-size:0.82rem;font-weight:700;text-decoration:none;">View in Queue</a>
+          <div class="ap-panel-hd">
+            <h2>Changes Requested (${changesRequestedCount})</h2>
+            <a href="?${not empty selectedCategory ? 'category='.concat(selectedCategory).concat('&') : ''}filter=changes_requested" style="color:var(--ap-accent);font-size:0.82rem;font-weight:700;text-decoration:none;">View all</a>
           </div>
           <div class="ap-table-wrap">
-            <table class="ap-table" style="min-width:100%;">
+            <table class="ap-table" style="min-width:520px;">
               <thead>
-                <tr><th>Lawyer</th><th>Category / Practice</th><th>Status</th><th>Action</th></tr>
+                <tr><th>${selectedCategory == 'WOMEN_LAWYER' ? 'Lawyer' : 'Provider'}</th><th>Reason / Note</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 <c:choose>
-                  <c:when test="${not empty verified}">
-                    <c:forEach var="p" items="${verified}">
+                  <c:when test="${not empty changesRequested}">
+                    <c:forEach var="p" items="${changesRequested}" end="4">
                       <tr>
                         <td>
-                          <div style="font-weight:700;color:#0F172A;"><c:out value="${p.fullName}"/></div>
+                          <div class="nm" style="font-weight:700;"><c:out value="${p.fullName}"/></div>
                           <div class="ap-muted" style="font-size:0.78rem;"><c:out value="${p.email}"/></div>
                         </td>
-                        <td>
-                          <span class="ap-clip" style="max-width:200px;" title="<c:out value='${p.practiceAreas}'/>">
-                            <c:out value="${not empty p.practiceAreas ? p.practiceAreas : p.category}"/>
-                          </span>
-                        </td>
-                        <td><span class="ap-badge ap-badge-approved">VERIFIED</span></td>
-                        <td>
-                          <c:if test="${not empty p.identityDocumentPath && p.identityDocumentPath != 'web-pending'}">
-                            <a class="btn-view-doc py-1 px-2 fs-7" href="${pageContext.request.contextPath}${p.identityDocumentPath}" target="_blank">
-                              <i class="fas fa-id-card"></i> Doc
-                            </a>
-                          </c:if>
-                        </td>
+                        <td><span class="ap-clip" style="max-width:220px;" title="<c:out value='${p.changesRequestedNote}'/>"><c:out value="${not empty p.changesRequestedNote ? p.changesRequestedNote : '-'}"/></span></td>
+                        <td><a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile">Review</a></td>
                       </tr>
                     </c:forEach>
                   </c:when>
                   <c:otherwise>
-                    <tr><td colspan="4"><div class="ap-empty py-4 text-center text-muted">No verified lawyers yet.</div></td></tr>
+                    <tr><td colspan="3"><div class="ap-empty">No changes requested.</div></td></tr>
                   </c:otherwise>
                 </c:choose>
               </tbody>
@@ -654,36 +414,32 @@
           </div>
         </section>
 
-        <!-- Card 2: Rejected Lawyers -->
         <section class="ap-panel">
-          <div class="ap-panel-hd d-flex align-items-center justify-content-between p-3 border-bottom" style="background:#FFF1F3;">
-            <div class="d-flex align-items-center gap-2">
-              <i class="fas fa-times-circle text-danger fs-5"></i>
-              <h2 class="fs-6 fw-bold mb-0 text-dark">Rejected Lawyers (${rejectedCount})</h2>
-            </div>
-            <a href="?category=${selectedCategory}&filter=rejected" style="color:var(--ap-accent, #F43F5E);font-size:0.82rem;font-weight:700;text-decoration:none;">View in Queue</a>
+          <div class="ap-panel-hd">
+            <h2>Pending Re-verification (${reverificationCount})</h2>
+            <a href="?${not empty selectedCategory ? 'category='.concat(selectedCategory).concat('&') : ''}filter=reverification" style="color:var(--ap-accent);font-size:0.82rem;font-weight:700;text-decoration:none;">View all</a>
           </div>
           <div class="ap-table-wrap">
-            <table class="ap-table" style="min-width:100%;">
+            <table class="ap-table" style="min-width:520px;">
               <thead>
-                <tr><th>Lawyer</th><th>Category</th><th>Status</th></tr>
+                <tr><th>${selectedCategory == 'WOMEN_LAWYER' ? 'Lawyer' : 'Provider'}</th><th>Status</th><th>Actions</th></tr>
               </thead>
               <tbody>
                 <c:choose>
-                  <c:when test="${not empty rejected}">
-                    <c:forEach var="p" items="${rejected}">
+                  <c:when test="${not empty reverification}">
+                    <c:forEach var="p" items="${reverification}" end="4">
                       <tr>
                         <td>
-                          <div style="font-weight:700;color:#0F172A;"><c:out value="${p.fullName}"/></div>
-                          <div class="ap-muted" style="font-size:0.78rem;"><c:out value="${p.email}"/></div>
+                          <div style="font-weight:700;"><c:out value="${p.fullName}"/></div>
+                          <div class="ap-muted" style="font-size:0.78rem;"><c:out value="${not empty p.practiceAreas ? p.practiceAreas : p.category}"/></div>
                         </td>
-                        <td><span class="badge bg-light text-dark border">${p.category}</span></td>
-                        <td><span class="ap-badge ap-badge-rejected">REJECTED</span></td>
+                        <td><span class="ap-badge ap-badge-reverify">RE-VERIFY</span></td>
+                        <td><a class="ap-btn-view" href="${pageContext.request.contextPath}/admin/providers/${p.id}/profile">Review</a></td>
                       </tr>
                     </c:forEach>
                   </c:when>
                   <c:otherwise>
-                    <tr><td colspan="3"><div class="ap-empty py-4 text-center text-muted">No rejected lawyers.</div></td></tr>
+                    <tr><td colspan="3"><div class="ap-empty">No re-verification requests.</div></td></tr>
                   </c:otherwise>
                 </c:choose>
               </tbody>
@@ -691,22 +447,21 @@
           </div>
         </section>
       </div>
-
     </div>
   </main>
 </div>
 
-<!-- Interactive Selection Script -->
 <script>
 (function () {
   var ctx = '${pageContext.request.contextPath}';
+  var selectedCategory = '${selectedCategory}';
   var rows = Array.prototype.slice.call(document.querySelectorAll('.lawyer-row'));
   var specSelect = document.getElementById('specClientFilter');
   var specs = {};
 
   rows.forEach(function (r) {
     var s = (r.getAttribute('data-practice') || '').trim();
-    if (s) {
+    if (s && s !== '-') {
       s.split(',').forEach(function(item) {
         var trimmed = item.trim();
         if (trimmed) specs[trimmed] = true;
@@ -721,6 +476,26 @@
     specSelect.appendChild(opt);
   });
 
+  function setDoc(el, ok, customText) {
+    if (!el) return;
+    if (customText) {
+      el.textContent = customText;
+      el.className = ok ? 'st-ok' : 'st-miss';
+    } else {
+      el.textContent = ok ? 'Uploaded' : 'Not uploaded';
+      el.className = ok ? 'st-ok' : 'st-miss';
+    }
+  }
+
+  function badgeClass(status) {
+    if (status === 'APPROVED' || status === 'VERIFIED') return 'ap-badge ap-badge-approved';
+    if (status === 'REJECTED') return 'ap-badge ap-badge-rejected';
+    if (status === 'CHANGES_REQUESTED') return 'ap-badge ap-badge-changes';
+    if (status === 'PROFILE_INCOMPLETE') return 'ap-badge ap-badge-incomplete';
+    if (status === 'RE_VERIFICATION') return 'ap-badge ap-badge-reverify';
+    return 'ap-badge ap-badge-pending';
+  }
+
   function fillPreview(row) {
     if (!row) {
       document.getElementById('previewBody').style.display = 'none';
@@ -730,40 +505,46 @@
     document.getElementById('previewBody').style.display = 'block';
     document.getElementById('previewEmpty').style.display = 'none';
 
-    var id = row.getAttribute('data-id');
     var name = row.getAttribute('data-name') || '-';
     var email = row.getAttribute('data-email') || '-';
     var phone = row.getAttribute('data-phone') || '-';
     var practice = row.getAttribute('data-practice') || '-';
-    var barid = row.getAttribute('data-barid') || '-';
-    var exp = row.getAttribute('data-exp') || '-';
-    var fee = row.getAttribute('data-fee') || '-';
-    var location = row.getAttribute('data-location') || '-';
-    var bio = row.getAttribute('data-bio') || '-';
-    var iddoc = row.getAttribute('data-iddoc') || '';
+    var barid = row.getAttribute('data-barid') || '';
+    var exp = row.getAttribute('data-exp');
     var status = row.getAttribute('data-status') || 'PENDING';
+    var pct = parseInt(row.getAttribute('data-pct') || '0', 10) || 0;
+    var photo = row.getAttribute('data-photo') || '';
+    var id = row.getAttribute('data-id');
+    var photoOk = row.getAttribute('data-photo-ok') === '1';
+    var docIdOk = row.getAttribute('data-doc-id') === '1';
+    var docChamberOk = row.getAttribute('data-doc-chamber') === '1';
 
     document.getElementById('pvName').textContent = name;
     document.getElementById('pvEmail').textContent = email;
-    document.getElementById('pvPhone').textContent = phone;
-    document.getElementById('pvPractice').textContent = practice;
-    document.getElementById('pvBarId').textContent = barid;
-    document.getElementById('pvExpFee').textContent = (exp !== '-' ? (exp + ' yrs') : '-') + ' / ' + (fee !== '-' ? ('Rs ' + fee) : '-');
-    document.getElementById('pvLocation').textContent = location;
-    document.getElementById('pvBio').textContent = bio;
-    document.getElementById('pvStatus').textContent = status;
-    document.getElementById('pvAv').textContent = (name || 'L').charAt(0).toUpperCase();
+    document.getElementById('pvPhone').textContent = phone || '-';
+    document.getElementById('pvPractice').textContent = practice + (exp ? (' • ' + exp + ' yrs exp.') : '');
+    var st = document.getElementById('pvStatus');
+    st.textContent = status;
+    st.className = badgeClass(status);
+    document.getElementById('pvPctLabel').textContent = pct + '%';
+    document.getElementById('pvPctBar').style.width = Math.max(0, Math.min(100, pct)) + '%';
 
-    var docBtn = document.getElementById('pvIdDocBtn');
-    if (iddoc && iddoc !== '' && iddoc !== 'web-pending') {
-      docBtn.style.display = 'inline-flex';
-      docBtn.href = ctx + iddoc;
+    var av = document.getElementById('pvAv');
+    if (photoOk && photo) {
+      var src = photo.indexOf('http') === 0 ? photo : (ctx + photo);
+      av.innerHTML = '<img src="' + src + '" alt="">';
     } else {
-      docBtn.style.display = 'none';
+      av.textContent = (name || 'L').charAt(0).toUpperCase();
     }
 
-    document.getElementById('pvApproveForm').action = ctx + '/admin/providers/' + id + '/verify';
-    document.getElementById('pvRejectForm').action = ctx + '/admin/providers/' + id + '/reject';
+    setDoc(document.getElementById('pvDocPhoto'), photoOk);
+    setDoc(document.getElementById('pvDocId'), docIdOk);
+    setDoc(document.getElementById('pvDocChamber'), docChamberOk);
+    setDoc(document.getElementById('pvDocBarNo'), Boolean(barid && barid.trim()), barid && barid.trim() ? barid : 'Not provided');
+
+    var href = ctx + '/admin/providers/' + id + '/profile';
+    document.getElementById('pvReview').href = href;
+    document.getElementById('pvViewAll').href = href;
   }
 
   rows.forEach(function (row) {
@@ -797,7 +578,10 @@
       if (e.key === 'Enter') {
         e.preventDefault();
         var q = hs.value.trim();
-        if (q) window.location.href = ctx + '/admin/pending-providers?category=${selectedCategory}&q=' + encodeURIComponent(q);
+        if (q) {
+          var target = ctx + '/admin/pending-providers?' + (selectedCategory ? ('category=' + encodeURIComponent(selectedCategory) + '&') : '') + 'q=' + encodeURIComponent(q);
+          window.location.href = target;
+        }
       }
     });
   }

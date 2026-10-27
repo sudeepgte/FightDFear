@@ -22,6 +22,12 @@ public class UserFollowService {
 
     @Autowired
     private UserRepository userRepo;
+
+    @Autowired(required = false)
+    private in.sp.main.Repository.CreatorNotificationRepository creatorNotificationRepository;
+
+    @Autowired(required = false)
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
     
     private static final Logger log = LoggerFactory.getLogger(UserFollowService.class);
 
@@ -50,6 +56,27 @@ public class UserFollowService {
             
             followRepo.save(uf);
             log.info("Follow relationship saved: id={}, accepted={}", uf.getId(), uf.isAccepted());
+
+            if (creatorNotificationRepository != null) {
+                try {
+                    in.sp.main.Entities.CreatorNotification notif = new in.sp.main.Entities.CreatorNotification();
+                    notif.setUser(followed);
+                    notif.setSender(follower);
+                    notif.setType("FOLLOW");
+                    notif.setMessage(follower.getFullName() + (uf.isAccepted() ? " started following you." : " requested to follow you."));
+                    creatorNotificationRepository.save(notif);
+
+                    if (messagingTemplate != null) {
+                        Map<String, Object> evt = new HashMap<>();
+                        evt.put("type", "FOLLOW_NOTIFICATION");
+                        evt.put("message", notif.getMessage());
+                        evt.put("senderName", follower.getFullName());
+                        messagingTemplate.convertAndSend("/topic/follow/" + followed.getId(), evt);
+                    }
+                } catch (Exception e) {
+                    log.warn("Could not save or broadcast follow notification: {}", e.getMessage());
+                }
+            }
         } else if (!existing.isAccepted()) {
             // If request exists but not accepted, and now we are "following back" (or just trying to follow again)
             // check if we should auto-accept it now

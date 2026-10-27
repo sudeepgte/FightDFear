@@ -131,7 +131,13 @@ public class SosService {
             sosRequest.setUser(user);
             sosRequest.setLatitude(userLat);
             sosRequest.setLongitude(userLon);
-            sosRequest.setGoogleMapsLink("https://www.google.com/maps?q=" + userLat + "," + userLon);
+            if ((userLat != 0.0 || userLon != 0.0)) {
+                sosRequest.setGoogleMapsLink("https://www.google.com/maps?q=" + userLat + "," + userLon);
+            } else if (user.getCity() != null && !user.getCity().isBlank()) {
+                sosRequest.setGoogleMapsLink("https://www.google.com/maps?q=" + java.net.URLEncoder.encode(user.getCity(), java.nio.charset.StandardCharsets.UTF_8));
+            } else {
+                sosRequest.setGoogleMapsLink("https://www.google.com/maps?q=0,0");
+            }
             sosRequest.setActivatedAt(LocalDateTime.now());
             sosRequest.setStatus(SOSRequest.SOSStatus.ACTIVE);
 
@@ -199,10 +205,16 @@ public class SosService {
                 .map(TrustedContact::getPhone)
                 .findFirst()
                 .orElse(emergencyContacts.stream()
-                    .filter(c -> c.getPhone() != null && !c.getPhone().isEmpty())
+                    .filter(c -> c.getPhone() != null && !c.getPhone().isEmpty()
+                            && !c.getPhone().equals("100") && !c.getPhone().equals("102") && !c.getPhone().equals("108"))
                     .map(EmergencyContact::getPhone)
                     .findFirst()
-                    .orElse("100") // Fallback to police
+                    .orElse(emergencyContacts.stream()
+                        .filter(c -> c.getPhone() != null && !c.getPhone().isEmpty())
+                        .map(EmergencyContact::getPhone)
+                        .findFirst()
+                        .orElse("100") // Fallback to police
+                    )
                 )
             );
         
@@ -439,6 +451,7 @@ public class SosService {
         status.put("autoCallPhone", sos.getAutoCallPhone());
         status.put("volunteersAlerted", sos.getVolunteersAlerted());
         status.put("audioPath", sos.getAudioRecordingPath());
+        status.put("videoPath", sos.getVideoRecordingPath());
 
         // Add contact responses
         List<Map<String, Object>> contacts = new ArrayList<>();

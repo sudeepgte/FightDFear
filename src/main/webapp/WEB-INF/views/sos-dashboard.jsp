@@ -337,6 +337,16 @@
         background: rgba(48, 209, 88, 0.08);
     }
 
+    .progress-step.warning {
+        border-color: rgba(245, 158, 11, 0.4);
+        background: rgba(245, 158, 11, 0.08);
+    }
+
+    .progress-step.error {
+        border-color: rgba(239, 68, 68, 0.4);
+        background: rgba(239, 68, 68, 0.08);
+    }
+
     .progress-step .step-icon {
         width: 32px; height: 32px;
         border-radius: 50%;
@@ -348,6 +358,28 @@
     .progress-step .step-icon.pending { background: var(--bg-card); color: var(--text-secondary); }
     .progress-step.active .step-icon { background: rgba(255, 45, 85, 0.2); color: var(--accent-red); }
     .progress-step.done .step-icon { background: rgba(48, 209, 88, 0.2); color: var(--accent-green); }
+    .progress-step.warning .step-icon { background: rgba(245, 158, 11, 0.2); color: var(--accent-orange); }
+    .progress-step.error .step-icon { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); }
+
+    .btn-whatsapp-fallback {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #25D366;
+        color: #ffffff !important;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        transition: all 0.2s ease;
+    }
+    .btn-whatsapp-fallback:hover {
+        background: #1eb754;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(37, 211, 102, 0.5);
+    }
 
     .progress-step .step-info { flex: 1; }
     .progress-step .step-title { font-weight: 600; font-size: 13px; }
@@ -1103,6 +1135,36 @@
             <div class="sos-btn-label">Tap to send emergency alert</div>
         </div>
 
+        <!-- Camera & Microphone Emergency Evidence Notice -->
+        <div class="info-card" id="mediaNoticeCard" style="border-left: 4px solid var(--accent-red); margin: 15px 0; background: rgba(244,63,94,0.06); width: 100%;">
+            <h4><i class="bi bi-camera-video-fill" style="color: var(--accent-red);"></i> Camera & Microphone Emergency Evidence</h4>
+            <p>
+                When SOS is triggered, your device will record <strong>up to 60 seconds of surrounding video and audio</strong> to securely preserve critical incident evidence.
+            </p>
+            <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-sm" id="btnRequestPerm" onclick="requestMediaPermissions(true)" style="padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid rgba(244,63,94,0.4); background: rgba(244,63,94,0.15); color: #fff; cursor: pointer;">
+                    <i class="bi bi-shield-lock"></i> Check / Grant Camera & Mic Access
+                </button>
+                <span id="mediaPermStatus" style="font-size: 12px; color: var(--text-secondary);">Permission requested upon SOS</span>
+            </div>
+        </div>
+
+        <!-- Live Video Recording Box (visible during recording) -->
+        <div id="mediaEvidenceBox" style="display: none; width: 100%; margin: 15px 0; border-radius: 16px; overflow: hidden; background: rgba(15, 13, 38, 0.85); border: 1px solid rgba(244, 63, 94, 0.4); padding: 14px; text-align: center; box-shadow: 0 8px 30px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div class="recording-badge" style="background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                    <span class="recording-dot"></span> LIVE SOS RECORDING
+                </div>
+                <div style="font-weight: 700; color: #f43f5e; font-size: 13px; font-family: monospace;">
+                    <i class="bi bi-stopwatch"></i> <span id="mediaTimerDisplay">60s remaining</span>
+                </div>
+            </div>
+            <video id="liveCameraPreview" autoplay muted playsinline style="width: 100%; max-height: 220px; border-radius: 12px; object-fit: cover; background: #000; border: 1px solid rgba(255,255,255,0.1); transform: scaleX(-1);"></video>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 8px;">
+                Capturing surrounding video and audio. Automatically stopping and saving after 60 seconds.
+            </div>
+        </div>
+
         <!-- Stop SOS Button (hidden until triggered) -->
         <div id="stopSosContainer" style="display: none; text-align: center; margin-top: 20px;">
             <button class="btn btn-danger btn-lg px-5 py-3 fw-bold shadow" onclick="cancelCountdown()" style="border-radius: 50px; background: #dc3545; border: none; color: white;">
@@ -1116,8 +1178,37 @@
             <div class="progress-step" id="step1">
                 <div class="step-icon pending"><i class="bi bi-geo-alt"></i></div>
                 <div class="step-info">
-                    <div class="step-title">Getting Location</div>
+                    <div class="step-title">Location Tracking</div>
                     <div class="step-desc">Acquiring GPS coordinates...</div>
+                </div>
+            </div>
+            <div class="progress-step" id="step4">
+                <div class="step-icon pending"><i class="bi bi-telephone"></i></div>
+                <div class="step-info">
+                    <div class="step-title">Emergency Call</div>
+                    <div class="step-desc">Dialing emergency contact...</div>
+                </div>
+            </div>
+            <div class="progress-step" id="stepWhatsApp">
+                <div class="step-icon pending"><i class="bi bi-whatsapp"></i></div>
+                <div class="step-info">
+                    <div class="step-title">WhatsApp Alert</div>
+                    <div class="step-desc" id="whatsappDesc">Preparing location link for registered WhatsApp...</div>
+                    <div id="whatsappActionArea" style="margin-top: 6px; display: none;"></div>
+                </div>
+            </div>
+            <div class="progress-step" id="stepRecording">
+                <div class="step-icon pending"><i class="bi bi-camera-video"></i></div>
+                <div class="step-info">
+                    <div class="step-title">Audio & Video Evidence (60s)</div>
+                    <div class="step-desc" id="recordingDesc">Awaiting camera/microphone recording...</div>
+                </div>
+            </div>
+            <div class="progress-step" id="stepUpload">
+                <div class="step-icon pending"><i class="bi bi-cloud-arrow-up"></i></div>
+                <div class="step-info">
+                    <div class="step-title">Evidence Storage</div>
+                    <div class="step-desc" id="uploadDesc">Pending 60-second recording completion...</div>
                 </div>
             </div>
             <div class="progress-step" id="step2">
@@ -1132,13 +1223,6 @@
                 <div class="step-info">
                     <div class="step-title">Notifying Nearby Volunteers</div>
                     <div class="step-desc">Searching within 20km radius...</div>
-                </div>
-            </div>
-            <div class="progress-step" id="step4">
-                <div class="step-icon pending"><i class="bi bi-telephone"></i></div>
-                <div class="step-info">
-                    <div class="step-title">Auto-Call</div>
-                    <div class="step-desc">Dialing emergency contact...</div>
                 </div>
             </div>
         </div>
@@ -1214,16 +1298,21 @@
             </div>
         </div>
 
-        <!-- Audio Evidence Panel -->
-        <div class="contact-response-panel" id="audioEvidenceContainer" style="display: none; margin-top: 20px; border-top: 2px solid #e9ecef; padding-top: 20px;">
+        <!-- Evidence Playback Panel -->
+        <div class="contact-response-panel" id="evidenceContainer" style="display: none; margin-top: 20px; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 20px;">
             <h4 style="margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                <i class="bi bi-mic-fill" style="color: #ef4444;"></i>
-                Emergency Audio Evidence
+                <i class="bi bi-shield-lock-fill" style="color: #ef4444;"></i>
+                SOS Incident Evidence
             </h4>
-            <div class="alert alert-info" style="font-size: 0.9rem;">
-                <i class="bi bi-info-circle"></i> This audio was automatically recorded during the SOS activation as evidence.
+            <div class="alert alert-info" style="font-size: 0.9rem; background: rgba(0, 188, 212, 0.1); border: 1px solid rgba(0, 188, 212, 0.3); color: #a5b4fc; border-radius: 10px; padding: 10px;">
+                <i class="bi bi-info-circle"></i> Emergency audio/video evidence recorded during the incident is preserved below.
             </div>
-            <audio id="sosAudioPlayer" controls style="width: 100%; margin-top: 10px;"></audio>
+            <div id="videoEvidenceWrapper" style="display: none; margin-top: 10px;">
+                <video id="sosVideoPlayer" controls playsinline style="width: 100%; max-height: 260px; border-radius: 10px; background: #000;"></video>
+            </div>
+            <div id="audioEvidenceWrapper" style="display: none; margin-top: 10px;">
+                <audio id="sosAudioPlayer" controls style="width: 100%; margin-top: 10px;"></audio>
+            </div>
         </div>
 
         <!-- Help Instructions -->
@@ -1250,18 +1339,19 @@
         <div class="info-card">
             <h4><i class="bi bi-info-circle"></i> How SOS Works</h4>
             <p>
-                1. Tap the SOS button to start a <strong>15-second countdown</strong><br>
+                1. Tap the SOS button to start a <strong>5-second countdown</strong><br>
                 2. You can <strong>cancel</strong> during the countdown if pressed accidentally<br>
-                3. After countdown: your <strong>location is sent</strong> to emergency contacts via email<br>
-                4. <strong>Nearby verified volunteers</strong> receive real-time alerts<br>
-                5. <strong>Auto-call</strong> dials your first emergency contact automatically
+                3. After countdown: your <strong>direct emergency call</strong> connects immediately<br>
+                4. Your <strong>live location</strong> is dispatched to your registered WhatsApp number and contacts<br>
+                5. <strong>60 seconds of surrounding video and audio</strong> is recorded and saved securely as evidence<br>
+                6. <strong>Nearby verified volunteers</strong> receive real-time alerts
             </p>
         </div>
     </div>
 
     <!-- Countdown Overlay -->
     <div class="countdown-overlay" id="countdownOverlay">
-        <div class="countdown-number" id="countdownNumber">15</div>
+        <div class="countdown-number" id="countdownNumber">5</div>
         <div class="countdown-text">
             Sending SOS alert when countdown reaches zero.<br>
             <strong>Tap below to cancel if pressed accidentally.</strong>
@@ -1280,21 +1370,37 @@
         const contextPath = '${pageContext.request.contextPath}';
         const userId = '${userId}';
         let countdownTimer = null;
-        let countdownValue = 15;
+        let countdownValue = 5;
         let currentSosId = ${activeSosId != null ? activeSosId : 'null'};
         let isInitiallyActive = ${isSosActive};
         let userLatitude = null;
         let userLongitude = null;
         let autoCallPhone = null;
         let stompClient = null;
-        let mediaRecorder = null;
-        let audioChunks = [];
 
-        // === Initialize: Get location on page load ===
+        // Evidence Recording state (Audio + Video up to 60s)
+        let mediaEvidenceRecorder = null;
+        let mediaEvidenceChunks = [];
+        let mediaActiveStream = null;
+        let mediaCountdownInterval = null;
+        let mediaSecondsRemaining = 60;
+        let mediaPermissionGranted = false;
+
+        function getCsrfHeaders() {
+            const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            const headers = {};
+            if (token && header) {
+                headers[header] = token;
+            }
+            return headers;
+        }
+
+        // === Initialize: Get location and setup on page load ===
         window.addEventListener('load', () => {
             initLocation();
             connectWebSocket();
-            requestAudioPermission();
+            checkInitialMediaPermission();
             
             // Restore state if SOS was active before refresh
             if (isInitiallyActive && currentSosId) {
@@ -1302,86 +1408,325 @@
             }
         });
 
-        async function requestAudioPermission() {
+        async function checkInitialMediaPermission() {
+            if (navigator.permissions && navigator.permissions.query) {
+                try {
+                    const cam = await navigator.permissions.query({ name: 'camera' });
+                    const mic = await navigator.permissions.query({ name: 'microphone' });
+                    if (cam.state === 'granted' && mic.state === 'granted') {
+                        mediaPermissionGranted = true;
+                        const label = document.getElementById('mediaPermStatus');
+                        if (label) {
+                            label.innerHTML = '<span style="color: #30d158;"><i class="bi bi-check-circle-fill"></i> Access already granted</span>';
+                        }
+                    }
+                } catch(e) {}
+            }
+        }
+
+        async function requestMediaPermissions(fromButton = false) {
+            const statusLabel = document.getElementById('mediaPermStatus');
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // We just want to check permission here, so we stop the tracks immediately
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    if (statusLabel) statusLabel.textContent = 'Camera/Mic not supported by browser';
+                    if (fromButton) showToast('Camera and microphone are not supported in this browser.', true);
+                    return false;
+                }
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                    audio: true
+                });
+                mediaPermissionGranted = true;
+                // Stop the temporary check stream
                 stream.getTracks().forEach(track => track.stop());
-                console.log('Microphone permission granted');
+                if (statusLabel) {
+                    statusLabel.innerHTML = '<span style="color: #30d158;"><i class="bi bi-check-circle-fill"></i> Camera & mic access granted</span>';
+                }
+                if (fromButton) {
+                    showToast('Camera and microphone permissions granted for SOS evidence.');
+                }
+                return true;
             } catch (err) {
-                console.error('Microphone permission denied:', err);
-                showToast('Warning: Microphone access is required for emergency audio evidence.');
+                console.warn('Media permission request:', err);
+                if (statusLabel) {
+                    statusLabel.innerHTML = '<span style="color: #f43f5e;"><i class="bi bi-x-circle-fill"></i> Access denied or unavailable</span>';
+                }
+                if (fromButton) {
+                    showToast('Camera or microphone permission was denied.', true);
+                }
+                return false;
             }
         }
 
-        async function startAudioRecording() {
+        function getSupportedMimeType() {
+            const types = [
+                'video/webm;codecs=vp9,opus',
+                'video/webm;codecs=vp8,opus',
+                'video/webm',
+                'video/mp4;codecs=avc1,mp4a.40.2',
+                'video/mp4'
+            ];
+            for (const t of types) {
+                if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
+                    return t;
+                }
+            }
+            return '';
+        }
+
+        async function startMediaEvidenceRecording() {
+            setStepActive('stepRecording');
+            const recDesc = document.getElementById('recordingDesc');
+            if (recDesc) recDesc.textContent = 'Requesting camera & microphone access...';
+            setStepActive('stepUpload');
+            const upDesc = document.getElementById('uploadDesc');
+            if (upDesc) upDesc.textContent = 'Pending 60-second recording completion...';
+
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                setStepWarning('stepRecording');
+                if (recDesc) recDesc.textContent = 'Media recording not supported by browser.';
+                setStepWarning('stepUpload');
+                if (upDesc) upDesc.textContent = 'Skipped (unsupported browser).';
+                return;
+            }
+
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = async () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    uploadAudioRecording(audioBlob);
-                    stream.getTracks().forEach(track => track.stop());
-                };
-
-                mediaRecorder.start();
-                console.log('Audio recording started');
-                
-                // Show recording status indicators
-                document.getElementById('liveRecordingBadge').style.display = 'flex';
-                document.getElementById('bannerRecordingStatus').style.display = 'block';
+                mediaActiveStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                    audio: true
+                });
             } catch (err) {
-                console.error('Error starting audio recording:', err);
+                console.warn('getUserMedia audio+video failed, trying audio only fallback:', err);
+                try {
+                    mediaActiveStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                } catch (err2) {
+                    console.error('All media permission denied:', err2);
+                    setStepWarning('stepRecording');
+                    if (recDesc) recDesc.textContent = 'Camera/mic permission denied. Evidence recording skipped.';
+                    setStepWarning('stepUpload');
+                    if (upDesc) upDesc.textContent = 'Skipped (permission denied).';
+                    return;
+                }
             }
+
+            mediaPermissionGranted = true;
+            const hasVideo = mediaActiveStream.getVideoTracks().length > 0;
+            const liveBox = document.getElementById('mediaEvidenceBox');
+            const liveVideo = document.getElementById('liveCameraPreview');
+
+            if (hasVideo && liveBox && liveVideo) {
+                liveBox.style.display = 'block';
+                liveVideo.srcObject = mediaActiveStream;
+            }
+
+            let options = {};
+            const mime = getSupportedMimeType();
+            if (mime) {
+                options = { mimeType: mime };
+            }
+
+            try {
+                mediaEvidenceRecorder = new MediaRecorder(mediaActiveStream, options);
+            } catch(e) {
+                mediaEvidenceRecorder = new MediaRecorder(mediaActiveStream);
+            }
+
+            mediaEvidenceChunks = [];
+            mediaEvidenceRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    mediaEvidenceChunks.push(event.data);
+                }
+            };
+
+            mediaEvidenceRecorder.onstop = async () => {
+                // Stop all tracks immediately
+                if (mediaActiveStream) {
+                    mediaActiveStream.getTracks().forEach(t => {
+                        try { t.stop(); } catch(e) {}
+                    });
+                    mediaActiveStream = null;
+                }
+                if (liveVideo) liveVideo.srcObject = null;
+                if (liveBox) liveBox.style.display = 'none';
+
+                setStepDone('stepRecording');
+                if (recDesc) recDesc.textContent = '60-second evidence recorded successfully.';
+
+                const recordingType = mediaEvidenceRecorder.mimeType || (hasVideo ? 'video/webm' : 'audio/webm');
+                const recordedBlob = new Blob(mediaEvidenceChunks, { type: recordingType });
+                uploadMediaEvidence(recordedBlob, hasVideo);
+            };
+
+            mediaEvidenceRecorder.start(1000);
+            mediaSecondsRemaining = 60;
+            updateRecordingTimerDisplay();
+
+            if (mediaCountdownInterval) clearInterval(mediaCountdownInterval);
+            mediaCountdownInterval = setInterval(() => {
+                mediaSecondsRemaining--;
+                updateRecordingTimerDisplay();
+                if (mediaSecondsRemaining <= 0) {
+                    clearInterval(mediaCountdownInterval);
+                    mediaCountdownInterval = null;
+                    if (mediaEvidenceRecorder && mediaEvidenceRecorder.state === 'recording') {
+                        mediaEvidenceRecorder.stop();
+                    }
+                }
+            }, 1000);
         }
 
-        function stopAudioRecording() {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-                console.log('Audio recording stopped');
-                
-                // Hide recording status indicators
-                document.getElementById('liveRecordingBadge').style.display = 'none';
-                document.getElementById('bannerRecordingStatus').style.display = 'none';
-            }
+        function updateRecordingTimerDisplay() {
+            const desc = document.getElementById('recordingDesc');
+            if (desc) desc.textContent = 'Recording in progress: ' + mediaSecondsRemaining + 's remaining';
+            const badge = document.getElementById('mediaTimerDisplay');
+            if (badge) badge.textContent = mediaSecondsRemaining + 's remaining';
         }
 
-        async function uploadAudioRecording(blob) {
-            if (!currentSosId) return;
+        function stopMediaEvidenceRecording() {
+            if (mediaCountdownInterval) {
+                clearInterval(mediaCountdownInterval);
+                mediaCountdownInterval = null;
+            }
+            if (mediaEvidenceRecorder && mediaEvidenceRecorder.state === 'recording') {
+                try { mediaEvidenceRecorder.stop(); } catch(e) {}
+            }
+            if (mediaActiveStream) {
+                mediaActiveStream.getTracks().forEach(t => {
+                    try { t.stop(); } catch(e) {}
+                });
+                mediaActiveStream = null;
+            }
+            const liveVideo = document.getElementById('liveCameraPreview');
+            if (liveVideo) liveVideo.srcObject = null;
+            const liveBox = document.getElementById('mediaEvidenceBox');
+            if (liveBox) liveBox.style.display = 'none';
+        }
+
+        async function uploadMediaEvidence(blob, hasVideo) {
+            setStepActive('stepUpload');
+            const upDesc = document.getElementById('uploadDesc');
+            if (upDesc) upDesc.textContent = 'Uploading evidence to secure storage...';
 
             const formData = new FormData();
-            formData.append('sosId', currentSosId);
-            formData.append('audio', blob, 'sos_recording.webm');
+            if (currentSosId) {
+                formData.append('sosId', currentSosId);
+            }
+            const filename = hasVideo ? 'sos_evidence_video.webm' : 'sos_evidence_audio.webm';
+            formData.append('file', blob, filename);
 
             try {
-                const response = await fetch(contextPath + '/api/sos/audio/upload', {
+                const response = await fetch(contextPath + '/api/sos/audio/upload-evidence', {
                     method: 'POST',
+                    headers: getCsrfHeaders(),
                     body: formData
                 });
                 const data = await response.json();
                 if (data.success) {
-                    console.log('Audio recording uploaded successfully:', data.audioPath);
-                    // Update the UI with audio player if needed
-                    updateAudioPlayer(data.audioPath);
+                    setStepDone('stepUpload');
+                    if (upDesc) upDesc.textContent = 'Evidence saved securely (' + Math.round(blob.size / 1024) + ' KB)';
+                    updateEvidencePlayer(data.videoPath || data.mediaPath || data.audioPath, hasVideo);
+                    showToast('Emergency recording securely saved to incident log.');
+                } else {
+                    setStepWarning('stepUpload');
+                    if (upDesc) upDesc.textContent = 'Upload note: ' + (data.message || 'Evidence saved with warnings');
                 }
             } catch (err) {
-                console.error('Error uploading audio recording:', err);
+                console.error('Evidence upload failed:', err);
+                setStepWarning('stepUpload');
+                if (upDesc) upDesc.textContent = 'Failed to upload evidence to server.';
             }
         }
 
-        function updateAudioPlayer(audioPath) {
-            const playerContainer = document.getElementById('audioEvidenceContainer');
-            if (playerContainer && audioPath) {
-                playerContainer.style.display = 'block';
-                const player = document.getElementById('sosAudioPlayer');
-                player.src = contextPath + audioPath;
+        function updateEvidencePlayer(mediaPath, isVideo) {
+            const container = document.getElementById('evidenceContainer');
+            if (!container || !mediaPath) return;
+            container.style.display = 'block';
+
+            const videoWrapper = document.getElementById('videoEvidenceWrapper');
+            const audioWrapper = document.getElementById('audioEvidenceWrapper');
+            const videoPlayer = document.getElementById('sosVideoPlayer');
+            const audioPlayer = document.getElementById('sosAudioPlayer');
+
+            if (isVideo && videoWrapper && videoPlayer) {
+                videoWrapper.style.display = 'block';
+                videoPlayer.src = contextPath + mediaPath;
+            } else if (audioWrapper && audioPlayer) {
+                audioWrapper.style.display = 'block';
+                audioPlayer.src = contextPath + mediaPath;
             }
+        }
+
+        function sendWhatsAppSOSAlert(lat, lon) {
+            setStepActive('stepWhatsApp');
+            const desc = document.getElementById('whatsappDesc');
+            const actionArea = document.getElementById('whatsappActionArea');
+            if (desc) desc.textContent = 'Contacting WhatsApp service with your location...';
+            if (actionArea) {
+                actionArea.style.display = 'none';
+                actionArea.innerHTML = '';
+            }
+
+            const params = new URLSearchParams();
+            params.append('latitude', lat || 0);
+            params.append('longitude', lon || 0);
+            if (currentSosId) {
+                params.append('sosId', currentSosId);
+            }
+
+            fetch(contextPath + '/sos/whatsapp-alert', {
+                method: 'POST',
+                headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, getCsrfHeaders()),
+                body: params.toString()
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.cloudApiConfirmed === true || data.status === 'SENT') {
+                    setStepDone('stepWhatsApp');
+                    if (desc) {
+                        desc.innerHTML = '<span style="color: #30d158;"><i class="bi bi-check-circle-fill"></i> Location delivered via WhatsApp Cloud API to ' + (data.recipient || 'registered WhatsApp') + '</span>';
+                    }
+                } else if (data.status === 'NOT_CONFIGURED') {
+                    setStepWarning('stepWhatsApp');
+                    if (desc) {
+                        desc.innerHTML = '<span style="color: #f59e0b;"><i class="bi bi-info-circle"></i> WhatsApp Cloud API not configured on server. Review and send:</span>';
+                    }
+                    if (actionArea && data.fallbackUrl) {
+                        actionArea.style.display = 'block';
+                        actionArea.innerHTML = `
+                            <a href="${data.fallbackUrl}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-fallback">
+                                <i class="bi bi-whatsapp"></i> Review & Send via WhatsApp
+                            </a>
+                        `;
+                    }
+                } else {
+                    setStepWarning('stepWhatsApp');
+                    if (desc) {
+                        desc.innerHTML = '<span style="color: #f43f5e;"><i class="bi bi-exclamation-triangle"></i> ' + (data.message || 'WhatsApp alert could not be delivered directly.') + '</span>';
+                    }
+                    if (actionArea && data.fallbackUrl) {
+                        actionArea.style.display = 'block';
+                        actionArea.innerHTML = `
+                            <a href="${data.fallbackUrl}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-fallback">
+                                <i class="bi bi-whatsapp"></i> Review & Send via WhatsApp
+                            </a>
+                        `;
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('WhatsApp alert error:', err);
+                setStepWarning('stepWhatsApp');
+                if (desc) desc.textContent = 'WhatsApp alert service unreachable';
+                if (actionArea && lat && lon) {
+                    const fallbackLink = 'https://api.whatsapp.com/send?text=' + encodeURIComponent('EMERGENCY SOS! I need help immediately. My location: https://www.google.com/maps?q=' + lat + ',' + lon);
+                    actionArea.style.display = 'block';
+                    actionArea.innerHTML = `
+                        <a href="${fallbackLink}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp-fallback">
+                            <i class="bi bi-whatsapp"></i> Review & Send via WhatsApp
+                        </a>
+                    `;
+                }
+            });
         }
 
         function restoreActiveSOSState() {
@@ -1397,13 +1742,14 @@
              const progress = document.getElementById('alertProgress');
              progress.classList.add('active');
              setStepDone('step1');
+             setStepDone('step4');
+             setStepDone('stepWhatsApp');
              setStepDone('step2');
              setStepDone('step3');
-             setStepDone('step4');
              
              // Start recording if not already started
-             if (!mediaRecorder || mediaRecorder.state === 'inactive') {
-                 startAudioRecording();
+             if (!mediaEvidenceRecorder || mediaEvidenceRecorder.state === 'inactive') {
+                 startMediaEvidenceRecording();
              }
              
              // Start polling for responses
@@ -1435,7 +1781,6 @@
         // === WebSocket Connection ===
         function connectWebSocket() {
             try {
-                // Use the same WebSocket endpoint as the chat or SOS updates
                 const socket = new SockJS(contextPath + '/ws-chat');
                 stompClient = Stomp.over(socket);
                 stompClient.debug = null; 
@@ -1460,7 +1805,7 @@
                 updateStatusBar('🚨 SOS Active — Help is on the way', true);
                 startContactResponsePolling();
             } else if (data.type === 'CONTACT_ACCEPTED') {
-                fetchContactResponses(); // Refresh list
+                fetchContactResponses();
                 showToast(data.contactName + ' has accepted your SOS!');
             } else if (data.type === 'VOLUNTEER_ACCEPTED') {
                 const banner = document.getElementById('respondedBanner');
@@ -1468,13 +1813,12 @@
                     data.volunteerName + ' is on their way to help you!';
                 banner.classList.add('active');
                 
-                // Show recording status in banner to reassure user
                 document.getElementById('bannerRecordingStatus').style.display = 'block';
                 
-                fetchContactResponses(); // Refresh list to show volunteers
+                fetchContactResponses();
                 showToast('Volunteer ' + data.volunteerName + ' is responding!');
             } else if (data.type === 'VOLUNTEER_DECLINED') {
-                fetchContactResponses(); // Refresh counts
+                fetchContactResponses();
             } else if (data.type === 'SOS_CANCELLED') {
                 showToast('SOS has been cancelled');
                 setTimeout(() => window.location.reload(), 2000);
@@ -1483,16 +1827,16 @@
 
         // === SOS Flow ===
         function initiateSOS() {
-            // Start countdown
+            // Start 5-second countdown
             document.getElementById('countdownOverlay').classList.add('active');
             document.getElementById('sosBtn').classList.add('pressed');
             document.getElementById('bgGrid').classList.add('sos-active');
-            countdownValue = 15;
+            countdownValue = 5;
             document.getElementById('countdownNumber').textContent = countdownValue;
 
             countdownTimer = setInterval(() => {
                 countdownValue--;
-                document.getElementById('countdownNumber').textContent = countdownValue;
+                document.getElementById('countdownNumber').textContent = Math.max(0, countdownValue);
 
                 if (countdownValue <= 0) {
                     clearInterval(countdownTimer);
@@ -1509,8 +1853,8 @@
                 countdownTimer = null;
             }
             
-            // Stop Audio Recording
-            stopAudioRecording();
+            // Stop Audio and Video Recording and release tracks immediately
+            stopMediaEvidenceRecording();
             
             // Stop Siren
             try {
@@ -1526,13 +1870,16 @@
 
             // If SOS was already triggered, cancel it on server
             if (currentSosId) {
-                fetch(contextPath + '/sos/cancel/' + currentSosId, { method: 'POST' })
-                    .then(r => r.json())
-                    .then(data => {
-                        showToast(data.message || 'SOS cancelled');
-                        currentSosId = null;
-                        setTimeout(() => window.location.reload(), 1500);
-                    });
+                fetch(contextPath + '/sos/cancel/' + currentSosId, { 
+                    method: 'POST',
+                    headers: getCsrfHeaders()
+                })
+                .then(r => r.json())
+                .then(data => {
+                    showToast(data.message || 'SOS cancelled');
+                    currentSosId = null;
+                    setTimeout(() => window.location.reload(), 1500);
+                });
             } else {
                 showToast('SOS cancelled — false alarm');
             }
@@ -1546,7 +1893,6 @@
             setStepActive('step1');
 
             if (!userLatitude || !userLongitude) {
-                // Try one more time
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         (pos) => {
@@ -1555,10 +1901,9 @@
                             proceedWithSOS();
                         },
                         (err) => {
-                            // Use default/fallback
                             userLatitude = 0;
                             userLongitude = 0;
-                            showToast('Could not get location — sending alert anyway', true);
+                            showToast('Could not get GPS location — sending alert anyway', true);
                             proceedWithSOS();
                         },
                         { enableHighAccuracy: true, timeout: 5000 }
@@ -1576,6 +1921,15 @@
         function proceedWithSOS() {
             setStepDone('step1');
 
+            const progress = document.getElementById('alertProgress');
+            progress.classList.add('active');
+
+            // Trigger WhatsApp Alert concurrently
+            sendWhatsAppSOSAlert(userLatitude, userLongitude);
+
+            // Trigger 60s Media Evidence Recording concurrently
+            startMediaEvidenceRecording();
+
             // Step 2 & 3: Send to server
             setStepActive('step2');
             updateStatusBar('Sending emergency alerts...', true);
@@ -1586,22 +1940,22 @@
 
             fetch(contextPath + '/sos/trigger', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: Object.assign({ 'Content-Type': 'application/x-www-form-urlencoded' }, getCsrfHeaders()),
                 body: formData.toString()
             })
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
                     showToast(data.error, true);
+                    // Still trigger emergency direct call
+                    setStepActive('step4');
+                    triggerAutoCall();
                     return;
                 }
 
                 currentSosId = data.sosId;
                 autoCallPhone = data.autoCallPhone;
                 document.getElementById('stopSosContainer').style.display = 'block';
-
-                // Start Audio Recording for Evidence
-                startAudioRecording();
 
                 // Play Siren
                 try {
@@ -1617,18 +1971,14 @@
                 setStepDone('step2');
 
                 // Step 3: Done - volunteers alerted
-                setTimeout(() => {
-                    const volCount = data.volunteersAlerted || 0;
-                    document.querySelector('#step3 .step-desc').textContent =
-                        volCount + ' volunteer(s) alerted nearby';
-                    setStepDone('step3');
+                const volCount = data.volunteersAlerted || 0;
+                document.querySelector('#step3 .step-desc').textContent =
+                    volCount + ' volunteer(s) alerted nearby';
+                setStepDone('step3');
 
-                    // Step 4: Auto-call
-                    setTimeout(() => {
-                        setStepActive('step4');
-                        triggerAutoCall();
-                    }, 1000);
-                }, 800);
+                // Step 4: Emergency Direct Auto-Call (Preserved without delay)
+                setStepActive('step4');
+                triggerAutoCall();
 
                 updateStatusBar('🚨 SOS Active — Help is on the way', true);
 
@@ -1637,10 +1987,11 @@
             })
             .catch(err => {
                 console.error('SOS trigger failed:', err);
-                showToast('Failed to send SOS. Trying auto-call directly...', true);
+                showToast('Failed to contact server. Dialing emergency contact directly...', true);
                 // Fallback: try auto-call even if server fails
                 autoCallPhone = '100';
-                setTimeout(triggerAutoCall, 1000);
+                setStepActive('step4');
+                setTimeout(triggerAutoCall, 800);
             });
         }
 
@@ -1651,30 +2002,54 @@
 
             // Mark auto-call on server
             if (currentSosId) {
-                fetch(contextPath + '/sos/auto-call/' + currentSosId, { method: 'POST' }).catch(() => {});
+                fetch(contextPath + '/sos/auto-call/' + currentSosId, { 
+                    method: 'POST',
+                    headers: getCsrfHeaders()
+                }).catch(() => {});
             }
 
             setTimeout(() => {
                 setStepDone('step4');
-                // Open phone dialer
+                // Open phone dialer directly without blocking
                 window.location.href = 'tel:' + phone;
-            }, 1500);
+            }, 1200);
         }
 
         // === UI Helpers ===
         function setStepActive(stepId) {
             const step = document.getElementById(stepId);
-            step.classList.remove('done');
+            if (!step) return;
+            step.classList.remove('done', 'warning', 'error');
             step.classList.add('active');
-            step.querySelector('.step-icon').classList.remove('pending');
-            step.querySelector('.step-icon').innerHTML = '<div class="spinner"></div>';
+            const icon = step.querySelector('.step-icon');
+            if (icon) {
+                icon.className = 'step-icon';
+                icon.innerHTML = '<div class="spinner"></div>';
+            }
         }
 
         function setStepDone(stepId) {
             const step = document.getElementById(stepId);
-            step.classList.remove('active');
+            if (!step) return;
+            step.classList.remove('active', 'warning', 'error');
             step.classList.add('done');
-            step.querySelector('.step-icon').innerHTML = '<i class="bi bi-check-lg"></i>';
+            const icon = step.querySelector('.step-icon');
+            if (icon) {
+                icon.className = 'step-icon done';
+                icon.innerHTML = '<i class="bi bi-check-lg"></i>';
+            }
+        }
+
+        function setStepWarning(stepId) {
+            const step = document.getElementById(stepId);
+            if (!step) return;
+            step.classList.remove('active', 'done', 'error');
+            step.classList.add('warning');
+            const icon = step.querySelector('.step-icon');
+            if (icon) {
+                icon.className = 'step-icon warning';
+                icon.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i>';
+            }
         }
 
         function updateStatusBar(text, isDanger) {
@@ -1710,14 +2085,10 @@
         let responsePollingInterval = null;
 
         function startContactResponsePolling() {
-            // Show the response panels
             document.getElementById('contactResponsePanel').style.display = 'block';
             document.getElementById('volunteerResponsePanel').style.display = 'block';
             
-            // Initial fetch
             fetchContactResponses();
-            
-            // Poll every 3 seconds for updates
             responsePollingInterval = setInterval(fetchContactResponses, 3000);
         }
 
@@ -1742,27 +2113,24 @@
         }
 
         function updateContactResponseUI(data) {
-            // Update summary counts
             document.getElementById('acceptedCount').textContent = data.contactsAccepted || 0;
             document.getElementById('pendingCount').textContent = data.contactsPending || 0;
             document.getElementById('rejectedCount').textContent = data.contactsRejected || 0;
 
-            // Update Volunteer summary counts
             if (document.getElementById('volAcceptedCount')) {
                 document.getElementById('volAcceptedCount').textContent = data.volunteersAccepted || 0;
                 document.getElementById('volPendingCount').textContent = data.volunteersPending || 0;
                 document.getElementById('volRejectedCount').textContent = data.volunteersDeclined || 0;
                 
-                // Show recording status if help is coming
-                if (data.volunteersAccepted > 0 && mediaRecorder && mediaRecorder.state === 'recording') {
+                if (data.volunteersAccepted > 0 && mediaEvidenceRecorder && mediaEvidenceRecorder.state === 'recording') {
                     document.getElementById('liveRecordingBadge').style.display = 'flex';
                     document.getElementById('bannerRecordingStatus').style.display = 'block';
                 }
             }
 
-            // Update Audio Evidence
-            if (data.audioPath) {
-                updateAudioPlayer(data.audioPath);
+            // Update Audio & Video Evidence Player
+            if (data.videoPath || data.audioPath) {
+                updateEvidencePlayer(data.videoPath || data.audioPath, !!data.videoPath);
             }
 
             // Update contact list

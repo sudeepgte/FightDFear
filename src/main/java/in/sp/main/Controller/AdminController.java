@@ -1456,43 +1456,117 @@ public class AdminController {
 
     // Purpose: admin verification for marketplace providers / service partners.
     @GetMapping("/pending-providers")
-    public String viewPendingProviders(@RequestParam(required = false) ProviderCategory category, Model model, HttpSession session) {
+    public String viewPendingProviders(@RequestParam(required = false) ProviderCategory category,
+                                      @RequestParam(value = "q", required = false) String q,
+                                      @RequestParam(value = "filter", required = false) String filter,
+                                      Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
 
-        Map<Long, ServiceProvider> pendingById = new LinkedHashMap<>();
-        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIn(
-                PartnerLifecycleSupport.pendingQueueStatuses())) {
-            if (category == null || p.getCategory() == category) {
-                pendingById.put(p.getId(), p);
-            }
-        }
-        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIsNull()) {
-            if (p.getVerificationStatus() == null) {
-                p.setVerificationStatus(VerificationStatus.PENDING);
+        String activeFilter = (filter == null || filter.isBlank()) ? "pending" : filter.trim().toLowerCase(Locale.ROOT);
+        model.addAttribute("filter", activeFilter);
+        model.addAttribute("q", q == null ? "" : q.trim());
+        model.addAttribute("selectedCategory", category != null ? category.name() : "");
+        model.addAttribute("categoryEnum", category);
+
+        List<ServiceProvider> allCategoryProviders = serviceProviderRepository.findAll().stream()
+                .filter(p -> category == null || p.getCategory() == category)
+                .toList();
+
+        List<ServiceProvider> pending = new ArrayList<>();
+        List<ServiceProvider> approved = new ArrayList<>();
+        List<ServiceProvider> rejected = new ArrayList<>();
+        List<ServiceProvider> changesRequested = new ArrayList<>();
+        List<ServiceProvider> reverification = new ArrayList<>();
+
+        for (ServiceProvider p : allCategoryProviders) {
+            int currentPct = serviceProviderProfileService.calculateCompletionPct(p);
+            if (p.getProfileCompletionPct() == null || !p.getProfileCompletionPct().equals(currentPct)) {
+                p.setProfileCompletionPct(currentPct);
                 serviceProviderRepository.save(p);
             }
-            if (category == null || p.getCategory() == category) {
-                pendingById.putIfAbsent(p.getId(), p);
+
+            PartnerProfileStatus ps = p.getPartnerProfileStatus();
+            VerificationStatus vs = p.getVerificationStatus();
+            if (ps == PartnerProfileStatus.APPROVED || vs == VerificationStatus.VERIFIED) {
+                approved.add(p);
+            } else if (ps == PartnerProfileStatus.REJECTED || vs == VerificationStatus.REJECTED) {
+                rejected.add(p);
+            } else if (ps == PartnerProfileStatus.CHANGES_REQUESTED || vs == VerificationStatus.CHANGES_REQUESTED) {
+                changesRequested.add(p);
+            } else if (vs == VerificationStatus.RE_VERIFICATION) {
+                reverification.add(p);
+            } else {
+                pending.add(p);
             }
         }
-        List<ServiceProvider> pending = new ArrayList<>(pendingById.values());
+
         pending.sort(Comparator
                 .comparingInt((ServiceProvider p) -> PartnerLifecycleSupport.pendingPriority(p.getPartnerProfileStatus()))
                 .thenComparing(ServiceProvider::getId, Comparator.nullsLast(Long::compareTo)));
 
-        if (category != null) {
-            model.addAttribute("pending", pending);
-            model.addAttribute("verified", serviceProviderRepository.findByCategoryAndVerificationStatus(category, VerificationStatus.VERIFIED));
-            model.addAttribute("rejected", serviceProviderRepository.findByCategoryAndVerificationStatus(category, VerificationStatus.REJECTED));
-            model.addAttribute("selectedCategory", category);
-        } else {
-            model.addAttribute("pending", pending);
-            model.addAttribute("verified", serviceProviderRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-            model.addAttribute("rejected", serviceProviderRepository.findByVerificationStatus(VerificationStatus.REJECTED));
+        model.addAttribute("pending", pending);
+        model.addAttribute("approved", approved);
+        model.addAttribute("verified", approved); // backward-compatible alias for older JSP fragments
+        model.addAttribute("rejected", rejected);
+        model.addAttribute("changesRequested", changesRequested);
+        model.addAttribute("reverification", reverification);
+
+        model.addAttribute("pendingCount", pending.size());
+        model.addAttribute("approvedCount", approved.size());
+        model.addAttribute("rejectedCount", rejected.size());
+        model.addAttribute("changesRequestedCount", changesRequested.size());
+        model.addAttribute("reverificationCount", reverification.size());
+        model.addAttribute("totalProviders", allCategoryProviders.size());
+        model.addAttribute("totalLawyers", allCategoryProviders.size());
+
+        if (q != null && !q.trim().isEmpty()) {
+            String keyword = q.trim().toLowerCase(Locale.ROOT);
+            List<ServiceProvider> searchResults = allCategoryProviders.stream()
+                    .filter(p -> matchesProviderSearch(p, keyword))
+                    .filter(p -> activeFilter.equals("all") || matchesProviderFilter(p, activeFilter))
+                    .toList();
+            if (!activeFilter.equals("pending") || filter != null) {
+                model.addAttribute("searchResults", searchResults);
+            } else {
+                model.addAttribute("searchResults", allCategoryProviders.stream()
+                        .filter(p -> matchesProviderSearch(p, keyword))
+                        .toList());
+            }
+            model.addAttribute("keywordLower", keyword);
         }
+
         return "adminPendingProviders";
+    }
+
+    private boolean matchesProviderSearch(ServiceProvider p, String kw) {
+        if (p == null || kw == null || kw.isEmpty()) return true;
+        return (p.getFullName() != null && p.getFullName().toLowerCase(Locale.ROOT).contains(kw))
+                || (p.getEmail() != null && p.getEmail().toLowerCase(Locale.ROOT).contains(kw))
+                || (p.getPhone() != null && p.getPhone().toLowerCase(Locale.ROOT).contains(kw))
+                || (p.getPracticeAreas() != null && p.getPracticeAreas().toLowerCase(Locale.ROOT).contains(kw))
+                || (p.getBarCouncilId() != null && p.getBarCouncilId().toLowerCase(Locale.ROOT).contains(kw))
+                || (p.getLocationText() != null && p.getLocationText().toLowerCase(Locale.ROOT).contains(kw))
+                || (p.getCity() != null && p.getCity().toLowerCase(Locale.ROOT).contains(kw))
+                || (p.getState() != null && p.getState().toLowerCase(Locale.ROOT).contains(kw));
+    }
+
+    private boolean matchesProviderFilter(ServiceProvider p, String filter) {
+        if (p == null || filter == null) return true;
+        PartnerProfileStatus ps = p.getPartnerProfileStatus();
+        VerificationStatus vs = p.getVerificationStatus();
+        return switch (filter.toLowerCase(Locale.ROOT)) {
+            case "approved" -> ps == PartnerProfileStatus.APPROVED || vs == VerificationStatus.VERIFIED;
+            case "rejected" -> ps == PartnerProfileStatus.REJECTED || vs == VerificationStatus.REJECTED;
+            case "changes_requested", "changes-requested" -> ps == PartnerProfileStatus.CHANGES_REQUESTED || vs == VerificationStatus.CHANGES_REQUESTED;
+            case "reverification" -> vs == VerificationStatus.RE_VERIFICATION;
+            case "all" -> true;
+            default -> (ps != PartnerProfileStatus.APPROVED && vs != VerificationStatus.VERIFIED
+                    && ps != PartnerProfileStatus.REJECTED && vs != VerificationStatus.REJECTED
+                    && ps != PartnerProfileStatus.CHANGES_REQUESTED && vs != VerificationStatus.CHANGES_REQUESTED
+                    && vs != VerificationStatus.RE_VERIFICATION);
+        };
     }
 
     @PostMapping("/providers/{id}/verify")
@@ -1575,6 +1649,7 @@ public class AdminController {
             return "redirect:/admin/pending-providers";
         }
 
+        p = serviceProviderProfileService.refreshCompletion(p);
         model.addAttribute("provider", p);
         return "adminViewProviderProfile";
     }

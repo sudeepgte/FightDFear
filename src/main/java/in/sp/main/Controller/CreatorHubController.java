@@ -89,10 +89,16 @@ public class CreatorHubController {
     private UserFollowRepository userFollowRepository;
 
     @Autowired
+    private ChatMessageRepository chatMessageRepository;
+
+    @Autowired
     private FileUploadService fileUploadService;
 
     @Autowired
     private in.sp.main.Service.AtomicCoinService atomicCoinService;
+
+    @Autowired(required = false)
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
 
     private final String[] CREATOR_CATEGORIES = {
         "Safety Awareness", "Entrepreneurship", "Financial Literacy", "Skill Development", "Inspirational", "Entertainment"
@@ -235,6 +241,7 @@ public class CreatorHubController {
     public List<Map<String, Object>> getCommentsApi(@RequestParam Long videoId) {
         List<VideoComment> list = videoCommentRepository.findByVideo_Id(videoId);
         List<Map<String, Object>> result = new ArrayList<>();
+        java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
         for (VideoComment c : list) {
             if (c.getParent() != null) {
                 continue;
@@ -243,6 +250,9 @@ public class CreatorHubController {
             map.put("id", c.getId());
             map.put("text", c.getText());
             map.put("username", c.getUser() != null ? c.getUser().getFullName() : "Anonymous User");
+            map.put("avatar", (c.getUser() != null && c.getUser().getProfilePhoto() != null) ? c.getUser().getProfilePhoto() : "");
+            map.put("userId", c.getUser() != null ? c.getUser().getId() : null);
+            map.put("timeAgo", c.getCommentedAt() != null ? c.getCommentedAt().format(dtf) : "Just now");
             List<Map<String, Object>> replies = new ArrayList<>();
             for (VideoComment reply : list) {
                 if (reply.getParent() != null && reply.getParent().getId().equals(c.getId())) {
@@ -250,6 +260,9 @@ public class CreatorHubController {
                     r.put("id", reply.getId());
                     r.put("text", reply.getText());
                     r.put("username", reply.getUser() != null ? reply.getUser().getFullName() : "Anonymous User");
+                    r.put("avatar", (reply.getUser() != null && reply.getUser().getProfilePhoto() != null) ? reply.getUser().getProfilePhoto() : "");
+                    r.put("userId", reply.getUser() != null ? reply.getUser().getId() : null);
+                    r.put("timeAgo", reply.getCommentedAt() != null ? reply.getCommentedAt().format(dtf) : "Just now");
                     replies.add(r);
                 }
             }
@@ -257,6 +270,80 @@ public class CreatorHubController {
             result.add(map);
         }
         return result;
+    }
+
+    @PostMapping("/comment")
+    @ResponseBody
+    public Map<String, Object> addCommentFromFeed(
+            @RequestParam("videoId") Long videoId,
+            @RequestParam("commentText") String text,
+            @RequestParam(value = "parentId", required = false) Long parentId,
+            HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) {
+            response.put("error", "NOT_LOGGED_IN");
+            return response;
+        }
+        if (text == null || text.trim().isEmpty()) {
+            response.put("error", "Comment cannot be empty");
+            return response;
+        }
+
+        Videoupload video = videoUploadRepository.findById(videoId).orElse(null);
+        if (video == null) {
+            response.put("error", "Video not found");
+            return response;
+        }
+
+        VideoComment comment = new VideoComment();
+        comment.setUser(currentUser);
+        comment.setText(text.trim());
+        comment.setCommentedAt(LocalDateTime.now());
+        comment.setVideo(video);
+
+        if (parentId != null) {
+            VideoComment parent = videoCommentRepository.findById(parentId).orElse(null);
+            if (parent != null) {
+                comment.setParent(parent);
+            }
+        }
+        videoCommentRepository.save(comment);
+
+        // Notify post owner
+        if (video.getUser() != null && !video.getUser().getId().equals(currentUser.getId())) {
+            try {
+                CreatorNotification notif = new CreatorNotification();
+                notif.setUser(video.getUser());
+                notif.setSender(currentUser);
+                notif.setType("COMMENT");
+                notif.setVideoId(video.getId());
+                String preview = text.trim();
+                if (preview.length() > 35) preview = preview.substring(0, 35) + "...";
+                notif.setMessage(currentUser.getFullName() + " commented on your post: \"" + preview + "\"");
+                creatorNotificationRepository.save(notif);
+            } catch (Exception ignored) {}
+        }
+
+        // Broadcast real-time if messagingTemplate is available
+        if (messagingTemplate != null) {
+            try {
+                Map<String, Object> evt = new HashMap<>();
+                evt.put("type", "COMMENT_ADDED");
+                evt.put("videoId", video.getId());
+                messagingTemplate.convertAndSend("/topic/reels", evt);
+                if (video.getUser() != null) {
+                    messagingTemplate.convertAndSend("/topic/userVideos/" + video.getUser().getId(), evt);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        response.put("success", true);
+        response.put("id", comment.getId());
+        response.put("username", currentUser.getFullName());
+        response.put("text", comment.getText());
+        response.put("avatar", currentUser.getProfilePhoto());
+        return response;
     }
 
     // UPLOAD CONTENT PAGE
@@ -376,10 +463,14 @@ public class CreatorHubController {
     }
 
     // CREATOR PROFILE
-    @GetMapping("/creator/{id}")
+    @GetMapping({"/creator/{id}", "/profile/{id}"})
     public String showCreatorProfile(@PathVariable Long id, HttpSession session, Model model) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
+
+        if (id.equals(currentUser.getId())) {
+            return "redirect:/creator-hub/profile";
+        }
 
         User creator = userRepository.findById(id).orElse(null);
         if (creator == null) return "redirect:/creator-hub";
@@ -395,15 +486,17 @@ public class CreatorHubController {
         // Follow stats
         int followersCount = userFollowRepository.findByFollowed(creator).size();
         int followingCount = userFollowRepository.findByFollower(creator).size();
-        boolean isFollowing = userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedTrue(currentUser.getId(), creator.getId());
-        boolean isRequested = userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedFalse(currentUser.getId(), creator.getId());
+        boolean isFollowing = userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedTrue(currentUser.getId(), creator.getId())
+                || userFollowRepository.existsByFollower_IdAndFollowed_Id(currentUser.getId(), creator.getId());
+        boolean isRequested = !isFollowing && userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedFalse(currentUser.getId(), creator.getId());
 
         // Check monthly subscription status
         boolean isSubscribed = creatorSubscriptionRepository.existsBySubscriber_IdAndCreator_IdAndEndDateAfter(currentUser.getId(), creator.getId(), LocalDateTime.now());
 
-        // Fetch uploads
+        // Fetch uploads: non-blocked and non-draft
         List<Videoupload> uploads = videoUploadRepository.findByUser_Id(creator.getId()).stream()
-                .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
+                .filter(v -> !v.isBlocked() && !v.isDraft() && (v.getStatus() == null || !"REJECTED".equalsIgnoreCase(v.getStatus())))
+                .sorted((a, b) -> (b.getUploadTime() != null && a.getUploadTime() != null) ? b.getUploadTime().compareTo(a.getUploadTime()) : 0)
                 .collect(Collectors.toList());
 
         // Active stories
@@ -725,6 +818,16 @@ public class CreatorHubController {
             notif.setType("FOLLOW");
             notif.setMessage(currentUser.getFullName() + (creator.isPrivate() ? " requested to follow you." : " started following you."));
             creatorNotificationRepository.save(notif);
+
+            if (messagingTemplate != null) {
+                try {
+                    Map<String, Object> evt = new HashMap<>();
+                    evt.put("type", "FOLLOW_NOTIFICATION");
+                    evt.put("message", notif.getMessage());
+                    evt.put("senderName", currentUser.getFullName());
+                    messagingTemplate.convertAndSend("/topic/follow/" + creator.getId(), evt);
+                } catch (Exception ignored) {}
+            }
 
             response.put("status", creator.isPrivate() ? "REQUESTED" : "FOLLOWED");
         }
@@ -1394,8 +1497,12 @@ public class CreatorHubController {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
+        // Sync historical follows, likes, and comments into CreatorNotification
+        syncRecentActivitiesForUser(currentUser);
+
         List<CreatorNotification> notifs = creatorNotificationRepository.findByUser_IdOrderByCreatedAtDesc(currentUser.getId());
         model.addAttribute("notifications", notifs);
+        model.addAttribute("currentUser", currentUser);
 
         // Mark all as read
         for (CreatorNotification n : notifs) {
@@ -1406,6 +1513,81 @@ public class CreatorHubController {
         }
 
         return "creatorNotifications";
+    }
+
+    private void syncRecentActivitiesForUser(User currentUser) {
+        if (currentUser == null) return;
+        try {
+            Long userId = currentUser.getId();
+
+            // 1. Sync follows
+            List<UserFollow> follows = userFollowRepository.findByFollowed(currentUser);
+            if (follows != null) {
+                for (UserFollow uf : follows) {
+                    if (uf.getFollower() != null && !uf.getFollower().getId().equals(userId)) {
+                        boolean exists = creatorNotificationRepository.existsByUser_IdAndSender_IdAndType(
+                                userId, uf.getFollower().getId(), "FOLLOW");
+                        if (!exists) {
+                            CreatorNotification cn = new CreatorNotification();
+                            cn.setUser(currentUser);
+                            cn.setSender(uf.getFollower());
+                            cn.setType("FOLLOW");
+                            cn.setMessage(uf.getFollower().getFullName() + " started following you.");
+                            cn.setCreatedAt(uf.getFollowedAt() != null ? uf.getFollowedAt() : LocalDateTime.now());
+                            creatorNotificationRepository.save(cn);
+                        }
+                    }
+                }
+            }
+
+            // 2. Sync likes on user videos
+            List<VideoLike> likes = videoLikeRepository.findRecentLikesOnUserVideos(userId);
+            if (likes != null) {
+                for (VideoLike vl : likes) {
+                    if (vl.getUser() != null && !vl.getUser().getId().equals(userId) && vl.getVideo() != null) {
+                        boolean exists = creatorNotificationRepository.existsByUser_IdAndSender_IdAndTypeAndVideoId(
+                                userId, vl.getUser().getId(), "LIKE", vl.getVideo().getId());
+                        if (!exists) {
+                            CreatorNotification cn = new CreatorNotification();
+                            cn.setUser(currentUser);
+                            cn.setSender(vl.getUser());
+                            cn.setType("LIKE");
+                            cn.setVideoId(vl.getVideo().getId());
+                            cn.setMessage(vl.getUser().getFullName() + " liked your post.");
+                            cn.setCreatedAt(LocalDateTime.now());
+                            creatorNotificationRepository.save(cn);
+                        }
+                    }
+                }
+            }
+
+            // 3. Sync comments on user videos
+            List<VideoComment> comments = videoCommentRepository.findRecentCommentsOnUserVideos(userId);
+            if (comments != null) {
+                for (VideoComment vc : comments) {
+                    if (vc.getUser() != null && !vc.getUser().getId().equals(userId) && vc.getVideo() != null) {
+                        boolean exists = creatorNotificationRepository.existsByUser_IdAndSender_IdAndTypeAndVideoId(
+                                userId, vc.getUser().getId(), "COMMENT", vc.getVideo().getId());
+                        if (!exists) {
+                            CreatorNotification cn = new CreatorNotification();
+                            cn.setUser(currentUser);
+                            cn.setSender(vc.getUser());
+                            cn.setType("COMMENT");
+                            cn.setVideoId(vc.getVideo().getId());
+                            String snippet = vc.getText();
+                            if (snippet != null && snippet.length() > 30) {
+                                snippet = snippet.substring(0, 30) + "...";
+                            }
+                            cn.setMessage(vc.getUser().getFullName() + " commented: \"" + (snippet != null ? snippet : "") + "\"");
+                            cn.setCreatedAt(vc.getCommentedAt() != null ? vc.getCommentedAt() : LocalDateTime.now());
+                            creatorNotificationRepository.save(cn);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log and ignore to prevent failure
+        }
     }
 
     // ADMIN PANEL INSIDE CREATOR HUB
@@ -1602,59 +1784,93 @@ public class CreatorHubController {
     }
 
     @GetMapping("/chat")
-    public String showChat(HttpSession session, Model model) {
+    public String showChat(@RequestParam(required = false) Long peerId,
+                           @RequestParam(required = false) Long user,
+                           HttpSession session, Model model) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
         model.addAttribute("currentUser", currentUser);
+
+        if (peerId == null && user != null) {
+            peerId = user;
+        }
         
-        List<User> followingList = userFollowRepository.findByFollower(currentUser)
-                .stream().map(f -> f.getFollowed()).collect(java.util.stream.Collectors.toList());
-        List<User> followersList = userFollowRepository.findByFollowed(currentUser)
-                .stream().map(f -> f.getFollower()).collect(java.util.stream.Collectors.toList());
-                
-        // Combine them to get a unique list of friends to chat with
-        java.util.Set<User> chatUsersSet = new java.util.LinkedHashSet<>(followingList);
-        chatUsersSet.addAll(followersList);
-        model.addAttribute("chatUsers", new java.util.ArrayList<>(chatUsersSet));
+        // 1. Followed users (Users currentUser follows or is connected with)
+        List<UserFollow> myFollows = userFollowRepository.findByFollower(currentUser);
+        List<UserFollow> followsMe = userFollowRepository.findByFollowed_IdAndAcceptedTrue(currentUser.getId());
+        
+        Set<User> chatUsersSet = new LinkedHashSet<>();
+        Set<Long> followingIds = new HashSet<>();
+        
+        for (UserFollow uf : myFollows) {
+            if (uf.getFollowed() != null && !uf.getFollowed().getId().equals(currentUser.getId())) {
+                chatUsersSet.add(uf.getFollowed());
+                followingIds.add(uf.getFollowed().getId());
+            }
+        }
+        for (UserFollow uf : followsMe) {
+            if (uf.getFollower() != null && !uf.getFollower().getId().equals(currentUser.getId())) {
+                chatUsersSet.add(uf.getFollower());
+                followingIds.add(uf.getFollower().getId());
+            }
+        }
+        
+        // 2. Chat history contacts
+        List<User> chatContacts = chatMessageRepository.findChatContacts(currentUser.getId());
+        if (chatContacts == null) chatContacts = Collections.emptyList();
+        
+        // 3. Separate into "chatUsers" (followed or mutual) and "messageRequests" (unfollowed users who messaged)
+        Set<User> messageRequestsSet = new LinkedHashSet<>();
+        
+        for (User contact : chatContacts) {
+            if (contact.getId().equals(currentUser.getId())) continue;
+            if (followingIds.contains(contact.getId())) {
+                chatUsersSet.add(contact);
+            } else {
+                messageRequestsSet.add(contact);
+            }
+        }
+
+        // If a specific peerId is requested via query param (e.g. from profile or notification)
+        if (peerId != null && !peerId.equals(currentUser.getId())) {
+            User requestedPeer = userRepository.findById(peerId).orElse(null);
+            if (requestedPeer != null) {
+                if (followingIds.contains(peerId)) {
+                    chatUsersSet.add(requestedPeer);
+                } else {
+                    messageRequestsSet.add(requestedPeer);
+                }
+                model.addAttribute("activePeerId", peerId);
+                model.addAttribute("activePeerUser", requestedPeer);
+            }
+        }
+        
+        // 4. Calculate unread counts per sender
+        Map<Long, Long> unreadCounts = new HashMap<>();
+        try {
+            List<Object[]> unreadList = chatMessageRepository.countUnreadBySender(currentUser.getId());
+            if (unreadList != null) {
+                for (Object[] row : unreadList) {
+                    if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                        Long senderId = ((Number) row[0]).longValue();
+                        Long count = ((Number) row[1]).longValue();
+                        unreadCounts.put(senderId, count);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        model.addAttribute("chatUsers", new ArrayList<>(chatUsersSet));
+        model.addAttribute("messageRequests", new ArrayList<>(messageRequestsSet));
+        model.addAttribute("followingIds", followingIds);
+        model.addAttribute("unreadCounts", unreadCounts);
         
         return "creatorHubChat";
     }
 
     @GetMapping("/coins")
     public String showCoins(HttpSession session, Model model) {
-        User currentUser = getSessionUser(session);
-        if (currentUser == null) return "redirect:/login";
-        model.addAttribute("currentUser", currentUser);
-        
-        // Calculate likes and views
-        List<in.sp.main.Entities.Videoupload> userVideos = videoUploadRepository.findByUser_Id(currentUser.getId());
-        int totalLikes = 0;
-        int totalViews = 0;
-        if (userVideos != null) {
-            for (in.sp.main.Entities.Videoupload v : userVideos) {
-                totalLikes += v.getLikeCount();
-                totalViews += v.getViewCount();
-            }
-        }
-        
-        int totalFollowers = userFollowRepository.findByFollowed(currentUser).size();
-        
-        // Coin formulas
-        int likesCoins = totalLikes; // 1 coin per like
-        int viewsCoins = totalViews / 10; // 1 coin per 10 views
-        int followersCoins = totalFollowers * 5; // 5 coins per follower
-        int totalCoins = likesCoins + viewsCoins + followersCoins;
-        
-        model.addAttribute("totalLikes", totalLikes);
-        model.addAttribute("totalViews", totalViews);
-        model.addAttribute("totalFollowers", totalFollowers);
-        
-        model.addAttribute("likesCoins", likesCoins);
-        model.addAttribute("viewsCoins", viewsCoins);
-        model.addAttribute("followersCoins", followersCoins);
-        model.addAttribute("totalCoins", totalCoins);
-        
-        return "creatorHubCoins";
+        return "redirect:/creator-hub";
     }
 }
 

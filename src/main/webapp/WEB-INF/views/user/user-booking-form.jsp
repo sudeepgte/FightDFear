@@ -163,7 +163,7 @@
 	      <ul>
 	        <li><a href="${pageContext.request.contextPath}/chat/users">Chat</a></li>
 	        <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
-	        <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
+	        <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet</a></li>
             <li><a href="${pageContext.request.contextPath}/users/dashboard" class="btn-dashboard"><i class="fas fa-th-large"></i> Back to Dashboard</a></li>
             <li class="nav-profile">
                 <a href="${pageContext.request.contextPath}/users/profile/${user.id}" class="d-flex align-items-center">

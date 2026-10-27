@@ -895,6 +895,16 @@
                             <div class="profile-field-label"><i class="bi bi-hash"></i>User ID</div>
                             <div class="profile-field-val">${user.id}</div>
                         </div>
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-whatsapp" style="color:#25D366;"></i>Emergency WhatsApp</div>
+                            <div class="profile-field-val">${not empty user.whatsappNumber ? user.whatsappNumber : '—'}</div>
+                        </div>
+                        <c:if test="${not empty user.emergencyContacts}">
+                        <div class="profile-field">
+                            <div class="profile-field-label"><i class="bi bi-shield-fill-plus" style="color:#F43F5E;"></i>Emergency Contact</div>
+                            <div class="profile-field-val">${user.emergencyContacts[0].name} (${user.emergencyContacts[0].phone})</div>
+                        </div>
+                        </c:if>
                         <c:if test="${not empty user.identityDocument && !fn:contains(user.identityDocument, 'web-member')}">
                         <div class="profile-field">
                             <div class="profile-field-label"><i class="bi bi-file-earmark"></i>ID document</div>

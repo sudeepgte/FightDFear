@@ -57,6 +57,20 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         jakarta.servlet.http.HttpSession session = httpRequest.getSession(false);
         if (session != null) {
             Object sessionUser = session.getAttribute("user");
+            if (sessionUser == null) {
+                try {
+                    Object secCtx = session.getAttribute("SPRING_SECURITY_CONTEXT");
+                    if (secCtx instanceof org.springframework.security.core.context.SecurityContext sc) {
+                        if (sc.getAuthentication() != null && sc.getAuthentication().getName() != null) {
+                            String authName = sc.getAuthentication().getName();
+                            userRepository.findByEmail(authName).ifPresent(u -> {
+                                session.setAttribute("user", u);
+                            });
+                            sessionUser = session.getAttribute("user");
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
             if (sessionUser instanceof in.sp.main.Entities.User user) {
                 String email = user.getEmail();
                 if (email == null || email.isBlank()) {

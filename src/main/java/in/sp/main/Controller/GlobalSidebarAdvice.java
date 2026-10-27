@@ -97,10 +97,28 @@ public class GlobalSidebarAdvice {
                 } catch (Exception ignored) {
                     pendingStylists = stylistRepository.countByApproved(false);
                 }
-                long pendingLawyers = serviceProviderRepository.countByCategoryAndVerificationStatus(
-                        in.sp.main.Entities.ProviderCategory.WOMEN_LAWYER, VerificationStatus.PENDING);
-                long pendingFitness = serviceProviderRepository.countByCategoryAndVerificationStatus(
-                        in.sp.main.Entities.ProviderCategory.FITNESS_ZUMBA, VerificationStatus.PENDING);
+                long pendingLawyers = 0;
+                try {
+                    pendingLawyers = serviceProviderRepository.countByCategoryAndPartnerProfileStatusIn(
+                            in.sp.main.Entities.ProviderCategory.WOMEN_LAWYER,
+                            PartnerLifecycleSupport.pendingQueueStatuses())
+                            + serviceProviderRepository.countByCategoryAndPartnerProfileStatusIsNull(
+                                    in.sp.main.Entities.ProviderCategory.WOMEN_LAWYER);
+                } catch (Exception ignored) {
+                    pendingLawyers = serviceProviderRepository.countByCategoryAndVerificationStatus(
+                            in.sp.main.Entities.ProviderCategory.WOMEN_LAWYER, VerificationStatus.PENDING);
+                }
+                long pendingFitness = 0;
+                try {
+                    pendingFitness = serviceProviderRepository.countByCategoryAndPartnerProfileStatusIn(
+                            in.sp.main.Entities.ProviderCategory.FITNESS_ZUMBA,
+                            PartnerLifecycleSupport.pendingQueueStatuses())
+                            + serviceProviderRepository.countByCategoryAndPartnerProfileStatusIsNull(
+                                    in.sp.main.Entities.ProviderCategory.FITNESS_ZUMBA);
+                } catch (Exception ignored) {
+                    pendingFitness = serviceProviderRepository.countByCategoryAndVerificationStatus(
+                            in.sp.main.Entities.ProviderCategory.FITNESS_ZUMBA, VerificationStatus.PENDING);
+                }
                 long unreadContactMessages = contactMessageRepository.countByReadByAdminFalse();
 
                 long pendingProposals = businessProposalRepository.countByStatus(VerificationStatus.PENDING);

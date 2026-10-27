@@ -182,7 +182,7 @@
             <a href="${pageContext.request.contextPath}/creator-hub/profile" title="Profile" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-user"></i> <span class="desktop-only">Profile</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/feed" title="CreatorHub" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-clapperboard"></i> <span class="desktop-only">CreatorHub</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span></a>
-            <a href="${pageContext.request.contextPath}/creator-hub/coins" title="Coins" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/notifications" title="Notifications" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-bell"></i> <span class="desktop-only">Notifications</span></a>
             <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span></a>
         </div>
     </header>
@@ -200,10 +200,7 @@
                 <i class="fa-regular fa-comment-dots"></i> Chat
                 
             </a>
-            <a href="${pageContext.request.contextPath}/creator-hub/coins" class="ls-item">
-            <i class="fa-solid fa-coins"></i> Coins
-        </a>
-            <a href="#" onclick="toggleNotifPanel()" class="ls-item">
+            <a href="${pageContext.request.contextPath}/creator-hub/notifications" class="ls-item">
                 <i class="fa-regular fa-bell"></i> Notifications
                 <c:if test="${unreadNotifCount > 0}"><span class="ls-badge">${unreadNotifCount}</span></c:if>
             </a>
@@ -219,24 +216,73 @@
         <div class="chat-container" style="width:100%; max-width:1200px; flex:1; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; display:flex; height:calc(100vh - 120px); position:sticky; top:80px;">
             
             <!-- Chat Sidebar (Users List) -->
-            <div style="width:320px; border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--bg);">
+            <div style="width:330px; border-right:1px solid var(--border); display:flex; flex-direction:column; background:var(--bg);">
                 <div style="padding:15px; border-bottom:1px solid var(--border);">
-                    <h3 style="margin:0 0 10px 0; font-size:18px;">Messages</h3>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <h3 style="margin:0; font-size:18px; font-weight:700;">Messages</h3>
+                    </div>
+
+                    <!-- Navigation Tabs: Chats vs Message Requests -->
+                    <div style="display:flex; border-bottom:1px solid var(--border); gap:8px; margin-bottom:12px;">
+                        <button id="tabChatsBtn" onclick="switchSidebarTab('chats')" class="chat-tab-btn active" style="background:none; border:none; padding:8px 6px; font-size:14px; font-weight:700; color:var(--accent); border-bottom:2px solid var(--accent); cursor:pointer; display:flex; align-items:center; gap:6px;">
+                            <span>Chats</span>
+                            <span id="chatsCountBadge" style="background:var(--accent-soft); color:var(--accent); font-size:11px; font-weight:700; border-radius:10px; padding:2px 7px;">${fn:length(chatUsers)}</span>
+                        </button>
+                        <button id="tabRequestsBtn" onclick="switchSidebarTab('requests')" class="chat-tab-btn" style="background:none; border:none; padding:8px 6px; font-size:14px; font-weight:600; color:var(--sub); border-bottom:2px solid transparent; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                            <span>Requests</span>
+                            <span id="requestsCountBadge" style="${fn:length(messageRequests) > 0 ? 'background:var(--accent); color:white;' : 'background:var(--border); color:var(--sub);'} font-size:11px; font-weight:700; border-radius:10px; padding:2px 7px;">${fn:length(messageRequests)}</span>
+                        </button>
+                    </div>
+
                     <div style="position:relative;">
                         <i class="fa-solid fa-search" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--sub);"></i>
-                        <input type="text" id="userSearch" placeholder="Search friends..." onkeyup="filterUsers()" style="width:100%; padding:10px 10px 10px 35px; border-radius:20px; border:none; background:var(--card); outline:none;">
+                        <input type="text" id="userSearch" placeholder="Search users..." onkeyup="filterUsers()" style="width:100%; padding:9px 10px 9px 34px; border-radius:20px; border:1px solid var(--border); background:var(--card); outline:none; font-size:13px;">
                     </div>
                 </div>
+
+                <!-- 1. Followed Users / Active Chats List -->
                 <div id="chatUsersList" style="flex:1; overflow-y:auto; padding:10px;">
                     <c:if test="${empty chatUsers}">
-                        <div style="text-align:center; padding:20px; color:var(--sub);">No friends found. Follow some creators!</div>
+                        <div class="empty-chat-notice" style="text-align:center; padding:30px 15px; color:var(--sub); font-size:13px;">
+                            <i class="fa-regular fa-comments mb-2" style="font-size:28px; opacity:0.4;"></i>
+                            <div>No conversations yet. Follow creators to start chatting!</div>
+                        </div>
                     </c:if>
                     <c:forEach var="friend" items="${chatUsers}">
-                        <div class="chat-user-item" onclick="openChatWith(${friend.id}, '${friend.fullName}', '${not empty friend.profilePhoto ? friend.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}')" data-name="${fn:toLowerCase(friend.fullName)}" style="display:flex; align-items:center; padding:12px; border-radius:12px; cursor:pointer; transition:background 0.2s; margin-bottom:5px;">
-                            <img src="${not empty friend.profilePhoto ? friend.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';" style="width:45px; height:45px; border-radius:50%; object-fit:cover; margin-right:12px;">
-                            <div style="flex:1;">
-                                <div style="font-weight:600; font-size:15px; color:var(--text);">${friend.fullName}</div>
-                                <div style="font-size:13px; color:var(--sub);">Tap to chat</div>
+                        <div class="chat-user-item" onclick="openChatWith(${friend.id}, '${friend.fullName}', '${not empty friend.profilePhoto ? friend.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}', true)" data-user-id="${friend.id}" data-name="${fn:toLowerCase(friend.fullName)}" style="display:flex; align-items:center; padding:11px; border-radius:12px; cursor:pointer; transition:background 0.2s; margin-bottom:4px; position:relative;">
+                            <img src="${not empty friend.profilePhoto ? friend.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';" style="width:44px; height:44px; border-radius:50%; object-fit:cover; margin-right:12px; flex-shrink:0;">
+                            <div style="flex:1; min-width:0;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="font-weight:600; font-size:14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${friend.fullName}</div>
+                                    <c:if test="${not empty unreadCounts[friend.id] && unreadCounts[friend.id] > 0}">
+                                        <span class="user-unread-badge" style="background:var(--accent); color:white; font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;">${unreadCounts[friend.id]}</span>
+                                    </c:if>
+                                </div>
+                                <div class="user-last-msg" style="font-size:12px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Tap to chat</div>
+                            </div>
+                        </div>
+                    </c:forEach>
+                </div>
+
+                <!-- 2. Message Requests List (Unfollowed Users) -->
+                <div id="messageRequestsList" style="flex:1; overflow-y:auto; padding:10px; display:none;">
+                    <c:if test="${empty messageRequests}">
+                        <div class="empty-chat-notice" style="text-align:center; padding:30px 15px; color:var(--sub); font-size:13px;">
+                            <i class="fa-regular fa-envelope-open mb-2" style="font-size:28px; opacity:0.4;"></i>
+                            <div>No message requests right now.</div>
+                        </div>
+                    </c:if>
+                    <c:forEach var="requestUser" items="${messageRequests}">
+                        <div class="chat-user-item request-item" onclick="openChatWith(${requestUser.id}, '${requestUser.fullName}', '${not empty requestUser.profilePhoto ? requestUser.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}', false)" data-user-id="${requestUser.id}" data-name="${fn:toLowerCase(requestUser.fullName)}" style="display:flex; align-items:center; padding:11px; border-radius:12px; cursor:pointer; transition:background 0.2s; margin-bottom:4px; position:relative; background:rgba(244,63,94,0.03);">
+                            <img src="${not empty requestUser.profilePhoto ? requestUser.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';" style="width:44px; height:44px; border-radius:50%; object-fit:cover; margin-right:12px; border:2px solid #fecdd3; flex-shrink:0;">
+                            <div style="flex:1; min-width:0;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="font-weight:600; font-size:14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${requestUser.fullName}</div>
+                                    <c:if test="${not empty unreadCounts[requestUser.id] && unreadCounts[requestUser.id] > 0}">
+                                        <span class="user-unread-badge" style="background:var(--accent); color:white; font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;">${unreadCounts[requestUser.id]}</span>
+                                    </c:if>
+                                </div>
+                                <div class="user-last-msg" style="font-size:12px; color:var(--accent); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><i class="fa-solid fa-envelope me-1"></i>Message Request</div>
                             </div>
                         </div>
                     </c:forEach>
@@ -249,20 +295,34 @@
                 <div id="chatPlaceholder" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--sub); z-index:10; background:var(--card);">
                     <i class="fa-regular fa-paper-plane" style="font-size:64px; margin-bottom:20px; opacity:0.3;"></i>
                     <h2>Your Messages</h2>
-                    <p>Select a friend from the left to start chatting.</p>
+                    <p>Select a conversation or a message request from the left.</p>
                 </div>
 
                 <!-- Active Chat Interface -->
                 <div id="activeChat" style="display:none; flex:1; flex-direction:column; min-height:0;">
                     <div style="padding:15px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--bg);">
-                        <div style="display:flex; align-items:center;">
-                            <img id="chatHeaderImg" src="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; margin-right:15px;">
-                            <h3 id="chatHeaderName" style="margin:0; font-size:16px;">User Name</h3>
+                        <div style="display:flex; align-items:center; min-width:0;">
+                            <img id="chatHeaderImg" src="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; margin-right:15px; flex-shrink:0;">
+                            <div style="min-width:0;">
+                                <h3 id="chatHeaderName" style="margin:0; font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">User Name</h3>
+                                <div id="chatHeaderStatus" style="font-size:12px; color:var(--sub);">Direct Message</div>
+                            </div>
                         </div>
                         <div style="display:flex; gap:15px; color:var(--accent); font-size:18px; cursor:pointer;">
-                            <i class="fa-solid fa-phone" onclick="startCall()"></i>
-                            <i class="fa-solid fa-video" onclick="startVideoCall()"></i>
+                            <i class="fa-solid fa-phone" onclick="startCall()" title="Audio Call"></i>
+                            <i class="fa-solid fa-video" onclick="startVideoCall()" title="Video Call"></i>
                         </div>
+                    </div>
+
+                    <!-- Message Request Warning & Accept Banner -->
+                    <div id="requestBanner" style="display:none; padding:12px 20px; background:linear-gradient(90deg, rgba(244,63,94,0.12), rgba(139,92,246,0.12)); border-bottom:1px solid var(--border); align-items:center; justify-content:space-between; gap:12px;">
+                        <div style="font-size:13px; color:var(--text); display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-shield-halved" style="color:var(--accent); font-size:16px;"></i>
+                            <span><strong>Message Request:</strong> You are not following this user.</span>
+                        </div>
+                        <button id="btnFollowAndAccept" onclick="followAndAcceptUser()" style="background:var(--accent); color:white; border:none; padding:6px 16px; border-radius:20px; font-weight:700; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(244,63,94,0.3); transition:transform 0.2s;">
+                            <i class="fa-solid fa-user-plus"></i> Follow Back / Accept
+                        </button>
                     </div>
                     
                     <div id="chatMessagesArea" style="flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:10px; min-height:0;">
@@ -315,10 +375,25 @@
             <button onclick="document.getElementById('deleteModal').style.display='none'" style="padding:12px; border:none; border-radius:8px; background:transparent; color:var(--sub); cursor:pointer; font-weight:600; font-size:15px; margin-top:5px;">Cancel</button>
         </div>
     </div>
+
+    <!-- Floating In-Chat Toast Notification Container -->
+    <div id="chatToastContainer" style="position:fixed; top:90px; right:24px; z-index:99999; display:flex; flex-direction:column; gap:10px; pointer-events:none;"></div>
     
     <style>
         .chat-user-item:hover { background:var(--border) !important; }
         .chat-user-item.active { background:var(--border) !important; }
+        .chat-tab-btn { transition: all 0.2s; outline: none; }
+        .chat-tab-btn:hover { color: var(--accent) !important; }
+        .user-unread-badge { animation: pulseBadge 1.5s infinite; }
+        @keyframes pulseBadge {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes slideInToast {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
         .msg-bubble { max-width:70%; padding:10px 32px 10px 15px; border-radius:18px; font-size:14px; line-height:1.4; word-wrap:break-word; position:relative; display:flex; flex-direction:column; }
         .msg-mine { background:var(--accent); color:white; align-self:flex-end; border-bottom-right-radius:4px; }
         .msg-theirs { background:var(--bg); color:var(--text); align-self:flex-start; border-bottom-left-radius:4px; border:1px solid var(--border); }
@@ -337,26 +412,81 @@
         .theme-toggle:hover { color: var(--accent); }
         
         .chat-img-preview { max-width: 100%; max-height: 300px; object-fit: cover; border-radius: 8px; margin-top: 5px; }
-    @media (max-width: 768px) { .chat-container { border-radius: 0 !important; border-left: none !important; border-right: none !important; flex-direction: column !important; height: auto !important; position: static !important; } .chat-container > div:first-child { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border) !important; max-height: 400px; } } </style>
+        @media (max-width: 768px) { 
+            .chat-container { border-radius: 0 !important; border-left: none !important; border-right: none !important; flex-direction: column !important; height: auto !important; position: static !important; } 
+            .chat-container > div:first-child { width: 100% !important; border-right: none !important; border-bottom: 1px solid var(--border) !important; max-height: 380px; } 
+        }
+    </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 
     <script>
         let currentPeerId = null;
+        let currentPeerName = '';
+        let currentPeerPhoto = '';
+        let currentIsFollowed = true;
         let chatInterval = null;
         let stompClient = null;
         const myId = ${currentUser.id};
+
+        // Followed user IDs tracked on client
+        const followingIdsSet = new Set([
+            <c:forEach var="fid" items="${followingIds}" varStatus="status">
+                ${fid}${!status.last ? ',' : ''}
+            </c:forEach>
+        ]);
+
+        <c:choose>
+            <c:when test="${not empty activePeerId}">
+                const serverActivePeerId = ${activePeerId};
+                const serverActivePeerName = "${activePeerUser != null ? activePeerUser.fullName : ''}";
+                const serverActivePeerPhoto = "${activePeerUser != null && not empty activePeerUser.profilePhoto ? activePeerUser.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}";
+            </c:when>
+            <c:otherwise>
+                const serverActivePeerId = null;
+                const serverActivePeerName = '';
+                const serverActivePeerPhoto = '';
+            </c:otherwise>
+        </c:choose>
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('chatDarkMode') === 'true') {
                 document.body.classList.add('dark-mode');
             }
             
-            const savedPeer = sessionStorage.getItem('activeChatPeerId');
-            if (savedPeer) {
-                const userEl = document.querySelector(`.chat-user-item[onclick*="openChatWith(${savedPeer}"]`);
-                if (userEl) userEl.click();
+            // Check if server or URL provided peerId or user
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryPeerId = urlParams.get('peerId') || urlParams.get('user');
+            const targetPeerId = serverActivePeerId || queryPeerId;
+
+            if (targetPeerId) {
+                const targetIsFollowed = followingIdsSet.has(Number(targetPeerId));
+                if (!targetIsFollowed) {
+                    switchSidebarTab('requests');
+                } else {
+                    switchSidebarTab('chats');
+                }
+                const existingEl = document.querySelector(`.chat-user-item[data-user-id="${targetPeerId}"]`);
+                if (existingEl) {
+                    existingEl.click();
+                } else if (serverActivePeerName) {
+                    openChatWith(targetPeerId, serverActivePeerName, serverActivePeerPhoto, targetIsFollowed);
+                } else {
+                    fetch('${pageContext.request.contextPath}/api/chat/user-info?userId=' + targetPeerId)
+                        .then(r => r.json())
+                        .then(u => {
+                            if (u && u.id) {
+                                openChatWith(u.id, u.fullName, u.profilePhoto || '${pageContext.request.contextPath}/assets/img/default-avatar.png', targetIsFollowed);
+                            }
+                        }).catch(() => {});
+                }
+            } else {
+                const savedPeer = sessionStorage.getItem('activeChatPeerId');
+                if (savedPeer) {
+                    const userEl = document.querySelector(`.chat-user-item[data-user-id="${savedPeer}"]`);
+                    if (userEl) userEl.click();
+                }
             }
 
             connectSTOMP();
@@ -367,31 +497,266 @@
             localStorage.setItem('chatDarkMode', document.body.classList.contains('dark-mode'));
         }
 
+        function switchSidebarTab(tab) {
+            const chatsList = document.getElementById('chatUsersList');
+            const reqList = document.getElementById('messageRequestsList');
+            const tabChats = document.getElementById('tabChatsBtn');
+            const tabReqs = document.getElementById('tabRequestsBtn');
+            
+            if (tab === 'chats') {
+                chatsList.style.display = 'block';
+                reqList.style.display = 'none';
+                tabChats.classList.add('active');
+                tabChats.style.color = 'var(--accent)';
+                tabChats.style.borderBottomColor = 'var(--accent)';
+                tabReqs.classList.remove('active');
+                tabReqs.style.color = 'var(--sub)';
+                tabReqs.style.borderBottomColor = 'transparent';
+            } else {
+                chatsList.style.display = 'none';
+                reqList.style.display = 'block';
+                tabReqs.classList.add('active');
+                tabReqs.style.color = 'var(--accent)';
+                tabReqs.style.borderBottomColor = 'var(--accent)';
+                tabChats.classList.remove('active');
+                tabChats.style.color = 'var(--sub)';
+                tabChats.style.borderBottomColor = 'transparent';
+            }
+        }
+
+        let stompReconnectTimeout = null;
         function connectSTOMP() {
-            const socket = new SockJS('${pageContext.request.contextPath}/ws-chat');
-            stompClient = Stomp.over(socket);
-            stompClient.debug = null;
-            stompClient.connect({}, function () {
-                stompClient.subscribe("/topic/messages/" + myId, function (response) {
-                    const msg = JSON.parse(response.body);
-                    
-                    if (msg.action === 'DELETE') {
-                        const el = document.getElementById('msg-'+msg.id);
-                        if (el) {
-                            const timeNode = el.querySelector('.msg-time');
-                            el.innerHTML = '<i style="opacity:0.6;">This message was deleted</i>';
-                            if (timeNode) el.appendChild(timeNode);
-                            el.onclick = null;
-                            el.style.cursor = 'default';
-                        }
-                        return;
+            try {
+                const socket = new SockJS('${pageContext.request.contextPath}/ws-chat');
+                stompClient = Stomp.over(socket);
+                stompClient.debug = null;
+                stompClient.connect({}, function () {
+                    if (stompReconnectTimeout) {
+                        clearTimeout(stompReconnectTimeout);
+                        stompReconnectTimeout = null;
                     }
-                    
-                    if (currentPeerId && (msg.senderId == currentPeerId || (msg.sender && msg.sender.id == currentPeerId))) {
-                        appendMessage(msg, false);
-                        fetch('${pageContext.request.contextPath}/api/chat/messages?peerId=' + currentPeerId).catch(()=>{});
+                    stompClient.subscribe("/topic/messages/" + myId, function (response) {
+                        const msg = JSON.parse(response.body);
+                        
+                        if (msg.action === 'DELETE') {
+                            const el = document.getElementById('msg-'+msg.id);
+                            if (el) {
+                                const timeNode = el.querySelector('.msg-time');
+                                el.innerHTML = '<i style="opacity:0.6;">This message was deleted</i>';
+                                if (timeNode) el.appendChild(timeNode);
+                                el.onclick = null;
+                                el.style.cursor = 'default';
+                            }
+                            return;
+                        }
+
+                        const senderId = Number(msg.senderId || (msg.sender ? msg.sender.id : null));
+                        const senderName = msg.senderName || (msg.sender ? msg.sender.fullName : 'Someone');
+                        const senderPhoto = msg.senderPhoto || (msg.sender && msg.sender.profilePhoto ? msg.sender.profilePhoto : '${pageContext.request.contextPath}/assets/img/default-avatar.png');
+                        const text = msg.message || 'Sent an attachment';
+
+                        // 1. If currently chatting with this user:
+                        if (currentPeerId && Number(currentPeerId) === senderId) {
+                            appendMessage(msg, false);
+                            // Mark as read immediately on backend
+                            fetch('${pageContext.request.contextPath}/api/chat/messages?peerId=' + currentPeerId).catch(()=>{});
+                            return;
+                        }
+
+                        // 2. Sender is not in the active view:
+                        const isFollowed = (msg.isFollowed === true) || followingIdsSet.has(senderId);
+
+                        if (isFollowed) {
+                            // Followed user: show in-chat notification & increment badge in Chats
+                            showInChatToast('💬 ' + senderName, text, () => {
+                                switchSidebarTab('chats');
+                                openChatWith(senderId, senderName, senderPhoto, true);
+                            }, true, senderPhoto);
+                            incrementUnreadBadge(senderId, senderName, senderPhoto, true, text);
+                        } else {
+                            // Unfollowed user: Message Request!
+                            showInChatToast('📩 Request from ' + senderName, text, () => {
+                                switchSidebarTab('requests');
+                                openChatWith(senderId, senderName, senderPhoto, false);
+                            }, false, senderPhoto);
+                            incrementUnreadBadge(senderId, senderName, senderPhoto, false, text);
+                            incrementRequestsCount();
+                        }
+                    });
+                }, function (err) {
+                    if (!stompReconnectTimeout) {
+                        stompReconnectTimeout = setTimeout(connectSTOMP, 5000);
                     }
                 });
+            } catch (e) {
+                if (!stompReconnectTimeout) {
+                    stompReconnectTimeout = setTimeout(connectSTOMP, 5000);
+                }
+            }
+        }
+
+        function showInChatToast(title, message, onClickAction, isFollowed = true, avatarUrl = null) {
+            const container = document.getElementById('chatToastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'chat-toast-card';
+            toast.style.cssText = 'display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:14px; background:var(--card); color:var(--text); border:1px solid ' + (isFollowed ? 'var(--accent)' : '#8b5cf6') + '; box-shadow:0 10px 30px rgba(0,0,0,0.18), 0 0 12px ' + (isFollowed ? 'rgba(244,63,94,0.25)' : 'rgba(139,92,246,0.25)') + '; cursor:pointer; min-width:280px; max-width:360px; animation:slideInToast 0.3s cubic-bezier(0.16, 1, 0.3, 1); transition:transform 0.2s, opacity 0.2s; position:relative; pointer-events:auto;';
+
+            const imgHtml = avatarUrl 
+                ? '<img src="' + avatarUrl + '" onerror="this.src=\'${pageContext.request.contextPath}/assets/img/default-avatar.png\';" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;">'
+                : '<div style="width:40px; height:40px; border-radius:50%; background:' + (isFollowed ? 'var(--accent-soft)' : '#ede9fe') + '; display:flex; align-items:center; justify-content:center; color:' + (isFollowed ? 'var(--accent)' : '#8b5cf6') + '; flex-shrink:0;"><i class="' + (isFollowed ? 'fa-solid fa-comment-dots' : 'fa-solid fa-envelope') + '"></i></div>';
+
+            const previewText = message.startsWith('[IMAGE:') ? '📷 Sent a photo' : (message.length > 50 ? message.substring(0, 47) + '...' : message);
+
+            toast.innerHTML = imgHtml + 
+                '<div style="flex:1; min-width:0;">' +
+                    '<div style="font-weight:700; font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + title + '</div>' +
+                    '<div style="font-size:12px; color:var(--sub); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + previewText + '</div>' +
+                '</div>' +
+                '<button style="background:none; border:none; color:var(--sub); font-size:16px; cursor:pointer; padding:4px;" onclick="event.stopPropagation(); this.parentElement.remove();">&times;</button>';
+
+            toast.onclick = function() {
+                toast.remove();
+                if (onClickAction) onClickAction();
+            };
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-10px)';
+                    setTimeout(() => toast.remove(), 250);
+                }
+            }, 6000);
+        }
+
+        function incrementUnreadBadge(userId, userName, userPhoto, isFollowed, lastMsg) {
+            let listId = isFollowed ? 'chatUsersList' : 'messageRequestsList';
+            let userEl = document.querySelector(`.chat-user-item[data-user-id="${userId}"]`);
+            
+            if (!userEl) {
+                userEl = document.createElement('div');
+                userEl.className = 'chat-user-item' + (!isFollowed ? ' request-item' : '');
+                userEl.setAttribute('data-user-id', userId);
+                userEl.setAttribute('data-name', userName.toLowerCase());
+                userEl.style.cssText = 'display:flex; align-items:center; padding:11px; border-radius:12px; cursor:pointer; transition:background 0.2s; margin-bottom:4px; position:relative;' + (!isFollowed ? ' background:rgba(244,63,94,0.03);' : '');
+                userEl.onclick = function() { openChatWith(userId, userName, userPhoto, isFollowed); };
+                
+                userEl.innerHTML = 
+                    '<img src="' + userPhoto + '" onerror="this.src=\'${pageContext.request.contextPath}/assets/img/default-avatar.png\';" style="width:44px; height:44px; border-radius:50%; object-fit:cover; margin-right:12px; ' + (!isFollowed ? 'border:2px solid #fecdd3;' : '') + ' flex-shrink:0;">' +
+                    '<div style="flex:1; min-width:0;">' +
+                        '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                            '<div style="font-weight:600; font-size:14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + userName + '</div>' +
+                            '<span class="user-unread-badge" style="background:var(--accent); color:white; font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;">1</span>' +
+                        '</div>' +
+                        '<div class="user-last-msg" style="font-size:12px; color:' + (isFollowed ? 'var(--sub)' : 'var(--accent)') + '; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' +
+                            (isFollowed ? (lastMsg.length > 25 ? lastMsg.substring(0, 22) + '...' : lastMsg) : '<i class="fa-solid fa-envelope me-1"></i>New Request') +
+                        '</div>' +
+                    '</div>';
+
+                const listContainer = document.getElementById(listId);
+                if (listContainer) {
+                    const emptyNotice = listContainer.querySelector('.empty-chat-notice');
+                    if (emptyNotice) emptyNotice.remove();
+                    listContainer.prepend(userEl);
+                }
+            } else {
+                let badge = userEl.querySelector('.user-unread-badge');
+                if (!badge) {
+                    const nameRow = userEl.querySelector('div[style*="justify-content:space-between"]');
+                    if (nameRow) {
+                        badge = document.createElement('span');
+                        badge.className = 'user-unread-badge';
+                        badge.style.cssText = 'background:var(--accent); color:white; font-size:11px; font-weight:700; padding:2px 7px; border-radius:10px; margin-left:6px;';
+                        badge.innerText = '1';
+                        nameRow.appendChild(badge);
+                    }
+                } else {
+                    const cur = parseInt(badge.innerText || '0', 10);
+                    badge.innerText = cur + 1;
+                }
+                const note = userEl.querySelector('.user-last-msg');
+                if (note) {
+                    note.innerText = lastMsg.startsWith('[IMAGE:') ? '📷 Photo' : (lastMsg.length > 25 ? lastMsg.substring(0, 22) + '...' : lastMsg);
+                }
+            }
+        }
+
+        function incrementRequestsCount() {
+            const badge = document.getElementById('requestsCountBadge');
+            if (badge) {
+                let count = parseInt(badge.innerText || '0', 10) + 1;
+                badge.innerText = count;
+                badge.style.background = 'var(--accent)';
+                badge.style.color = 'white';
+            }
+        }
+
+        function decrementRequestsCount() {
+            const badge = document.getElementById('requestsCountBadge');
+            if (badge) {
+                let count = Math.max(0, parseInt(badge.innerText || '0', 10) - 1);
+                badge.innerText = count;
+                if (count === 0) {
+                    badge.style.background = 'var(--border)';
+                    badge.style.color = 'var(--sub)';
+                }
+            }
+        }
+
+        function followAndAcceptUser() {
+            if (!currentPeerId) return;
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            const headers = {};
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            const btn = document.getElementById('btnFollowAndAccept');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Following...';
+
+            fetch('${pageContext.request.contextPath}/creator-hub/creator/follow/' + currentPeerId, {
+                method: 'POST',
+                headers: headers
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'FOLLOWED') {
+                    followingIdsSet.add(Number(currentPeerId));
+                    currentIsFollowed = true;
+                    const banner = document.getElementById('requestBanner');
+                    if (banner) banner.style.display = 'none';
+
+                    const statusNode = document.getElementById('chatHeaderStatus');
+                    if (statusNode) statusNode.innerText = 'Direct Message · Following';
+
+                    // Move from Requests list to Chats list
+                    const reqItem = document.querySelector(`#messageRequestsList .chat-user-item[data-user-id="${currentPeerId}"]`);
+                    if (reqItem) {
+                        reqItem.classList.remove('request-item');
+                        reqItem.style.background = '';
+                        const img = reqItem.querySelector('img');
+                        if (img) img.style.border = 'none';
+                        reqItem.onclick = function() { openChatWith(currentPeerId, currentPeerName, currentPeerPhoto, true); };
+                        const note = reqItem.querySelector('.user-last-msg');
+                        if (note) {
+                            note.style.color = 'var(--sub)';
+                            note.innerHTML = 'Following · Tap to chat';
+                        }
+                        const chatsContainer = document.getElementById('chatUsersList');
+                        const emptyNotice = chatsContainer.querySelector('.empty-chat-notice');
+                        if (emptyNotice) emptyNotice.remove();
+                        chatsContainer.prepend(reqItem);
+                        decrementRequestsCount();
+                    }
+                    showInChatToast('Followed!', 'You are now following ' + currentPeerName + '. Chat moved to Chats.', null, true);
+                } else {
+                    if (btn) btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Follow Back / Accept';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Follow Back / Accept';
             });
         }
 
@@ -428,7 +793,15 @@
         }
 
         function deleteMessage(msgId, type) {
-            fetch('${pageContext.request.contextPath}/api/chat/delete/' + msgId + '?type=' + type, { method: 'POST' })
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            const headers = {};
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            fetch('${pageContext.request.contextPath}/api/chat/delete/' + msgId + '?type=' + type, { 
+                method: 'POST',
+                headers: headers
+            })
             .then(r => r.json())
             .then(data => { 
                 if (data.success) { 
@@ -437,7 +810,6 @@
                         if (type === 'me') {
                             el.style.display = 'none';
                         } else {
-                            // The stomp handler will also do this, but we do it optimistically for the sender
                             const timeNode = el.querySelector('.msg-time');
                             el.innerHTML = '<i style="opacity:0.6;">This message was deleted</i>';
                             if (timeNode) el.appendChild(timeNode);
@@ -463,9 +835,15 @@
             
             const formData = new FormData();
             formData.append("file", file);
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            const headers = {};
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
             
             fetch('${pageContext.request.contextPath}/api/chat/upload', {
                 method: 'POST',
+                headers: headers,
                 body: formData
             }).then(r => r.json()).then(data => {
                 if (data.success && data.url) {
@@ -479,22 +857,47 @@
         function filterUsers() {
             const val = document.getElementById('userSearch').value.toLowerCase();
             document.querySelectorAll('.chat-user-item').forEach(el => {
-                if(el.getAttribute('data-name').includes(val)) el.style.display = 'flex';
+                const name = (el.getAttribute('data-name') || '').toLowerCase();
+                if(name.includes(val)) el.style.display = 'flex';
                 else el.style.display = 'none';
             });
         }
 
-        function openChatWith(peerId, name, photoUrl) {
-            currentPeerId = peerId;
-            sessionStorage.setItem('activeChatPeerId', peerId);
+        function openChatWith(peerId, name, photoUrl, isFollowed = null) {
+            currentPeerId = Number(peerId);
+            currentPeerName = name;
+            currentPeerPhoto = photoUrl;
+
+            if (isFollowed === null) {
+                currentIsFollowed = followingIdsSet.has(currentPeerId);
+            } else {
+                currentIsFollowed = isFollowed;
+            }
+
+            sessionStorage.setItem('activeChatPeerId', currentPeerId);
             
             document.getElementById('chatPlaceholder').style.display = 'none';
             document.getElementById('activeChat').style.display = 'flex';
             document.getElementById('chatHeaderName').innerText = name;
             document.getElementById('chatHeaderImg').src = photoUrl;
             
+            const statusNode = document.getElementById('chatHeaderStatus');
+            const banner = document.getElementById('requestBanner');
+            if (currentIsFollowed) {
+                if (statusNode) statusNode.innerText = 'Direct Message · Following';
+                if (banner) banner.style.display = 'none';
+            } else {
+                if (statusNode) statusNode.innerText = 'Message Request · Not following';
+                if (banner) banner.style.display = 'flex';
+            }
+
             document.querySelectorAll('.chat-user-item').forEach(el => el.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            const activeUserEl = document.querySelector(`.chat-user-item[data-user-id="${currentPeerId}"]`);
+            if (activeUserEl) {
+                activeUserEl.classList.add('active');
+                const badge = activeUserEl.querySelector('.user-unread-badge');
+                if (badge) badge.remove();
+            }
 
             loadMessages();
             if(chatInterval) clearInterval(chatInterval);
@@ -521,19 +924,19 @@
             const area = document.getElementById('chatMessagesArea');
             area.innerHTML = '';
             if(msgs.length === 0) {
-                area.innerHTML = '<div style="text-align:center;padding:40px;color:var(--sub);">Say hi! 👋</div>';
+                area.innerHTML = '<div style="text-align:center;padding:40px;color:var(--sub);font-size:14px;"><i class="fa-regular fa-paper-plane mb-2" style="font-size:32px;display:block;opacity:0.3;"></i>Say hi and start conversation! 👋</div>';
                 return;
             }
             msgs.forEach(m => {
                 const senderId = m.senderId || (m.sender ? m.sender.id : null);
-                const isMine = (senderId == myId);
+                const isMine = (Number(senderId) === Number(myId));
                 appendMessage(m, isMine, area, false);
             });
             area.scrollTop = area.scrollHeight;
         }
 
         function appendMessage(msg, isMine, area = document.getElementById('chatMessagesArea'), scroll = true) {
-            if (area.innerHTML.includes('Say hi!')) area.innerHTML = '';
+            if (area.innerHTML.includes('Say hi')) area.innerHTML = '';
             
             const div = document.createElement('div');
             div.id = 'msg-' + msg.id;
@@ -579,7 +982,7 @@
                 if(msg.readStatus) {
                     status = '<span class="msg-seen"><i class="fa-solid fa-check-double"></i></span>';
                 } else {
-                    status = '<span style="color:var(--sub)"><i class="fa-solid fa-check"></i></span>';
+                    status = '<span style="color:rgba(255,255,255,0.7)"><i class="fa-solid fa-check"></i></span>';
                 }
             }
             
@@ -601,21 +1004,38 @@
             if(!txt || !currentPeerId) return;
             
             if (!overrideText) input.value = '';
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
             
             fetch('${pageContext.request.contextPath}/api/chat/send', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
                 body: JSON.stringify({ peerId: currentPeerId, message: txt })
             }).then(r => r.json()).then(data => {
                 if(data.success && data.message) {
                     appendMessage(data.message, true);
+                    const userEl = document.querySelector(`.chat-user-item[data-user-id="${currentPeerId}"]`);
+                    if (userEl) {
+                        const note = userEl.querySelector('.user-last-msg');
+                        if (note) note.innerText = txt.startsWith('[IMAGE:') ? '📷 Photo' : (txt.length > 25 ? txt.substring(0, 22) + '...' : txt);
+                    }
+                } else {
+                    showInChatToast('Chat Error', data.error || 'Failed to send message', null, false);
                 }
-            }).catch(() => {});
+            }).catch(err => {
+                console.error("Failed to send message:", err);
+                showInChatToast('Connection Error', 'Failed to send message. Please check connection.', null, false);
+            });
         }
 
         function toggleEmoji() {
             const ep = document.getElementById('emojiPicker');
-            ep.style.display = ep.style.display === 'flex' ? 'none' : 'flex';
+            if (ep) ep.style.display = ep.style.display === 'flex' ? 'none' : 'flex';
         }
 
         function startCall() {

@@ -19,6 +19,9 @@ public class GlobalModelAttributes {
     @Autowired
     private in.sp.main.Repository.ContactMessageRepository contactMessageRepo;
 
+    @Autowired
+    private in.sp.main.Repository.CreatorNotificationRepository creatorNotificationRepo;
+
     @ModelAttribute("user")
     public User currentUser(HttpSession session) {
         Object u = session.getAttribute("user");
@@ -48,9 +51,27 @@ public class GlobalModelAttributes {
                             .countByEmailIgnoreCaseAndAdminReplyIsNotNullAndReplyReadByUserFalse(user.getEmail().trim());
                 } catch (Exception ignored) {}
             }
-            return unreadBroadcasts + unreadReplies;
+
+            long unreadCreatorNotifs = 0;
+            try {
+                unreadCreatorNotifs = creatorNotificationRepo.countByUser_IdAndIsReadFalse(user.getId());
+            } catch (Exception ignored) {}
+
+            return unreadBroadcasts + unreadReplies + unreadCreatorNotifs;
         }
         return 0;
+    }
+
+    @ModelAttribute("userFollowNotifications")
+    public java.util.List<in.sp.main.Entities.CreatorNotification> userFollowNotifications(HttpSession session) {
+        Object u = session.getAttribute("user");
+        if (u instanceof User user) {
+            try {
+                return creatorNotificationRepo.findByUser_IdOrderByCreatedAtDesc(user.getId())
+                        .stream().limit(20).collect(java.util.stream.Collectors.toList());
+            } catch (Exception ignored) {}
+        }
+        return java.util.Collections.emptyList();
     }
 
     @ModelAttribute("userContactReplies")

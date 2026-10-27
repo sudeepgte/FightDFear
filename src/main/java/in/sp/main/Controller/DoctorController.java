@@ -55,6 +55,9 @@ public class DoctorController {
     @Autowired
     private DoctorRepository doctorRepo;
 
+    @org.springframework.beans.factory.annotation.Value("${google.maps.apiKey:}")
+    private String googleMapsApiKey;
+
     @Autowired
     private DoctorAppointmentRepository appointmentRepo;
 
@@ -178,7 +181,11 @@ public class DoctorController {
     @GetMapping("/login")
     public String loginPage(@RequestParam(value = "registered", required = false) String registered,
                             HttpSession session, Model model) {
-        if (requireLoggedDoctor(session) != null) {
+        Doctor logged = requireLoggedDoctor(session);
+        if (logged != null) {
+            if (isApprovedDoctor(logged)) {
+                return "redirect:/doctors/dashboard";
+            }
             return "redirect:/doctors/profile-completion";
         }
         consumeDoctorLoginPrefill(session, model);
@@ -238,6 +245,10 @@ public class DoctorController {
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
 
+        if (isApprovedDoctor(d)) {
+            return "redirect:/doctors/dashboard";
+        }
+
         return "redirect:/doctors/profile-completion";
     }
 
@@ -264,6 +275,8 @@ public class DoctorController {
         model.addAttribute("statusLabel",
                 in.sp.main.Service.DoctorVerificationService.friendlyStatusLabel(d.getDoctorProfileStatus()));
         model.addAttribute("nextStepGuidance", doctorProfileService.nextStepGuidance(d));
+        String key = (googleMapsApiKey != null && !googleMapsApiKey.isBlank()) ? googleMapsApiKey.trim() : "";
+        model.addAttribute("googleMapsApiKey", key);
         return "doctor/doctor-profile-completion";
     }
 
@@ -290,6 +303,7 @@ public class DoctorController {
             @RequestParam(required = false) String autoConfirm,
             @RequestParam(required = false) String emergencyAvailable,
             @RequestParam(required = false) String clinicAddress,
+            @RequestParam(required = false) String country,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String pincode,
@@ -332,6 +346,7 @@ public class DoctorController {
             if (medicalRegNumber != null) body.put("medicalRegNumber", medicalRegNumber);
             if (hospitalName != null) body.put("hospitalName", hospitalName);
             if (clinicAddress != null) body.put("clinicAddress", clinicAddress);
+            if (country != null) body.put("country", country);
             if (city != null) body.put("city", city);
             if (state != null) body.put("state", state);
             if (pincode != null) body.put("pincode", pincode);
@@ -402,6 +417,10 @@ public class DoctorController {
                 }
             }
 
+            if (isApprovedDoctor(d)) {
+                redirectAttributes.addFlashAttribute("message", "Profile updated successfully.");
+                return "redirect:/doctors/dashboard?section=profile";
+            }
             redirectAttributes.addFlashAttribute("message", "Profile updated successfully. Review section 11 when you are ready to submit for verification.");
             return "redirect:/doctors/profile-completion";
         } catch (ResponseStatusException ex) {
@@ -447,6 +466,13 @@ public class DoctorController {
     private Doctor requireLoggedDoctor(HttpSession session) {
         Object d = session == null ? null : session.getAttribute("loggedDoctor");
         return d instanceof Doctor ? (Doctor) d : null;
+    }
+
+    private boolean isApprovedDoctor(Doctor d) {
+        if (d == null) return false;
+        Doctor fresh = doctorRepo.findById(d.getId()).orElse(d);
+        return fresh.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED
+                || fresh.getVerificationStatus() == VerificationStatus.VERIFIED;
     }
 
     private static boolean needsProfileCompletion(Doctor d) {
@@ -903,9 +929,11 @@ public class DoctorController {
                 .anyMatch(a -> a.getDoctor() != null
                         && a.getDoctor().getId().equals(id)
                         && a.getStatus() == DoctorAppointmentStatus.COMPLETED);
+        boolean hasBookedAppointment = doctorAppointmentService.hasActiveRelationship(d, u);
         model.addAttribute("doctor", d);
         model.addAttribute("reviews", reviews);
         model.addAttribute("canReview", completedVisit && !reviewRepo.existsByUserIdAndDoctorId(u.getId(), id));
+        model.addAttribute("hasBookedAppointment", hasBookedAppointment);
         return "doctor/doctor-view";
     }
 
@@ -1237,6 +1265,9 @@ public class DoctorController {
             peerName = patient.getFullName();
             peerRole = "Patient";
         } else if (u != null) {
+            if (!doctorAppointmentService.hasActiveRelationship(target, u)) {
+                return "redirect:/doctors/view/" + doctorId + "?error=booking_required";
+            }
             myId = u.getId();
             myRole = "USER";
             displayName = u.getFullName();

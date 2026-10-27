@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import in.sp.main.Entities.ChatMessage;
+import in.sp.main.Entities.CreatorNotification;
 import in.sp.main.Entities.User;
 import in.sp.main.Repository.UserRepository;
 import in.sp.main.Service.ChatService;
@@ -46,8 +47,44 @@ public class MobileChatController {
     @Autowired
     private UserFollowService followService;
 
+    @Autowired
+    private in.sp.main.Repository.CreatorNotificationRepository creatorNotificationRepository;
+
+    @Autowired(required = false)
+    private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private in.sp.main.Repository.UserFollowRepository userFollowRepository;
+
     private User requireUser(HttpSession session) {
-        return (User) session.getAttribute("user");
+        User u = session == null ? null : (User) session.getAttribute("user");
+        if (u != null) return u;
+        try {
+            org.springframework.security.core.Authentication auth = 
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+                String email = auth.getName();
+                u = userRepository.findByEmail(email).orElse(null);
+                if (u != null && session != null) {
+                    session.setAttribute("user", u);
+                }
+                return u;
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    @GetMapping("/user-info")
+    public ResponseEntity<Map<String, Object>> userInfo(@RequestParam Long userId) {
+        User u = userRepository.findById(userId).orElse(null);
+        if (u == null) {
+            return ResponseEntity.notFound().build();
+        }
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", u.getId());
+        map.put("fullName", u.getFullName());
+        map.put("profilePhoto", u.getProfilePhoto());
+        return ResponseEntity.ok(map);
     }
 
     @GetMapping("/messages")
@@ -64,17 +101,11 @@ public class MobileChatController {
         if (peer == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Peer not found"));
         }
-        // Relaxed constraint: Allow if they are following or followed
-        boolean allowed = followService.isFollowing(current.getId(), peerId) || 
-                          followService.isFollowing(peerId, current.getId());
-        if (!allowed) {
-            // Still allow if there's already chat history (meaning they chatted before)
-            List<ChatMessage> history = chatService.getChatHistory(current, peer);
-            if (history.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("success", false, "error", "Not allowed to chat with this user"));
-            }
-        }
+
+        // Mark incoming messages as read when opening conversation
+        try {
+            chatService.markAsRead(peerId, current.getId());
+        } catch (Exception e) {}
 
         List<ChatMessage> messages;
         if (since != null && !since.isBlank()) {
@@ -131,19 +162,55 @@ public class MobileChatController {
         chatMessage.setReadStatus(false);
         ChatMessage saved = chatService.save(chatMessage);
 
+        boolean receiverFollowsSender = userFollowRepository.existsByFollower_IdAndFollowed_Id(peerId, current.getId())
+                || userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedTrue(current.getId(), peerId);
+
+        Map<String, Object> wireDto = messageDto(saved);
+        wireDto.put("isFollowed", receiverFollowsSender);
+
         try {
-            org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate = 
-                org.springframework.web.context.support.WebApplicationContextUtils
-                .getRequiredWebApplicationContext(session.getServletContext())
-                .getBean(org.springframework.messaging.simp.SimpMessagingTemplate.class);
-            messagingTemplate.convertAndSend("/topic/messages/" + peerId, messageDto(saved));
+            org.springframework.messaging.simp.SimpMessagingTemplate template = this.messagingTemplate;
+            if (template == null && session != null) {
+                template = org.springframework.web.context.support.WebApplicationContextUtils
+                    .getRequiredWebApplicationContext(session.getServletContext())
+                    .getBean(org.springframework.messaging.simp.SimpMessagingTemplate.class);
+            }
+
+            if (template != null) {
+                // Broadcast real-time message to receiver
+                template.convertAndSend("/topic/messages/" + peerId, wireDto);
+
+                // If receiver follows sender, record notification and alert bell
+                if (receiverFollowsSender) {
+                    CreatorNotification notif = new CreatorNotification();
+                    notif.setUser(peer);
+                    notif.setSender(current);
+                    notif.setType("CHAT_MESSAGE");
+                    String preview = message.length() > 60 ? message.substring(0, 57) + "..." : message;
+                    notif.setMessage(current.getFullName() + ": " + preview);
+                    notif.setCreatedAt(LocalDateTime.now());
+                    notif.setRead(false);
+                    creatorNotificationRepository.save(notif);
+
+                    try {
+                        Map<String, Object> notifAlert = new HashMap<>();
+                        notifAlert.put("type", "CHAT_MESSAGE");
+                        notifAlert.put("title", "New message from " + current.getFullName());
+                        notifAlert.put("message", current.getFullName() + ": " + preview);
+                        notifAlert.put("senderName", current.getFullName());
+                        notifAlert.put("senderPhoto", current.getProfilePhoto());
+                        notifAlert.put("peerId", current.getId());
+                        template.convertAndSend("/topic/follow/" + peerId, notifAlert);
+                    } catch (Exception ignored) {}
+                }
+            }
         } catch (Exception e) {
-            // ignore if not configured
+            System.err.println("Failed to broadcast chat STOMP message: " + e.getMessage());
         }
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("success", true);
-        response.put("message", messageDto(saved));
+        response.put("message", wireDto);
         return ResponseEntity.ok(response);
     }
 
@@ -157,6 +224,7 @@ public class MobileChatController {
         if (message.getSender() != null) {
             dto.put("senderId", message.getSender().getId());
             dto.put("senderName", message.getSender().getFullName());
+            dto.put("senderPhoto", message.getSender().getProfilePhoto());
         }
         if (message.getReceiver() != null) {
             dto.put("receiverId", message.getReceiver().getId());

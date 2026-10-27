@@ -12,6 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -134,6 +141,106 @@ public class GoogleMapsService {
             return Optional.of(new LatLng(Double.parseDouble(at.group(1)), Double.parseDouble(at.group(2))));
         }
         return Optional.empty();
+    }
+
+    public Optional<String> reverseGeocode(double lat, double lng) {
+        // 1. Try Google Maps Geocoding API if key configured/available
+        String key = apiKey();
+        if (key != null && !key.isBlank()) {
+            try {
+                String url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="
+                        + lat + "," + lng + "&key=" + key;
+                String json = restTemplate.getForObject(url, String.class);
+                if (json != null && !json.isBlank()) {
+                    JsonNode root = mapper.readTree(json);
+                    if ("OK".equals(root.path("status").asText())) {
+                        JsonNode results = root.path("results");
+                        if (results.isArray() && results.size() > 0) {
+                            String formatted = results.get(0).path("formatted_address").asText();
+                            if (formatted != null && !formatted.isBlank()) {
+                                return Optional.of(formatted);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 2. Fallback to OpenStreetMap Nominatim reverse geocode
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "FightDFear-Safety/1.0 (safety@fightdfear.org)");
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            String osmUrl = "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lng + "&zoom=18&addressdetails=1";
+            ResponseEntity<String> resp = restTemplate.exchange(
+                    osmUrl, HttpMethod.GET, entity, String.class);
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                JsonNode root = mapper.readTree(resp.getBody());
+                String formatted = root.path("display_name").asText();
+                if (formatted != null && !formatted.isBlank()) {
+                    return Optional.of(formatted);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return Optional.of(String.format(Locale.ROOT, "Lat: %.5f, Lng: %.5f", lat, lng));
+    }
+
+    public List<Map<String, Object>> searchLocations(String query) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (query == null || query.isBlank()) return list;
+
+        // 1. Try Google Geocode/Places
+        String key = apiKey();
+        if (key != null && !key.isBlank()) {
+            try {
+                String url = "https://maps.googleapis.com/maps/api/geocode/json?address="
+                        + URLEncoder.encode(query.trim(), StandardCharsets.UTF_8) + "&key=" + key;
+                String json = restTemplate.getForObject(url, String.class);
+                if (json != null && !json.isBlank()) {
+                    JsonNode root = mapper.readTree(json);
+                    if ("OK".equals(root.path("status").asText())) {
+                        JsonNode results = root.path("results");
+                        if (results.isArray()) {
+                            for (JsonNode res : results) {
+                                Map<String, Object> item = new LinkedHashMap<>();
+                                item.put("address", res.path("formatted_address").asText(""));
+                                JsonNode loc = res.path("geometry").path("location");
+                                item.put("lat", loc.path("lat").asDouble());
+                                item.put("lng", loc.path("lng").asDouble());
+                                list.add(item);
+                            }
+                            if (!list.isEmpty()) return list;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        // 2. Fallback to Nominatim search
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("User-Agent", "FightDFear-Safety/1.0 (safety@fightdfear.org)");
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            String osmUrl = "https://nominatim.openstreetmap.org/search?format=json&q="
+                    + URLEncoder.encode(query.trim(), StandardCharsets.UTF_8) + "&addressdetails=1&limit=5";
+            ResponseEntity<String> resp = restTemplate.exchange(
+                    osmUrl, HttpMethod.GET, entity, String.class);
+            if (resp.getStatusCode().is2xxSuccessful() && resp.getBody() != null) {
+                JsonNode root = mapper.readTree(resp.getBody());
+                if (root.isArray()) {
+                    for (JsonNode res : root) {
+                        Map<String, Object> item = new LinkedHashMap<>();
+                        item.put("address", res.path("display_name").asText(""));
+                        item.put("lat", res.path("lat").asDouble());
+                        item.put("lng", res.path("lon").asDouble());
+                        list.add(item);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return list;
     }
 
     public record LatLng(double lat, double lng) {}

@@ -22,6 +22,12 @@ public class SosActivationController {
     @Autowired
     private SosService sosService;
 
+    @Autowired
+    private in.sp.main.Repository.UserRepository userRepository;
+
+    @Autowired
+    private in.sp.main.Service.WhatsAppService whatsAppService;
+
     /**
      * Serve the Volunteer Help Dashboard
      */
@@ -68,9 +74,11 @@ public class SosActivationController {
         if (user == null) {
             return "redirect:/login";
         }
+
+        User freshUser = userRepository.findById(user.getId()).orElse(user);
         
         // Check for active SOS to restore state on refresh
-        Optional<SOSRequest> activeSos = sosService.getActiveSOSForUser(user.getId());
+        Optional<SOSRequest> activeSos = sosService.getActiveSOSForUser(freshUser.getId());
         if (activeSos.isPresent()) {
             model.addAttribute("activeSosId", activeSos.get().getId());
             model.addAttribute("isSosActive", true);
@@ -78,10 +86,56 @@ public class SosActivationController {
             model.addAttribute("isSosActive", false);
         }
         
-        model.addAttribute("userId", user.getId());
-        model.addAttribute("user", user);
+        model.addAttribute("userId", freshUser.getId());
+        model.addAttribute("user", freshUser);
         return "sos-dashboard";
     }
+
+    /**
+     * REST API: Send SOS location alert to the user's registered WhatsApp number
+     */
+    @PostMapping("/whatsapp-alert")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> sendWhatsAppAlert(
+            @RequestParam("latitude") double latitude,
+            @RequestParam("longitude") double longitude,
+            HttpSession session) {
+
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("error", "User not logged in");
+            return ResponseEntity.status(401).body(error);
+        }
+
+        User freshUser = userRepository.findById(user.getId()).orElse(user);
+        String whatsapp = freshUser.getWhatsappNumber();
+        if (whatsapp == null || whatsapp.isBlank()) {
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("success", false);
+            resp.put("configured", false);
+            resp.put("error", "No WhatsApp number registered for this account.");
+            return ResponseEntity.badRequest().body(resp);
+        }
+
+        String mapsLink = (latitude != 0.0 || longitude != 0.0)
+                ? "https://www.google.com/maps?q=" + latitude + "," + longitude
+                : (freshUser.getCity() != null && !freshUser.getCity().isBlank()
+                    ? "https://www.google.com/maps?q=" + java.net.URLEncoder.encode(freshUser.getCity(), java.nio.charset.StandardCharsets.UTF_8)
+                    : "https://www.google.com/maps?q=0,0");
+
+        Map<String, Object> result = whatsAppService.sendSOSLocationAlert(
+                whatsapp,
+                freshUser.getFullName(),
+                freshUser.getPhoneNumber(),
+                mapsLink,
+                latitude,
+                longitude);
+
+        return ResponseEntity.ok(result);
+    }
+
 
     /**
      * REST API: Trigger SOS emergency

@@ -88,6 +88,9 @@ public class MartialArtsCenterController {
     @Autowired
     private in.sp.main.Service.OtpVerificationService otpVerificationService;
 
+    @org.springframework.beans.factory.annotation.Value("${google.maps.api.key:${google.maps.apiKey:}}")
+    private String googleMapsApiKey;
+
     public MartialArtsCenterController(MartialArtsCenterService centreService, ObjectMapper objectMapper) {
         this.centreService = centreService;
         this.objectMapper = objectMapper;
@@ -123,6 +126,10 @@ public class MartialArtsCenterController {
             RedirectAttributes redirectAttributes) {
 
         try {
+            if (center.getName() == null || center.getName().trim().length() < 2) {
+                redirectAttributes.addFlashAttribute("error", "Centre / Trainer name is required (minimum 2 characters).");
+                return "redirect:/centres/registerCentre";
+            }
             if (center.getEmail() == null || center.getEmail().isBlank()) {
                 redirectAttributes.addFlashAttribute("error", "Email is required.");
                 return "redirect:/centres/registerCentre";
@@ -147,8 +154,8 @@ public class MartialArtsCenterController {
                 return "redirect:/centres/registerCentre";
             }
 
-            if (center.getPassword() == null || center.getPassword().isBlank()) {
-                redirectAttributes.addFlashAttribute("error", "Password is required.");
+            if (center.getPassword() == null || center.getPassword().trim().length() < 6) {
+                redirectAttributes.addFlashAttribute("error", "Password must be at least 6 characters.");
                 return "redirect:/centres/registerCentre";
             }
             center.setPassword(passwordService.encode(center.getPassword()));
@@ -487,7 +494,7 @@ public class MartialArtsCenterController {
     @RequestMapping(value = "/profile-completion", method = RequestMethod.GET)
     public String showProfileCompletion(HttpSession session, Model model) {
         MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
-        if (sessionCenter == null) {
+        if (sessionCenter == null || sessionCenter.getId() == null) {
             return "redirect:/centres/login";
         }
         MartialArtsCenter center = centreRepository.findById(sessionCenter.getId()).orElse(sessionCenter);
@@ -500,6 +507,8 @@ public class MartialArtsCenterController {
         center = centreProfileService.refreshCompletion(center);
         session.setAttribute("loggedCentre", center);
         model.addAttribute("center", center);
+        String key = (googleMapsApiKey != null && !googleMapsApiKey.isBlank()) ? googleMapsApiKey.trim() : "";
+        model.addAttribute("googleMapsApiKey", key);
         return "centreProfileCompletion";
     }
 
@@ -520,6 +529,8 @@ public class MartialArtsCenterController {
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String pincode,
             @RequestParam(required = false) String mapLink,
+            @RequestParam(required = false) Double centreLat,
+            @RequestParam(required = false) Double centreLng,
             @RequestParam(required = false) List<String> styles,
             @RequestParam(required = false) List<String> audience,
             @RequestParam(required = false) Boolean womenOnly,
@@ -563,6 +574,8 @@ public class MartialArtsCenterController {
         if (state != null) body.put("state", state);
         if (pincode != null) body.put("pincode", pincode);
         if (mapLink != null) body.put("googleMapLocation", mapLink);
+        if (centreLat != null) body.put("centreLat", centreLat);
+        if (centreLng != null) body.put("centreLng", centreLng);
         if (styles != null) body.put("stylesTaught", styles);
         if (audience != null) body.put("audience", audience);
         if (womenOnly != null) body.put("womenOnlyBatches", womenOnly);

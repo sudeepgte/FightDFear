@@ -8,6 +8,7 @@ import in.sp.main.Entities.VideoLike;
 import in.sp.main.Entities.VideoReport;
 import in.sp.main.Entities.VideoView;
 import in.sp.main.Entities.Videoupload;
+import in.sp.main.Entities.CreatorNotification;
 
 import in.sp.main.Repository.UserRepository;
 
@@ -92,8 +93,10 @@ public class VideoUploadController {
  
     
     @Autowired
-
     private VideoLikeRepository videoLikeRepository;
+
+    @Autowired(required = false)
+    private CreatorNotificationRepository creatorNotificationRepository;
  
     @GetMapping("/upload")
     public String showUploadPage(@RequestParam(value = "isReel", defaultValue = "false") boolean isReel,
@@ -610,6 +613,18 @@ public class VideoUploadController {
         video.setLikeCount(likeCount);
         videoRepository.save(video);
 
+        if (liked && creatorNotificationRepository != null && video.getUser() != null && !video.getUser().getId().equals(user.getId())) {
+            try {
+                CreatorNotification notif = new CreatorNotification();
+                notif.setUser(video.getUser());
+                notif.setSender(user);
+                notif.setType("LIKE");
+                notif.setVideoId(video.getId());
+                notif.setMessage(user.getFullName() + " liked your post.");
+                creatorNotificationRepository.save(notif);
+            } catch (Exception ignored) {}
+        }
+
         res.put("liked", liked);
         res.put("likeCount", likeCount);
 
@@ -671,6 +686,20 @@ public class VideoUploadController {
         }
 
         videocommentRepository.save(comment);
+
+        if (creatorNotificationRepository != null && video.getUser() != null && !video.getUser().getId().equals(loggedUser.getId())) {
+            try {
+                CreatorNotification notif = new CreatorNotification();
+                notif.setUser(video.getUser());
+                notif.setSender(loggedUser);
+                notif.setType("COMMENT");
+                notif.setVideoId(video.getId());
+                String preview = text != null ? text.trim() : "";
+                if (preview.length() > 35) preview = preview.substring(0, 35) + "...";
+                notif.setMessage(loggedUser.getFullName() + " commented on your post: \"" + preview + "\"");
+                creatorNotificationRepository.save(notif);
+            } catch (Exception ignored) {}
+        }
 
         // Response data
         response.put("id", comment.getId());

@@ -161,6 +161,44 @@
             box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
         }
 
+        .form-input.is-invalid {
+            border-color: var(--error) !important;
+            background: #FFF5F5 !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .form-input.is-valid {
+            border-color: var(--success) !important;
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.08) !important;
+        }
+
+        .error-msg {
+            display: none;
+            color: var(--error);
+            font-size: 0.78rem;
+            margin-top: 5px;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        .error-msg.show {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            animation: fadeInErr 0.2s ease-in-out;
+        }
+
+        @keyframes fadeInErr {
+            from { opacity: 0; transform: translateY(-2px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hint {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            margin-top: 4px;
+        }
+
         /* Password Wrapper */
         .password-field .form-input {
             padding-right: 42px;
@@ -509,27 +547,35 @@
                 <!-- Centre / Trainer Name -->
                 <div class="form-group">
                     <label for="name">Centre / Trainer name *</label>
-                    <input type="text" id="name" name="name" class="form-input" placeholder="e.g. Tiger Martial Arts Academy" required>
+                    <input type="text" id="name" name="name" class="form-input" placeholder="e.g. Tiger Martial Arts Academy" maxlength="80" required>
+                    <div class="hint">Official academy, dojo, or trainer name (minimum 2 characters).</div>
+                    <div class="error-msg" id="err-name"><i class="bi bi-exclamation-circle-fill"></i> Centre / Trainer name is required (minimum 2 characters).</div>
                 </div>
 
                 <!-- Contact Person -->
                 <div class="form-group">
                     <label for="contactPerson">Contact person (optional)</label>
-                    <input type="text" id="contactPerson" name="contactPerson" class="form-input" placeholder="e.g. Master Rajesh Sharma">
+                    <input type="text" id="contactPerson" name="contactPerson" class="form-input" placeholder="e.g. Master Rajesh Sharma" maxlength="60">
+                    <div class="hint">Name of the head sensei, coach or manager.</div>
+                    <div class="error-msg" id="err-contactPerson"><i class="bi bi-exclamation-circle-fill"></i> Enter a valid name (letters and spaces only).</div>
                 </div>
 
                 <!-- Mobile Number -->
                 <div class="form-group">
                     <label for="phone">Mobile number *</label>
-                    <input type="tel" id="phone" name="phone" class="form-input" placeholder="10-digit mobile number" maxlength="10" required pattern="[0-9]{10}">
+                    <input type="tel" id="phone" name="phone" class="form-input" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" required pattern="[0-9]{10}">
+                    <div class="hint">10-digit mobile number (digits only, e.g. 9876543210).</div>
+                    <div class="error-msg" id="err-phone"><i class="bi bi-exclamation-circle-fill"></i> Valid 10-digit mobile number is required.</div>
                 </div>
 
                 <!-- Email -->
                 <div class="form-group">
                     <label for="email">Email *</label>
                     <div class="input-wrapper">
-                        <input type="email" id="email" name="email" class="form-input" placeholder="centre@example.com" required>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="centre@example.com" maxlength="80" required>
                     </div>
+                    <div class="hint">Official email used for student inquiries, logins, and OTP verification.</div>
+                    <div class="error-msg" id="err-email"><i class="bi bi-exclamation-circle-fill"></i> Valid email address is required.</div>
                 </div>
 
                 <!-- OTP Dispatch & Verification -->
@@ -548,18 +594,19 @@
                 <div class="form-group" id="otpGroup" style="display: none;">
                     <label for="emailOtp">Email OTP *</label>
                     <div class="otp-row">
-                        <input type="text" id="emailOtp" name="emailOtp" class="form-input" placeholder="6-digit OTP" maxlength="6" style="letter-spacing: 2px; font-weight: 700;">
+                        <input type="text" id="emailOtp" name="emailOtp" class="form-input" placeholder="6-digit OTP" maxlength="6" inputmode="numeric" style="letter-spacing: 2px; font-weight: 700;">
                         <button type="button" id="btnVerifyOtp" class="btn-otp" style="background: var(--navy);" onclick="handleVerifyOtp()">
                             Verify
                         </button>
                     </div>
+                    <div class="error-msg" id="err-emailOtp"><i class="bi bi-exclamation-circle-fill"></i> Enter the 6-digit OTP sent to your email.</div>
                 </div>
 
                 <!-- Password -->
                 <div class="form-group">
                     <label for="password">Password *</label>
                     <div class="input-wrapper password-field">
-                        <input type="password" id="password" name="password" class="form-input" placeholder="Min 6 chars with number & special char" required oninput="evaluatePasswordStrength(this.value)">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Min 6 chars with number & special char" required maxlength="50" oninput="evaluatePasswordStrength(this.value)">
                         <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
                             <i class="bi bi-eye"></i>
                         </button>
@@ -573,17 +620,20 @@
                         </div>
                         <span class="strength-text" id="strLabel">Weak</span>
                     </div>
+                    <div class="hint">Minimum 6 characters. Use letters, numbers, and symbols for better security.</div>
+                    <div class="error-msg" id="err-password"><i class="bi bi-exclamation-circle-fill"></i> Password must be at least 6 characters.</div>
                 </div>
 
                 <!-- Confirm Password -->
                 <div class="form-group">
                     <label for="confirmPassword">Confirm password *</label>
                     <div class="input-wrapper password-field">
-                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Re-enter password" required>
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Re-enter password" required maxlength="50">
                         <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('confirmPassword', this)" aria-label="Toggle confirm password">
                             <i class="bi bi-eye"></i>
                         </button>
                     </div>
+                    <div class="error-msg" id="err-confirmPassword"><i class="bi bi-exclamation-circle-fill"></i> Passwords do not match.</div>
                 </div>
 
                 <!-- Terms & Conditions Box with Modal Link -->
@@ -601,6 +651,7 @@
                     <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:var(--success); font-weight:700; margin-top:6px; padding-left:28px;">
                         <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
                     </div>
+                    <div class="error-msg" id="err-terms"><i class="bi bi-exclamation-circle-fill"></i> You must accept the Terms &amp; Conditions and Privacy Policy.</div>
                 </div>
 
                 <!-- Submit Button -->
@@ -660,9 +711,11 @@
         let isOtpVerified = false;
         let resendSeconds = 0;
         let resendTimer = null;
+        let isSubmitting = false;
 
         function showAlert(msg, isError = true) {
             const el = document.getElementById('jsAlert');
+            if (!el) return;
             el.className = 'alert-box ' + (isError ? 'alert-error' : 'alert-success');
             el.innerHTML = '<i class="bi ' + (isError ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill') + '"></i> ' + msg;
             el.style.display = 'flex';
@@ -670,7 +723,141 @@
         }
 
         function hideAlert() {
-            document.getElementById('jsAlert').style.display = 'none';
+            const el = document.getElementById('jsAlert');
+            if (el) el.style.display = 'none';
+        }
+
+        function setFieldError(fieldId, isError, customMsg) {
+            const input = document.getElementById(fieldId);
+            const errEl = document.getElementById('err-' + fieldId);
+            if (input) {
+                if (isError) {
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                } else {
+                    input.classList.remove('is-invalid');
+                    if (input.value && input.value.trim().length > 0) {
+                        input.classList.add('is-valid');
+                    } else {
+                        input.classList.remove('is-valid');
+                    }
+                }
+            }
+            if (errEl) {
+                if (customMsg) {
+                    errEl.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> ' + customMsg;
+                }
+                if (isError) {
+                    errEl.classList.add('show');
+                } else {
+                    errEl.classList.remove('show');
+                }
+            }
+        }
+
+        function validateName(showErr = true) {
+            const el = document.getElementById('name');
+            const val = el ? el.value.trim() : '';
+            if (!val) {
+                if (showErr) setFieldError('name', true, 'Centre / Trainer name is required.');
+                return false;
+            }
+            if (val.length < 2) {
+                if (showErr) setFieldError('name', true, 'Centre name must be at least 2 characters.');
+                return false;
+            }
+            setFieldError('name', false);
+            return true;
+        }
+
+        function validateContactPerson(showErr = true) {
+            const el = document.getElementById('contactPerson');
+            const val = el ? el.value.trim() : '';
+            if (val && !/^[a-zA-Z\s.]+$/.test(val)) {
+                if (showErr) setFieldError('contactPerson', true, 'Contact person can only contain letters and spaces.');
+                return false;
+            }
+            setFieldError('contactPerson', false);
+            return true;
+        }
+
+        function validatePhone(showErr = true) {
+            const el = document.getElementById('phone');
+            const val = el ? el.value.trim() : '';
+            if (!val) {
+                if (showErr) setFieldError('phone', true, 'Mobile number is required.');
+                return false;
+            }
+            if (!/^[6-9]\d{9}$/.test(val)) {
+                if (showErr) setFieldError('phone', true, 'Enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+                return false;
+            }
+            setFieldError('phone', false);
+            return true;
+        }
+
+        function validateEmail(showErr = true) {
+            const el = document.getElementById('email');
+            const val = el ? el.value.trim().toLowerCase() : '';
+            if (!val) {
+                if (showErr) setFieldError('email', true, 'Email address is required.');
+                return false;
+            }
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            if (!emailRegex.test(val)) {
+                if (showErr) setFieldError('email', true, 'Please enter a valid email format (e.g. centre@example.com).');
+                return false;
+            }
+            setFieldError('email', false);
+            return true;
+        }
+
+        function validatePassword(showErr = true) {
+            const el = document.getElementById('password');
+            const val = el ? el.value : '';
+            if (!val) {
+                if (showErr) setFieldError('password', true, 'Password is required.');
+                return false;
+            }
+            if (val.length < 6) {
+                if (showErr) setFieldError('password', true, 'Password must be at least 6 characters.');
+                return false;
+            }
+            setFieldError('password', false);
+            // Re-validate confirm password if it already has value
+            const confEl = document.getElementById('confirmPassword');
+            if (confEl && confEl.value) {
+                validateConfirmPassword(showErr);
+            }
+            return true;
+        }
+
+        function validateConfirmPassword(showErr = true) {
+            const passEl = document.getElementById('password');
+            const confEl = document.getElementById('confirmPassword');
+            const pass = passEl ? passEl.value : '';
+            const conf = confEl ? confEl.value : '';
+            if (!conf) {
+                if (showErr) setFieldError('confirmPassword', true, 'Please confirm your password.');
+                return false;
+            }
+            if (pass !== conf) {
+                if (showErr) setFieldError('confirmPassword', true, 'Passwords do not match.');
+                return false;
+            }
+            setFieldError('confirmPassword', false);
+            return true;
+        }
+
+        function validateTerms(showErr = true) {
+            const el = document.getElementById('termsCheck');
+            const checked = el ? el.checked : false;
+            if (!checked) {
+                if (showErr) setFieldError('terms', true, 'You must accept the Terms & Conditions and Privacy Policy.');
+                return false;
+            }
+            setFieldError('terms', false);
+            return true;
         }
 
         function togglePassVisibility(id, btn) {
@@ -697,18 +884,19 @@
 
             for (let i = 1; i <= 4; i++) {
                 const bar = document.getElementById('str' + i);
-                bar.style.backgroundColor = (i <= score) ? colors[score] : '#E2E8F0';
+                if (bar) bar.style.backgroundColor = (i <= score) ? colors[score] : '#E2E8F0';
             }
-            document.getElementById('strLabel').textContent = labels[score];
+            const lbl = document.getElementById('strLabel');
+            if (lbl) lbl.textContent = labels[score];
         }
 
         async function handleSendOtp() {
             hideAlert();
-            const email = document.getElementById('email').value.trim();
-            if (!email || !email.includes('@') || !email.includes('.')) {
-                showAlert('Please enter a valid email address first.');
+            if (!validateEmail(true)) {
+                showAlert('Please provide a valid email address before requesting an OTP.');
                 return;
             }
+            const email = document.getElementById('email').value.trim();
 
             const btn = document.getElementById('btnSendOtp');
             btn.disabled = true;
@@ -726,7 +914,6 @@
                     isOtpSent = true;
                     document.getElementById('otpGroup').style.display = 'block';
                     showAlert('OTP sent to ' + email, false);
-                    alert('OTP sent to your email (' + email + ')! Please check your inbox or spam folder.');
                     startResendTimer(60);
                 } else {
                     btn.disabled = false;
@@ -764,10 +951,11 @@
             const email = document.getElementById('email').value.trim();
             const otp = document.getElementById('emailOtp').value.trim();
 
-            if (otp.length !== 6) {
-                showAlert('Please enter the 6-digit OTP.');
+            if (!otp || otp.length !== 6) {
+                setFieldError('emailOtp', true, 'Please enter the complete 6-digit OTP.');
                 return;
             }
+            setFieldError('emailOtp', false);
 
             const btn = document.getElementById('btnVerifyOtp');
             btn.disabled = true;
@@ -789,37 +977,76 @@
                     document.getElementById('otpGroup').style.display = 'none';
                     document.getElementById('btnSendOtp').style.display = 'none';
                     document.getElementById('email').readOnly = true;
-                    showAlert('Email verified successfully!', false);
-                    alert('Email verified successfully! You can now complete registration.');
+                    setFieldError('email', false);
+                    showAlert('Email verified successfully! You can now complete registration.', false);
                 } else {
+                    setFieldError('emailOtp', true, data.error || 'Invalid or expired OTP. Please try again.');
                     showAlert(data.error || 'Invalid or expired OTP. Please try again.');
                 }
             } catch (err) {
                 btn.disabled = false;
                 btn.textContent = 'Verify';
+                setFieldError('emailOtp', true, 'Network error while verifying OTP.');
                 showAlert('Network error while verifying OTP.');
             }
         }
 
         function openConfirmationModal() {
             hideAlert();
+            const isNameValid = validateName(true);
+            const isContactValid = validateContactPerson(true);
+            const isPhoneValid = validatePhone(true);
+            const isEmailValid = validateEmail(true);
+            const isPassValid = validatePassword(true);
+            const isConfirmValid = validateConfirmPassword(true);
+            const isTermsValid = validateTerms(true);
+
+            if (!isNameValid) {
+                document.getElementById('name').focus();
+                return;
+            }
+            if (!isContactValid) {
+                document.getElementById('contactPerson').focus();
+                return;
+            }
+            if (!isPhoneValid) {
+                document.getElementById('phone').focus();
+                return;
+            }
+            if (!isEmailValid) {
+                document.getElementById('email').focus();
+                return;
+            }
+            if (!isOtpVerified) {
+                showAlert('Please verify your email with the OTP before completing registration.');
+                if (!isOtpSent) {
+                    document.getElementById('btnSendOtp').focus();
+                } else {
+                    document.getElementById('emailOtp').focus();
+                }
+                return;
+            }
+            if (!isPassValid) {
+                document.getElementById('password').focus();
+                return;
+            }
+            if (!isConfirmValid) {
+                document.getElementById('confirmPassword').focus();
+                return;
+            }
+            if (!isTermsValid) {
+                showAlert('Please read and accept the Terms & Conditions and Privacy Policy.');
+                document.getElementById('termsCheck').focus();
+                return;
+            }
+
             const name = document.getElementById('name').value.trim();
             const phone = document.getElementById('phone').value.trim();
             const email = document.getElementById('email').value.trim();
-            const pass = document.getElementById('password').value;
-            const confirm = document.getElementById('confirmPassword').value;
-            const terms = document.getElementById('termsCheck').checked;
-
-            if (!name) { showAlert('Centre / Trainer name is required.'); return; }
-            if (!phone || phone.length !== 10) { showAlert('Valid 10-digit mobile number is required.'); return; }
-            if (!email || !email.includes('@')) { showAlert('Valid email address is required.'); return; }
-            if (!isOtpVerified) { showAlert('Please verify your email OTP before registering.'); return; }
-            if (!pass || pass.length < 6) { showAlert('Password must be at least 6 characters.'); return; }
-            if (pass !== confirm) { showAlert('Passwords do not match.'); return; }
-            if (!terms) { showAlert('Please accept the Terms & Privacy Policy.'); return; }
+            const contact = document.getElementById('contactPerson').value.trim();
 
             document.getElementById('revName').textContent = name;
-            document.getElementById('revContact').textContent = document.getElementById('contactPerson').value.trim() || name;
+            document.getElementById('revContact').textContent = contact || name;
             document.getElementById('revPhone').textContent = phone;
             document.getElementById('revEmail').textContent = email;
 
@@ -831,6 +1058,14 @@
         }
 
         function submitRegistration() {
+            if (isSubmitting) return;
+            isSubmitting = true;
+
+            const btn = document.querySelector('.btn-modal-confirm');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display:inline-block;width:1rem;height:1rem;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin 0.75s linear infinite;margin-right:6px;"></span> Registering...';
+            }
             document.getElementById('regForm').submit();
         }
 
@@ -849,6 +1084,7 @@
             const chk = document.getElementById('termsCheck');
             if (chk) {
                 chk.checked = true;
+                setFieldError('terms', false);
                 syncTermsCheckBadge();
             }
             closeTermsModal();
@@ -859,14 +1095,74 @@
             const badge = document.getElementById('termsCheckBadge');
             if (badge && chk) {
                 badge.style.display = chk.checked ? 'block' : 'none';
+                if (chk.checked) setFieldError('terms', false);
             }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             const chk = document.getElementById('termsCheck');
             if (chk) {
-                chk.addEventListener('change', syncTermsCheckBadge);
+                chk.addEventListener('change', function() {
+                    syncTermsCheckBadge();
+                    validateTerms(false);
+                });
                 syncTermsCheckBadge();
+            }
+
+            // Input clamping and live real-time validation handlers
+            const phoneEl = document.getElementById('phone');
+            if (phoneEl) {
+                phoneEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                    validatePhone(false);
+                });
+                phoneEl.addEventListener('blur', function() { validatePhone(true); });
+            }
+
+            const otpEl = document.getElementById('emailOtp');
+            if (otpEl) {
+                otpEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                    if (this.value.length === 6) setFieldError('emailOtp', false);
+                });
+            }
+
+            const nameEl = document.getElementById('name');
+            if (nameEl) {
+                nameEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^a-zA-Z0-9\s.\-&',]/g, '').slice(0, 80);
+                    validateName(false);
+                });
+                nameEl.addEventListener('blur', function() { validateName(true); });
+            }
+
+            const contactEl = document.getElementById('contactPerson');
+            if (contactEl) {
+                contactEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^a-zA-Z\s.]/g, '').slice(0, 60);
+                    validateContactPerson(false);
+                });
+                contactEl.addEventListener('blur', function() { validateContactPerson(true); });
+            }
+
+            const emailEl = document.getElementById('email');
+            if (emailEl) {
+                emailEl.addEventListener('input', function() {
+                    if (this.value.includes('@') && this.value.includes('.')) validateEmail(false);
+                });
+                emailEl.addEventListener('blur', function() { validateEmail(true); });
+            }
+
+            const passEl = document.getElementById('password');
+            if (passEl) {
+                passEl.addEventListener('input', function() { validatePassword(false); });
+                passEl.addEventListener('blur', function() { validatePassword(true); });
+            }
+
+            const confirmEl = document.getElementById('confirmPassword');
+            if (confirmEl) {
+                confirmEl.addEventListener('input', function() { validateConfirmPassword(false); });
+                confirmEl.addEventListener('blur', function() { validateConfirmPassword(true); });
             }
         });
     </script>

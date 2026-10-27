@@ -92,4 +92,89 @@ public final class MobileValidation {
         }
         return Gender.valueOf(genderRaw.trim().toUpperCase(Locale.ROOT));
     }
+
+    private static final Pattern VALID_NAME = Pattern.compile("^[a-zA-Z\\s.'\\-]+$");
+
+    public static String requireEmergencyContactName(String name) {
+        String n = trim(name);
+        if (n.isEmpty()) {
+            return "Emergency contact name is required.";
+        }
+        if (n.length() < 2 || n.length() > 70) {
+            return "Emergency contact name must be between 2 and 70 characters.";
+        }
+        if (!VALID_NAME.matcher(n).matches()) {
+            return "Emergency contact name can only contain letters, spaces, hyphens, and dots.";
+        }
+        return null;
+    }
+
+    public static String requireEmergencyContactPhone(String phone) {
+        String p = trim(phone);
+        if (p.isEmpty()) {
+            return "Emergency contact phone number is required.";
+        }
+        if (!isPhone10(p)) {
+            return "Emergency contact phone number must be exactly 10 digits.";
+        }
+        if (p.matches("^(\\d)\\1{9}$")) {
+            return "Please enter a valid 10-digit emergency contact phone number.";
+        }
+        return null;
+    }
+
+    public static String requireEmergencyContactEmail(String email) {
+        String e = trim(email);
+        if (e.isEmpty()) {
+            return "Emergency contact email is required.";
+        }
+        if (e.length() > 100) {
+            return "Emergency contact email must not exceed 100 characters.";
+        }
+        if (!isEmail(e)) {
+            return "Enter a valid emergency contact email address (e.g. name@example.com).";
+        }
+        return null;
+    }
+
+    private static final Pattern WHATSAPP_CHARS = Pattern.compile("^\\+?[0-9\\s\\-().]{8,25}$");
+
+    public static String requireWhatsappNumber(String whatsapp) {
+        String w = trim(whatsapp);
+        if (w.isEmpty()) {
+            return "WhatsApp number is required.";
+        }
+        if (!WHATSAPP_CHARS.matcher(w).matches()) {
+            return "WhatsApp number can only contain digits, spaces, and an optional leading '+'.";
+        }
+        String digitsOnly = w.replaceAll("\\D", "");
+        if (digitsOnly.length() < 8 || digitsOnly.length() > 15) {
+            return "WhatsApp number must contain between 8 and 15 digits with country code.";
+        }
+        if (digitsOnly.matches("^(\\d)\\1{7,}$")) {
+            return "Please enter a valid WhatsApp number with country code.";
+        }
+        return null;
+    }
+
+    public static String normalizeWhatsappNumber(String whatsapp) {
+        String w = trim(whatsapp);
+        if (w.isEmpty()) {
+            return "";
+        }
+        boolean hasLeadingPlus = w.startsWith("+");
+        String digitsOnly = w.replaceAll("\\D", "");
+        if (digitsOnly.isEmpty()) {
+            return "";
+        }
+        if (hasLeadingPlus) {
+            return "+" + digitsOnly;
+        }
+        if (digitsOnly.length() == 10) {
+            return "+91" + digitsOnly; // Default to India (+91) if 10 national digits provided
+        }
+        return "+" + digitsOnly;
+    }
 }
+
+

@@ -503,9 +503,6 @@
         <a href="${pageContext.request.contextPath}/creator-hub/chat" class="icon-btn" title="Chat" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
             <i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span>
         </a>
-        <a href="${pageContext.request.contextPath}/creator-hub/coins" class="icon-btn" title="Coins" style="width:auto; padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; gap:6px;">
-            <i class="fa-solid fa-coins"></i> <span class="desktop-only">Coins</span>
-        </a>
         <div class="icon-btn" id="notifToggleBtn" onclick="toggleNotifPanel()" title="Notifications" >
             <i class="fa-regular fa-bell"></i> 
             <c:if test="${unreadNotifCount > 0}">
@@ -582,10 +579,7 @@
             <i class="fa-regular fa-comment-dots"></i> Chat
             
         </a>
-        <a href="${pageContext.request.contextPath}/creator-hub/coins" class="ls-item">
-            <i class="fa-solid fa-coins"></i> Coins
-        </a>
-        <a href="#" onclick="toggleNotifPanel()" class="ls-item">
+        <a href="${pageContext.request.contextPath}/creator-hub/notifications" class="ls-item">
             <i class="fa-regular fa-bell"></i> Notifications
             <c:if test="${unreadNotifCount > 0}"><span class="ls-badge">${unreadNotifCount}</span></c:if>
         </a>
@@ -925,26 +919,28 @@
                 </c:when>
                 <c:otherwise>
                     <c:forEach var="su" items="${suggestedUsers}">
-                        <div class="suggest-item">
-                            <c:choose>
-                                <c:when test="${not empty su.profilePhoto}">
-                                    <img src="${su.profilePhoto}" class="suggest-avatar" alt="${su.fullName}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
-                                </c:when>
-                                <c:otherwise>
-                                    <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="suggest-avatar" alt="${su.fullName}">
-                                </c:otherwise>
-                            </c:choose>
-                            <div class="suggest-info">
-                                <div class="suggest-name">${su.fullName}</div>
-                                <div class="suggest-sub">
-                                    <c:choose>
-                                        <c:when test="${su.verifiedCreator}"><i class="fa-solid fa-circle-check" style="color:var(--success);font-size:10px;"></i> Verified</c:when>
-                                        <c:when test="${not empty su.creatorCategory}">${su.creatorCategory}</c:when>
-                                        <c:otherwise>Member</c:otherwise>
-                                    </c:choose>
+                        <div class="suggest-item" onclick="window.location.href='${pageContext.request.contextPath}/creator-hub/creator/${su.id}'" style="cursor:pointer;">
+                            <a href="${pageContext.request.contextPath}/creator-hub/creator/${su.id}" class="suggest-user-link" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-decoration:none;color:inherit;cursor:pointer;">
+                                <c:choose>
+                                    <c:when test="${not empty su.profilePhoto}">
+                                        <img src="${su.profilePhoto}" class="suggest-avatar" alt="${su.fullName}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
+                                    </c:when>
+                                    <c:otherwise>
+                                        <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="suggest-avatar" alt="${su.fullName}">
+                                    </c:otherwise>
+                                </c:choose>
+                                <div class="suggest-info">
+                                    <div class="suggest-name">${su.fullName}</div>
+                                    <div class="suggest-sub">
+                                        <c:choose>
+                                            <c:when test="${su.verifiedCreator}"><i class="fa-solid fa-circle-check" style="color:var(--success);font-size:10px;"></i> Verified</c:when>
+                                            <c:when test="${not empty su.creatorCategory}">${su.creatorCategory}</c:when>
+                                            <c:otherwise>Member</c:otherwise>
+                                        </c:choose>
+                                    </div>
                                 </div>
-                            </div>
-                            <button class="follow-btn" id="follow-btn-${su.id}" onclick="toggleFollow(${su.id}, this)">
+                            </a>
+                            <button class="follow-btn" id="follow-btn-${su.id}" onclick="event.stopPropagation(); toggleFollow(${su.id}, this)">
                                 Follow
                             </button>
                         </div>
@@ -963,20 +959,22 @@
                 <div style="padding:16px 18px;font-size:13px;color:var(--sub);">You haven't followed anyone yet.</div>
             </c:if>
             <c:forEach var="friend" items="${followingList}">
-                <div class="suggest-item">
-                    <c:choose>
-                        <c:when test="${not empty friend.profilePhoto}">
-                            <img src="${friend.profilePhoto}" class="suggest-avatar" alt="${friend.fullName}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
-                        </c:when>
-                        <c:otherwise>
-                            <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="suggest-avatar" alt="${friend.fullName}">
-                        </c:otherwise>
-                    </c:choose>
-                    <div class="suggest-info">
-                        <div class="suggest-name">${friend.fullName}</div>
-                        <div class="suggest-sub">Following</div>
-                    </div>
-                    <button class="follow-btn following" onclick="openChat(${friend.id}, '${friend.fullName}', '${not empty friend.profilePhoto ? friend.profilePhoto : ''}')">
+                <div class="suggest-item" onclick="window.location.href='${pageContext.request.contextPath}/creator-hub/creator/${friend.id}'" style="cursor:pointer;">
+                    <a href="${pageContext.request.contextPath}/creator-hub/creator/${friend.id}" class="suggest-user-link" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-decoration:none;color:inherit;cursor:pointer;">
+                        <c:choose>
+                            <c:when test="${not empty friend.profilePhoto}">
+                                <img src="${friend.profilePhoto}" class="suggest-avatar" alt="${friend.fullName}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
+                            </c:when>
+                            <c:otherwise>
+                                <img src="${pageContext.request.contextPath}/assets/img/default-avatar.png" class="suggest-avatar" alt="${friend.fullName}">
+                            </c:otherwise>
+                        </c:choose>
+                        <div class="suggest-info">
+                            <div class="suggest-name">${friend.fullName}</div>
+                            <div class="suggest-sub">Following</div>
+                        </div>
+                    </a>
+                    <button class="follow-btn following" title="Message" onclick="event.stopPropagation(); window.location.href='${pageContext.request.contextPath}/creator-hub/chat?peerId=${friend.id}'">
                         <i class="fa-regular fa-comment-dots"></i>
                     </button>
                 </div>
@@ -1403,7 +1401,9 @@
 
     // Chat is now a dedicated page - redirect all chat actions
     function toggleChatPanel() { window.location.href = '${pageContext.request.contextPath}/creator-hub/chat'; }
-    function openChat(userId, name, avatar) { window.location.href = '${pageContext.request.contextPath}/creator-hub/chat'; }
+    function openChat(userId, name, avatar) { 
+        window.location.href = '${pageContext.request.contextPath}/creator-hub/chat' + (userId ? '?peerId=' + encodeURIComponent(userId) : ''); 
+    }
     function closeChat() {}
     function loadMessages() {}
     function sendMessage() {}

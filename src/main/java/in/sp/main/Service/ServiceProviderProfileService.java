@@ -67,8 +67,9 @@ public class ServiceProviderProfileService {
         if (PartnerLifecycleSupport.blank(provider.getOpenDays())) missing.add("6.1 Open days");
         if (provider.getOpenTime() == null) missing.add("6.2 Open time");
         if (provider.getCloseTime() == null) missing.add("6.3 Close time");
-        if (PartnerLifecycleSupport.blank(provider.getBio()) && PartnerLifecycleSupport.blank(provider.getDescription())) {
-            missing.add("7.1 About");
+        String bio = provider.getBio() != null ? provider.getBio().trim() : (provider.getDescription() != null ? provider.getDescription().trim() : "");
+        if (bio.length() < 25) {
+            missing.add("7.1 About (min 25 chars)");
         }
         if (provider.getConsultationFee() == null || provider.getConsultationFee() < 0
                 || PartnerLifecycleSupport.blank(provider.getServiceMode())
@@ -79,10 +80,61 @@ public class ServiceProviderProfileService {
     }
 
     public int calculateCompletionPct(ServiceProvider provider) {
-        int total = isLawyer(provider) ? 15 : 4;
-        int filled = total - missingItems(provider).size();
-        if (filled < 0) filled = 0;
-        return (int) Math.round(100.0 * filled / total);
+        if (provider == null) return 0;
+        if (!isLawyer(provider)) {
+            int score = 0;
+            if (!PartnerLifecycleSupport.blank(provider.getFullName())) score += 25;
+            if (!PartnerLifecycleSupport.blank(provider.getPhone())) score += 25;
+            if (!PartnerLifecycleSupport.blank(provider.getDescription())) score += 25;
+            if (!PartnerLifecycleSupport.blank(provider.getLocationText()) || !PartnerLifecycleSupport.blank(provider.getCity())) score += 25;
+            return Math.min(100, score);
+        }
+
+        int score = 0;
+        // 1. Full name
+        if (!PartnerLifecycleSupport.blank(provider.getFullName())) score += 5;
+        // 2. Designation
+        if (!PartnerLifecycleSupport.blank(provider.getDesignation())) score += 5;
+        // 3. Official phone (10 digits)
+        if (!PartnerLifecycleSupport.blank(provider.getPhone()) && provider.getPhone().trim().matches("\\d{10}")) score += 5;
+        // 4. WhatsApp number
+        if (!PartnerLifecycleSupport.blank(provider.getWhatsappNumber())) score += 5;
+        // 5. Bar Council ID
+        if (!PartnerLifecycleSupport.blank(provider.getBarCouncilId())) score += 5;
+        // 6. Experience years
+        if (provider.getExperienceYears() != null && provider.getExperienceYears() >= 0) score += 5;
+        // 7. Languages
+        if (!PartnerLifecycleSupport.blank(provider.getLanguages())) score += 5;
+        // 8. Profile headshot photo
+        String photo = provider.getProfilePhoto();
+        if (!PartnerLifecycleSupport.blank(photo) && !"web-pending".equals(photo) && !"mobile-pending".equals(photo)) score += 5;
+        // 9. Practice areas
+        if (!PartnerLifecycleSupport.blank(provider.getPracticeAreas())) score += 5;
+        // 10. Bio (at least 25 characters)
+        String bio = provider.getBio() != null ? provider.getBio().trim() : (provider.getDescription() != null ? provider.getDescription().trim() : "");
+        if (bio.length() >= 25) score += 5;
+        // 11. Client focus / Audience
+        if (!PartnerLifecycleSupport.blank(provider.getAudience())) score += 5;
+        // 12. Address
+        if (!PartnerLifecycleSupport.blank(provider.getAddress())) score += 5;
+        // 13. State
+        if (!PartnerLifecycleSupport.blank(provider.getState())) score += 5;
+        // 14. City
+        if (!PartnerLifecycleSupport.blank(provider.getCity())) score += 5;
+        // 15. Pincode (6 digits)
+        if (!PartnerLifecycleSupport.blank(provider.getPincode()) && provider.getPincode().trim().matches("\\d{6}")) score += 5;
+        // 16. Open days
+        if (!PartnerLifecycleSupport.blank(provider.getOpenDays())) score += 5;
+        // 17. Operating hours
+        if (provider.getOpenTime() != null && provider.getCloseTime() != null) score += 5;
+        // 18. Service mode & duration
+        if (!PartnerLifecycleSupport.blank(provider.getServiceMode()) && provider.getDurationMinutes() != null) score += 5;
+        // 19. Consultation fee & consultation mode
+        if (provider.getConsultationFee() != null && provider.getConsultationFee() >= 0 && !PartnerLifecycleSupport.blank(provider.getConsultationMode())) score += 5;
+        // 20. Bank details or UPI ID
+        if (!PartnerLifecycleSupport.blank(provider.getBankDetails()) || !PartnerLifecycleSupport.blank(provider.getUpiId())) score += 5;
+
+        return Math.min(100, score);
     }
 
     @Transactional

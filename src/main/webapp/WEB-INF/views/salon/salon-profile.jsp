@@ -340,6 +340,66 @@
         
         .btn-visibility { background: white; border: 1px solid var(--brand-pink); color: var(--brand-pink); padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: 0.2s;}
         .btn-visibility:hover { background: var(--brand-pink-light); color: var(--brand-pink); }
+
+        /* Enhanced Validation and Helper Styling */
+        .f-control.is-invalid {
+            border-color: #ef4444 !important;
+            background-color: #fffbfa !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
+        .f-control.is-valid {
+            border-color: #10b981 !important;
+        }
+        .error-msg {
+            display: none;
+            font-size: 0.72rem;
+            color: #ef4444;
+            font-weight: 500;
+            margin-top: 4px;
+            align-items: center;
+            gap: 4px;
+        }
+        .error-msg.show {
+            display: flex;
+        }
+        .field-hint {
+            font-size: 0.72rem;
+            color: #64748b;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .cascade-info {
+            font-size: 0.72rem;
+            color: var(--brand-pink);
+            font-weight: 500;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .validation-alert-toast {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: #ef4444;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            font-size: 0.85rem;
+            font-weight: 500;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 
     <!-- Global Dashboard Theme -->
@@ -500,8 +560,7 @@ style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight
         </a>
         <div class="header-actions">
             <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn-skip">Skip for now</a>
-            <button type="button" class="btn-header-save" 
-onclick="document.getElementById('profileForm').submit()">Save Profile</button>
+            <button type="button" class="btn-header-save" id="btnHeaderSave" onclick="handleProfileSave(event)">Save Profile</button>
         </div>
     </header>
 
@@ -512,7 +571,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
     
     <!-- Main Content Area -->
     <div class="main-content">
-        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+        <form id="profileForm" action="${pageContext.request.contextPath}/salons/updateProfile${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" onsubmit="return handleProfileSave(event)" novalidate>
             <c:if test="${not empty _csrf}">
                 <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
             </c:if>
@@ -665,8 +724,8 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
             <!-- Profile Completion Tracker -->
             <div class="profile-tracker">
                 <div class="pt-left">
-                    <div class="pt-circle-wrap" style="background: conic-gradient(var(--brand-pink) ${completionPercentage}%, #f0f0f0 0);">
-                        <div class="pt-circle-inner">${completionPercentage}%</div>
+                    <div class="pt-circle-wrap" id="ptCircleWrap" style="background: conic-gradient(var(--brand-pink) ${completionPercentage}%, #f0f0f0 0);">
+                        <div class="pt-circle-inner" id="ptCircleInner">${completionPercentage}%</div>
                     </div>
                     <div class="pt-text">
                         <h4>Profile Completion</h4>
@@ -674,46 +733,46 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     </div>
                 </div>
                 
-                <div class="pt-steps" style="--progress: ${completionPercentage}%;">
-                    <div class="pt-step ${stepBasicInfo ? 'done' : ''}" onclick="openEditMode('tab-business')" style="cursor:pointer;">
+                <div class="pt-steps" id="ptStepsBar" style="--progress: ${completionPercentage}%;">
+                    <div class="pt-step ${stepBasicInfo ? 'done' : ''}" id="stepBasicInfo" onclick="openEditMode('tab-business')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Basic<br>Information</div>
-                        <div class="pt-status">${stepBasicInfo ? 'Completed' : 'Pending'}</div>
+                        <div class="pt-status" id="statusBasicInfo">${stepBasicInfo ? 'Completed' : 'Pending'}</div>
                     </div>
-                    <div class="pt-step ${stepSalonDetails ? 'done' : ''}" onclick="openEditMode('tab-details')" style="cursor:pointer;">
+                    <div class="pt-step ${stepSalonDetails ? 'done' : ''}" id="stepSalonDetails" onclick="openEditMode('tab-details')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Salon<br>Details</div>
-                        <div class="pt-status">${stepSalonDetails ? 'Completed' : 'Pending'}</div>
+                        <div class="pt-status" id="statusSalonDetails">${stepSalonDetails ? 'Completed' : 'Pending'}</div>
                     </div>
-                    <div class="pt-step ${stepServices ? 'done' : ''}" onclick="openEditMode('tab-services')" style="cursor:pointer;">
+                    <div class="pt-step ${stepServices ? 'done' : ''}" id="stepServices" onclick="openEditMode('tab-services')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Services<br>Offered</div>
-                        <div class="pt-status">${stepServices ? 'Completed' : 'Pending'}</div>
+                        <div class="pt-status" id="statusServices">${stepServices ? 'Completed' : 'Pending'}</div>
                     </div>
-                    <div class="pt-step ${stepPhotos ? 'done' : ''}" onclick="window.scrollTo({top:0, behavior:'smooth'})" style="cursor:pointer;">
+                    <div class="pt-step ${stepPhotos ? 'done' : ''}" id="stepPhotos" onclick="window.scrollTo({top:0, behavior:'smooth'})" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Photos</div>
-                        <div class="pt-status">${stepPhotos ? 'Completed' : 'Pending'}</div>
+                        <div class="pt-status" id="statusPhotos">${stepPhotos ? 'Completed' : 'Pending'}</div>
                     </div>
-                    <div class="pt-step ${stepFacilities ? 'done' : ''}" onclick="openEditMode('tab-facilities')" style="cursor:pointer;">
+                    <div class="pt-step ${stepFacilities ? 'done' : ''}" id="stepFacilities" onclick="openEditMode('tab-facilities')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Facilities &<br>Amenities</div>
-                        <div class="pt-status">${stepFacilities ? 'Completed' : 'Pending'}</div>
+                        <div class="pt-status" id="statusFacilities">${stepFacilities ? 'Completed' : 'Pending'}</div>
                     </div>
-                    <div class="pt-step ${stepDocs ? 'done' : ''}" onclick="openEditMode('tab-documents')" style="cursor:pointer;">
+                    <div class="pt-step ${stepDocs ? 'done' : ''}" id="stepDocs" onclick="openEditMode('tab-documents')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Documents</div>
-                        <div class="pt-status">${docsCount}/${docsTotal} Completed</div>
+                        <div class="pt-status" id="statusDocs">${docsCount}/${docsTotal} Completed</div>
                     </div>
-                    <div class="pt-step ${stepSocial ? 'done' : ''}" onclick="openEditMode('tab-social')" style="cursor:pointer;">
+                    <div class="pt-step ${stepSocial ? 'done' : ''}" id="stepSocial" onclick="openEditMode('tab-social')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Social<br>Media</div>
-                        <div class="pt-status">${socialCount}/${socialTotal} Completed</div>
+                        <div class="pt-status" id="statusSocial">${socialCount}/${socialTotal} Completed</div>
                     </div>
-                    <div class="pt-step ${stepPref ? 'done' : ''}" onclick="openEditMode('tab-preferences')" style="cursor:pointer;">
+                    <div class="pt-step ${stepPref ? 'done' : ''}" id="stepPref" onclick="openEditMode('tab-preferences')" style="cursor:pointer;">
                         <div class="pt-icon"><i class="bi bi-check2"></i></div>
                         <div class="pt-label">Preferences</div>
-                        <div class="pt-status">${stepPref ? 'Completed' : 'Pending'}</div>
+                        <div class="pt-status" id="statusPref">${stepPref ? 'Completed' : 'Pending'}</div>
                     </div>
                 </div>
                 
@@ -748,54 +807,82 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     
                     <div class="f-row-2">
                         <div class="f-group">
-                            <label class="f-label">Salon Name <span class="req">*</span></label>
-                            <input type="text" class="f-control" name="name" value="${salon.name}" required>
+                            <label class="f-label" for="salonName">Salon Name <span class="req">*</span></label>
+                            <input type="text" class="f-control" id="salonName" name="name" value="${salon.name}" placeholder="e.g. Aura Beauty Lounge" maxlength="150" required>
+                            <div class="error-msg" id="err-name"><i class="bi bi-exclamation-circle-fill"></i> Salon name is required (at least 3 characters).</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Business Type <span class="req">*</span></label>
-                            <select class="f-control" name="salonCategory">
-                                <option value="Beauty, Wellness & Hair Salon" ${salon.salonCategory == 'Beauty, Wellness & Hair Salon' ? 'selected' : ''}>Beauty, Wellness & Hair Salon</option>
-                                <option value="Premium Salon" ${salon.salonCategory == 'Premium Salon' ? 'selected' : ''}>Premium Salon</option>
+                            <label class="f-label" for="salonType">Business Type <span class="req">*</span></label>
+                            <select class="f-control" name="salonType" id="salonType" required>
+                                <option value="">-- Select Business Type --</option>
+                                <option value="Beauty, Wellness & Hair Salon" ${salon.salonType == 'Beauty, Wellness & Hair Salon' or (empty salon.salonType and salon.salonCategory == 'Beauty, Wellness & Hair Salon') ? 'selected' : ''}>Beauty, Wellness & Hair Salon</option>
+                                <option value="Hair Salon" ${salon.salonType == 'Hair Salon' ? 'selected' : ''}>Hair Salon</option>
+                                <option value="Beauty Parlour" ${salon.salonType == 'Beauty Parlour' ? 'selected' : ''}>Beauty Parlour</option>
+                                <option value="Unisex Salon" ${salon.salonType == 'Unisex Salon' ? 'selected' : ''}>Unisex Salon</option>
+                                <option value="Bridal & Makeup Studio" ${salon.salonType == 'Bridal & Makeup Studio' ? 'selected' : ''}>Bridal & Makeup Studio</option>
+                                <option value="Spa & Wellness Centre" ${salon.salonType == 'Spa & Wellness Centre' ? 'selected' : ''}>Spa & Wellness Centre</option>
+                                <option value="Nail Studio & Bar" ${salon.salonType == 'Nail Studio & Bar' ? 'selected' : ''}>Nail Studio & Bar</option>
+                                <option value="Skin Clinic & Aesthetics" ${salon.salonType == 'Skin Clinic & Aesthetics' ? 'selected' : ''}>Skin Clinic & Aesthetics</option>
+                                <option value="Ayurvedic & Natural Care" ${salon.salonType == 'Ayurvedic & Natural Care' ? 'selected' : ''}>Ayurvedic & Natural Care</option>
+                                <c:if test="${not empty salon.salonType and salon.salonType != 'Beauty, Wellness & Hair Salon' and salon.salonType != 'Hair Salon' and salon.salonType != 'Beauty Parlour' and salon.salonType != 'Unisex Salon' and salon.salonType != 'Bridal & Makeup Studio' and salon.salonType != 'Spa & Wellness Centre' and salon.salonType != 'Nail Studio & Bar' and salon.salonType != 'Skin Clinic & Aesthetics' and salon.salonType != 'Ayurvedic & Natural Care'}">
+                                    <option value="${salon.salonType}" selected>${salon.salonType}</option>
+                                </c:if>
                             </select>
+                            <div class="error-msg" id="err-salonType"><i class="bi bi-exclamation-circle-fill"></i> Please select a business type.</div>
                         </div>
                     </div>
                     
                     <div class="f-group">
-                        <label class="f-label">Tagline / Motto</label>
-                        <input type="text" class="f-control" name="salonTagline" value="${salon.salonTagline}" placeholder="Enhancing Beauty, Elevating Confidence">
+                        <label class="f-label" for="salonTagline">Tagline / Motto</label>
+                        <input type="text" class="f-control" id="salonTagline" name="salonTagline" value="${salon.salonTagline}" placeholder="Enhancing Beauty, Elevating Confidence" maxlength="255">
+                        <div class="field-hint"><i class="bi bi-info-circle"></i> Short memorable slogan displayed on your public profile</div>
                     </div>
                     
                     <div class="f-row-2">
                         <div class="f-group">
-                            <label class="f-label">Business Registration No.</label>
-                            <input type="text" class="f-control" name="businessRegistrationNo" value="${salon.businessRegistrationNo}" placeholder="KA03AB1234C">
+                            <label class="f-label" for="businessRegistrationNo">Business Registration No.</label>
+                            <input type="text" class="f-control" id="businessRegistrationNo" name="businessRegistrationNo" value="${salon.businessRegistrationNo}" placeholder="e.g. KA03AB1234C" maxlength="50">
                         </div>
                         <div class="f-group">
-                            <label class="f-label">GST Number (Optional)</label>
-                            <input type="text" class="f-control" name="gstNumber" value="${salon.gstNumber}" placeholder="29ABCDE1234F1Z5">
+                            <label class="f-label" for="gstNumber">GST Number (Optional)</label>
+                            <input type="text" class="f-control" id="gstNumber" name="gstNumber" value="${salon.gstNumber}" placeholder="29ABCDE1234F1Z5" maxlength="15" style="text-transform:uppercase;">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> 15-character Goods and Services Tax ID</div>
+                            <div class="error-msg" id="err-gstNumber"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid 15-character GST format (e.g. 29ABCDE1234F1Z5).</div>
                         </div>
                     </div>
                     
                     <div class="f-row-3">
                         <div class="f-group">
-                            <label class="f-label">Established Year</label>
-                            <select class="f-control" name="establishedYear">
-                                <option value="2020" ${salon.establishedYear == 2020 ? 'selected' : ''}>2020</option>
-                                <option value="2021" ${salon.establishedYear == 2021 ? 'selected' : ''}>2021</option>
-                                <option value="2022" ${salon.establishedYear == 2022 ? 'selected' : ''}>2022</option>
-                            </select>
+                            <label class="f-label" for="establishedYear">Established Year</label>
+                            <input type="text" inputmode="numeric" class="f-control" id="establishedYear" name="establishedYear" value="${salon.establishedYear}" placeholder="e.g. 2018" maxlength="4" autocomplete="off">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> 4-digit year (1900 - 2026)</div>
+                            <div class="error-msg" id="err-establishedYear"><i class="bi bi-exclamation-circle-fill"></i> Enter a valid 4-digit year between 1900 and 2026.</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Salon Category</label>
-                            <select class="f-control" name="salonCategory">
-                                <option value="Premium Salon">Premium Salon</option>
+                            <label class="f-label" for="salonCategory">Salon Category <span class="req">*</span></label>
+                            <select class="f-control" name="salonCategory" id="salonCategory" required>
+                                <option value="">-- Select Category --</option>
+                                <option value="Premium Salon" ${salon.salonCategory == 'Premium Salon' ? 'selected' : ''}>Premium Salon</option>
+                                <option value="Luxury Salon" ${salon.salonCategory == 'Luxury Salon' ? 'selected' : ''}>Luxury Salon</option>
+                                <option value="Standard Salon" ${salon.salonCategory == 'Standard Salon' ? 'selected' : ''}>Standard Salon</option>
+                                <option value="Boutique Salon" ${salon.salonCategory == 'Boutique Salon' ? 'selected' : ''}>Boutique Salon</option>
+                                <option value="Budget / Economy Salon" ${salon.salonCategory == 'Budget / Economy Salon' ? 'selected' : ''}>Budget / Economy Salon</option>
+                                <option value="Family Salon" ${salon.salonCategory == 'Family Salon' ? 'selected' : ''}>Family Salon</option>
+                                <option value="Unisex Salon" ${salon.salonCategory == 'Unisex Salon' ? 'selected' : ''}>Unisex Salon</option>
+                                <option value="Bridal & Event Studio" ${salon.salonCategory == 'Bridal & Event Studio' ? 'selected' : ''}>Bridal & Event Studio</option>
+                                <option value="Organic & Eco-Friendly Salon" ${salon.salonCategory == 'Organic & Eco-Friendly Salon' ? 'selected' : ''}>Organic & Eco-Friendly Salon</option>
+                                <option value="Express Salon" ${salon.salonCategory == 'Express Salon' ? 'selected' : ''}>Express Salon</option>
+                                <c:if test="${not empty salon.salonCategory and salon.salonCategory != 'Premium Salon' and salon.salonCategory != 'Luxury Salon' and salon.salonCategory != 'Standard Salon' and salon.salonCategory != 'Boutique Salon' and salon.salonCategory != 'Budget / Economy Salon' and salon.salonCategory != 'Family Salon' and salon.salonCategory != 'Unisex Salon' and salon.salonCategory != 'Bridal & Event Studio' and salon.salonCategory != 'Organic & Eco-Friendly Salon' and salon.salonCategory != 'Express Salon'}">
+                                    <option value="${salon.salonCategory}" selected>${salon.salonCategory}</option>
+                                </c:if>
                             </select>
+                            <div class="error-msg" id="err-salonCategory"><i class="bi bi-exclamation-circle-fill"></i> Please select a salon category.</div>
                         </div>
                         <div class="f-group text-end">
                             <label class="f-label">Women Only Salon</label>
                             <div class="toggle-switch justify-content-end pt-1">
-                                <label class="switch">
-                                    <input type="checkbox" name="isWomenOnly" value="true" ${salon.isWomenOnly ? 'checked' : ''}>
+                                <label class="switch" for="isWomenOnlySwitch">
+                                    <input type="checkbox" id="isWomenOnlySwitch" name="isWomenOnly" value="true" ${salon.isWomenOnly ? 'checked' : ''}>
                                     <span class="slider"></span>
                                 </label>
                                 <span style="font-size:0.75rem; font-weight:500;">Yes</span>
@@ -804,12 +891,13 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     </div>
                     
                     <div class="f-group mt-2">
-                        <label class="f-label">Description <span class="req">*</span></label>
-                        <textarea class="f-control" name="bio" rows="4" placeholder="Enter description...">${salon.bio}</textarea>
-                        <div class="char-count">156 / 500</div>
+                        <label class="f-label" for="salonBio">Description <span class="req">*</span></label>
+                        <textarea class="f-control" id="salonBio" name="bio" rows="4" placeholder="Enter salon description, specialty services, ambiance, hygiene promises..." maxlength="2000" required>${salon.bio}</textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <div class="error-msg" id="err-bio"><i class="bi bi-exclamation-circle-fill"></i> Description is required (at least 10 characters).</div>
+                            <div class="char-count" id="bioCharCount">0 / 2000</div>
+                        </div>
                     </div>
-                </div>
-
                 </div>
                 
                 <!-- Col 2: Contact Info -->
@@ -820,46 +908,68 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     </div>
                     
                     <div class="f-group">
-                        <label class="f-label">Phone Number <span class="req">*</span></label>
-                        <input type="text" class="f-control" name="phone" value="${salon.phone}" required>
+                        <label class="f-label" for="salonPhone">Phone Number <span class="req">*</span></label>
+                        <input type="tel" inputmode="numeric" class="f-control" id="salonPhone" name="phone" value="${salon.phone}" placeholder="10-digit mobile number" maxlength="10" autocomplete="tel" required>
+                        <div class="field-hint"><i class="bi bi-info-circle"></i> 10 digits starting with 6, 7, 8, or 9</div>
+                        <div class="error-msg" id="err-phone"><i class="bi bi-exclamation-circle-fill"></i> Valid 10-digit phone number starting with 6-9 is required.</div>
                     </div>
                     
                     <div class="f-group">
-                        <label class="f-label">Alternate Number</label>
-                        <input type="text" class="f-control" name="alternateNumber" value="${salon.alternateNumber}" placeholder="+91 91234 56789">
+                        <label class="f-label" for="alternateNumber">Alternate Number</label>
+                        <input type="tel" inputmode="numeric" class="f-control" id="alternateNumber" name="alternateNumber" value="${salon.alternateNumber}" placeholder="Optional 10-digit mobile number" maxlength="10" autocomplete="tel">
+                        <div class="field-hint"><i class="bi bi-info-circle"></i> Optional secondary phone (must differ from primary phone)</div>
+                        <div class="error-msg" id="err-alternateNumber"><i class="bi bi-exclamation-circle-fill"></i> Alternate number must be 10 digits and distinct from primary phone.</div>
                     </div>
                     
                     <div class="f-group">
-                        <label class="f-label">Email Address <span class="req">*</span></label>
-                        <input type="email" class="f-control" name="email" value="${salon.email}" required>
+                        <label class="f-label" for="salonEmail">Email Address <span class="req">*</span></label>
+                        <input type="email" class="f-control" id="salonEmail" name="email" value="${salon.email}" placeholder="contact@salon.com" maxlength="100" autocomplete="email" required>
+                        <div class="error-msg" id="err-email"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid email address.</div>
                     </div>
                     
                     <div class="f-group">
-                        <label class="f-label">Full Address <span class="req">*</span></label>
-                        <textarea class="f-control" name="address" rows="3" required>${salon.address}</textarea>
+                        <label class="f-label" for="salonAddress">Full Address <span class="req">*</span></label>
+                        <textarea class="f-control" id="salonAddress" name="address" rows="3" placeholder="Door / Building No, Street, Area / Locality..." maxlength="500" required>${salon.address}</textarea>
+                        <div class="error-msg" id="err-address"><i class="bi bi-exclamation-circle-fill"></i> Full address is required (at least 5 characters).</div>
                     </div>
                     
                     <div class="f-row-3">
                         <div class="f-group">
-                            <label class="f-label">City <span class="req">*</span></label>
-                            <input type="text" class="f-control" name="city" value="${salon.city}" required>
-                        </div>
-                        <div class="f-group">
-                            <label class="f-label">State <span class="req">*</span></label>
-                            <select class="f-control" name="state">
-                                <option value="Karnataka" ${salon.state == 'Karnataka' ? 'selected' : ''}>Karnataka</option>
-                                <option value="Maharashtra" ${salon.state == 'Maharashtra' ? 'selected' : ''}>Maharashtra</option>
+                            <label class="f-label" for="stateSelect">State <span class="req">*</span></label>
+                            <select class="f-control" name="state" id="stateSelect" required>
+                                <option value="">-- Select State --</option>
                             </select>
+                            <div class="cascade-info"><i class="bi bi-info-circle"></i> Updates districts</div>
+                            <div class="error-msg" id="err-state"><i class="bi bi-exclamation-circle-fill"></i> State is required.</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Pincode <span class="req">*</span></label>
-                            <input type="text" class="f-control" name="pincode" value="${salon.pincode}" required>
+                            <label class="f-label" for="districtSelect">District / City <span class="req">*</span></label>
+                            <select class="f-control" id="districtSelect" required>
+                                <option value="">-- Select State First --</option>
+                            </select>
+                            <div class="cascade-info"><i class="bi bi-check-circle"></i> Filters to chosen state</div>
+                            <div class="error-msg" id="err-city"><i class="bi bi-exclamation-circle-fill"></i> District / City is required.</div>
+                        </div>
+                        <div class="f-group">
+                            <label class="f-label" for="salonPincode">Pincode <span class="req">*</span></label>
+                            <input type="text" inputmode="numeric" class="f-control" id="salonPincode" name="pincode" value="${salon.pincode}" placeholder="6-digit Pincode" maxlength="6" required>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> 6 digits postal code</div>
+                            <div class="error-msg" id="err-pincode"><i class="bi bi-exclamation-circle-fill"></i> Valid 6-digit pincode is required.</div>
                         </div>
                     </div>
+
+                    <div class="f-group mt-2" id="customCityGroup" style="display:none;">
+                        <label class="f-label" for="customCityInput">Custom City / Town Name <span class="req">*</span></label>
+                        <input type="text" id="customCityInput" class="f-control" placeholder="Type city or town name" maxlength="60">
+                        <div class="error-msg" id="err-customCity"><i class="bi bi-exclamation-circle-fill"></i> Please enter your city or town name.</div>
+                    </div>
+
+                    <!-- Hidden input submitted as the official city param -->
+                    <input type="hidden" name="city" id="inputCity" value="${salon.city}">
                     
                     <div class="f-group mt-2">
-                        <label class="f-label">Landmark</label>
-                        <input type="text" class="f-control" name="landmark" value="${salon.landmark}" placeholder="Near Metro Station">
+                        <label class="f-label" for="salonLandmark">Landmark</label>
+                        <input type="text" class="f-control" id="salonLandmark" name="landmark" value="${salon.landmark}" placeholder="Near Metro Station, Opposite Central Mall" maxlength="200">
                     </div>
                 </div>
 
@@ -894,78 +1004,95 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                             <div class="hours-row">
                                 <div class="hours-day" style="text-transform: capitalize;">${day}</div>
                                 <div class="hours-inputs">
-                                    <input type="time" class="hours-input" name="hours_${day}_open" value="${fn:split(salonHours[day], ' - ')[0]}">
+                                    <input type="time" class="hours-input" id="hours_${day}_open" name="hours_${day}_open" value="${fn:split(salonHours[day], ' - ')[0]}">
                                     <span>to</span>
-                                    <input type="time" class="hours-input" name="hours_${day}_close" value="${fn:split(salonHours[day], ' - ')[1]}">
+                                    <input type="time" class="hours-input" id="hours_${day}_close" name="hours_${day}_close" value="${fn:split(salonHours[day], ' - ')[1]}">
                                 </div>
                                 <div class="hours-closed">
-                                    <input type="checkbox" name="hours_${day}_closed" value="true" ${salonHours[day] == 'Closed' ? 'checked' : ''}> Closed
+                                    <input type="checkbox" id="hours_${day}_closed" name="hours_${day}_closed" value="true" ${salonHours[day] == 'Closed' ? 'checked' : ''}> Closed
                                 </div>
                             </div>
                         </c:forEach>
                     </div>
+                    <div class="field-hint mb-3"><i class="bi bi-info-circle"></i> Set standard daily operating opening and closing timings, or check Closed for rest days</div>
                     
                     <div class="f-row-3">
                         <div class="f-group">
-                            <label class="f-label">Total Chairs / Stations</label>
-                            <input type="number" class="f-control" name="totalChairs" value="${not empty salon.totalChairs ? salon.totalChairs : 12}">
+                            <label class="f-label" for="totalChairs">Total Chairs / Stations <span class="req">*</span></label>
+                            <input type="text" inputmode="numeric" class="f-control" id="totalChairs" name="totalChairs" value="${not empty salon.totalChairs ? salon.totalChairs : 12}" placeholder="e.g. 12" maxlength="3" required>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Active styling or cutting stations (1–500)</div>
+                            <div class="error-msg" id="err-totalChairs"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid number of chairs (1 to 500).</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Total Treatment Rooms</label>
-                            <input type="number" class="f-control" name="treatmentRooms" value="${not empty salon.treatmentRooms ? salon.treatmentRooms : 4}">
+                            <label class="f-label" for="treatmentRooms">Total Treatment Rooms</label>
+                            <input type="text" inputmode="numeric" class="f-control" id="treatmentRooms" name="treatmentRooms" value="${not empty salon.treatmentRooms ? salon.treatmentRooms : 4}" placeholder="e.g. 4" maxlength="3">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Private therapy, facial, or spa rooms (0–100)</div>
+                            <div class="error-msg" id="err-treatmentRooms"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid number of rooms (0 to 100).</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Reception Area</label>
-                            <select class="f-control" name="hasReceptionArea">
+                            <label class="f-label" for="hasReceptionArea">Reception Area</label>
+                            <select class="f-control" id="hasReceptionArea" name="hasReceptionArea">
                                 <option value="true" ${salon.hasReceptionArea ? 'selected' : ''}>Yes</option>
                                 <option value="false" ${!salon.hasReceptionArea ? 'selected' : ''}>No</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Dedicated desk for customer greetings & billing</div>
                         </div>
                     </div>
                     
                     <div class="f-row-3">
                         <div class="f-group">
-                            <label class="f-label">Waiting Area</label>
-                            <select class="f-control" name="hasWaitingArea">
+                            <label class="f-label" for="hasWaitingArea">Waiting Area</label>
+                            <select class="f-control" id="hasWaitingArea" name="hasWaitingArea">
                                 <option value="true" ${salon.hasWaitingArea ? 'selected' : ''}>Yes</option>
                                 <option value="false" ${!salon.hasWaitingArea ? 'selected' : ''}>No</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Comfortable seated lounge for waiting guests</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Parking Facility</label>
-                            <select class="f-control" name="hasParking">
+                            <label class="f-label" for="hasParking">Parking Facility</label>
+                            <select class="f-control" id="hasParking" name="hasParking">
                                 <option value="true" ${salon.hasParking ? 'selected' : ''}>Yes</option>
                                 <option value="false" ${!salon.hasParking ? 'selected' : ''}>No</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Customer parking space or valet support</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Washrooms</label>
-                            <input type="number" class="f-control" name="washrooms" value="${not empty salon.washrooms ? salon.washrooms : 2}">
-                        </div>
-                    </div>
-                    
-                    <div class="f-row-2">
-                        <div class="f-group">
-                            <label class="f-label">Salon Size (sq.ft)</label>
-                            <input type="number" class="f-control" name="salonSizeSqFt" value="${not empty salon.salonSizeSqFt ? salon.salonSizeSqFt : 1500}">
-                        </div>
-                        <div class="f-group">
-                            <label class="f-label">Salon License No.</label>
-                            <input type="text" class="f-control" name="salonLicenseNo" value="${salon.salonLicenseNo}" placeholder="BBMP/2020/12345">
+                            <label class="f-label" for="washrooms">Washrooms</label>
+                            <input type="text" inputmode="numeric" class="f-control" id="washrooms" name="washrooms" value="${not empty salon.washrooms ? salon.washrooms : 2}" placeholder="e.g. 2" maxlength="2">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Clean restroom facilities for customers (0–50)</div>
+                            <div class="error-msg" id="err-washrooms"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid number of washrooms (0 to 50).</div>
                         </div>
                     </div>
                     
                     <div class="f-row-2">
                         <div class="f-group">
-                            <label class="f-label">Hygiene Standard</label>
-                            <select class="f-control" name="hygieneStandard">
-                                <option value="Premium" ${salon.hygieneStandard == 'Premium' ? 'selected' : ''}>Premium</option>
-                                <option value="Standard" ${salon.hygieneStandard == 'Standard' ? 'selected' : ''}>Standard</option>
+                            <label class="f-label" for="salonSizeSqFt">Salon Size (sq.ft) <span class="req">*</span></label>
+                            <input type="text" inputmode="numeric" class="f-control" id="salonSizeSqFt" name="salonSizeSqFt" value="${not empty salon.salonSizeSqFt ? salon.salonSizeSqFt : 1500}" placeholder="e.g. 1500" maxlength="5" required>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Total carpet / floor area in square feet (50–50,000)</div>
+                            <div class="error-msg" id="err-salonSizeSqFt"><i class="bi bi-exclamation-circle-fill"></i> Please enter an area between 50 and 50,000 sq.ft.</div>
+                        </div>
+                        <div class="f-group">
+                            <label class="f-label" for="salonLicenseNo">Salon License No.</label>
+                            <input type="text" class="f-control" id="salonLicenseNo" name="salonLicenseNo" value="${salon.salonLicenseNo}" placeholder="e.g. BBMP/2020/12345" maxlength="50">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Municipal trade or health license reference number</div>
+                            <div class="error-msg" id="err-salonLicenseNo"><i class="bi bi-exclamation-circle-fill"></i> License number cannot exceed 50 characters.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="f-row-2">
+                        <div class="f-group">
+                            <label class="f-label" for="hygieneStandard">Hygiene Standard</label>
+                            <select class="f-control" id="hygieneStandard" name="hygieneStandard">
+                                <option value="Premium" ${salon.hygieneStandard == 'Premium' ? 'selected' : ''}>Premium (Hospital-grade sterilization)</option>
+                                <option value="Standard" ${salon.hygieneStandard == 'Standard' ? 'selected' : ''}>Standard (Regular sanitization)</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Sanitation protocol and hygiene level followed</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Languages Spoken</label>
-                            <input type="text" class="f-control" name="languagesSpoken" value="${salon.languagesSpoken}" placeholder="English, Hindi, Kannada">
+                            <label class="f-label" for="languagesSpoken">Languages Spoken</label>
+                            <input type="text" class="f-control" id="languagesSpoken" name="languagesSpoken" value="${salon.languagesSpoken}" placeholder="English, Hindi, Kannada" maxlength="150">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Languages spoken by styling & front-desk staff</div>
+                            <div class="error-msg" id="err-languagesSpoken"><i class="bi bi-exclamation-circle-fill"></i> Languages list cannot exceed 150 characters.</div>
                         </div>
                     </div>
                 </div>
@@ -981,8 +1108,8 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     
                     <div class="f-row-2 mt-3">
                         <div class="f-group">
-                            <label class="f-label">Service Category</label>
-                            <select name="serviceCategory" class="f-control">
+                            <label class="f-label" for="serviceCategory">Service Category</label>
+                            <select name="serviceCategory" id="serviceCategory" class="f-control">
                                 <option value="Haircut">Haircut</option>
                                 <option value="Hair Styling">Hair Styling</option>
                                 <option value="Hair Coloring">Hair Coloring</option>
@@ -993,38 +1120,48 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                                 <option value="Makeup">Makeup</option>
                                 <option value="Other">Other</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Select category under which this service will be listed</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Service Name</label>
-                            <input type="text" name="serviceName" class="f-control" placeholder="e.g. Premium Hair Spa">
-                        </div>
-                    </div>
-
-                    <div class="f-row-2 mt-2">
-                        <div class="f-group">
-                            <label class="f-label">Price (₹)</label>
-                            <input type="number" name="servicePrice" step="0.01" class="f-control" placeholder="0.00">
-                        </div>
-                        <div class="f-group">
-                            <label class="f-label">Duration (Minutes)</label>
-                            <input type="number" name="serviceDuration" class="f-control" placeholder="e.g. 45">
+                            <label class="f-label" for="serviceName">Service Name</label>
+                            <input type="text" name="serviceName" id="serviceName" class="f-control" placeholder="e.g. Premium Hair Spa & Scalp Therapy" maxlength="100">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Distinctive service or treatment name</div>
+                            <div class="error-msg" id="err-serviceName"><i class="bi bi-exclamation-circle-fill"></i> Service name must be at least 2 characters.</div>
                         </div>
                     </div>
 
                     <div class="f-row-2 mt-2">
                         <div class="f-group">
-                            <label class="f-label">Ingredients Used</label>
-                            <input type="text" name="serviceIngredients" class="f-control" placeholder="e.g. Argan oil, Keratin">
+                            <label class="f-label" for="servicePrice">Price (₹)</label>
+                            <input type="text" inputmode="numeric" name="servicePrice" id="servicePrice" class="f-control" placeholder="e.g. 799" maxlength="6">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Price charged in Indian Rupees (₹)</div>
+                            <div class="error-msg" id="err-servicePrice"><i class="bi bi-exclamation-circle-fill"></i> Enter a valid price (₹ 0 or more).</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Allergen Information</label>
-                            <input type="text" name="serviceAllergenInfo" class="f-control" placeholder="e.g. Contains nut extracts">
+                            <label class="f-label" for="serviceDuration">Duration (Minutes)</label>
+                            <input type="text" inputmode="numeric" name="serviceDuration" id="serviceDuration" class="f-control" placeholder="e.g. 45" maxlength="3">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Estimated service duration in minutes (5–480)</div>
+                            <div class="error-msg" id="err-serviceDuration"><i class="bi bi-exclamation-circle-fill"></i> Duration must be between 5 and 480 minutes.</div>
+                        </div>
+                    </div>
+
+                    <div class="f-row-2 mt-2">
+                        <div class="f-group">
+                            <label class="f-label" for="serviceIngredients">Ingredients / Products Used</label>
+                            <input type="text" name="serviceIngredients" id="serviceIngredients" class="f-control" placeholder="e.g. Argan oil, Keratin complex, L'Oreal Professional" maxlength="200">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Primary brand products or active ingredients</div>
+                        </div>
+                        <div class="f-group">
+                            <label class="f-label" for="serviceAllergenInfo">Allergen Information</label>
+                            <input type="text" name="serviceAllergenInfo" id="serviceAllergenInfo" class="f-control" placeholder="e.g. Contains almond extracts, patch test recommended" maxlength="200">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Sensitive skin notices or contraindications</div>
                         </div>
                     </div>
                     
                     <div class="f-group mt-3">
-                        <label class="f-label">Service Photo</label>
-                        <input type="file" name="servicePhoto" class="f-control">
+                        <label class="f-label" for="servicePhoto">Service Photo</label>
+                        <input type="file" name="servicePhoto" id="servicePhoto" accept="image/*" class="f-control">
+                        <div class="field-hint"><i class="bi bi-info-circle"></i> Showcase image for this service (PNG, JPG, max 5MB)</div>
                     </div>
                 </div>
                 </div> <!-- End Tab Services -->
@@ -1038,35 +1175,39 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     
                     <div class="f-row-2 mt-3">
                         <div class="f-group">
-                            <label class="f-label">Air Conditioning (AC)</label>
-                            <select class="f-control" name="hasAc">
+                            <label class="f-label" for="hasAc">Air Conditioning (AC)</label>
+                            <select class="f-control" id="hasAc" name="hasAc">
                                 <option value="true" ${salon.hasAc ? 'selected' : ''}>Yes</option>
                                 <option value="false" ${!salon.hasAc ? 'selected' : ''}>No</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Fully air-conditioned styling space and treatment rooms</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Free Wi-Fi</label>
-                            <select class="f-control" name="hasWifi">
+                            <label class="f-label" for="hasWifi">Free Wi-Fi</label>
+                            <select class="f-control" id="hasWifi" name="hasWifi">
                                 <option value="true" ${salon.hasWifi ? 'selected' : ''}>Yes</option>
                                 <option value="false" ${!salon.hasWifi ? 'selected' : ''}>No</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> High-speed internet access available for customers</div>
                         </div>
                     </div>
                     
                     <div class="f-row-2 mt-2">
                         <div class="f-group">
-                            <label class="f-label">Customer Parking</label>
-                            <select class="f-control" name="hasParking">
+                            <label class="f-label" for="hasParkingFacility">Customer Parking</label>
+                            <select class="f-control" id="hasParkingFacility" name="hasParking">
                                 <option value="true" ${salon.hasParking ? 'selected' : ''}>Yes</option>
                                 <option value="false" ${!salon.hasParking ? 'selected' : ''}>No</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Dedicated 2-wheeler or 4-wheeler parking on premises</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label">Power Backup</label>
-                            <select class="f-control" name="hasPowerBackup">
+                            <label class="f-label" for="hasPowerBackup">Power Backup</label>
+                            <select class="f-control" id="hasPowerBackup" name="hasPowerBackup">
                                 <option value="true" ${salon.hasPowerBackup ? 'selected' : ''}>Yes</option>
                                 <option value="false" ${!salon.hasPowerBackup ? 'selected' : ''}>No</option>
                             </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Inverter or generator backup to avoid service interruptions</div>
                         </div>
                     </div>
                 </div>
@@ -1082,19 +1223,25 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     
                     <div class="f-row-2 mt-3">
                         <div class="f-group">
-                            <label class="f-label"><i class="bi bi-instagram text-pink"></i> Instagram Username/URL</label>
-                            <input type="text" class="f-control" name="socialInstagram" placeholder="@beautysalon">
+                            <label class="f-label" for="socialInstagram"><i class="bi bi-instagram text-pink"></i> Instagram Username or URL</label>
+                            <input type="text" class="f-control" id="socialInstagram" name="socialInstagram" placeholder="@beautysalon or instagram.com/salon" maxlength="100">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> e.g. @aurasalon or https://instagram.com/aurasalon</div>
+                            <div class="error-msg" id="err-socialInstagram"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid Instagram handle or URL.</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label"><i class="bi bi-facebook text-primary"></i> Facebook Page/URL</label>
-                            <input type="text" class="f-control" name="socialFacebook" placeholder="facebook.com/beautysalon">
+                            <label class="f-label" for="socialFacebook"><i class="bi bi-facebook text-primary"></i> Facebook Page or URL</label>
+                            <input type="text" class="f-control" id="socialFacebook" name="socialFacebook" placeholder="facebook.com/beautysalon" maxlength="150">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> e.g. facebook.com/aurasalon</div>
+                            <div class="error-msg" id="err-socialFacebook"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid Facebook URL or handle.</div>
                         </div>
                     </div>
                     
                     <div class="f-row-2 mt-2">
                         <div class="f-group">
-                            <label class="f-label"><i class="bi bi-globe"></i> Website Link</label>
-                            <input type="url" class="f-control" name="socialWebsite" placeholder="https://www.mysalon.com">
+                            <label class="f-label" for="socialWebsite"><i class="bi bi-globe"></i> Website Link</label>
+                            <input type="url" class="f-control" id="socialWebsite" name="socialWebsite" placeholder="https://www.mysalon.com" maxlength="200">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Official salon website (https://...)</div>
+                            <div class="error-msg" id="err-socialWebsite"><i class="bi bi-exclamation-circle-fill"></i> Please enter a valid website URL starting with http:// or https://.</div>
                         </div>
                     </div>
                 </div>
@@ -1194,7 +1341,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                         <c:if test="${not empty salon.businessRegistrationUrl}"><i class="bi bi-check doc-check"></i></c:if>
                         <div class="doc-icon-wrapper" style="color:#a855f7; background:#f3e8ff;"><i class="bi bi-file-earmark-text"></i></div>
                         <div class="doc-info">
-                            <div class="doc-title">Business Registration <br>Certificate</div>
+                            <div class="doc-title">Business Registration <br>Certificate</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> PDF, PNG, JPG (max 5 MB)</div>
                             <div class="doc-action" onclick="document.getElementById('fileBus').click()">View / Upload</div>
                         </div>
                         <input type="file" name="businessRegistration" style="display:none;" id="fileBus">
@@ -1204,7 +1351,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                         <c:if test="${not empty salon.salonLicenseUrl}"><i class="bi bi-check doc-check"></i></c:if>
                         <div class="doc-icon-wrapper" style="color:#3b82f6; background:#eff6ff;"><i class="bi bi-file-text"></i></div>
                         <div class="doc-info">
-                            <div class="doc-title"><br>Salon License</div>
+                            <div class="doc-title"><br>Salon License</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Trade license copy (max 5 MB)</div>
                             <div class="doc-action" onclick="document.getElementById('fileLic').click()">View / Upload</div>
                         </div>
                         <input type="file" name="salonLicense" style="display:none;" id="fileLic">
@@ -1214,7 +1361,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                         <c:if test="${not empty salon.gstCertificateUrl}"><i class="bi bi-check doc-check"></i></c:if>
                         <div class="doc-icon-wrapper" style="color:#10b981; background:#ecfdf5;"><i class="bi bi-receipt"></i></div>
                         <div class="doc-info">
-                            <div class="doc-title">GST Certificate <br><span class="text-muted fw-normal" style="font-size:0.6rem">(If Applicable)</span></div>
+                            <div class="doc-title">GST Certificate <br><span class="text-muted fw-normal" style="font-size:0.6rem">(If Applicable)</span></div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> GST registration certificate</div>
                             <div class="doc-action" onclick="document.getElementById('fileGst').click()">View / Upload</div>
                         </div>
                         <input type="file" name="gstCertificate" style="display:none;" id="fileGst">
@@ -1224,7 +1371,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                         <c:if test="${not empty salon.hygieneCertificateUrl}"><i class="bi bi-check doc-check"></i></c:if>
                         <div class="doc-icon-wrapper" style="color:#ec4899; background:#fdf2f8;"><i class="bi bi-droplet"></i></div>
                         <div class="doc-info">
-                            <div class="doc-title"><br>Hygiene Certificate</div>
+                            <div class="doc-title"><br>Hygiene Certificate</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Safety inspection certificate</div>
                             <div class="doc-action" onclick="document.getElementById('fileHyg').click()">View / Upload</div>
                         </div>
                         <input type="file" name="hygieneCertificate" style="display:none;" id="fileHyg">
@@ -1234,7 +1381,7 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                         <c:if test="${not empty salon.fireSafetyUrl}"><i class="bi bi-check doc-check"></i></c:if>
                         <div class="doc-icon-wrapper" style="color:#ef4444; background:#fef2f2;"><i class="bi bi-fire"></i></div>
                         <div class="doc-info">
-                            <div class="doc-title"><br>Fire Safety Certificate</div>
+                            <div class="doc-title"><br>Fire Safety Certificate</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Fire NOC or safety certificate</div>
                             <div class="doc-action" onclick="document.getElementById('fileFire').click()">View / Upload</div>
                         </div>
                         <input type="file" name="fireSafety" style="display:none;" id="fileFire">
@@ -1243,25 +1390,30 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
                     <div class="doc-card">
                         <div class="doc-icon-wrapper" style="color:#0ea5e9; background:#f0f9ff;"><i class="bi bi-shield-check"></i></div>
                         <div class="doc-info">
-                            <div class="doc-title">Insurance Certificate <br><span class="text-muted fw-normal" style="font-size:0.6rem">(Optional)</span></div>
+                            <div class="doc-title">Insurance Certificate <br><span class="text-muted fw-normal" style="font-size:0.6rem">(Optional)</span></div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Liability / property insurance</div>
                             <div class="doc-action">View / Upload</div>
                         </div>
                     </div>
                 </div>
             </div>
-
-                </div>
                 </div> <!-- End Tab Documents -->
                 </div> <!-- End Tab Content Container -->
 
                 <!-- Fixed Bottom Action Bar -->
                 <div class="bottom-action-bar">
                     <button type="button" class="btn-cancel" id="btnCancelEdit">Cancel</button>
-                    <button type="submit" class="btn-save">Save Changes</button>
+                    <button type="submit" class="btn-save" id="btnBottomSave">Save Changes</button>
                 </div>
             </div> <!-- End editableSections wrapper -->
             
         </form>
+    </div>
+
+
+    <!-- Toast notification container -->
+    <div id="validationToast" class="validation-alert-toast">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        <span id="validationToastMsg">Please fill all required fields correctly before saving.</span>
     </div>
 
     <!-- Bootstrap JS for dropdowns -->
@@ -1472,6 +1624,837 @@ onclick="document.getElementById('profileForm').submit()">Save Profile</button>
             });
         });
     </script>
+
+    <!-- Enhanced Location Selectors & Strict Live Validation -->
+    <script>
+        const savedState = "${salon.state}";
+        const savedCity = "${salon.city}";
+        // Initial Server-Rendered State for Accurate Completion Sync
+        const hasExistingServices = ${stepServices ? 'true' : 'false'};
+        const hasExistingProfilePhoto = ${(not empty salon.profileImageUrl and not fn:contains(salon.profileImageUrl, 'ui-avatars')) ? 'true' : 'false'};
+        const hasExistingCover = ${(not empty salon.coverImageUrl or (not empty salon.interiorImagesJson and salon.interiorImagesJson != '[]')) ? 'true' : 'false'};
+        const hasExistingFacilities = ${(salon.hasAc or salon.hasWifi or salon.hasParking or salon.hasPowerBackup) ? 'true' : 'false'};
+        const initialDocsCount = ${docsCount};
+        const initialSocialCount = ${socialCount};
+        const hasExistingPreferences = ${(not empty salon.preferencesJson and salon.preferencesJson != '{}') ? 'true' : 'false'};
+
+
+        const locationData = {
+            "India": {
+                "Andhra Pradesh": ["Ananthapuramu", "Chittoor", "East Godavari", "Eluru", "Guntur", "Kakinada", "Krishna", "Kurnool", "NTR", "Palnadu", "Prakasam", "Srikakulam", "Sri Potti Sriramulu Nellore", "Tirupati", "Visakhapatnam", "Vizianagaram", "West Godavari", "YSR Kadapa", "Other"],
+                "Arunachal Pradesh": ["Itanagar", "Tawang", "West Kameng", "East Kameng", "Papum Pare", "Kurung Kumey", "Kra Daadi", "Lower Subansiri", "Upper Subansiri", "West Siang", "East Siang", "Siang", "Upper Siang", "Lower Siang", "Lower Dibang Valley", "Dibang Valley", "Anjaw", "Lohit", "Namsai", "Changlang", "Tirap", "Longding", "Other"],
+                "Assam": ["Guwahati (Kamrup Metro)", "Kamrup", "Dibrugarh", "Silchar (Cachar)", "Jorhat", "Nagaon", "Tinsukia", "Tezpur (Sonitpur)", "Barpeta", "Dhubri", "Goalpara", "Golaghat", "Hailakandi", "Karimganj", "Kokrajhar", "Lakhimpur", "Morigaon", "Nalbari", "Sivasagar", "Bongaigaon", "Other"],
+                "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Bihar Sharif (Nalanda)", "Arrah (Bhojpur)", "Begusarai", "Katihar", "Munger", "Chhapra (Saran)", "Danapur", "Saharsa", "Sasaram (Rohtas)", "Hajipur (Vaishali)", "Dehri", "Siwan", "Motihari (East Champaran)", "Bettiah (West Champaran)", "Other"],
+                "Chhattisgarh": ["Raipur", "Bhilai (Durg)", "Bilaspur", "Korba", "Rajnandgaon", "Jagdalpur (Bastar)", "Ambikapur (Surguja)", "Raigarh", "Dhamtari", "Mahasamund", "Kanker", "Kawardha (Kabirdham)", "Janjgir-Champa", "Other"],
+                "Goa": ["North Goa", "South Goa", "Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda", "Other"],
+                "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Gandhinagar", "Junagadh", "Anand", "Navsari", "Morbi", "Nadiad (Kheda)", "Surendranagar", "Bharuch", "Mehsana", "Bhuj (Kutch)", "Porbandar", "Palanpur (Banaskantha)", "Valsad", "Vapi", "Other"],
+                "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Yamunanagar", "Rohtak", "Hisar", "Karnal", "Sonipat", "Panchkula", "Bhiwani", "Sirsa", "Bahadurgarh (Jhajjar)", "Jind", "Thanesar (Kurukshetra)", "Kaithal", "Rewari", "Palwal", "Other"],
+                "Himachal Pradesh": ["Shimla", "Dharamshala (Kangra)", "Mandi", "Solan", "Kullu", "Hamirpur", "Una", "Bilaspur", "Chamba", "Sirmaur (Nahan)", "Kinnaur", "Lahaul and Spiti", "Other"],
+                "Jharkhand": ["Ranchi", "Jamshedpur (East Singhbhum)", "Dhanbad", "Bokaro", "Deoghar", "Hazaribagh", "Giridih", "Ramgarh", "Medininagar (Palamu)", "Dumka", "Chaibasa (West Singhbhum)", "Other"],
+                "Karnataka": ["Bengaluru Urban", "Bengaluru Rural", "Mysuru", "Hubballi-Dharwad", "Mangaluru (Dakshina Kannada)", "Belagavi", "Kalaburagi (Gulbarga)", "Davanagere", "Ballari", "Vijayapura (Bijapur)", "Shivamogga (Shimoga)", "Tumakuru", "Bidar", "Raichur", "Udupi", "Hassan", "Mandya", "Chikkamagaluru", "Bagalkote", "Gadag", "Kolar", "Chitradurga", "Other"],
+                "Kerala": ["Thiruvananthapuram", "Ernakulam (Kochi)", "Kozhikode", "Thrissur", "Kollam", "Palakkad", "Malappuram", "Kannur", "Kottayam", "Alappuzha", "Kasaragod", "Pathanamthitta", "Idukki", "Wayanad", "Other"],
+                "Madhya Pradesh": ["Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Dewas", "Satna", "Ratlam", "Rewa", "Katni", "Singrauli", "Burhanpur", "Khandwa", "Bhind", "Chhindwara", "Guna", "Shivpuri", "Vidisha", "Damoh", "Other"],
+                "Maharashtra": ["Mumbai City", "Mumbai Suburban", "Pune", "Nagpur", "Thane", "Nashik", "Chhatrapati Sambhajinagar (Aurangabad)", "Solapur", "Kolhapur", "Amravati", "Navi Mumbai", "Nanded", "Jalgaon", "Akola", "Latur", "Dhule", "Ahmednagar", "Chandrapur", "Parbhani", "Jalna", "Raigad", "Satara", "Sangli", "Wardha", "Other"],
+                "Manipur": ["Imphal West", "Imphal East", "Thoubal", "Bishnupur", "Churachandpur", "Ukhrul", "Senapati", "Tamenglong", "Chandel", "Kangpokpi", "Other"],
+                "Meghalaya": ["Shillong (East Khasi Hills)", "West Khasi Hills", "South West Khasi Hills", "Ri-Bhoi", "Tura (West Garo Hills)", "East Garo Hills", "South Garo Hills", "North Garo Hills", "Jowai (West Jaintia Hills)", "East Jaintia Hills", "Other"],
+                "Mizoram": ["Aizawl", "Lunglei", "Champhai", "Kolasib", "Serchhip", "Lawngtlai", "Mamit", "Saiha", "Other"],
+                "Nagaland": ["Kohima", "Dimapur", "Mokokchung", "Tuensang", "Wokha", "Zunheboto", "Mon", "Phek", "Chumoukedima", "Niuland", "Other"],
+                "Odisha": ["Bhubaneswar (Khurda)", "Cuttack", "Rourkela (Sundargarh)", "Berhampur (Ganjam)", "Sambalpur", "Puri", "Balasore", "Bhadrak", "Baripada (Mayurbhanj)", "Jharsuguda", "Jeypore (Koraput)", "Angul", "Bargarh", "Balangir", "Kendujhar", "Other"],
+                "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "SAS Nagar (Mohali)", "Hoshiarpur", "Pathankot", "Moga", "Abohar (Fazilka)", "Batala (Gurdaspur)", "Khanna", "Firozpur", "Kapurthala", "Sangrur", "Barnala", "Faridkot", "Rupnagar", "Other"],
+                "Rajasthan": ["Jaipur", "Jodhpur", "Kota", "Bikaner", "Ajmer", "Udaipur", "Bhilwara", "Alwar", "Bharatpur", "Sikar", "Pali", "Sri Ganganagar", "Hanumangarh", "Tonk", "Kishangarh", "Beawar", "Jhunjhunu", "Chittorgarh", "Barmer", "Nagaur", "Other"],
+                "Sikkim": ["Gangtok (East Sikkim)", "Namchi (South Sikkim)", "Gyalshing (West Sikkim)", "Mangan (North Sikkim)", "Pakyong", "Soreng", "Other"],
+                "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Tiruppur", "Ranipet", "Vellore", "Erode", "Thoothukudi", "Dindigul", "Thanjavur", "Hosur (Krishnagiri)", "Nagercoil (Kanyakumari)", "Kanchipuram", "Kumarapalayam", "Karaikkudi", "Neyveli", "Cuddalore", "Other"],
+                "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Khammam", "Karimnagar", "Ramagundam (Peddapalli)", "Mahbubnagar", "Nalgonda", "Adilabad", "Suryapet", "Miryalaguda", "Siddipet", "Mancherial", "Rangareddy", "Medchal-Malkajgiri", "Sangareddy", "Other"],
+                "Tripura": ["Agartala (West Tripura)", "Dharmanagar (North Tripura)", "Udaipur (Gomati)", "Kailashahar (Unakoti)", "Belonia (South Tripura)", "Khowai", "Ambassa (Dhalai)", "Sepahijala", "Other"],
+                "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Prayagraj (Allahabad)", "Gautam Buddha Nagar (Noida / Greater Noida)", "Ghaziabad", "Meerut", "Bareilly", "Aligarh", "Moradabad", "Saharanpur", "Gorakhpur", "Firozabad", "Jhansi", "Muzaffarnagar", "Mathura", "Ayodhya", "Budaun", "Rampur", "Shahjahanpur", "Farrukhabad", "Other"],
+                "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani (Nainital)", "Rudraprayag", "Kashipur (Udham Singh Nagar)", "Rishikesh", "Pithoragarh", "Almora", "Tehri Garhwal", "Pauri Garhwal", "Chamoli", "Uttarkashi", "Other"],
+                "West Bengal": ["Kolkata", "Howrah", "North 24 Parganas", "South 24 Parganas", "Hooghly", "Durgapur (Paschim Bardhaman)", "Asansol", "Siliguri (Darjeeling)", "Bardhaman", "Malda", "Baharampur (Murshidabad)", "Habra", "Kharagpur (Paschim Medinipur)", "Shantipur (Nadia)", "Dankuni", "Jalpaiguri", "Cooch Behar", "Purulia", "Bankura", "Other"],
+                "Andaman and Nicobar Islands": ["Port Blair (South Andaman)", "North and Middle Andaman", "Nicobar", "Other"],
+                "Chandigarh": ["Chandigarh", "Other"],
+                "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa", "Other"],
+                "Delhi": ["Central Delhi", "East Delhi", "New Delhi", "North Delhi", "North East Delhi", "North West Delhi", "Shahdara", "South Delhi", "South East Delhi", "South West Delhi", "West Delhi", "Other"],
+                "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Kathua", "Udhampur", "Budgam", "Pulwama", "Kupwara", "Poonch", "Rajouri", "Other"],
+                "Ladakh": ["Leh", "Kargil", "Other"],
+                "Lakshadweep": ["Kavaratti", "Agatti", "Andrott", "Minicoy", "Other"],
+                "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam", "Other"]
+            }
+        };
+
+        function setStatus(id, errId, isInvalid, customMsg) {
+            const input = document.getElementById(id);
+            const errEl = document.getElementById(errId);
+            if (input) {
+                if (isInvalid) {
+                    input.classList.add('is-invalid');
+                    input.classList.remove('is-valid');
+                } else {
+                    input.classList.remove('is-invalid');
+                    if (input.value && input.value.trim().length > 0) {
+                        input.classList.add('is-valid');
+                    } else {
+                        input.classList.remove('is-valid');
+                    }
+                }
+            }
+            if (errEl) {
+                if (customMsg) errEl.innerHTML = '<i class="bi bi-exclamation-circle-fill"></i> ' + customMsg;
+                if (isInvalid) errEl.classList.add('show');
+                else errEl.classList.remove('show');
+            }
+            return !isInvalid;
+        }
+
+        function val(id) {
+            const el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        }
+
+        // Field-specific validation functions
+        function validateSalonName(strict) {
+            const v = val('salonName');
+            if (!v) return setStatus('salonName', 'err-name', strict, 'Salon name is required.');
+            if (v.length < 3) return setStatus('salonName', 'err-name', true, 'Salon name must be at least 3 characters.');
+            if (v.length > 150) return setStatus('salonName', 'err-name', true, 'Salon name cannot exceed 150 characters.');
+            return setStatus('salonName', 'err-name', false);
+        }
+
+        function validateSalonType(strict) {
+            const v = val('salonType');
+            if (!v) return setStatus('salonType', 'err-salonType', strict, 'Please select a business type.');
+            return setStatus('salonType', 'err-salonType', false);
+        }
+
+        function validateSalonCategory(strict) {
+            const v = val('salonCategory');
+            if (!v) return setStatus('salonCategory', 'err-salonCategory', strict, 'Please select a salon category.');
+            return setStatus('salonCategory', 'err-salonCategory', false);
+        }
+
+        function validateEstablishedYear(strict) {
+            const v = val('establishedYear');
+            if (!v) {
+                return setStatus('establishedYear', 'err-establishedYear', false);
+            }
+            if (!/^\d{4}$/.test(v)) {
+                return setStatus('establishedYear', 'err-establishedYear', true, 'Established year must be exactly 4 digits.');
+            }
+            const y = parseInt(v, 10);
+            const currentYear = new Date().getFullYear();
+            if (y < 1900 || y > currentYear) {
+                return setStatus('establishedYear', 'err-establishedYear', true, 'Year must be between 1900 and ' + currentYear + '.');
+            }
+            return setStatus('establishedYear', 'err-establishedYear', false);
+        }
+
+        function validateGstNumber(strict) {
+            const v = val('gstNumber');
+            if (!v) return setStatus('gstNumber', 'err-gstNumber', false);
+            const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            if (!gstRegex.test(v)) {
+                return setStatus('gstNumber', 'err-gstNumber', true, 'Please enter a valid 15-character GSTIN (e.g. 29ABCDE1234F1Z5).');
+            }
+            return setStatus('gstNumber', 'err-gstNumber', false);
+        }
+
+        function validateSalonBio(strict) {
+            const v = val('salonBio');
+            if (!v) return setStatus('salonBio', 'err-bio', strict, 'Salon description is required.');
+            if (v.length < 10) return setStatus('salonBio', 'err-bio', true, 'Description must be at least 10 characters.');
+            if (v.length > 2000) return setStatus('salonBio', 'err-bio', true, 'Description cannot exceed 2000 characters.');
+            return setStatus('salonBio', 'err-bio', false);
+        }
+
+        function validateSalonPhone(strict) {
+            const v = val('salonPhone');
+            if (!v) return setStatus('salonPhone', 'err-phone', strict, 'Phone number is required.');
+            if (!/^[6-9]\d{9}$/.test(v)) {
+                return setStatus('salonPhone', 'err-phone', true, 'Phone number must be exactly 10 digits starting with 6, 7, 8, or 9.');
+            }
+            return setStatus('salonPhone', 'err-phone', false);
+        }
+
+        function validateAlternateNumber(strict) {
+            const v = val('alternateNumber');
+            if (!v) return setStatus('alternateNumber', 'err-alternateNumber', false);
+            if (!/^[6-9]\d{9}$/.test(v)) {
+                return setStatus('alternateNumber', 'err-alternateNumber', true, 'Alternate number must be exactly 10 digits starting with 6-9.');
+            }
+            const primary = val('salonPhone');
+            if (primary && v === primary) {
+                return setStatus('alternateNumber', 'err-alternateNumber', true, 'Alternate number cannot be identical to primary phone.');
+            }
+            return setStatus('alternateNumber', 'err-alternateNumber', false);
+        }
+
+        function validateSalonEmail(strict) {
+            const v = val('salonEmail');
+            if (!v) return setStatus('salonEmail', 'err-email', strict, 'Email address is required.');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(v)) {
+                return setStatus('salonEmail', 'err-email', true, 'Please enter a valid email address.');
+            }
+            return setStatus('salonEmail', 'err-email', false);
+        }
+
+        function validateSalonAddress(strict) {
+            const v = val('salonAddress');
+            if (!v) return setStatus('salonAddress', 'err-address', strict, 'Full address is required.');
+            if (v.length < 5) return setStatus('salonAddress', 'err-address', true, 'Address must be at least 5 characters.');
+            return setStatus('salonAddress', 'err-address', false);
+        }
+
+        function validateSalonState(strict) {
+            const v = val('stateSelect');
+            if (!v) return setStatus('stateSelect', 'err-state', strict, 'State is required.');
+            return setStatus('stateSelect', 'err-state', false);
+        }
+
+        function validateSalonCity(strict) {
+            const dist = val('districtSelect');
+            if (!dist) return setStatus('districtSelect', 'err-city', strict, 'District / City is required.');
+            if (dist === 'Other') {
+                const custom = val('customCityInput');
+                if (!custom || custom.length < 2) {
+                    setStatus('customCityInput', 'err-customCity', true, 'Please enter your city/town name (at least 2 characters).');
+                    return false;
+                }
+                setStatus('customCityInput', 'err-customCity', false);
+            }
+            return setStatus('districtSelect', 'err-city', false);
+        }
+
+
+        // Validation functions for Tab: Salon Details
+        function validateTotalChairs(strict) {
+            const v = val('totalChairs');
+            if (!v) return setStatus('totalChairs', 'err-totalChairs', strict, 'Total chairs is required.');
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 1 || n > 500) {
+                return setStatus('totalChairs', 'err-totalChairs', true, 'Total chairs must be between 1 and 500.');
+            }
+            return setStatus('totalChairs', 'err-totalChairs', false);
+        }
+
+        function validateTreatmentRooms(strict) {
+            const v = val('treatmentRooms');
+            if (!v) return setStatus('treatmentRooms', 'err-treatmentRooms', false);
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 0 || n > 100) {
+                return setStatus('treatmentRooms', 'err-treatmentRooms', true, 'Treatment rooms must be between 0 and 100.');
+            }
+            return setStatus('treatmentRooms', 'err-treatmentRooms', false);
+        }
+
+        function validateWashrooms(strict) {
+            const v = val('washrooms');
+            if (!v) return setStatus('washrooms', 'err-washrooms', false);
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 0 || n > 50) {
+                return setStatus('washrooms', 'err-washrooms', true, 'Washrooms must be between 0 and 50.');
+            }
+            return setStatus('washrooms', 'err-washrooms', false);
+        }
+
+        function validateSalonSize(strict) {
+            const v = val('salonSizeSqFt');
+            if (!v) return setStatus('salonSizeSqFt', 'err-salonSizeSqFt', strict, 'Salon size is required.');
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 50 || n > 50000) {
+                return setStatus('salonSizeSqFt', 'err-salonSizeSqFt', true, 'Salon size must be between 50 and 50,000 sq.ft.');
+            }
+            return setStatus('salonSizeSqFt', 'err-salonSizeSqFt', false);
+        }
+
+        function validateSalonLicenseNo(strict) {
+            const v = val('salonLicenseNo');
+            if (!v) return setStatus('salonLicenseNo', 'err-salonLicenseNo', false);
+            if (v.length > 50) return setStatus('salonLicenseNo', 'err-salonLicenseNo', true, 'License number cannot exceed 50 characters.');
+            return setStatus('salonLicenseNo', 'err-salonLicenseNo', false);
+        }
+
+        function validateLanguagesSpoken(strict) {
+            const v = val('languagesSpoken');
+            if (!v) return setStatus('languagesSpoken', 'err-languagesSpoken', false);
+            if (v.length > 150) return setStatus('languagesSpoken', 'err-languagesSpoken', true, 'Languages list cannot exceed 150 characters.');
+            return setStatus('languagesSpoken', 'err-languagesSpoken', false);
+        }
+
+        function validateServiceName(strict) {
+            const v = val('serviceName');
+            if (!v) return setStatus('serviceName', 'err-serviceName', false);
+            if (v.length < 2) return setStatus('serviceName', 'err-serviceName', true, 'Service name must be at least 2 characters.');
+            return setStatus('serviceName', 'err-serviceName', false);
+        }
+
+        function validateServicePrice(strict) {
+            const v = val('servicePrice');
+            if (!v) return setStatus('servicePrice', 'err-servicePrice', false);
+            const n = parseFloat(v);
+            if (isNaN(n) || n < 0) return setStatus('servicePrice', 'err-servicePrice', true, 'Enter a valid price (₹ 0 or more).');
+            return setStatus('servicePrice', 'err-servicePrice', false);
+        }
+
+        function validateServiceDuration(strict) {
+            const v = val('serviceDuration');
+            if (!v) return setStatus('serviceDuration', 'err-serviceDuration', false);
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 5 || n > 480) return setStatus('serviceDuration', 'err-serviceDuration', true, 'Duration must be between 5 and 480 minutes.');
+            return setStatus('serviceDuration', 'err-serviceDuration', false);
+        }
+
+        function validateSocialInstagram(strict) {
+            const v = val('socialInstagram');
+            if (!v) return setStatus('socialInstagram', 'err-socialInstagram', false);
+            if (v.length > 100) return setStatus('socialInstagram', 'err-socialInstagram', true, 'Instagram handle too long.');
+            return setStatus('socialInstagram', 'err-socialInstagram', false);
+        }
+
+        function validateSocialFacebook(strict) {
+            const v = val('socialFacebook');
+            if (!v) return setStatus('socialFacebook', 'err-socialFacebook', false);
+            if (v.length > 150) return setStatus('socialFacebook', 'err-socialFacebook', true, 'Facebook URL or handle too long.');
+            return setStatus('socialFacebook', 'err-socialFacebook', false);
+        }
+
+        function validateSocialWebsite(strict) {
+            const v = val('socialWebsite');
+            if (!v) return setStatus('socialWebsite', 'err-socialWebsite', false);
+            if (!/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/\S*)?$/i.test(v)) {
+                return setStatus('socialWebsite', 'err-socialWebsite', true, 'Please enter a valid URL (e.g. https://www.salon.com).');
+            }
+            return setStatus('socialWebsite', 'err-socialWebsite', false);
+        }
+
+        function validateSalonPincode(strict) {
+            const v = val('salonPincode');
+            if (!v) return setStatus('salonPincode', 'err-pincode', strict, 'Pincode is required.');
+            if (!/^\d{6}$/.test(v)) return setStatus('salonPincode', 'err-pincode', true, 'Pincode must be exactly 6 digits.');
+            return setStatus('salonPincode', 'err-pincode', false);
+        }
+
+        // Dynamic progress calculation (20 milestones, 5% each = 100%)
+        function updateStepStatus(stepId, statusId, isDone, customText) {
+            const stepEl = document.getElementById(stepId);
+            const statusEl = document.getElementById(statusId);
+            if (stepEl) {
+                if (isDone) stepEl.classList.add('done');
+                else stepEl.classList.remove('done');
+            }
+            if (statusEl) {
+                statusEl.textContent = customText ? customText : (isDone ? 'Completed' : 'Pending');
+            }
+        }
+
+        function recalculateSalonProgress() {
+            let filled = 0;
+            const total = 20;
+
+            // 1. Salon Name (>= 3 chars)
+            const hasName = val('salonName').length >= 3;
+            if (hasName) filled++;
+
+            // 2. Business Type
+            const hasType = val('salonType') !== '' || val('salonCategory') !== '';
+            if (hasType) filled++;
+
+            // 3. Description / Bio (>= 10 chars)
+            const hasBio = val('salonBio').length >= 10;
+            if (hasBio) filled++;
+
+            // 4. Official Phone (10 digits starting with 6-9)
+            const hasPhone = /^[6-9]\d{9}$/.test(val('salonPhone'));
+            if (hasPhone) filled++;
+
+            // 5. Official Email (valid email format)
+            const hasEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val('salonEmail'));
+            if (hasEmail) filled++;
+
+            // 6. Full Address (>= 5 chars)
+            const hasAddress = val('salonAddress').length >= 5;
+            if (hasAddress) filled++;
+
+            // 7. State
+            const hasState = val('stateSelect') !== '';
+            if (hasState) filled++;
+
+            // 8. District / City
+            const dist = val('districtSelect');
+            const customCity = val('customCityInput');
+            const cityVal = (dist && dist !== 'Other') ? dist : (customCity || val('inputCity'));
+            const hasCity = cityVal !== '';
+            if (hasCity) filled++;
+
+            const hasPincode = /^\d{6}$/.test(val('salonPincode'));
+
+            // Step 1: Basic Info Done Flag
+            const basicDone = hasName && hasType && hasBio && hasPhone && hasAddress && hasState && hasCity && hasPincode;
+            updateStepStatus('stepBasicInfo', 'statusBasicInfo', basicDone);
+
+            // 9. Salon Category
+            const hasCategory = val('salonCategory') !== '';
+            if (hasCategory) filled++;
+
+            // 10. Established Year (valid 4-digit year 1900-currentYear)
+            const yearVal = parseInt(val('establishedYear'), 10);
+            const currentYear = new Date().getFullYear();
+            const hasYear = !isNaN(yearVal) && yearVal >= 1900 && yearVal <= currentYear;
+            if (hasYear) filled++;
+
+            // 11. Total Chairs / Stations (>= 1)
+            const chairsVal = parseInt(val('totalChairs'), 10);
+            const hasChairs = !isNaN(chairsVal) && chairsVal >= 1 && chairsVal <= 500;
+            if (hasChairs) filled++;
+
+            // 12. Salon Size (>= 50 sq.ft)
+            const sizeVal = parseInt(val('salonSizeSqFt'), 10);
+            const hasSize = !isNaN(sizeVal) && sizeVal >= 50 && sizeVal <= 50000;
+            if (hasSize) filled++;
+
+            // Step 2: Salon Details Done Flag
+            const detailsDone = hasCategory && hasChairs && hasSize;
+            updateStepStatus('stepSalonDetails', 'statusSalonDetails', detailsDone);
+
+            // 13. Services Offered (at least 1 service)
+            const hasService = hasExistingServices || val('serviceName').length >= 2;
+            if (hasService) filled++;
+            updateStepStatus('stepServices', 'statusServices', hasService);
+
+            // 14. Profile Photo / Logo
+            const profileInput = document.getElementById('profileImageInput');
+            const hasUploadedProfile = profileInput && profileInput.files && profileInput.files.length > 0;
+            const hasProfileImg = hasUploadedProfile || hasExistingProfilePhoto;
+            if (hasProfileImg) filled++;
+
+            // 15. Cover Photo / Interior Photos
+            const coverInput = document.getElementById('coverImageInput');
+            const interiorInput = document.getElementById('interiorImageInput');
+            const hasUploadedCover = (coverInput && coverInput.files && coverInput.files.length > 0) ||
+                                     (interiorInput && interiorInput.files && interiorInput.files.length > 0);
+            const hasCoverImg = hasUploadedCover || hasExistingCover;
+            if (hasCoverImg) filled++;
+
+            // Step 4: Photos Done Flag
+            const photosDone = hasProfileImg || hasCoverImg;
+            updateStepStatus('stepPhotos', 'statusPhotos', photosDone);
+
+            // 16. Facilities & Amenities
+            const hasFacilities = val('hasAc') === 'true' || val('hasWifi') === 'true' ||
+                                  val('hasParkingFacility') === 'true' || val('hasPowerBackup') === 'true' ||
+                                  hasExistingFacilities;
+            if (hasFacilities) filled++;
+            updateStepStatus('stepFacilities', 'statusFacilities', hasFacilities);
+
+            // 17 & 18. Documents (up to 5)
+            let uploadedDocs = 0;
+            ['fileBus', 'fileLic', 'fileGst', 'fileHyg', 'fileFire'].forEach(id => {
+                const inp = document.getElementById(id);
+                if (inp && inp.files && inp.files.length > 0) uploadedDocs++;
+            });
+            const totalDocsCount = Math.min(5, initialDocsCount + uploadedDocs);
+            if (totalDocsCount >= 1) filled++;
+            if (totalDocsCount >= 2) filled++;
+            updateStepStatus('stepDocs', 'statusDocs', totalDocsCount > 0, totalDocsCount + '/5 Completed');
+
+            // 19. Social Media (up to 3)
+            let typedSocial = 0;
+            if (val('socialInstagram') !== '') typedSocial++;
+            if (val('socialFacebook') !== '') typedSocial++;
+            if (val('socialWebsite') !== '') typedSocial++;
+            const totalSocialCount = Math.max(typedSocial, initialSocialCount);
+            if (totalSocialCount > 0) filled++;
+            updateStepStatus('stepSocial', 'statusSocial', totalSocialCount > 0, Math.min(3, totalSocialCount) + '/3 Completed');
+
+            // 20. Preferences
+            const hasPref = hasExistingPreferences || val('pref_onlineBooking') !== '' || val('pref_cancelAllowed') !== '';
+            if (hasPref) filled++;
+            updateStepStatus('stepPref', 'statusPref', hasPref);
+
+            // Accurate Percentage: 20 milestones, each 5%
+            const pct = Math.min(100, Math.round((100 * filled) / total));
+
+            // Update UI elements
+            const circleInner = document.getElementById('ptCircleInner');
+            const circleWrap = document.getElementById('ptCircleWrap');
+            if (circleInner) circleInner.textContent = pct + '%';
+            if (circleWrap) circleWrap.style.background = 'conic-gradient(var(--brand-pink) ' + pct + '%, #f0f0f0 0)';
+
+            const stepsBar = document.getElementById('ptStepsBar');
+            if (stepsBar) stepsBar.style.setProperty('--progress', pct + '%');
+        }
+
+        // Cascading State & District Setup
+        function initLocationSelectors() {
+            const stateSelect = document.getElementById('stateSelect');
+            const districtSelect = document.getElementById('districtSelect');
+            const customCityGroup = document.getElementById('customCityGroup');
+            const customCityInput = document.getElementById('customCityInput');
+            const cityInput = document.getElementById('inputCity');
+
+            const indiaStates = locationData["India"] || {};
+            const stateNames = Object.keys(indiaStates).sort();
+
+            stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+            stateNames.forEach(st => {
+                const opt = document.createElement('option');
+                opt.value = st;
+                opt.textContent = st;
+                if (savedState && (st.toLowerCase() === savedState.toLowerCase().trim())) {
+                    opt.selected = true;
+                }
+                stateSelect.appendChild(opt);
+            });
+
+            function populateDistricts(selectedState, selectedDistrict) {
+                districtSelect.innerHTML = '<option value="">-- Select District / City --</option>';
+                if (!selectedState) {
+                    districtSelect.innerHTML = '<option value="">-- Select State First --</option>';
+                    if (customCityGroup) customCityGroup.style.display = 'none';
+                    return;
+                }
+
+                const districts = indiaStates[selectedState] || ["Other"];
+                const targetCity = selectedDistrict || savedCity || '';
+                let matched = false;
+
+                districts.forEach(dist => {
+                    const opt = document.createElement('option');
+                    opt.value = dist;
+                    opt.textContent = dist;
+                    if (targetCity && dist.toLowerCase() === targetCity.toLowerCase().trim()) {
+                        opt.selected = true;
+                        matched = true;
+                    }
+                    districtSelect.appendChild(opt);
+                });
+
+                if (targetCity && !matched && targetCity !== "Other") {
+                    districtSelect.value = "Other";
+                    if (customCityGroup) customCityGroup.style.display = 'block';
+                    if (customCityInput) customCityInput.value = targetCity;
+                    if (cityInput) cityInput.value = targetCity;
+                } else if (districtSelect.value === "Other") {
+                    if (customCityGroup) customCityGroup.style.display = 'block';
+                    if (cityInput && customCityInput) cityInput.value = customCityInput.value.trim();
+                } else {
+                    if (customCityGroup) customCityGroup.style.display = 'none';
+                    if (cityInput) cityInput.value = districtSelect.value;
+                }
+            }
+
+            if (stateSelect.value) {
+                populateDistricts(stateSelect.value, savedCity);
+            }
+
+            stateSelect.addEventListener('change', function () {
+                validateSalonState(true);
+                populateDistricts(this.value, '');
+                validateSalonCity(false);
+                recalculateSalonProgress();
+            });
+
+            districtSelect.addEventListener('change', function () {
+                if (this.value === 'Other') {
+                    if (customCityGroup) customCityGroup.style.display = 'block';
+                    if (customCityInput) customCityInput.focus();
+                    if (cityInput && customCityInput) cityInput.value = customCityInput.value.trim();
+                } else {
+                    if (customCityGroup) customCityGroup.style.display = 'none';
+                    if (cityInput) cityInput.value = this.value;
+                }
+                validateSalonCity(true);
+                recalculateSalonProgress();
+            });
+
+            if (customCityInput) {
+                customCityInput.addEventListener('input', function () {
+                    if (districtSelect.value === 'Other' && cityInput) {
+                        cityInput.value = this.value.trim();
+                    }
+                    validateSalonCity(true);
+                    recalculateSalonProgress();
+                });
+            }
+        }
+
+        // Master Save Validation Handler
+        function handleProfileSave(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            // Sync city input before validation
+            const dist = val('districtSelect');
+            const cityInput = document.getElementById('inputCity');
+            if (dist === 'Other') {
+                if (cityInput) cityInput.value = val('customCityInput');
+            } else if (dist) {
+                if (cityInput) cityInput.value = dist;
+            }
+
+            const isNameValid = validateSalonName(true);
+            const isTypeValid = validateSalonType(true);
+            const isCategoryValid = validateSalonCategory(true);
+            const isYearValid = validateEstablishedYear(true);
+            const isGstValid = validateGstNumber(true);
+            const isBioValid = validateSalonBio(true);
+            const isPhoneValid = validateSalonPhone(true);
+            const isAltValid = validateAlternateNumber(true);
+            const isEmailValid = validateSalonEmail(true);
+            const isAddressValid = validateSalonAddress(true);
+            const isStateValid = validateSalonState(true);
+            const isCityValid = validateSalonCity(true);
+            const isPincodeValid = validateSalonPincode(true);
+
+            // Tab: Salon Details Validations
+            const isChairsValid = validateTotalChairs(true);
+            const isRoomsValid = validateTreatmentRooms(true);
+            const isWashroomsValid = validateWashrooms(true);
+            const isSizeValid = validateSalonSize(true);
+            const isLicValid = validateSalonLicenseNo(true);
+            const isLangValid = validateLanguagesSpoken(true);
+
+            // Optional Services & Social validations
+            const isSvcNameValid = validateServiceName(true);
+            const isSvcPriceValid = validateServicePrice(true);
+            const isSvcDurValid = validateServiceDuration(true);
+            const isInstaValid = validateSocialInstagram(true);
+            const isFbValid = validateSocialFacebook(true);
+            const isWebValid = validateSocialWebsite(true);
+
+            const allValid = isNameValid && isTypeValid && isCategoryValid && isYearValid &&
+                             isGstValid && isBioValid && isPhoneValid && isAltValid &&
+                             isEmailValid && isAddressValid && isStateValid && isCityValid && isPincodeValid &&
+                             isChairsValid && isRoomsValid && isWashroomsValid && isSizeValid && isLicValid && isLangValid &&
+                             isSvcNameValid && isSvcPriceValid && isSvcDurValid && isInstaValid && isFbValid && isWebValid;
+
+            if (!allValid) {
+                const firstInvalid = document.querySelector('.f-control.is-invalid, select.is-invalid, textarea.is-invalid');
+                if (firstInvalid) {
+                    // Switch to tab containing invalid field
+                    const parentPane = firstInvalid.closest('.tab-pane');
+                    if (parentPane && parentPane.id) {
+                        const tabBtn = document.querySelector('.custom-tab[data-target="' + parentPane.id + '"]');
+                        if (tabBtn) tabBtn.click();
+                    }
+                    setTimeout(() => {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }, 100);
+                }
+
+                const toast = document.getElementById('validationToast');
+                if (toast) {
+                    toast.style.display = 'flex';
+                    setTimeout(() => { toast.style.display = 'none'; }, 4000);
+                }
+                return false;
+            }
+
+            // Ensure editable section is displayed so backend accepts the fields
+            const editSec = document.getElementById('editableSections');
+            if (editSec) editSec.style.display = 'block';
+
+            document.getElementById('profileForm').submit();
+            return true;
+        }
+
+        // DOM Initialization
+        document.addEventListener("DOMContentLoaded", function () {
+            initLocationSelectors();
+
+            // Bio char count
+            const bioArea = document.getElementById('salonBio');
+            const bioCounter = document.getElementById('bioCharCount');
+            if (bioArea && bioCounter) {
+                const updateBioCount = () => {
+                    bioCounter.textContent = bioArea.value.length + ' / 2000';
+                };
+                bioArea.addEventListener('input', () => {
+                    updateBioCount();
+                    validateSalonBio(false);
+                    recalculateSalonProgress();
+                });
+                updateBioCount();
+            }
+
+            // Strict numeric filters for details
+            const chairsEl = document.getElementById('totalChairs');
+            if (chairsEl) {
+                chairsEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 3);
+                    validateTotalChairs(false);
+                    recalculateSalonProgress();
+                });
+                chairsEl.addEventListener('blur', () => validateTotalChairs(true));
+            }
+
+            const roomsEl = document.getElementById('treatmentRooms');
+            if (roomsEl) {
+                roomsEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 3);
+                    validateTreatmentRooms(false);
+                });
+                roomsEl.addEventListener('blur', () => validateTreatmentRooms(true));
+            }
+
+            const washEl = document.getElementById('washrooms');
+            if (washEl) {
+                washEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 2);
+                    validateWashrooms(false);
+                });
+                washEl.addEventListener('blur', () => validateWashrooms(true));
+            }
+
+            const sizeEl = document.getElementById('salonSizeSqFt');
+            if (sizeEl) {
+                sizeEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 5);
+                    validateSalonSize(false);
+                    recalculateSalonProgress();
+                });
+                sizeEl.addEventListener('blur', () => validateSalonSize(true));
+            }
+
+            const svcPriceEl = document.getElementById('servicePrice');
+            if (svcPriceEl) {
+                svcPriceEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                    validateServicePrice(false);
+                });
+                svcPriceEl.addEventListener('blur', () => validateServicePrice(true));
+            }
+
+            const svcDurEl = document.getElementById('serviceDuration');
+            if (svcDurEl) {
+                svcDurEl.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 3);
+                    validateServiceDuration(false);
+                });
+                svcDurEl.addEventListener('blur', () => validateServiceDuration(true));
+            }
+
+            const svcNameEl = document.getElementById('serviceName');
+            if (svcNameEl) {
+                svcNameEl.addEventListener('input', () => validateServiceName(false));
+                svcNameEl.addEventListener('blur', () => validateServiceName(true));
+            }
+
+            const licEl = document.getElementById('salonLicenseNo');
+            if (licEl) {
+                licEl.addEventListener('input', () => validateSalonLicenseNo(false));
+                licEl.addEventListener('blur', () => validateSalonLicenseNo(true));
+            }
+
+            const langEl = document.getElementById('languagesSpoken');
+            if (langEl) {
+                langEl.addEventListener('input', () => validateLanguagesSpoken(false));
+                langEl.addEventListener('blur', () => validateLanguagesSpoken(true));
+            }
+
+            const instaEl = document.getElementById('socialInstagram');
+            if (instaEl) {
+                instaEl.addEventListener('input', () => validateSocialInstagram(false));
+                instaEl.addEventListener('blur', () => validateSocialInstagram(true));
+            }
+
+            const fbEl = document.getElementById('socialFacebook');
+            if (fbEl) {
+                fbEl.addEventListener('input', () => validateSocialFacebook(false));
+                fbEl.addEventListener('blur', () => validateSocialFacebook(true));
+            }
+
+            const webEl = document.getElementById('socialWebsite');
+            if (webEl) {
+                webEl.addEventListener('input', () => validateSocialWebsite(false));
+                webEl.addEventListener('blur', () => validateSocialWebsite(true));
+            }
+
+            // Strict numeric filters
+            const phoneEl = document.getElementById('salonPhone');
+            if (phoneEl) {
+                phoneEl.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                    validateSalonPhone(false);
+                    if (val('alternateNumber')) validateAlternateNumber(false);
+                    recalculateSalonProgress();
+                });
+                phoneEl.addEventListener('blur', () => validateSalonPhone(true));
+            }
+
+            const altPhoneEl = document.getElementById('alternateNumber');
+            if (altPhoneEl) {
+                altPhoneEl.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                    validateAlternateNumber(false);
+                    recalculateSalonProgress();
+                });
+                altPhoneEl.addEventListener('blur', () => validateAlternateNumber(true));
+            }
+
+            const pincodeEl = document.getElementById('salonPincode');
+            if (pincodeEl) {
+                pincodeEl.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                    validateSalonPincode(false);
+                    recalculateSalonProgress();
+                });
+                pincodeEl.addEventListener('blur', () => validateSalonPincode(true));
+            }
+
+            const yearEl = document.getElementById('establishedYear');
+            if (yearEl) {
+                yearEl.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 4);
+                    validateEstablishedYear(false);
+                    recalculateSalonProgress();
+                });
+                yearEl.addEventListener('blur', () => validateEstablishedYear(true));
+            }
+
+            const gstEl = document.getElementById('gstNumber');
+            if (gstEl) {
+                gstEl.addEventListener('input', function () {
+                    this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                    validateGstNumber(false);
+                });
+                gstEl.addEventListener('blur', () => validateGstNumber(true));
+            }
+
+            // Bind other fields
+            const nameEl = document.getElementById('salonName');
+            if (nameEl) {
+                nameEl.addEventListener('input', () => { validateSalonName(false); recalculateSalonProgress(); });
+                nameEl.addEventListener('blur', () => validateSalonName(true));
+            }
+
+            const typeEl = document.getElementById('salonType');
+            if (typeEl) {
+                typeEl.addEventListener('change', () => { validateSalonType(true); recalculateSalonProgress(); });
+            }
+
+            const catEl = document.getElementById('salonCategory');
+            if (catEl) {
+                catEl.addEventListener('change', () => { validateSalonCategory(true); recalculateSalonProgress(); });
+            }
+
+            const emailEl = document.getElementById('salonEmail');
+            if (emailEl) {
+                emailEl.addEventListener('input', () => { validateSalonEmail(false); recalculateSalonProgress(); });
+                emailEl.addEventListener('blur', () => validateSalonEmail(true));
+            }
+
+            const addrEl = document.getElementById('salonAddress');
+            if (addrEl) {
+                addrEl.addEventListener('input', () => { validateSalonAddress(false); recalculateSalonProgress(); });
+                addrEl.addEventListener('blur', () => validateSalonAddress(true));
+            }
+
+            recalculateSalonProgress();
+        });
+    </script>
+
     <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

@@ -129,6 +129,9 @@ public class UserService {
         existingUser.setDob(updatedUser.getDob());
         existingUser.setAge(updatedUser.getAge());
         existingUser.setGender(updatedUser.getGender());
+        if (updatedUser.getWhatsappNumber() != null && !updatedUser.getWhatsappNumber().isEmpty()) {
+            existingUser.setWhatsappNumber(updatedUser.getWhatsappNumber());
+        }
 
         if (updatedUser.getProfilePhoto() != null && !updatedUser.getProfilePhoto().isEmpty()) {
             existingUser.setProfilePhoto(updatedUser.getProfilePhoto());
@@ -156,6 +159,7 @@ public class UserService {
             primary.setName(incoming.getName());
             primary.setPhone(incoming.getPhone());
             primary.setRelation(incoming.getRelation());
+            primary.setEmail(incoming.getEmail());
         }
 
         if (updatedUser.getMedicalDetails() != null) {

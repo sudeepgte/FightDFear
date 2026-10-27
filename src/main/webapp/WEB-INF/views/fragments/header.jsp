@@ -344,7 +344,7 @@
             <c:when test="${not empty headerUser}">
                 <li><a href="${pageContext.request.contextPath}/">Home</a></li>
                 <li><a href="${pageContext.request.contextPath}/user/bookings">My Bookings</a></li>
-                <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet 💰</a></li>
+                <li><a href="${pageContext.request.contextPath}/users/wallet">Wallet</a></li>
                 <li><a href="${pageContext.request.contextPath}/index/contact">Contact</a></li>
                 
                 <!-- Notification Bell for Broadcasts & Support -->
@@ -455,9 +455,49 @@
           </div>
         </c:if>
 
+        <div id="followAlertsSection" class="mb-3" <c:if test="${empty userFollowNotifications}">style="display:none;"</c:if>>
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="fw-bold" style="font-size: 0.8rem; color: #F43F5E; text-transform: uppercase; letter-spacing: 0.5px;">
+              <i class="bi bi-person-plus-fill me-1"></i> Follow &amp; Social Alerts
+            </span>
+            <a href="${pageContext.request.contextPath}/creator-hub" style="font-size: 0.75rem; color: #64748B; text-decoration: none;">
+              Creator Hub &rarr;
+            </a>
+          </div>
+          <div id="followAlertsContainer">
+            <c:forEach var="fn" items="${userFollowNotifications}">
+              <div class="mb-2 p-3 rounded-3 d-flex align-items-center justify-content-between" style="background:#FFF1F2; border:1px solid #FFE4E6;">
+                <div class="d-flex align-items-center gap-2">
+                  <div style="width:36px; height:36px; border-radius:50%; background:#FECDD3; display:flex; align-items:center; justify-content:center; color:#F43F5E; flex-shrink:0; overflow:hidden;">
+                    <c:choose>
+                      <c:when test="${not empty fn.sender and not empty fn.sender.profilePhoto}">
+                        <img src="${fn.sender.profilePhoto}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-profile.png';" style="width:100%; height:100%; border-radius:50%; object-fit:cover;" alt="Avatar">
+                      </c:when>
+                      <c:otherwise>
+                        <i class="bi bi-person-heart fs-6"></i>
+                      </c:otherwise>
+                    </c:choose>
+                  </div>
+                  <div>
+                    <div class="fw-bold" style="color:#0F172A; font-size:0.88rem;">
+                      <c:out value="${fn.message}"/>
+                    </div>
+                    <div style="font-size:0.75rem; color:#94A3B8;">
+                      ${fn.createdAt}
+                    </div>
+                  </div>
+                </div>
+                <c:if test="${!fn.read}">
+                  <span class="badge bg-danger rounded-pill" style="font-size:0.65rem;">NEW</span>
+                </c:if>
+              </div>
+            </c:forEach>
+          </div>
+        </div>
+
         <c:choose>
-          <c:when test="${empty recentBroadcasts && empty userContactReplies}">
-            <p class="text-muted text-center py-4 mb-0">No alerts or responses right now.</p>
+          <c:when test="${empty recentBroadcasts && empty userContactReplies && empty userFollowNotifications}">
+            <p id="noAlertsMsg" class="text-muted text-center py-4 mb-0">No alerts or responses right now.</p>
           </c:when>
           <c:when test="${not empty recentBroadcasts}">
             <div class="fw-bold mb-2 mt-2" style="font-size: 0.8rem; color: #64748B; text-transform: uppercase; letter-spacing: 0.5px;">
@@ -486,6 +526,9 @@ function markBroadcastsAsRead() {
       if (badge) badge.style.display = 'none';
       var bells = document.querySelectorAll('.bell-dynamic');
       bells.forEach(b => b.classList.remove('bell-ringing'));
+      document.querySelectorAll('#broadcastModal .badge.bg-danger').forEach(function(el) {
+        el.style.display = 'none';
+      });
     })
     .catch(function () {});
 }
@@ -564,6 +607,59 @@ function markBroadcastsAsRead() {
                             stopGlobalRingtone();
                             const modal = bootstrap.Modal.getInstance(document.getElementById('globalIncomingCallModal'));
                             if (modal) modal.hide();
+                        }
+                    });
+
+                    // Subscribe to global follow & social notifications
+                    globalStompClient.subscribe("/topic/follow/" + userId, function (response) {
+                        try {
+                            const data = JSON.parse(response.body);
+                            // Update badge count
+                            let badge = document.getElementById('broadcastBadge');
+                            const bells = document.querySelectorAll('.bell-dynamic');
+                            bells.forEach(b => b.classList.add('bell-ringing'));
+                            if (badge) {
+                                let cur = parseInt(badge.textContent.trim()) || 0;
+                                badge.textContent = cur + 1;
+                                badge.style.display = 'inline-block';
+                            } else {
+                                const container = document.querySelector('.bell-dynamic')?.parentElement;
+                                if (container) {
+                                    const span = document.createElement('span');
+                                    span.id = 'broadcastBadge';
+                                    span.className = 'position-absolute badge rounded-pill bg-danger';
+                                    span.style.cssText = 'font-size: 0.65rem; top: -5px; right: -10px; padding: 3px 6px;';
+                                    span.textContent = '1';
+                                    container.appendChild(span);
+                                }
+                            }
+
+                            // Prepend notification card
+                            const container = document.getElementById('followAlertsContainer');
+                            if (container) {
+                                const card = document.createElement('div');
+                                card.className = 'mb-2 p-3 rounded-3 d-flex align-items-center justify-content-between';
+                                card.style.cssText = 'background:#FFF1F2; border:1px solid #FFE4E6;';
+                                card.innerHTML = '<div class="d-flex align-items-center gap-2">' +
+                                    '<div style="width:36px; height:36px; border-radius:50%; background:#FECDD3; display:flex; align-items:center; justify-content:center; color:#F43F5E; flex-shrink:0;">' +
+                                        '<i class="bi bi-person-heart fs-6"></i>' +
+                                    '</div>' +
+                                    '<div>' +
+                                        '<div class="fw-bold" style="color:#0F172A; font-size:0.88rem;">' +
+                                            (data.message || 'Someone started following you.') +
+                                        '</div>' +
+                                        '<div style="font-size:0.75rem; color:#94A3B8;">Just now</div>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<span class="badge bg-danger rounded-pill" style="font-size:0.65rem;">NEW</span>';
+                                container.prepend(card);
+                                const section = document.getElementById('followAlertsSection');
+                                if (section) section.style.display = 'block';
+                                const emptyMsg = document.getElementById('noAlertsMsg');
+                                if (emptyMsg) emptyMsg.style.display = 'none';
+                            }
+                        } catch (err) {
+                            console.error('Error handling follow notification:', err);
                         }
                     });
                 }, function() {

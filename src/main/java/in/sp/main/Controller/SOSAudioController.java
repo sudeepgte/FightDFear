@@ -72,4 +72,59 @@ public class SOSAudioController {
             return ResponseEntity.status(500).body(response);
         }
     }
-}
+
+    @PostMapping("/upload-evidence")
+    public ResponseEntity<Map<String, Object>> uploadEvidence(
+            @RequestParam("sosId") Long sosId,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "media", required = false) MultipartFile media,
+            HttpSession session) {
+
+        Map<String, Object> response = new HashMap<>();
+        User user = (User) session.getAttribute("user");
+
+        if (user == null) {
+            response.put("success", false);
+            response.put("message", "User not authenticated");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        MultipartFile uploadFile = file != null ? file : media;
+        if (uploadFile == null || uploadFile.isEmpty()) {
+            response.put("success", false);
+            response.put("message", "No media file provided");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        SOSRequest sosRequest = sosRequestRepository.findById(sosId).orElse(null);
+        if (sosRequest == null) {
+            response.put("success", false);
+            response.put("message", "SOS request not found");
+            return ResponseEntity.status(404).body(response);
+        }
+        if (sosRequest.getUser() == null || !sosRequest.getUser().getId().equals(user.getId())) {
+            response.put("success", false);
+            response.put("message", "Access denied");
+            return ResponseEntity.status(403).body(response);
+        }
+
+        try {
+            String savedUrl = fileUploadService.saveFile(uploadFile);
+            sosRequest.setVideoRecordingPath(savedUrl);
+            if (sosRequest.getAudioRecordingPath() == null || sosRequest.getAudioRecordingPath().isBlank()) {
+                sosRequest.setAudioRecordingPath(savedUrl);
+            }
+            sosRequestRepository.save(sosRequest);
+
+            response.put("success", true);
+            response.put("mediaPath", savedUrl);
+            response.put("message", "Evidence video and audio saved successfully.");
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Failed to save evidence recording: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+}

@@ -301,7 +301,7 @@
                     </div>
 
                     <hr class="section-divider">
-                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Primary Emergency Contact</h5>
+                    <h5 class="mb-3" style="color: var(--brand-purple); font-weight: 700;">Primary Emergency Contact &amp; SOS</h5>
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
                             <label class="form-label" for="emergencyContactName">Contact Name</label>
@@ -316,15 +316,33 @@
                                    oninput="this.value=this.value.replace(/[^0-9]/g,''); syncPreview();">
                         </div>
                     </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="emergencyContactEmail">Contact Email</label>
+                            <input type="email" name="emergencyContactEmail" id="emergencyContactEmail" class="form-control"
+                                   value="${not empty user.emergencyContacts ? user.emergencyContacts[0].email : ''}"
+                                   placeholder="contact@example.com">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="emergencyContactRelation">Relationship</label>
+                            <select name="emergencyContactRelation" id="emergencyContactRelation" class="form-select" onchange="syncPreview()">
+                                <option value="Emergency Contact" ${not empty user.emergencyContacts && (user.emergencyContacts[0].relation eq 'Emergency Contact' || empty user.emergencyContacts[0].relation) ? 'selected' : ''}>Emergency Contact</option>
+                                <option value="Mother" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Mother' ? 'selected' : ''}>Mother</option>
+                                <option value="Father" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Father' ? 'selected' : ''}>Father</option>
+                                <option value="Spouse" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Spouse' ? 'selected' : ''}>Spouse</option>
+                                <option value="Friend" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Friend' ? 'selected' : ''}>Friend</option>
+                                <option value="Other"  ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Other'  ? 'selected' : ''}>Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Emergency WhatsApp Number -->
                     <div class="field-group mt-3">
-                        <label class="form-label" for="emergencyContactRelation">Relationship</label>
-                        <select name="emergencyContactRelation" id="emergencyContactRelation" class="form-select" onchange="syncPreview()">
-                            <option value="Mother" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Mother' ? 'selected' : ''}>Mother</option>
-                            <option value="Father" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Father' ? 'selected' : ''}>Father</option>
-                            <option value="Spouse" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Spouse' ? 'selected' : ''}>Spouse</option>
-                            <option value="Friend" ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Friend' ? 'selected' : ''}>Friend</option>
-                            <option value="Other"  ${not empty user.emergencyContacts && user.emergencyContacts[0].relation eq 'Other'  ? 'selected' : ''}>Other</option>
-                        </select>
+                        <label class="form-label" for="whatsappNumber">Emergency WhatsApp Number</label>
+                        <input type="tel" name="whatsappNumber" id="whatsappNumber" class="form-control"
+                               value="${user.whatsappNumber}" placeholder="e.g. +91 9876543210"
+                               maxlength="20" oninput="syncPreview()">
+                        <div class="small mt-1 text-muted"><i class="bi bi-whatsapp text-success me-1"></i> Used to share your real-time location when you are in danger or trigger SOS.</div>
                     </div>
 
                     <hr class="section-divider">
@@ -405,6 +423,8 @@
                             <div class="col-6"><strong>DOB:</strong> <span id="previewDob">${user.dob}</span></div>
                             <div class="col-6"><strong>Gender:</strong> <span id="previewGender">${user.gender}</span></div>
                             <div class="col-6"><strong>City:</strong> <span id="previewCity">${user.city}</span></div>
+                            <div class="col-6"><strong>Emergency Contact:</strong> <span id="previewEmergencyContact">${not empty user.emergencyContacts ? user.emergencyContacts[0].name : '—'}</span></div>
+                            <div class="col-6"><strong>Emergency WhatsApp:</strong> <span id="previewWhatsappNumber">${not empty user.whatsappNumber ? user.whatsappNumber : '—'}</span></div>
                         </div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
                             <button type="button" class="btn btn-light rounded-pill px-3" onclick="hidePreview()">Edit</button>
@@ -430,6 +450,8 @@ function syncPreview() {
     el = document.getElementById('previewDob'); if (el) el.textContent = document.getElementById('dob').value || '—';
     el = document.getElementById('previewGender'); if (el) el.textContent = document.getElementById('gender').value || '—';
     el = document.getElementById('previewCity'); if (el) el.textContent = document.getElementById('city').value || '—';
+    el = document.getElementById('previewEmergencyContact'); if (el) el.textContent = document.getElementById('emergencyContactName').value || '—';
+    el = document.getElementById('previewWhatsappNumber'); if (el) el.textContent = document.getElementById('whatsappNumber').value || '—';
 }
 function showPreview() {
     syncPreview();

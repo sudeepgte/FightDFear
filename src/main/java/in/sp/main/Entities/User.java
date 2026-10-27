@@ -30,6 +30,7 @@ public class User {
     private String homeAddress;
     private String profilePhoto; // This stores the URL of the profile photo (e.g., /uploads/photo.jpg)
     private String password;
+    private String whatsappNumber;
     
     private String dob;
     // New fields
@@ -521,6 +522,9 @@ public class User {
 
     public String getSafetyPreferences() { return safetyPreferences; }
     public void setSafetyPreferences(String safetyPreferences) { this.safetyPreferences = safetyPreferences; }
+
+    public String getWhatsappNumber() { return whatsappNumber; }
+    public void setWhatsappNumber(String whatsappNumber) { this.whatsappNumber = whatsappNumber; }
 
     @Override
     public boolean equals(Object o) {

@@ -56,8 +56,40 @@ public class MobileAuthController {
     @Autowired
     private OtpVerificationService otpVerificationService;
 
+    @Autowired
+    private in.sp.main.Service.GoogleMapsService googleMapsService;
+
+    @Autowired
+    private in.sp.main.Repository.EmergencyContactRepository emergencyContactRepository;
+
     @org.springframework.beans.factory.annotation.Value("${otp.expiration-minutes:10}")
     private int otpExpirationMinutes;
+
+    @GetMapping("/geo/reverse")
+    public ResponseEntity<Map<String, Object>> reverseGeocode(
+            @RequestParam("lat") double lat,
+            @RequestParam("lng") double lng) {
+        Map<String, Object> resp = new LinkedHashMap<>();
+        java.util.Optional<String> address = googleMapsService.reverseGeocode(lat, lng);
+        if (address.isPresent()) {
+            resp.put("success", true);
+            resp.put("address", address.get());
+        } else {
+            resp.put("success", false);
+            resp.put("error", "Unable to resolve address for coordinates.");
+        }
+        return ResponseEntity.ok(resp);
+    }
+
+    @GetMapping("/geo/search")
+    public ResponseEntity<Map<String, Object>> searchLocations(
+            @RequestParam("q") String query) {
+        Map<String, Object> resp = new LinkedHashMap<>();
+        java.util.List<Map<String, Object>> results = googleMapsService.searchLocations(query);
+        resp.put("success", true);
+        resp.put("results", results);
+        return ResponseEntity.ok(resp);
+    }
 
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> health() {
@@ -272,18 +304,30 @@ public class MobileAuthController {
             }
         }
 
-        if (!emergencyContact.isEmpty()) {
-            if (!emergencyContact.matches("^\\d{10}$")) {
+        String ecName = MobileValidation.trim(body.get("emergencyContactName"));
+        String ecPhone = MobileValidation.trim(body.get("emergencyContactPhone"));
+        String ecEmail = MobileValidation.trim(body.get("emergencyContactEmail"));
+        if (ecPhone.isEmpty()) {
+            ecPhone = emergencyContact;
+        }
+        if (!ecPhone.isEmpty() || !ecName.isEmpty() || !ecEmail.isEmpty()) {
+            if (!ecPhone.matches("^\\d{10}$")) {
                 response.put("success", false);
                 response.put("error", "Emergency contact must be exactly 10 digits");
                 return ResponseEntity.badRequest().body(response);
             }
-            EmergencyContact ec = new EmergencyContact("Emergency", emergencyContact, "Emergency", null);
+            if (ecName.isEmpty()) {
+                ecName = "Emergency Contact";
+            }
+            EmergencyContact ec = new EmergencyContact(ecName, ecPhone, "Emergency Contact", ecEmail.isEmpty() ? null : ecEmail);
             ec.setUser(user);
             user.setEmergencyContacts(java.util.List.of(ec));
         }
 
         userService.createUser(user);
+        if (user.getEmergencyContacts() != null && !user.getEmergencyContacts().isEmpty()) {
+            emergencyContactRepository.saveAll(user.getEmergencyContacts());
+        }
         otpVerificationService.consumeVerifiedOtp(normEmail, OtpPurpose.USER_REGISTER, otpExpirationMinutes);
         response.put("success", true);
         response.put("message", "Registration successful. You can now sign in.");
@@ -316,6 +360,10 @@ public class MobileAuthController {
         String genderRaw = MobileValidation.trim(body.get("gender"));
         String acceptedTerms = MobileValidation.trim(body.get("acceptedTerms"));
         String emailOtp = body.get("emailOtp") == null ? "" : body.get("emailOtp").trim();
+        String ecName = MobileValidation.trim(body.get("emergencyContactName"));
+        String ecPhone = MobileValidation.trim(body.get("emergencyContactPhone"));
+        String ecEmail = MobileValidation.trim(body.get("emergencyContactEmail"));
+        String whatsappNumber = MobileValidation.trim(body.get("whatsappNumber"));
 
         if (!"true".equalsIgnoreCase(acceptedTerms)) {
             return ResponseEntity.badRequest().body(error("You must accept the Terms & Conditions and Privacy Policy to register."));
@@ -323,9 +371,15 @@ public class MobileAuthController {
         if (fullName.isEmpty()) {
             return ResponseEntity.badRequest().body(error("Full name is required."));
         }
+        if (fullName.length() < 2 || fullName.length() > 70) {
+            return ResponseEntity.badRequest().body(error("Full name must be between 2 and 70 characters."));
+        }
         String emailErr = MobileValidation.requireEmail(email);
         if (emailErr != null) {
             return ResponseEntity.badRequest().body(error(emailErr));
+        }
+        if (email.length() > 100) {
+            return ResponseEntity.badRequest().body(error("Email address must not exceed 100 characters."));
         }
         String phoneErr = MobileValidation.requirePhone(phone, true);
         if (phoneErr != null) {
@@ -335,12 +389,18 @@ public class MobileAuthController {
         if (passErr != null) {
             return ResponseEntity.badRequest().body(error(passErr));
         }
+        if (password.length() > 64) {
+            return ResponseEntity.badRequest().body(error("Password must not exceed 64 characters."));
+        }
         String confirmErr = MobileValidation.requireConfirm(password, confirmPassword);
         if (confirmErr != null) {
             return ResponseEntity.badRequest().body(error(confirmErr));
         }
         if (city.isEmpty()) {
             return ResponseEntity.badRequest().body(error("City / Location is required."));
+        }
+        if (city.length() < 2 || city.length() > 150) {
+            return ResponseEntity.badRequest().body(error("City / Location must be between 2 and 150 characters."));
         }
 
         String genderErr = MobileValidation.requireWomenMemberGender(genderRaw);
@@ -363,6 +423,9 @@ public class MobileAuthController {
         user.setEmail(email);
         user.setPhoneNumber(phone);
         user.setCity(city);
+        if (user.getHomeAddress() == null || user.getHomeAddress().isBlank()) {
+            user.setHomeAddress(city);
+        }
         user.setPassword(passwordService.encode(password));
         user.setVerificationStatus(VerificationStatus.VERIFIED);
         user.setIdentityDocument("web-member|lang:English");
@@ -381,8 +444,38 @@ public class MobileAuthController {
         }
         user.setGender(MobileValidation.parseWomenMemberGender(genderRaw));
 
+        String ecNameErr = MobileValidation.requireEmergencyContactName(ecName);
+        if (ecNameErr != null) {
+            return ResponseEntity.badRequest().body(error(ecNameErr));
+        }
+        String ecPhoneErr = MobileValidation.requireEmergencyContactPhone(ecPhone);
+        if (ecPhoneErr != null) {
+            return ResponseEntity.badRequest().body(error(ecPhoneErr));
+        }
+        String ecEmailErr = MobileValidation.requireEmergencyContactEmail(ecEmail);
+        if (ecEmailErr != null) {
+            return ResponseEntity.badRequest().body(error(ecEmailErr));
+        }
+        String normEcEmail = MobileValidation.normalizeEmail(ecEmail);
+
+        String whatsappErr = MobileValidation.requireWhatsappNumber(whatsappNumber);
+        if (whatsappErr != null) {
+            return ResponseEntity.badRequest().body(error(whatsappErr));
+        }
+        String normWhatsapp = MobileValidation.normalizeWhatsappNumber(whatsappNumber);
+        user.setWhatsappNumber(normWhatsapp);
+
+        EmergencyContact contact = new EmergencyContact();
+        contact.setName(ecName);
+        contact.setPhone(ecPhone);
+        contact.setEmail(normEcEmail);
+        contact.setRelation("Emergency Contact");
+        contact.setUser(user);
+        user.setEmergencyContacts(java.util.List.of(contact));
+
         try {
             userService.createUser(user);
+            emergencyContactRepository.save(contact);
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(error("Registration failed. Please try again or use a different email/phone."));
