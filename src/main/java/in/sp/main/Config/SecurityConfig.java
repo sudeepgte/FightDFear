@@ -168,6 +168,11 @@ public class SecurityConfig {
             "/marketplace/provider/login",
             "/marketplace/provider/register",
             "/marketplace/provider/register/**",
+            "/marketplace/provider/otp/**",
+            "/marketplace/provider/profile-completion",
+            "/marketplace/provider/profile-completion/**",
+            "/marketplace/api/**",
+            "/api/locations/**",
             "/women-products/**",
             "/contact",
             "/sendMessage",
@@ -268,6 +273,8 @@ public class SecurityConfig {
                             || path.startsWith("/doctors/profile-completion")
                             || path.equals("/doctors/logout"))) {
                         response.sendRedirect("/doctors/login");
+                    } else if (path != null && path.startsWith("/marketplace/provider/")) {
+                        response.sendRedirect("/marketplace/provider/login");
                     } else {
                         response.sendRedirect("/login");
                     }
@@ -312,7 +319,8 @@ public class SecurityConfig {
                                 || path.startsWith("/creator-hub/")
                                 || path.endsWith("/login")
                                 || path.endsWith("/loginAdmin")
-                                || path.endsWith("/register");
+                                || path.endsWith("/register")
+                                || path.endsWith("/profile-completion");
                     }
                 )
             )

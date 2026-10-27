@@ -31,6 +31,8 @@ public final class PartnerLifecycleSupport {
         return switch (status) {
             case APPROVED -> VerificationStatus.VERIFIED;
             case REJECTED -> VerificationStatus.REJECTED;
+            case CHANGES_REQUESTED -> VerificationStatus.CHANGES_REQUESTED;
+            case READY_FOR_VERIFICATION -> VerificationStatus.RE_VERIFICATION;
             default -> VerificationStatus.PENDING;
         };
     }
@@ -40,7 +42,9 @@ public final class PartnerLifecycleSupport {
         return switch (status) {
             case VERIFIED -> PartnerProfileStatus.APPROVED;
             case REJECTED, CANCELLED -> PartnerProfileStatus.REJECTED;
-            case PENDING, CHANGES_REQUESTED, RE_VERIFICATION -> PartnerProfileStatus.PENDING_ADMIN_APPROVAL;
+            case CHANGES_REQUESTED -> PartnerProfileStatus.CHANGES_REQUESTED;
+            case RE_VERIFICATION -> PartnerProfileStatus.READY_FOR_VERIFICATION;
+            case PENDING -> PartnerProfileStatus.PENDING_ADMIN_APPROVAL;
         };
     }
 

@@ -17,6 +17,8 @@ public interface ServiceProviderRepository extends JpaRepository<ServiceProvider
     long countByVerificationStatus(VerificationStatus status);
     List<ServiceProvider> findByCategoryAndVerificationStatus(ProviderCategory category, VerificationStatus status);
     long countByCategoryAndVerificationStatus(ProviderCategory category, VerificationStatus status);
+    List<ServiceProvider> findByCategory(ProviderCategory category);
+    long countByCategory(ProviderCategory category);
     List<ServiceProvider> findByPartnerProfileStatus(PartnerProfileStatus status);
     List<ServiceProvider> findByPartnerProfileStatusIn(Collection<PartnerProfileStatus> statuses);
     List<ServiceProvider> findByPartnerProfileStatusIsNull();
