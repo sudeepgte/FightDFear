@@ -88,9 +88,11 @@ public class ServiceProviderRegistrationService {
         if (emailErr != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, emailErr);
         }
-        String phoneErr = MobileValidation.requirePhone(trimmedPhone, true);
-        if (phoneErr != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, phoneErr);
+        if (!trimmedPhone.isBlank()) {
+            String phoneErr = MobileValidation.requirePhone(trimmedPhone, true);
+            if (phoneErr != null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, phoneErr);
+            }
         }
         String passErr = MobileValidation.requirePassword(password);
         if (passErr != null) {
@@ -122,11 +124,11 @@ public class ServiceProviderRegistrationService {
         ServiceProvider provider = new ServiceProvider();
         provider.setFullName(trimmedName);
         provider.setEmail(normalizedEmail);
-        provider.setPhone(trimmedPhone);
+        provider.setPhone(trimmedPhone.isBlank() ? null : trimmedPhone);
         provider.setCategory(cat);
         provider.setPassword(passwordService.encode(password));
         provider.setRating(0.0);
-        provider.setIdentityDocumentPath("mobile-pending");
+        provider.setIdentityDocumentPath(null);
         provider.setAcceptedTermsAt(LocalDateTime.now());
         providerProfileService.setLifecycleStatus(provider, PartnerProfileStatus.REGISTERED);
         provider = providerRepository.save(provider);

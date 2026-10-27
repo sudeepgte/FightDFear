@@ -65,6 +65,15 @@ public class ServiceProvider {
     @Column(name = "changes_requested_note", columnDefinition = "TEXT")
     private String changesRequestedNote;
 
+    @Column(name = "reviewed_by_admin_id")
+    private Long reviewedByAdminId;
+
+    @Column(name = "reviewed_by_admin_name")
+    private String reviewedByAdminName;
+
+    @Column(name = "reviewed_at")
+    private LocalDateTime reviewedAt;
+
     private Double rating = 0.0;
 
     @Column(name = "practice_areas", columnDefinition = "TEXT")
@@ -438,6 +447,30 @@ public class ServiceProvider {
 
     public void setLanguagesSpoken(String languagesSpoken) {
         this.languagesSpoken = languagesSpoken;
+    }
+
+    public Long getReviewedByAdminId() {
+        return reviewedByAdminId;
+    }
+
+    public void setReviewedByAdminId(Long reviewedByAdminId) {
+        this.reviewedByAdminId = reviewedByAdminId;
+    }
+
+    public String getReviewedByAdminName() {
+        return reviewedByAdminName;
+    }
+
+    public void setReviewedByAdminName(String reviewedByAdminName) {
+        this.reviewedByAdminName = reviewedByAdminName;
+    }
+
+    public LocalDateTime getReviewedAt() {
+        return reviewedAt;
+    }
+
+    public void setReviewedAt(LocalDateTime reviewedAt) {
+        this.reviewedAt = reviewedAt;
     }
 }
 

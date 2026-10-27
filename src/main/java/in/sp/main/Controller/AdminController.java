@@ -1456,126 +1456,328 @@ public class AdminController {
 
     // Purpose: admin verification for marketplace providers / service partners.
     @GetMapping("/pending-providers")
-    public String viewPendingProviders(@RequestParam(required = false) ProviderCategory category, Model model, HttpSession session) {
+    public String viewPendingProviders(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false, defaultValue = "pending") String filter,
+            Model model,
+            HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
 
-        Map<Long, ServiceProvider> pendingById = new LinkedHashMap<>();
-        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIn(
-                PartnerLifecycleSupport.pendingQueueStatuses())) {
-            if (category == null || p.getCategory() == category) {
-                pendingById.put(p.getId(), p);
-            }
+        ProviderCategory parsedCategory = null;
+        if (category != null && !category.trim().isBlank()) {
+            parsedCategory = ProviderCategory.fromFlexible(category.trim());
         }
-        for (ServiceProvider p : serviceProviderRepository.findByPartnerProfileStatusIsNull()) {
-            if (p.getVerificationStatus() == null) {
-                p.setVerificationStatus(VerificationStatus.PENDING);
-                serviceProviderRepository.save(p);
-            }
-            if (category == null || p.getCategory() == category) {
-                pendingById.putIfAbsent(p.getId(), p);
-            }
-        }
-        List<ServiceProvider> pending = new ArrayList<>(pendingById.values());
-        pending.sort(Comparator
-                .comparingInt((ServiceProvider p) -> PartnerLifecycleSupport.pendingPriority(p.getPartnerProfileStatus()))
-                .thenComparing(ServiceProvider::getId, Comparator.nullsLast(Long::compareTo)));
 
-        if (category != null) {
-            model.addAttribute("pending", pending);
-            model.addAttribute("verified", serviceProviderRepository.findByCategoryAndVerificationStatus(category, VerificationStatus.VERIFIED));
-            model.addAttribute("rejected", serviceProviderRepository.findByCategoryAndVerificationStatus(category, VerificationStatus.REJECTED));
-            model.addAttribute("selectedCategory", category);
-        } else {
-            model.addAttribute("pending", pending);
-            model.addAttribute("verified", serviceProviderRepository.findByVerificationStatus(VerificationStatus.VERIFIED));
-            model.addAttribute("rejected", serviceProviderRepository.findByVerificationStatus(VerificationStatus.REJECTED));
+        List<ServiceProvider> allProviders = (parsedCategory != null)
+                ? serviceProviderRepository.findByCategory(parsedCategory)
+                : serviceProviderRepository.findAll();
+
+        // Categorize providers into exact queues
+        List<ServiceProvider> pendingList = new ArrayList<>();
+        List<ServiceProvider> reverificationList = new ArrayList<>();
+        List<ServiceProvider> changesRequestedList = new ArrayList<>();
+        List<ServiceProvider> approvedList = new ArrayList<>();
+        List<ServiceProvider> rejectedList = new ArrayList<>();
+
+        for (ServiceProvider p : allProviders) {
+            PartnerProfileStatus ps = p.getPartnerProfileStatus();
+            VerificationStatus vs = p.getVerificationStatus();
+
+            if (ps == PartnerProfileStatus.APPROVED || vs == VerificationStatus.VERIFIED) {
+                approvedList.add(p);
+            } else if (ps == PartnerProfileStatus.REJECTED || vs == VerificationStatus.REJECTED) {
+                rejectedList.add(p);
+            } else if (ps == PartnerProfileStatus.CHANGES_REQUESTED || vs == VerificationStatus.CHANGES_REQUESTED) {
+                changesRequestedList.add(p);
+            } else if (ps == PartnerProfileStatus.READY_FOR_VERIFICATION || vs == VerificationStatus.RE_VERIFICATION) {
+                reverificationList.add(p);
+            } else {
+                pendingList.add(p);
+            }
         }
+
+        Comparator<ServiceProvider> idDesc = Comparator.comparing(ServiceProvider::getId, Comparator.nullsLast(Comparator.reverseOrder()));
+        pendingList.sort(idDesc);
+        reverificationList.sort(idDesc);
+        changesRequestedList.sort(idDesc);
+        approvedList.sort(idDesc);
+        rejectedList.sort(idDesc);
+
+        int pendingCount = pendingList.size();
+        int reverificationCount = reverificationList.size();
+        int changesRequestedCount = changesRequestedList.size();
+        int approvedCount = approvedList.size();
+        int rejectedCount = rejectedList.size();
+        int totalPartnersCount = pendingCount + reverificationCount + changesRequestedCount + approvedCount + rejectedCount;
+
+        String activeFilter = (filter != null && !filter.trim().isBlank()) ? filter.trim().toLowerCase() : "pending";
+
+        List<ServiceProvider> activeList;
+        switch (activeFilter) {
+            case "reverification" -> activeList = reverificationList;
+            case "changes_requested" -> activeList = changesRequestedList;
+            case "approved" -> activeList = approvedList;
+            case "rejected" -> activeList = rejectedList;
+            case "all" -> {
+                activeList = new ArrayList<>(allProviders);
+                activeList.sort(idDesc);
+            }
+            default -> {
+                activeFilter = "pending";
+                activeList = pendingList;
+            }
+        }
+
+        final String queryStr = (q != null && !q.trim().isBlank()) ? q.trim().toLowerCase() : null;
+        if (queryStr != null) {
+            activeList = activeList.stream().filter(p -> {
+                if (p.getFullName() != null && p.getFullName().toLowerCase().contains(queryStr)) return true;
+                if (p.getEmail() != null && p.getEmail().toLowerCase().contains(queryStr)) return true;
+                if (p.getPhone() != null && p.getPhone().toLowerCase().contains(queryStr)) return true;
+                if (p.getCategory() != null) {
+                    if (p.getCategory().name().toLowerCase().contains(queryStr)) return true;
+                    if (p.getCategory().getDisplayName() != null && p.getCategory().getDisplayName().toLowerCase().contains(queryStr)) return true;
+                }
+                if (p.getLocationText() != null && p.getLocationText().toLowerCase().contains(queryStr)) return true;
+                if (p.getCity() != null && p.getCity().toLowerCase().contains(queryStr)) return true;
+                if (p.getBusinessName() != null && p.getBusinessName().toLowerCase().contains(queryStr)) return true;
+                if (p.getDescription() != null && p.getDescription().toLowerCase().contains(queryStr)) return true;
+                return false;
+            }).collect(Collectors.toList());
+        }
+
+        model.addAttribute("pendingCount", pendingCount);
+        model.addAttribute("reverificationCount", reverificationCount);
+        model.addAttribute("changesRequestedCount", changesRequestedCount);
+        model.addAttribute("approvedCount", approvedCount);
+        model.addAttribute("rejectedCount", rejectedCount);
+        model.addAttribute("totalPartnersCount", totalPartnersCount);
+
+        model.addAttribute("activeFilter", activeFilter);
+        model.addAttribute("searchQuery", queryStr != null ? q.trim() : "");
+        model.addAttribute("selectedCategory", parsedCategory);
+        model.addAttribute("selectedCategoryCode", parsedCategory != null ? parsedCategory.name() : "");
+        model.addAttribute("providerCategories", ProviderCategory.values());
+
+        model.addAttribute("providers", activeList);
+        model.addAttribute("activeList", activeList);
+        model.addAttribute("pending", pendingList);
+        model.addAttribute("verified", approvedList);
+        model.addAttribute("rejected", rejectedList);
+        model.addAttribute("reverification", reverificationList);
+        model.addAttribute("changesRequested", changesRequestedList);
+
         return "adminPendingProviders";
     }
 
-    @PostMapping("/providers/{id}/verify")
+    @PostMapping({"/providers/{id}/verify", "/providers/{id}/approve", "/admin/providers/{id}/verify", "/admin/providers/{id}/approve"})
     @Transactional
-    public String verifyProvider(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String verifyProvider(
+            @PathVariable Long id,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "q", required = false) String q,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
         ServiceProvider p = serviceProviderRepository.findById(id).orElse(null);
         if (p == null) {
-            redirectAttributes.addFlashAttribute("message", "Provider not found.");
-            return "redirect:/admin/pending-providers";
+            redirectAttributes.addFlashAttribute("error", "Provider not found.");
+            return buildPendingProvidersRedirect(category, filter, q);
         }
-        serviceProviderProfileService.setLifecycleStatus(p, PartnerProfileStatus.APPROVED);
+        Admin admin = (Admin) session.getAttribute("admin");
+        p.setVerificationStatus(VerificationStatus.VERIFIED);
+        p.setPartnerProfileStatus(PartnerProfileStatus.APPROVED);
         p.setRejectionReason(null);
         p.setChangesRequestedNote(null);
+        p.setReviewedAt(LocalDateTime.now());
+        if (admin != null) {
+            p.setReviewedByAdminId(Long.valueOf(admin.getId()));
+            p.setReviewedByAdminName(admin.getName());
+        }
         serviceProviderRepository.save(p);
-        redirectAttributes.addFlashAttribute("message", "Provider verified.");
-        return pendingProvidersRedirect(p);
+
+        try {
+            if (p.getEmail() != null && !p.getEmail().isBlank()) {
+                String subject = "Fight D Fear - Marketplace Provider Account Approved!";
+                String text = "Dear " + (p.getFullName() != null ? p.getFullName() : "Partner") + ",\n\n"
+                        + "Congratulations! Your Fight D Fear Marketplace provider account has been successfully verified and approved.\n\n"
+                        + "Your profile is now active on the public marketplace, and you can now publish classes/services, manage customer bookings, and access your provider dashboard.\n\n"
+                        + "Log in to your provider dashboard:\n"
+                        + "http://localhost:8084/marketplace/provider/login\n\n"
+                        + "Best Regards,\nFight D Fear Administration Team";
+                emailService.sendEmail(p.getEmail(), subject, text);
+            }
+        } catch (Exception e) {
+            log.warn("Could not send approval email to provider {}: {}", p.getEmail(), e.getMessage());
+        }
+
+        redirectAttributes.addFlashAttribute("message", "Provider " + p.getFullName() + " approved successfully.");
+        return buildPendingProvidersRedirect(category, filter != null ? filter : "approved", q);
     }
 
-    @PostMapping("/providers/{id}/reject")
+    @PostMapping({"/providers/{id}/reject", "/admin/providers/{id}/reject"})
     @Transactional
-    public String rejectProvider(@PathVariable Long id,
-                                 @RequestParam(value = "reason", required = false) String reason,
-                                 HttpSession session, RedirectAttributes redirectAttributes) {
+    public String rejectProvider(
+            @PathVariable Long id,
+            @RequestParam(value = "reason", required = false) String reason,
+            @RequestParam(value = "notes", required = false) String notes,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "q", required = false) String q,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
         ServiceProvider p = serviceProviderRepository.findById(id).orElse(null);
         if (p == null) {
-            redirectAttributes.addFlashAttribute("message", "Provider not found.");
-            return "redirect:/admin/pending-providers";
+            redirectAttributes.addFlashAttribute("error", "Provider not found.");
+            return buildPendingProvidersRedirect(category, filter, q);
         }
-        serviceProviderProfileService.setLifecycleStatus(p, PartnerProfileStatus.REJECTED);
-        p.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
+        String combined = (reason != null && !reason.isBlank()) ? reason.trim()
+                : (notes != null && !notes.isBlank() ? notes.trim() : "");
+        if (combined.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Please provide a reason to reject the provider.");
+            return buildPendingProvidersRedirect(category, filter, q);
+        }
+        Admin admin = (Admin) session.getAttribute("admin");
+        p.setVerificationStatus(VerificationStatus.REJECTED);
+        p.setPartnerProfileStatus(PartnerProfileStatus.REJECTED);
+        p.setRejectionReason(combined);
+        p.setReviewedAt(LocalDateTime.now());
+        if (admin != null) {
+            p.setReviewedByAdminId(Long.valueOf(admin.getId()));
+            p.setReviewedByAdminName(admin.getName());
+        }
         serviceProviderRepository.save(p);
-        redirectAttributes.addFlashAttribute("message", "Provider rejected.");
-        return pendingProvidersRedirect(p);
+
+        try {
+            if (p.getEmail() != null && !p.getEmail().isBlank()) {
+                String subject = "Fight D Fear - Application Status Update";
+                String text = "Dear " + (p.getFullName() != null ? p.getFullName() : "Partner") + ",\n\n"
+                        + "Thank you for your interest in joining the Fight D Fear Marketplace. After review, your application could not be approved at this time for the following reason:\n\n"
+                        + combined + "\n\n"
+                        + "If you have any questions, please reach out to our support team at support@fightdfear.com.\n\n"
+                        + "Best Regards,\nFight D Fear Administration Team";
+                emailService.sendEmail(p.getEmail(), subject, text);
+            }
+        } catch (Exception e) {
+            log.warn("Could not send rejection email to provider {}: {}", p.getEmail(), e.getMessage());
+        }
+
+        redirectAttributes.addFlashAttribute("message", "Provider " + p.getFullName() + " application rejected.");
+        return buildPendingProvidersRedirect(category, filter != null ? filter : "rejected", q);
     }
 
-    @PostMapping("/providers/{id}/request-changes")
+    @PostMapping({"/providers/{id}/request-changes", "/admin/providers/{id}/request-changes"})
     @Transactional
-    public String requestProviderChanges(@PathVariable Long id,
-                                         @RequestParam(value = "note", required = false) String note,
-                                         HttpSession session, RedirectAttributes redirectAttributes) {
+    public String requestProviderChanges(
+            @PathVariable Long id,
+            @RequestParam(value = "note", required = false) String note,
+            @RequestParam(value = "notes", required = false) String notes,
+            @RequestParam(value = "reasons", required = false) String reasons,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "q", required = false) String q,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
         ServiceProvider p = serviceProviderRepository.findById(id).orElse(null);
         if (p == null) {
-            redirectAttributes.addFlashAttribute("message", "Provider not found.");
-            return "redirect:/admin/pending-providers";
+            redirectAttributes.addFlashAttribute("error", "Provider not found.");
+            return buildPendingProvidersRedirect(category, filter, q);
         }
-        serviceProviderProfileService.setLifecycleStatus(p, PartnerProfileStatus.CHANGES_REQUESTED);
-        p.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
+        String combined = (note != null && !note.isBlank()) ? note.trim()
+                : (notes != null && !notes.isBlank() ? notes.trim()
+                : (reasons != null && !reasons.isBlank() ? reasons.trim() : ""));
+        if (combined.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Please provide notes/corrections when requesting changes.");
+            return buildPendingProvidersRedirect(category, filter, q);
+        }
+
+        Admin admin = (Admin) session.getAttribute("admin");
+        p.setVerificationStatus(VerificationStatus.CHANGES_REQUESTED);
+        p.setPartnerProfileStatus(PartnerProfileStatus.CHANGES_REQUESTED);
+        p.setChangesRequestedNote(combined);
         p.setRejectionReason(null);
+        p.setReviewedAt(LocalDateTime.now());
+        if (admin != null) {
+            p.setReviewedByAdminId(Long.valueOf(admin.getId()));
+            p.setReviewedByAdminName(admin.getName());
+        }
         serviceProviderRepository.save(p);
-        redirectAttributes.addFlashAttribute("message", "Changes requested from provider.");
-        return pendingProvidersRedirect(p);
+
+        try {
+            if (p.getEmail() != null && !p.getEmail().isBlank()) {
+                String subject = "Fight D Fear - Profile Changes Requested";
+                String text = "Dear " + (p.getFullName() != null ? p.getFullName() : "Partner") + ",\n\n"
+                        + "The Fight D Fear administrator has reviewed your application and requested the following corrections:\n\n"
+                        + combined + "\n\n"
+                        + "Please log in to update your profile details and resubmit for verification:\n"
+                        + "http://localhost:8084/marketplace/provider/login\n\n"
+                        + "Best Regards,\nFight D Fear Administration Team";
+                emailService.sendEmail(p.getEmail(), subject, text);
+            }
+        } catch (Exception e) {
+            log.warn("Could not send changes requested email to provider {}: {}", p.getEmail(), e.getMessage());
+        }
+
+        redirectAttributes.addFlashAttribute("message", "Changes requested from provider " + p.getFullName() + ".");
+        return buildPendingProvidersRedirect(category, filter != null ? filter : "changes_requested", q);
     }
 
-    private String pendingProvidersRedirect(ServiceProvider p) {
-        if (p != null && p.getCategory() != null) {
-            return "redirect:/admin/pending-providers?category=" + p.getCategory().name();
+    private String buildPendingProvidersRedirect(String category, String filter, String q) {
+        StringBuilder sb = new StringBuilder("redirect:/admin/pending-providers?");
+        if (category != null && !category.isBlank()) {
+            sb.append("category=").append(category.trim()).append("&");
         }
-        return "redirect:/admin/pending-providers";
+        if (q != null && !q.isBlank()) {
+            try {
+                sb.append("q=").append(java.net.URLEncoder.encode(q.trim(), java.nio.charset.StandardCharsets.UTF_8)).append("&");
+            } catch (Exception ignored) {
+                sb.append("q=").append(q.trim()).append("&");
+            }
+        }
+        if (filter != null && !filter.isBlank()) {
+            sb.append("filter=").append(filter.trim());
+        } else {
+            sb.append("filter=pending");
+        }
+        return sb.toString();
     }
 
     // Purpose: admin views full profile of a specific marketplace provider.
-    @GetMapping("/providers/{id}/profile")
-    public String viewProviderProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+    @GetMapping({"/providers/{id}/profile", "/admin/providers/{id}/profile", "/admin/provider/view/{id}"})
+    public String viewProviderProfile(
+            @PathVariable Long id,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "q", required = false) String q,
+            HttpSession session,
+            Model model,
+            RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
 
         ServiceProvider p = serviceProviderRepository.findById(id).orElse(null);
         if (p == null) {
-            redirectAttributes.addFlashAttribute("message", "Provider not found.");
+            redirectAttributes.addFlashAttribute("error", "Provider not found.");
             return "redirect:/admin/pending-providers";
         }
 
         model.addAttribute("provider", p);
+        model.addAttribute("categoryParam", category != null ? category : "");
+        model.addAttribute("filterParam", filter != null ? filter : "pending");
+        model.addAttribute("qParam", q != null ? q : "");
         return "adminViewProviderProfile";
     }
 

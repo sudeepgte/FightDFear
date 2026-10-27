@@ -3,418 +3,934 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="_csrf" content="${_csrf.token}">
-  <meta name="_csrf_header" content="${_csrf.headerName}">
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <title>Provider Registration — Fight D Fear</title>
-  <link href="${pageContext.request.contextPath}/assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-  <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
-  <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fightdfire-theme.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <style>
-      :root {
-          --primary: #F43F5E;
-          --primary-hover: #E11D48;
-          --navy: #1E1B4B;
-          --text-gray: #64748B;
-          --bg-page: #F8FAFC;
-          --card-bg: #FFFFFF;
-          --border-color: #E2E8F0;
-      }
+    <meta name="_csrf" content="${_csrf.token}">
+    <meta name="_csrf_header" content="${_csrf.headerName}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join as Service Provider — Fight D Fear</title>
+    <!-- Google Fonts & Bootstrap Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --navy: #1E1B4B;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --warning: #C2410C;
+            --warning-bg: #FFF7ED;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --rose-soft: #FFE4E6;
+        }
 
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-      body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-          min-height: 100vh;
-          background: var(--bg-page);
-          color: var(--navy);
-          display: flex;
-          flex-direction: column;
-      }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: var(--bg-page);
+            color: var(--navy);
+            display: flex;
+            flex-direction: column;
+        }
 
-      .app-header {
-          background: #FFFFFF;
-          border-bottom: 1px solid var(--border-color);
-          padding: 14px 24px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          position: sticky;
-          top: 0;
-          z-index: 50;
-      }
+        /* Top Bar */
+        .app-header {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-color);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
 
-      .header-brand {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-size: 1.15rem;
-          font-weight: 800;
-          color: var(--navy);
-          text-decoration: none;
-      }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+        }
 
-      .header-brand i { color: var(--primary); font-size: 1.3rem; }
+        .header-brand img {
+            height: 32px;
+            width: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
 
-      .main-container {
-          flex: 1;
-          max-width: 600px;
-          width: 100%;
-          margin: 40px auto;
-          padding: 0 16px;
-      }
+        .header-links a {
+            color: var(--text-gray);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
 
-      .form-card {
-          background: var(--card-bg);
-          border: 1px solid var(--border-color);
-          border-radius: 16px;
-          padding: 40px 32px;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-      }
+        .header-links a:hover {
+            color: var(--primary);
+        }
 
-      .card-header-area { text-align: center; margin-bottom: 30px; }
-      .card-header-area h2 { font-size: 1.8rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
-      .card-header-area p { font-size: 0.95rem; color: var(--text-gray); }
+        /* Main Container */
+        .main-container {
+            flex: 1;
+            max-width: 640px;
+            width: 100%;
+            margin: 28px auto 40px;
+            padding: 0 16px;
+        }
 
-      .fdf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 16px; }
-      .fdf-group { margin-bottom: 18px; text-align: left; }
-      .fdf-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
-      .fdf-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.95rem; font-family: inherit; color: var(--navy); background: #FFFFFF; transition: all 0.2s ease; }
-      .fdf-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12); }
+        /* Info Card */
+        .info-banner {
+            background: var(--rose-soft);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid #FECDD3;
+        }
 
-      .btn-dr { padding: 14px 28px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; border: none; font-size: 1rem; }
-      .btn-dr-next { background: var(--primary); color: #fff; width: 100%; margin-top: 10px; }
-      .btn-dr-next:hover { background: var(--primary-hover); transform: translateY(-1px); }
-      .btn-dr-prev { background: #f1f5f9; color: var(--text-gray); width: 100%; }
-      .btn-dr-prev:hover { background: #e2e8f0; }
+        .info-banner h2 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
 
-      .dr-progress { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
-      .dr-step-dot { width: 36px; height: 36px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; transition: 0.3s; color: var(--text-gray); }
-      .dr-step-dot.active { background: var(--primary); color: #fff; transform: scale(1.1); box-shadow: 0 4px 10px rgba(244, 63, 94, 0.3); }
-      .dr-step-dot.completed { background: var(--navy); color: #fff; }
-      
-      .dr-step-panel { display: none; animation: fadeIn 0.4s ease; }
-      .dr-step-panel.active { display: block; }
-      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .info-banner p {
+            font-size: 0.9rem;
+            color: var(--navy);
+            line-height: 1.45;
+            margin-bottom: 8px;
+        }
 
-      .login-footer { text-align: center; margin-top: 24px; font-size: 0.9rem; color: var(--text-gray); }
-      .login-footer a { color: var(--primary); text-decoration: none; font-weight: 700; }
+        .info-banner .subtext {
+            font-size: 0.8rem;
+            color: rgba(30, 27, 75, 0.75);
+            margin-bottom: 0;
+        }
 
-      @media (max-width: 600px) {
-          .fdf-row { grid-template-columns: 1fr; gap: 0; }
-      }
-      @media (max-width: 480px) {
-          .main-container { padding: 0 16px; margin: 20px auto; width: 100%; }
-          .form-card { padding: 24px 16px; width: 100%; }
-      }
+        /* Form Card */
+        .form-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 28px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+        }
 
-      /* Terms Modal Styles */
-      .modal-overlay {
-          position: fixed;
-          top: 0; left: 0; right: 0; bottom: 0;
-          background: rgba(15, 23, 42, 0.6);
-          backdrop-filter: blur(4px);
-          display: none;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-          padding: 16px;
-      }
-      .modal-card {
-          background: #FFFFFF;
-          border-radius: 20px;
-          max-width: 580px;
-          width: 100%;
-          padding: 24px;
-          box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-      }
-      .modal-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin-bottom: 16px;
-      }
-      .modal-header .icon-wrap {
-          width: 44px;
-          height: 44px;
-          border-radius: 12px;
-          background: #FDF2F8;
-          color: var(--primary);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.3rem;
-      }
-      .modal-actions {
-          display: flex;
-          gap: 12px;
-          margin-top: 18px;
-      }
-      .btn-modal-cancel {
-          flex: 1;
-          padding: 12px;
-          background: #F1F5F9;
-          border: 1px solid #CBD5E1;
-          border-radius: 10px;
-          font-weight: 700;
-          color: #475569;
-          cursor: pointer;
-      }
-      .btn-modal-confirm {
-          flex: 1.5;
-          padding: 12px;
-          background: var(--primary);
-          border: none;
-          border-radius: 10px;
-          font-weight: 700;
-          color: #FFFFFF;
-          cursor: pointer;
-      }
-  </style>
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 6px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: var(--navy);
+            background: #FFFFFF;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+        }
+
+        /* Password Wrapper */
+        .password-field .form-input {
+            padding-right: 42px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.1rem;
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--navy);
+        }
+
+        /* OTP Row */
+        .otp-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-otp {
+            padding: 12px 16px;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-otp:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        .btn-otp:disabled {
+            background: #CBD5E1;
+            cursor: not-allowed;
+            color: #64748B;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--success);
+            font-weight: 700;
+            font-size: 0.85rem;
+            background: var(--success-bg);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid #BBF7D0;
+        }
+
+        /* Password Strength */
+        .pass-strength {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .strength-bars {
+            display: flex;
+            gap: 4px;
+            flex: 1;
+            height: 4px;
+        }
+
+        .strength-bar {
+            flex: 1;
+            background: #E2E8F0;
+            border-radius: 2px;
+        }
+
+        .strength-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-gray);
+        }
+
+        /* Terms Box */
+        .terms-box {
+            background: #FDF2F8;
+            border: 1px solid #FBCFE8;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin: 16px 0 10px;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:disabled {
+            background: #CBD5E1;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .login-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .login-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Alerts */
+        .alert-box {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .alert-error {
+            background: var(--error-bg);
+            border: 1px solid #FECACA;
+            color: var(--error);
+        }
+
+        .alert-success {
+            background: var(--success-bg);
+            border: 1px solid #BBF7D0;
+            color: var(--success);
+        }
+
+        /* Modal Overlay & Card */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: 20px;
+            max-width: 460px;
+            width: 100%;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            animation: popIn 0.2s ease-out;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .modal-header .icon-wrap {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: var(--rose-soft);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--navy);
+        }
+
+        .modal-body {
+            background: var(--bg-page);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 20px;
+        }
+
+        .review-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        .review-row:last-child {
+            border-bottom: none;
+        }
+
+        .review-row .label {
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        .review-row .value {
+            color: var(--navy);
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-modal-cancel {
+            flex: 1;
+            padding: 12px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            color: var(--navy);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-modal-confirm {
+            flex: 1.5;
+            padding: 12px;
+            background: var(--primary);
+            border: none;
+            color: #FFFFFF;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-modal-confirm:hover {
+            background: var(--primary-hover);
+        }
+    </style>
 </head>
 <body>
 
+    <!-- App Header -->
+    <header class="app-header">
+        <a href="${pageContext.request.contextPath}/" class="header-brand">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear"> Fight D Fear
+        </a>
+        <div class="header-links">
+            <a href="${pageContext.request.contextPath}/marketplace/provider/login">Sign in</a>
+        </div>
+    </header>
 
-  <header class="app-header">
-      <div style="display: flex; align-items: center; gap: 16px;">
-          <a href="javascript:history.back()" style="color: var(--navy); text-decoration: none; font-size: 1.2rem; display: none;" class="mobile-back-btn">
-              <i class="bi bi-arrow-left"></i>
-          </a>
-          <a href="${pageContext.request.contextPath}/" class="header-brand">
-              <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
-          </a>
-      </div>
-  </header>
+    <!-- Main Container -->
+    <main class="main-container">
 
-  <main class="main-container">
-      <div class="form-card">
-          <div class="card-header-area">
-              <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 64px; width: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(244,63,94,0.15);">
-              <h2>Provider Registration</h2>
-              <p>Register your services to join the platform</p>
-          </div>
+        <!-- Info Card Matching Centre Registration -->
+        <div class="info-banner">
+            <h2>Provider Registration</h2>
+            <p>Join the Fight D Fear Marketplace. After creating your account and signing in, complete your professional profile to showcase your services.</p>
+            <p class="subtext">Verified providers reach thousands of clients looking for trusted women empowerment services.</p>
+        </div>
 
+        <!-- Form Card -->
+        <div class="form-card">
+            <div id="jsAlert" style="display: none;"></div>
 
-          <div class="dr-progress">
-              <div class="dr-step-dot active" data-step="1" id="dot1">1</div>
-              <div class="dr-step-dot" data-step="2" id="dot2">2</div>
-          </div>
+            <c:if test="${not empty error}">
+                <div class="alert-box alert-error">
+                    <i class="bi bi-exclamation-circle-fill"></i> ${error}
+                </div>
+            </c:if>
+            <c:if test="${not empty message}">
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> ${message}
+                </div>
+            </c:if>
 
-          <c:if test="${not empty error}">
-              <div class="alert alert-danger" style="border-radius:12px; padding:12px; font-size:0.9rem; margin-bottom:20px;">${error}</div>
-          </c:if>
-          
-          <form action="${pageContext.request.contextPath}/marketplace/provider/register" method="post" enctype="multipart/form-data" id="providerForm">
-              <!-- Step 1: Account Information -->
-              <div class="dr-step-panel active" id="step1">
-                  <h4 style="margin-bottom:20px; color:var(--navy); font-weight:700;">Account Details</h4>
-                  <div class="fdf-row">
-                      <div class="fdf-group"><label>Full Name</label><input class="fdf-input" name="fullName" placeholder="Priya Sharma" required></div>
-                      <div class="fdf-group"><label>Email</label><input class="fdf-input" type="email" name="email" placeholder="priya@example.com" required></div>
-                  </div>
-                  <div class="fdf-row">
-                      <div class="fdf-group"><label>Phone</label><input class="fdf-input" type="tel" name="phone" placeholder="10-digit number" pattern="[0-9]{10}" maxlength="10" minlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" required></div>
-                      <div class="fdf-group"><label>Password</label><input class="fdf-input" type="password" name="password" placeholder="Min. 8 characters" minlength="8" required></div>
-                  </div>
-                  <button type="button" class="btn-dr btn-dr-next" onclick="nextStep(1)">Continue to Professional Details <i class="bi bi-arrow-right"></i></button>
-              </div>
+            <form id="regForm" action="${pageContext.request.contextPath}/marketplace/provider/register" method="post">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
 
-              <!-- Step 2: Professional Details -->
-              <div class="dr-step-panel" id="step2">
-                  <h4 style="margin-bottom:20px; color:var(--navy); font-weight:700;">Professional Details</h4>
-                  <div class="fdf-row">
-                      <div class="fdf-group">
-                          <label>Category</label>
-                          <select class="fdf-input" name="category" id="categorySelect" required>
-                              <option value="" disabled ${empty param.category ? 'selected' : ''}>Choose a category</option>
-                              <c:forEach var="cat" items="${providerCategories}">
-                                  <option value="${cat.name()}" ${param.category == cat.name() ? 'selected' : ''}>${cat.displayName}</option>
-                              </c:forEach>
-                              <c:if test="${empty providerCategories}">
-                                  <option value="TUTOR" ${param.category == 'TUTOR' ? 'selected' : ''}>Tutor</option>
-                                  <option value="TAILOR" ${param.category == 'TAILOR' ? 'selected' : ''}>Tailor</option>
-                                  <option value="HOME_COOK" ${param.category == 'HOME_COOK' ? 'selected' : ''}>Home Cook</option>
-                                  <option value="CATERING_SERVICE" ${param.category == 'CATERING_SERVICE' ? 'selected' : ''}>Catering Service</option>
-                                  <option value="EVENT_PLANNER" ${param.category == 'EVENT_PLANNER' ? 'selected' : ''}>Event Planner</option>
-                                  <option value="BABYSITTER" ${param.category == 'BABYSITTER' ? 'selected' : ''}>Babysitter</option>
-                                  <option value="PET_CARE" ${param.category == 'PET_CARE' ? 'selected' : ''}>Pet Care</option>
-                                  <option value="DIETITIAN" ${param.category == 'DIETITIAN' ? 'selected' : ''}>Dietitian</option>
-                                  <option value="HOME_CLEANER" ${param.category == 'HOME_CLEANER' ? 'selected' : ''}>Home Cleaner</option>
-                                  <option value="INTERIOR_DESIGNER" ${param.category == 'INTERIOR_DESIGNER' ? 'selected' : ''}>Interior Designer</option>
-                                  <option value="HANDICRAFT_SELLER" ${param.category == 'HANDICRAFT_SELLER' ? 'selected' : ''}>Handicraft Seller</option>
-                                  <option value="DIGITAL_MARKETING_CONSULTANT" ${param.category == 'DIGITAL_MARKETING_CONSULTANT' ? 'selected' : ''}>Digital Marketing Consultant</option>
-                                  <option value="HOME_BAKER" ${param.category == 'HOME_BAKER' ? 'selected' : ''}>Home Baker</option>
-                                  <option value="LANGUAGE_TRAINER" ${param.category == 'LANGUAGE_TRAINER' ? 'selected' : ''}>Language Trainer</option>
-                                  <option value="WOMEN_PRODUCTS" ${param.category == 'WOMEN_PRODUCTS' ? 'selected' : ''}>Women Products</option>
-                                  <option value="WOMEN_LAWYER" ${param.category == 'WOMEN_LAWYER' ? 'selected' : ''}>Women Lawyer</option>
-                                  <option value="FITNESS_ZUMBA" ${param.category == 'FITNESS_ZUMBA' ? 'selected' : ''}>Fitness / Zumba</option>
-                                  <option value="BEAUTICIAN" ${param.category == 'BEAUTICIAN' ? 'selected' : ''}>Beautician</option>
-                                  <option value="MAKEUP_ARTIST" ${param.category == 'MAKEUP_ARTIST' ? 'selected' : ''}>Makeup Artist</option>
-                                  <option value="MEHENDI_ARTIST" ${param.category == 'MEHENDI_ARTIST' ? 'selected' : ''}>Mehendi Artist</option>
-                                  <option value="PHOTOGRAPHER" ${param.category == 'PHOTOGRAPHER' ? 'selected' : ''}>Photographer</option>
-                                  <option value="YOGA_TRAINER" ${param.category == 'YOGA_TRAINER' ? 'selected' : ''}>Yoga Trainer</option>
-                                  <option value="FITNESS_TRAINER" ${param.category == 'FITNESS_TRAINER' ? 'selected' : ''}>Fitness Trainer</option>
-                                  <option value="DANCE_INSTRUCTOR" ${param.category == 'DANCE_INSTRUCTOR' ? 'selected' : ''}>Dance Instructor</option>
-                                  <option value="MUSIC_TEACHER" ${param.category == 'MUSIC_TEACHER' ? 'selected' : ''}>Music Teacher</option>
-                                  <option value="CRAFT_SELLER" ${param.category == 'CRAFT_SELLER' ? 'selected' : ''}>Craft Seller</option>
-                                  <option value="HANDMADE_PRODUCTS" ${param.category == 'HANDMADE_PRODUCTS' ? 'selected' : ''}>Handmade Products</option>
-                                  <option value="BOUTIQUE" ${param.category == 'BOUTIQUE' ? 'selected' : ''}>Boutique</option>
-                                  <option value="FASHION_DESIGNER" ${param.category == 'FASHION_DESIGNER' ? 'selected' : ''}>Fashion Designer</option>
-                                  <option value="FREELANCER" ${param.category == 'FREELANCER' ? 'selected' : ''}>Freelancer</option>
-                                  <option value="GRAPHIC_DESIGNER" ${param.category == 'GRAPHIC_DESIGNER' ? 'selected' : ''}>Graphic Designer</option>
-                                  <option value="CONTENT_WRITER" ${param.category == 'CONTENT_WRITER' ? 'selected' : ''}>Content Writer</option>
-                                  <option value="MARTIAL_ARTS" ${param.category == 'MARTIAL_ARTS' ? 'selected' : ''}>Martial Arts</option>
-                                  <option value="FEMALE_DOCTORS" ${param.category == 'FEMALE_DOCTORS' ? 'selected' : ''}>Female Doctors</option>
-                              </c:if>
-                          </select>
-                      </div>
-                      <div class="fdf-group"><label>Location</label><input class="fdf-input" name="locationText" placeholder="City / Area" required></div>
-                  </div>
-                  <div class="fdf-group"><label>Profile Bio / Description</label><textarea class="fdf-input" name="description" rows="3" maxlength="300" placeholder="Tell us about your services..." required></textarea></div>
-                  <div class="fdf-group"><label>Gov ID Identification (PDF/IMG)</label><input class="fdf-input" type="file" name="identityDoc" style="padding:10px;" required></div>
-                  
-                  <!-- Terms & Conditions Box with Modal Link -->
-                  <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:20px 0 10px;">
-                      <div style="display:flex; align-items:flex-start; gap:10px;">
-                          <input type="checkbox" name="acceptedTerms" id="termsCheck" value="true" required style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
-                          <label for="termsCheck" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
-                              I have read and agree to the 
-                              <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--primary); font-weight:700; text-decoration:underline;">
-                                  Terms &amp; Conditions
-                              </a>
-                              and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
-                          </label>
-                      </div>
-                      <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:#16A34A; font-weight:700; margin-top:6px; padding-left:28px;">
-                          <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
-                      </div>
-                  </div>
+                <!-- Full Name -->
+                <div class="form-group">
+                    <label for="fullName">Full Name *</label>
+                    <input type="text" id="fullName" name="fullName" class="form-input" placeholder="e.g. Ananya Sharma" required>
+                </div>
 
-                  <div style="display:flex; justify-content:space-between; gap:15px; margin-top:20px;">
-                      <button type="button" class="btn-dr btn-dr-prev w-50" onclick="showStep(1)"><i class="bi bi-arrow-left"></i> Back</button>
-                      <button type="submit" class="btn-dr btn-dr-next w-50" style="margin-top:0;">Register</button>
-                  </div>
-              </div>
-          </form>
-          
-          <div class="login-footer">
-              Already registered? <a href="${pageContext.request.contextPath}/marketplace/provider/login">Sign In</a>
-          </div>
-      </div>
-  </main>
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <div class="input-wrapper">
+                        <input type="email" id="email" name="email" class="form-input" placeholder="provider@example.com" required>
+                    </div>
+                </div>
 
-  <!-- Terms & Conditions Modal -->
-  <div id="termsModal" class="modal-overlay">
-      <div class="modal-card" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
-          <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px;">
-              <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
-              <div style="flex: 1;">
-                  <h3 id="termsModalTitle" style="margin:0; font-size:1.15rem; font-weight:800; color:var(--navy);">Terms &amp; Conditions</h3>
-                  <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Fight D Fear — Women Community &amp; Safety Platform</p>
-              </div>
-              <button type="button" onclick="closeTermsModal()" style="background:none; border:none; font-size:1.5rem; color:var(--text-gray); cursor:pointer; line-height:1;">&times;</button>
-          </div>
-          <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 12px;">
-              <div id="termsTextSection">
-                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women-Centric Services</h4>
-                  <p style="margin-bottom:12px; color:var(--text-gray);">Fight D Fear provides an empowerment, personal safety, and trusted freelance service network. By registering as a provider, you commit to professional excellence, safety, and mutual respect.</p>
+                <!-- OTP Dispatch & Verification -->
+                <div class="form-group">
+                    <div class="otp-row">
+                        <button type="button" id="btnSendOtp" class="btn-otp" onclick="handleSendOtp()">
+                            <i class="bi bi-envelope-arrow-up"></i> <span id="sendOtpText">Send email OTP</span>
+                        </button>
+                        <div id="verifiedBadge" class="verified-badge" style="display: none;">
+                            <i class="bi bi-patch-check-fill"></i> Email Verified
+                        </div>
+                    </div>
+                </div>
 
-                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Professional Integrity &amp; Verification</h4>
-                  <p style="margin-bottom:12px; color:var(--text-gray);">All certifications, portfolio work, skills, and identification documents must be authentic. Providing falsified information results in account revocation.</p>
+                <!-- OTP Input Field (shown after sending) -->
+                <div class="form-group" id="otpGroup" style="display: none;">
+                    <label for="emailOtp">Email OTP *</label>
+                    <div class="otp-row">
+                        <input type="text" id="emailOtp" name="emailOtp" class="form-input" placeholder="6-digit OTP" maxlength="6" style="letter-spacing: 2px; font-weight: 700;">
+                        <button type="button" id="btnVerifyOtp" class="btn-otp" style="background: var(--navy);" onclick="handleVerifyOtp()">
+                            Verify
+                        </button>
+                    </div>
+                </div>
 
-                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">3. Service Safety &amp; Code of Conduct</h4>
-                  <p style="margin-bottom:12px; color:var(--text-gray);">Service providers must strictly adhere to personal safety guidelines when interacting with clients. Misconduct or violation of client safety triggers zero-tolerance termination.</p>
+                <!-- Service Category Dropdown -->
+                <div class="form-group">
+                    <label for="category">Service Category *</label>
+                    <select id="category" name="category" class="form-select" required>
+                        <option value="">-- Select Service Category --</option>
+                        <c:forEach items="${providerCategories}" var="cat">
+                            <option value="${cat.name()}">${cat.displayName}</option>
+                        </c:forEach>
+                    </select>
+                </div>
 
-                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">4. Privacy &amp; Data Security</h4>
-                  <p style="margin-bottom:0; color:var(--text-gray);">All user contact information and transaction details are encrypted and maintained with highest safety standards.</p>
-              </div>
-              <div id="privacyTextSection" style="display:none;">
-                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Information We Collect</h4>
-                  <p style="margin-bottom:12px; color:var(--text-gray);">We collect contact data, service specialties, identity verification documents, and payout records strictly for platform operation and safety checks.</p>
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password">Password *</label>
+                    <div class="input-wrapper password-field">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Min 6 chars with number & special char" required oninput="evaluatePasswordStrength(this.value)">
+                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('password', this)" aria-label="Toggle password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="pass-strength">
+                        <div class="strength-bars">
+                            <div class="strength-bar" id="str1"></div>
+                            <div class="strength-bar" id="str2"></div>
+                            <div class="strength-bar" id="str3"></div>
+                            <div class="strength-bar" id="str4"></div>
+                        </div>
+                        <span class="strength-text" id="strLabel">Weak</span>
+                    </div>
+                </div>
 
-                  <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">2. Security &amp; Data Protection</h4>
-                  <p style="margin-bottom:0; color:var(--text-gray);">We use industry-standard encryption protocols to safeguard your personal credentials and government ID records.</p>
-              </div>
-          </div>
-          <div class="modal-actions" style="margin-top: 14px;">
-              <button type="button" class="btn-modal-cancel" onclick="closeTermsModal()">Close</button>
-              <button type="button" class="btn-modal-confirm" onclick="acceptTermsAndClose()">
-                  I Agree &amp; Accept <i class="bi bi-check2-circle"></i>
-              </button>
-          </div>
-      </div>
-  </div>
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password *</label>
+                    <div class="input-wrapper password-field">
+                        <input type="password" id="confirmPassword" name="confirmPassword" class="form-input" placeholder="Re-enter password" required>
+                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('confirmPassword', this)" aria-label="Toggle confirm password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
 
-  <script>
-      function openTermsModal(title, isPrivacy) {
-          document.getElementById('termsModalTitle').textContent = title;
-          document.getElementById('termsTextSection').style.display = isPrivacy ? 'none' : 'block';
-          document.getElementById('privacyTextSection').style.display = isPrivacy ? 'block' : 'none';
-          document.getElementById('termsModal').style.display = 'flex';
-      }
+                <!-- Terms & Conditions Box with Modal Link -->
+                <div class="terms-box">
+                    <div style="display:flex; align-items:flex-start; gap:10px;">
+                        <input type="checkbox" name="acceptedTerms" id="termsCheck" value="true" required style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer; margin-top:2px;">
+                        <label for="termsCheck" style="font-size:0.88rem; color:var(--navy); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
+                            I have read and agree to the 
+                            <a href="javascript:void(0)" onclick="openTermsModal('Terms &amp; Conditions', false)" style="color:var(--primary); font-weight:700; text-decoration:underline;">
+                                Terms &amp; Conditions
+                            </a>
+                            and <a href="javascript:void(0)" onclick="openTermsModal('Privacy Policy &amp; Data Security', true)" style="color:var(--primary); font-weight:700; text-decoration:underline;">Privacy Policy</a> *
+                        </label>
+                    </div>
+                    <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:var(--success); font-weight:700; margin-top:6px; padding-left:28px;">
+                        <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
+                    </div>
+                </div>
 
-      function closeTermsModal() {
-          document.getElementById('termsModal').style.display = 'none';
-      }
+                <!-- Register Submit Button -->
+                <button type="button" class="btn-submit" onclick="openConfirmationModal()">
+                    Create Account <i class="bi bi-arrow-right"></i>
+                </button>
+            </form>
 
-      function acceptTermsAndClose() {
-          var chk = document.getElementById('termsCheck');
-          if (chk) {
-              chk.checked = true;
-              syncTermsCheckBadge();
-          }
-          closeTermsModal();
-      }
+            <div class="login-footer">
+                Already registered? <a href="${pageContext.request.contextPath}/marketplace/provider/login">Sign in</a>
+            </div>
+        </div>
+    </main>
 
-      function syncTermsCheckBadge() {
-          var chk = document.getElementById('termsCheck');
-          var badge = document.getElementById('termsCheckBadge');
-          if (badge && chk) {
-              badge.style.display = chk.checked ? 'block' : 'none';
-          }
-      }
+    <!-- Confirmation Modal Card -->
+    <div id="confirmModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="icon-wrap">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <div>
+                    <h3>Confirm Details</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-gray);">Review your information before account creation</p>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="review-row">
+                    <span class="label">Full Name:</span>
+                    <span class="value" id="revName">—</span>
+                </div>
+                <div class="review-row">
+                    <span class="label">Email:</span>
+                    <span class="value" id="revEmail">—</span>
+                </div>
+                <div class="review-row">
+                    <span class="label">Category:</span>
+                    <span class="value" id="revCategory">—</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeConfirmationModal()">Back / Edit</button>
+                <button type="button" class="btn-modal-confirm" onclick="submitRegistration()">
+                    Confirm & Register <i class="bi bi-check2-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-      function showStep(s) {
-          document.querySelectorAll('.dr-step-panel').forEach(p => p.classList.remove('active'));
-          document.getElementById('step' + s).classList.add('active');
-          document.querySelectorAll('.dr-step-dot').forEach(d => {
-              const step = parseInt(d.dataset.step);
-              d.classList.remove('active', 'completed');
-              if (step === s) d.classList.add('active');
-              else if (step < s) d.classList.add('completed');
-          });
-      }
+    <!-- Terms Modal Card -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-header">
+                <div class="icon-wrap">
+                    <i class="bi bi-file-text-fill"></i>
+                </div>
+                <div>
+                    <h3 id="termsModalTitle">Terms &amp; Conditions</h3>
+                    <p style="font-size: 0.8rem; color: var(--text-gray);">Fight D Fear Partner Policies</p>
+                </div>
+            </div>
+            <div class="modal-body" style="max-height: 260px; overflow-y: auto; font-size: 0.85rem; line-height: 1.6; color: var(--navy);">
+                <p>1. As a marketplace service provider on Fight D Fear, you agree to provide authentic and accurate professional qualifications.</p>
+                <p style="margin-top: 8px;">2. All services and interactions with clients must uphold safety, dignity, and respectful communication.</p>
+                <p style="margin-top: 8px;">3. Profile information submitted will be reviewed by admin for marketplace trust and verification.</p>
+                <p style="margin-top: 8px;">4. Client data and booking details must remain confidential according to Fight D Fear privacy standards.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-confirm" style="width: 100%;" onclick="closeTermsModal()">Understood &amp; Close</button>
+            </div>
+        </div>
+    </div>
 
-      function nextStep(s) {
-          const panel = document.getElementById('step' + s);
-          const req = panel.querySelectorAll('[required]');
-          let valid = true;
-          req.forEach(el => { if (!el.value) { el.style.borderColor = 'red'; valid = false; } else { el.style.borderColor = ''; } });
-          if (valid) showStep(s + 1);
-      }
+    <!-- Script Logic -->
+    <script>
+        let isOtpSent = false;
+        let isOtpVerified = false;
+        let resendSeconds = 0;
+        let resendTimer = null;
 
-      document.addEventListener('DOMContentLoaded', function() {
-          var chk = document.getElementById('termsCheck');
-          if (chk) {
-              chk.addEventListener('change', syncTermsCheckBadge);
-          }
-          var form = document.getElementById('providerForm');
-          if (form) {
-              form.addEventListener('submit', function(e) {
-                  var terms = document.getElementById('termsCheck');
-                  if (terms && !terms.checked) {
-                      e.preventDefault();
-                      terms.focus();
-                      alert('Please agree to the Terms & Conditions and Privacy Policy to register.');
-                  }
-              });
-          }
-      });
-  </script>
-<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+        // Dynamic categories fetch
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchCategoriesDynamically();
+        });
 
+        async function fetchCategoriesDynamically() {
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/marketplace/api/categories');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        const select = document.getElementById('category');
+                        const currentVal = select.value;
+                        select.innerHTML = '<option value="">-- Select Service Category --</option>';
+                        data.forEach(item => {
+                            const opt = document.createElement('option');
+                            opt.value = item.code;
+                            opt.textContent = item.displayName;
+                            if (item.code === currentVal) {
+                                opt.selected = true;
+                            }
+                            select.appendChild(opt);
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Categories loaded from server-side markup fallback.');
+            }
+        }
+
+        function showAlert(msg, isError = true) {
+            const el = document.getElementById('jsAlert');
+            el.className = 'alert-box ' + (isError ? 'alert-error' : 'alert-success');
+            el.innerHTML = '<i class="bi ' + (isError ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill') + '"></i> ' + msg;
+            el.style.display = 'flex';
+            window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+        }
+
+        function hideAlert() {
+            document.getElementById('jsAlert').style.display = 'none';
+        }
+
+        function togglePassVisibility(id, btn) {
+            const input = document.getElementById(id);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+
+        function evaluatePasswordStrength(p) {
+            let score = 0;
+            if (p.length >= 6) score++;
+            if (p.length >= 10) score++;
+            if (/[0-9]/.test(p)) score++;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(p)) score++;
+
+            const colors = ['#E2E8F0', '#EF4444', '#F97316', '#84CC16', '#22C55E'];
+            const labels = ['Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+
+            for (let i = 1; i <= 4; i++) {
+                const bar = document.getElementById('str' + i);
+                bar.style.backgroundColor = (i <= score) ? colors[score] : '#E2E8F0';
+            }
+            document.getElementById('strLabel').textContent = labels[score];
+        }
+
+        function getCsrfToken() {
+            const meta = document.querySelector('meta[name="_csrf"]');
+            return meta ? meta.getAttribute('content') : '';
+        }
+
+        function getCsrfHeader() {
+            const meta = document.querySelector('meta[name="_csrf_header"]');
+            return meta ? meta.getAttribute('content') : 'X-CSRF-TOKEN';
+        }
+
+        async function handleSendOtp() {
+            hideAlert();
+            const email = document.getElementById('email').value.trim();
+            if (!email || !email.includes('@') || !email.includes('.')) {
+                showAlert('Please enter a valid email address first.');
+                return;
+            }
+
+            const btn = document.getElementById('btnSendOtp');
+            btn.disabled = true;
+            document.getElementById('sendOtpText').textContent = 'Sending...';
+
+            const headers = { 'Content-Type': 'application/json' };
+            const csrfToken = getCsrfToken();
+            if (csrfToken) {
+                headers[getCsrfHeader()] = csrfToken;
+            }
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/marketplace/provider/otp/send-email', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ email: email })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    isOtpSent = true;
+                    document.getElementById('otpGroup').style.display = 'block';
+                    showAlert('OTP sent to ' + email, false);
+                    startResendTimer(60);
+                } else {
+                    btn.disabled = false;
+                    document.getElementById('sendOtpText').textContent = 'Send email OTP';
+                    showAlert(data.error || 'Failed to send OTP. Please check the email.');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                document.getElementById('sendOtpText').textContent = 'Send email OTP';
+                showAlert('Network error while sending OTP.');
+            }
+        }
+
+        function startResendTimer(sec) {
+            resendSeconds = sec;
+            const btn = document.getElementById('btnSendOtp');
+            const txt = document.getElementById('sendOtpText');
+            btn.disabled = true;
+
+            clearInterval(resendTimer);
+            resendTimer = setInterval(() => {
+                resendSeconds--;
+                if (resendSeconds <= 0) {
+                    clearInterval(resendTimer);
+                    btn.disabled = false;
+                    txt.textContent = 'Resend OTP';
+                } else {
+                    txt.textContent = 'Resend in ' + resendSeconds + 's';
+                }
+            }, 1000);
+        }
+
+        async function handleVerifyOtp() {
+            hideAlert();
+            const email = document.getElementById('email').value.trim();
+            const otp = document.getElementById('emailOtp').value.trim();
+
+            if (otp.length < 4) {
+                showAlert('Please enter the OTP sent to your email.');
+                return;
+            }
+
+            const btn = document.getElementById('btnVerifyOtp');
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            const headers = { 'Content-Type': 'application/json' };
+            const csrfToken = getCsrfToken();
+            if (csrfToken) {
+                headers[getCsrfHeader()] = csrfToken;
+            }
+
+            try {
+                const res = await fetch('${pageContext.request.contextPath}/marketplace/provider/otp/verify-email', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ email: email, otp: otp })
+                });
+                const data = await res.json();
+                btn.disabled = false;
+                btn.textContent = 'Verify';
+
+                if (data.success) {
+                    isOtpVerified = true;
+                    document.getElementById('verifiedBadge').style.display = 'inline-flex';
+                    document.getElementById('otpGroup').style.display = 'none';
+                    document.getElementById('btnSendOtp').style.display = 'none';
+                    document.getElementById('email').readOnly = true;
+                    showAlert('Email verified successfully!', false);
+                } else {
+                    showAlert(data.error || 'Invalid or expired OTP. Please try again.');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Verify';
+                showAlert('Network error while verifying OTP.');
+            }
+        }
+
+        function openConfirmationModal() {
+            hideAlert();
+            const name = document.getElementById('fullName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const catSelect = document.getElementById('category');
+            const catVal = catSelect.value;
+            const catText = catSelect.options[catSelect.selectedIndex] ? catSelect.options[catSelect.selectedIndex].text : '';
+            const pass = document.getElementById('password').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('termsCheck').checked;
+
+            if (!name) {
+                showAlert('Please enter your full name.');
+                return;
+            }
+            if (!email) {
+                showAlert('Please enter your email address.');
+                return;
+            }
+            if (!isOtpVerified) {
+                showAlert('Please verify your email address with OTP before submitting.');
+                return;
+            }
+            if (!catVal) {
+                showAlert('Please select your service category.');
+                return;
+            }
+            if (!pass || pass.length < 6) {
+                showAlert('Password must be at least 6 characters.');
+                return;
+            }
+            if (pass !== confirmPass) {
+                showAlert('Passwords do not match.');
+                return;
+            }
+            if (!terms) {
+                showAlert('You must accept the Terms & Conditions and Privacy Policy.');
+                return;
+            }
+
+            document.getElementById('revName').textContent = name;
+            document.getElementById('revEmail').textContent = email;
+            document.getElementById('revCategory').textContent = catText;
+
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+
+        function closeConfirmationModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        function submitRegistration() {
+            closeConfirmationModal();
+            document.getElementById('regForm').submit();
+        }
+
+        function openTermsModal(title, isPrivacy) {
+            document.getElementById('termsModalTitle').textContent = title;
+            document.getElementById('termsModal').style.display = 'flex';
+        }
+
+        function closeTermsModal() {
+            document.getElementById('termsModal').style.display = 'none';
+        }
+    </script>
 </body>
 </html>

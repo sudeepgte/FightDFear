@@ -26,7 +26,7 @@ public class ContactMessage {
     private LocalDateTime submittedAt;
 
     @Column(name = "read_by_admin")
-    private boolean readByAdmin;
+    private Boolean readByAdmin = false;
 
     @Column(name = "admin_reply", columnDefinition = "TEXT")
     private String adminReply;
@@ -35,12 +35,22 @@ public class ContactMessage {
     private LocalDateTime repliedAt;
 
     @Column(name = "reply_read_by_user")
-    private boolean replyReadByUser;
+    private Boolean replyReadByUser = false;
 
     public ContactMessage() {
         this.submittedAt = LocalDateTime.now();
         this.readByAdmin = false;
         this.replyReadByUser = false;
+    }
+
+    @PostLoad
+    private void onLoad() {
+        if (this.readByAdmin == null) {
+            this.readByAdmin = false;
+        }
+        if (this.replyReadByUser == null) {
+            this.replyReadByUser = false;
+        }
     }
 
     public Long getId() {
@@ -92,11 +102,15 @@ public class ContactMessage {
     }
 
     public boolean isReadByAdmin() {
-        return readByAdmin;
+        return Boolean.TRUE.equals(readByAdmin);
     }
 
-    public void setReadByAdmin(boolean readByAdmin) {
-        this.readByAdmin = readByAdmin;
+    public Boolean getReadByAdmin() {
+        return isReadByAdmin();
+    }
+
+    public void setReadByAdmin(Boolean readByAdmin) {
+        this.readByAdmin = (readByAdmin != null) ? readByAdmin : false;
     }
 
     public String getAdminReply() {
@@ -116,10 +130,14 @@ public class ContactMessage {
     }
 
     public boolean isReplyReadByUser() {
-        return replyReadByUser;
+        return Boolean.TRUE.equals(replyReadByUser);
     }
 
-    public void setReplyReadByUser(boolean replyReadByUser) {
-        this.replyReadByUser = replyReadByUser;
+    public Boolean getReplyReadByUser() {
+        return isReplyReadByUser();
+    }
+
+    public void setReplyReadByUser(Boolean replyReadByUser) {
+        this.replyReadByUser = (replyReadByUser != null) ? replyReadByUser : false;
     }
 }

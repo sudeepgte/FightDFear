@@ -284,6 +284,13 @@
     </c:when>
 </c:choose>
 
+<c:set var="isApproved" value="${provider.verificationStatus == 'VERIFIED' || provider.partnerProfileStatus == 'APPROVED'}"/>
+<c:set var="isChangesRequested" value="${provider.verificationStatus == 'CHANGES_REQUESTED' || provider.partnerProfileStatus == 'CHANGES_REQUESTED'}"/>
+<c:set var="isReVerification" value="${provider.verificationStatus == 'RE_VERIFICATION' || provider.partnerProfileStatus == 'READY_FOR_VERIFICATION'}"/>
+<c:set var="isRejected" value="${provider.verificationStatus == 'REJECTED' || provider.partnerProfileStatus == 'REJECTED'}"/>
+<c:set var="isIncomplete" value="${empty provider.partnerProfileStatus || provider.partnerProfileStatus == 'PROFILE_INCOMPLETE' || provider.partnerProfileStatus == 'REGISTERED'}"/>
+<c:set var="isPending" value="${provider.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}"/>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -882,23 +889,53 @@
                 </a>
             </li>
             <li>
-                <a href="javascript:void(0)" onclick="showTab('schedule')" id="nav-schedule">
-                    <i class="bi bi-calendar-event-fill"></i> Schedule
-                </a>
+                <c:choose>
+                    <c:when test="${isApproved}">
+                        <a href="javascript:void(0)" onclick="showTab('schedule')" id="nav-schedule">
+                            <i class="bi bi-calendar-event-fill"></i> Schedule
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="javascript:void(0)" onclick="showLockedFeatureNotice('Schedule &amp; Class Management')" id="nav-schedule" style="opacity: 0.55; cursor: not-allowed; display: flex; align-items: center; justify-content: space-between;">
+                            <span><i class="bi bi-calendar-event-fill me-2"></i> Schedule</span>
+                            <i class="bi bi-lock-fill small text-muted"></i>
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </li>
             <li>
-                <a href="javascript:void(0)" onclick="showTab('clients')" id="nav-clients">
-                    <i class="bi bi-people-fill"></i> My Clients
-                </a>
+                <c:choose>
+                    <c:when test="${isApproved}">
+                        <a href="javascript:void(0)" onclick="showTab('clients')" id="nav-clients">
+                            <i class="bi bi-people-fill"></i> My Clients
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="javascript:void(0)" onclick="showLockedFeatureNotice('Client Management')" id="nav-clients" style="opacity: 0.55; cursor: not-allowed; display: flex; align-items: center; justify-content: space-between;">
+                            <span><i class="bi bi-people-fill me-2"></i> My Clients</span>
+                            <i class="bi bi-lock-fill small text-muted"></i>
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </li>
             <li>
-                <a href="javascript:void(0)" onclick="showTab('earnings')" id="nav-earnings">
-                    <i class="bi bi-wallet2"></i> Earnings
-                </a>
+                <c:choose>
+                    <c:when test="${isApproved}">
+                        <a href="javascript:void(0)" onclick="showTab('earnings')" id="nav-earnings">
+                            <i class="bi bi-wallet2"></i> Earnings
+                        </a>
+                    </c:when>
+                    <c:otherwise>
+                        <a href="javascript:void(0)" onclick="showLockedFeatureNotice('Earnings Ledger')" id="nav-earnings" style="opacity: 0.55; cursor: not-allowed; display: flex; align-items: center; justify-content: space-between;">
+                            <span><i class="bi bi-wallet2 me-2"></i> Earnings</span>
+                            <i class="bi bi-lock-fill small text-muted"></i>
+                        </a>
+                    </c:otherwise>
+                </c:choose>
             </li>
             <li>
-                <a href="javascript:void(0)" onclick="showTab('profile')" id="nav-profile">
-                    <i class="bi bi-person-circle"></i> Profile
+                <a href="${pageContext.request.contextPath}/marketplace/provider/profile-completion" id="nav-profile">
+                    <i class="bi bi-person-circle"></i> Complete / Edit Profile
                 </a>
             </li>
             <li class="mt-auto pt-3 border-top">
@@ -926,11 +963,11 @@
             </div>
 
             <div class="header-actions">
-                <button class="btn-icon" title="Notifications" onclick="openNotificationModal()">
+                <button class="btn-icon" title="Notifications" <c:choose><c:when test="${isApproved}">onclick="openNotificationModal()"</c:when><c:otherwise>onclick="showLockedFeatureNotice('Notifications')" style="opacity: 0.6; cursor: not-allowed;"</c:otherwise></c:choose>>
                     <i class="bi bi-bell"></i>
                     <span class="notification-dot"></span>
                 </button>
-                <div class="d-none d-sm-flex align-items-center gap-2 ps-3 border-start" onclick="showTab('profile')" style="cursor: pointer;">
+                <div class="d-none d-sm-flex align-items-center gap-2 ps-3 border-start" onclick="window.location.href='${pageContext.request.contextPath}/marketplace/provider/profile-completion'" style="cursor: pointer;" title="Profile Settings">
                     <c:choose>
                         <c:when test="${not empty provider.profilePhoto}">
                             <img src="${pageContext.request.contextPath}${provider.profilePhoto}" alt="${provider.fullName}" class="rounded-circle border shadow-sm" style="width: 38px; height: 38px; object-fit: cover;">
@@ -1006,31 +1043,230 @@
                 </c:otherwise>
             </c:choose>
 
+            <!-- Verification Status Banner (Section 7) -->
+            <c:set var="isApproved" value="${provider.verificationStatus == 'VERIFIED' || provider.partnerProfileStatus == 'APPROVED'}"/>
+            <c:set var="isChangesRequested" value="${provider.verificationStatus == 'CHANGES_REQUESTED' || provider.partnerProfileStatus == 'CHANGES_REQUESTED'}"/>
+            <c:set var="isReVerification" value="${provider.verificationStatus == 'RE_VERIFICATION' || provider.partnerProfileStatus == 'READY_FOR_VERIFICATION'}"/>
+            <c:set var="isRejected" value="${provider.verificationStatus == 'REJECTED' || provider.partnerProfileStatus == 'REJECTED'}"/>
+            <c:set var="isIncomplete" value="${provider.partnerProfileStatus == 'PROFILE_INCOMPLETE' || provider.partnerProfileStatus == 'REGISTERED' || (empty provider.partnerProfileStatus && empty provider.verificationStatus)}"/>
+            <c:set var="isPending" value="${provider.partnerProfileStatus == 'PENDING_ADMIN_APPROVAL'}"/>
+
+            <c:choose>
+                <c:when test="${isApproved}">
+                    <div class="card-custom mb-4 p-3 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 5px solid #16a34a !important;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #22c55e; color: #fff; font-size: 1.4rem;">
+                                    <i class="bi bi-patch-check-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="fw-bold mb-0 text-success" style="font-size: 1.05rem;">Account Verified &amp; Approved</h6>
+                                        <span class="badge bg-success rounded-pill px-2 py-1 small">Verified Partner</span>
+                                    </div>
+                                    <div class="text-secondary small mt-1">
+                                        Your provider profile is active and verified. You have full access to marketplace features, class publishing, and client bookings.
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-white text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Public Listing Active
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </c:when>
+
+                <c:when test="${isChangesRequested}">
+                    <div class="card-custom mb-4 p-3 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-left: 5px solid #d97706 !important;">
+                        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #f59e0b; color: #fff; font-size: 1.4rem;">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="fw-bold mb-0 text-warning-emphasis" style="font-size: 1.05rem;">Action Required: Administrator Requested Corrections</h6>
+                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small">Changes Requested</span>
+                                    </div>
+                                    <c:if test="${not empty provider.changesRequestedNote}">
+                                        <div class="alert alert-warning border-0 my-2 p-2 px-3 small rounded-3" style="background: rgba(254, 243, 199, 0.9); border: 1px solid #fde68a !important;">
+                                            <strong>Admin Feedback:</strong> <c:out value="${provider.changesRequestedNote}"/>
+                                        </div>
+                                    </c:if>
+                                    <div class="text-secondary small">
+                                        Please review the administrator's feedback, update the required profile details, and resubmit for re-verification. Protected features remain paused until your changes are reviewed and approved.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 align-self-center">
+                                <a href="${pageContext.request.contextPath}/marketplace/provider/profile-completion" class="btn btn-warning fw-bold text-dark rounded-pill px-4 shadow-sm">
+                                    <i class="bi bi-pencil-square me-1"></i> Update &amp; Resubmit Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </c:when>
+
+                <c:when test="${isReVerification}">
+                    <div class="card-custom mb-4 p-3 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-left: 5px solid #6366f1 !important;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #6366f1; color: #fff; font-size: 1.4rem;">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="fw-bold mb-0 text-primary" style="font-size: 1.05rem;">Updated Application Under Re-verification</h6>
+                                        <span class="badge text-white rounded-pill px-2 py-1 small" style="background: #6366f1;">Re-verification Queue</span>
+                                    </div>
+                                    <div class="text-secondary small mt-1">
+                                        Your updated profile information has been resubmitted and is currently undergoing admin review. Protected marketplace features will unlock as soon as verification is complete.
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge bg-white text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-bold">
+                                    <i class="bi bi-clock-history me-1"></i> Review in Progress
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </c:when>
+
+                <c:when test="${isRejected}">
+                    <div class="card-custom mb-4 p-3 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-left: 5px solid #ef4444 !important;">
+                        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 48px; height: 48px; background: #ef4444; color: #fff; font-size: 1.4rem;">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="fw-bold mb-0 text-danger" style="font-size: 1.05rem;">Application Not Approved</h6>
+                                        <span class="badge bg-danger rounded-pill px-2 py-1 small">Rejected</span>
+                                    </div>
+                                    <c:if test="${not empty provider.rejectionReason}">
+                                        <div class="alert alert-danger border-0 my-2 p-2 px-3 small rounded-3" style="background: rgba(254, 226, 226, 0.9); border: 1px solid #fca5a5 !important;">
+                                            <strong>Rejection Reason:</strong> <c:out value="${provider.rejectionReason}"/>
+                                        </div>
+                                    </c:if>
+                                    <div class="text-secondary small">
+                                        Your partner application did not meet our verification criteria. If you believe this decision was made in error or would like to submit additional credentials, please contact our support team.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="align-self-center">
+                                <a href="mailto:support@fightdfear.com" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                    <i class="bi bi-headset me-1"></i> Contact Support
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </c:when>
+
+                <c:when test="${isIncomplete}">
+                    <div class="card-custom mb-4 p-4 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-left: 6px solid #ea580c !important;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: #ea580c; color: #fff; font-size: 1.5rem; flex-shrink: 0;">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="fw-bold mb-0 text-dark" style="font-size: 1.05rem;">Profile Completion Skipped — All Features Locked</h6>
+                                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1 small fw-bold">Action Required</span>
+                                    </div>
+                                    <div class="text-secondary small mt-1" style="max-width: 680px;">
+                                        You skipped profile completion. In accordance with platform guidelines, other features on this dashboard (Schedule, Class Publishing, Client Management, and Earnings) are <strong>strictly locked and non-clickable</strong>. Please submit your details to request admin verification.
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="${pageContext.request.contextPath}/marketplace/provider/profile-completion" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                                    <i class="bi bi-pencil-square me-1"></i> Submit Details for Verification
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </c:when>
+
+                <c:otherwise>
+                    <!-- Pending verification (default when completed and awaiting admin) -->
+                    <div class="card-custom mb-4 p-4 border-0 shadow-sm rounded-4" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 6px solid #3b82f6 !important;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: #3b82f6; color: #fff; font-size: 1.5rem; flex-shrink: 0;">
+                                    <i class="bi bi-hourglass-split"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="fw-bold mb-0 text-primary" style="font-size: 1.05rem;">Application Under Review — Features Locked</h6>
+                                        <span class="badge bg-primary text-white rounded-pill px-2 py-1 small fw-bold">Pending Admin Verification</span>
+                                    </div>
+                                    <div class="text-secondary small mt-1" style="max-width: 680px;">
+                                        Your details have been submitted and are awaiting administrator review. Dashboard features remain <strong>locked and non-clickable</strong> until your profile is approved.
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <a href="${pageContext.request.contextPath}/marketplace/provider/profile-completion" class="btn btn-outline-primary bg-white rounded-pill px-4 fw-bold shadow-sm">
+                                    <i class="bi bi-eye me-1"></i> View / Edit Submitted Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
+
             <!-- Quick Actions Bar -->
             <div class="quick-actions-bar">
                 <div class="quick-actions-label">
                     <i class="bi bi-lightning-charge-fill text-warning"></i> Quick Actions
                 </div>
                 <div class="quick-actions-group">
-                    <button class="btn-action btn-action-primary" onclick="showTab('schedule'); focusCreateClass();">
-                        <i class="bi bi-plus-lg"></i> Create New Class
-                    </button>
-                    <button class="btn-action" onclick="showTab('schedule')">
-                        <i class="bi bi-calendar3"></i> View Schedule
-                    </button>
-                    <button class="btn-action" onclick="showTab('clients')">
-                        <i class="bi bi-people"></i> Manage Clients
-                    </button>
-                    <button class="btn-action" onclick="showTab('earnings')">
-                        <i class="bi bi-currency-rupee"></i> View Earnings
-                    </button>
-                    <button class="btn-action" onclick="openEditProfileModal()">
-                        <i class="bi bi-person"></i> Edit Profile
+                    <c:choose>
+                        <c:when test="${isApproved}">
+                            <button class="btn-action btn-action-primary" onclick="showTab('schedule'); focusCreateClass();">
+                                <i class="bi bi-plus-lg"></i> Create New Class
+                            </button>
+                            <button class="btn-action" onclick="showTab('schedule')">
+                                <i class="bi bi-calendar3"></i> View Schedule
+                            </button>
+                            <button class="btn-action" onclick="showTab('clients')">
+                                <i class="bi bi-people"></i> Manage Clients
+                            </button>
+                            <button class="btn-action" onclick="showTab('earnings')">
+                                <i class="bi bi-currency-rupee"></i> View Earnings
+                            </button>
+                            <button class="btn-action" onclick="openEditProfileModal()">
+                                <i class="bi bi-person"></i> Edit Profile
+                            </button>
+                        </c:when>
+                        <c:otherwise>
+                            <button class="btn-action btn-action-primary" style="opacity: 0.55; cursor: not-allowed;" onclick="showLockedFeatureNotice('Create New Class')" title="Admin verification required before creating classes">
+                                <i class="bi bi-lock-fill"></i> Create New Class (Locked)
+                            </button>
+                            <button class="btn-action" style="opacity: 0.55; cursor: not-allowed;" onclick="showLockedFeatureNotice('Schedule &amp; Class Management')" title="Admin verification required">
+                                <i class="bi bi-lock-fill"></i> View Schedule (Locked)
+                            </button>
+                            <button class="btn-action" style="opacity: 0.55; cursor: not-allowed;" onclick="showLockedFeatureNotice('Client Management')" title="Admin verification required">
+                                <i class="bi bi-lock-fill"></i> Manage Clients (Locked)
+                            </button>
+                            <button class="btn-action" style="opacity: 0.55; cursor: not-allowed;" onclick="showLockedFeatureNotice('Earnings Ledger')" title="Admin verification required">
+                                <i class="bi bi-lock-fill"></i> View Earnings (Locked)
+                            </button>
+                            <a href="${pageContext.request.contextPath}/marketplace/provider/profile-completion" class="btn-action btn-action-primary" style="background: var(--brand-primary, #dc3545); color: #fff; text-decoration: none;">
+                                <i class="bi bi-pencil-square"></i> Submit Profile Details
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
 
                 <div class="d-flex gap-3 align-items-center">
                     <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
                         <i class="bi bi-bell"></i>
-
                     </button>
                     <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
                         <i class="bi bi-box-arrow-right me-1"></i> Logout
@@ -1049,9 +1285,9 @@
                         <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill fw-bold">${profilePercent}%</span>
                         <c:choose>
                             <c:when test="${profilePercent < 100}">
-                                <button class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3" onclick="openEditProfileModal()">
-                                    <i class="bi bi-pencil-square me-1"></i> Complete Profile
-                                </button>
+                                <a href="${pageContext.request.contextPath}/marketplace/provider/profile-completion" class="btn btn-sm btn-outline-primary fw-bold rounded-pill px-3">
+                                    <i class="bi bi-pencil-square me-1"></i> Submit Details
+                                </a>
                             </c:when>
                             <c:otherwise>
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold" style="font-size: 0.85rem;">
@@ -1072,7 +1308,8 @@
             <!-- Summary Cards -->
             <div class="summary-grid">
                 <!-- Card 1: Total Earnings -->
-                <div class="summary-card" onclick="showTab('earnings')">
+                <div class="summary-card ${!isApproved ? 'locked-card' : ''}" <c:choose><c:when test="${isApproved}">onclick="showTab('earnings')"</c:when><c:otherwise>onclick="showLockedFeatureNotice('Earnings Ledger')" style="cursor: not-allowed; opacity: 0.72; position: relative;"</c:otherwise></c:choose>>
+                    <c:if test="${!isApproved}"><span class="badge bg-light text-secondary border position-absolute top-0 end-0 m-2" style="font-size:0.7rem;"><i class="bi bi-lock-fill"></i> Locked</span></c:if>
                     <div class="summary-header">
                         <span class="summary-title">Total Earnings</span>
                         <div class="summary-icon icon-earnings">
@@ -1084,7 +1321,8 @@
                 </div>
 
                 <!-- Card 2: Total Clients -->
-                <div class="summary-card" onclick="showTab('clients')">
+                <div class="summary-card ${!isApproved ? 'locked-card' : ''}" <c:choose><c:when test="${isApproved}">onclick="showTab('clients')"</c:when><c:otherwise>onclick="showLockedFeatureNotice('Client Management')" style="cursor: not-allowed; opacity: 0.72; position: relative;"</c:otherwise></c:choose>>
+                    <c:if test="${!isApproved}"><span class="badge bg-light text-secondary border position-absolute top-0 end-0 m-2" style="font-size:0.7rem;"><i class="bi bi-lock-fill"></i> Locked</span></c:if>
                     <div class="summary-header">
                         <span class="summary-title">Total Clients</span>
                         <div class="summary-icon icon-clients">
@@ -1092,11 +1330,12 @@
                         </div>
                     </div>
                     <div class="summary-value">${enrollments.size()}</div>
-                    <div class="summary-subtext">Enrolled Students & Customers</div>
+                    <div class="summary-subtext">Enrolled Students &amp; Customers</div>
                 </div>
 
                 <!-- Card 3: Upcoming Classes -->
-                <div class="summary-card" onclick="showTab('schedule')">
+                <div class="summary-card ${!isApproved ? 'locked-card' : ''}" <c:choose><c:when test="${isApproved}">onclick="showTab('schedule')"</c:when><c:otherwise>onclick="showLockedFeatureNotice('Schedule &amp; Classes')" style="cursor: not-allowed; opacity: 0.72; position: relative;"</c:otherwise></c:choose>>
+                    <c:if test="${!isApproved}"><span class="badge bg-light text-secondary border position-absolute top-0 end-0 m-2" style="font-size:0.7rem;"><i class="bi bi-lock-fill"></i> Locked</span></c:if>
                     <div class="summary-header">
                         <span class="summary-title">Upcoming Classes</span>
                         <div class="summary-icon icon-classes">
@@ -1108,7 +1347,7 @@
                 </div>
 
                 <!-- Card 4: Average Rating -->
-                <div class="summary-card" onclick="showTab('profile')">
+                <div class="summary-card ${!isApproved ? 'locked-card' : ''}" <c:choose><c:when test="${isApproved}">onclick="showTab('profile')"</c:when><c:otherwise>onclick="window.location.href='${pageContext.request.contextPath}/marketplace/provider/profile-completion'" style="position: relative;"</c:otherwise></c:choose>>
                     <div class="summary-header">
                         <span class="summary-title">Average Rating</span>
                         <div class="summary-icon icon-rating">
@@ -1117,14 +1356,6 @@
                     </div>
                     <div class="summary-value">${provider.rating}</div>
                     <div class="summary-subtext">Out of 5.0 Star Reviews</div>
-                </div>
-                <div class="d-flex gap-3 align-items-center">
-                    <button class="btn btn-outline-light border-0" style="background: var(--p-glass); border-radius: 12px; padding: 10px 15px;">
-                        <i class="bi bi-bell"></i>
-                    </button>
-                    <a href="${pageContext.request.contextPath}/logout" class="btn btn-premium" style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 10px 20px; font-size: 0.9rem;">
-                        <i class="bi bi-box-arrow-right me-1"></i> Logout
-                    </a>
                 </div>
             </div>
 
@@ -1136,7 +1367,14 @@
                         <div class="card-custom">
                             <div class="card-title-custom">
                                 <span><i class="bi bi-calendar-event me-2 text-danger"></i> Upcoming Classes</span>
-                                <a href="javascript:void(0)" onclick="showTab('schedule')" class="text-decoration-none small text-danger fw-bold">View All <i class="bi bi-arrow-right"></i></a>
+                                <c:choose>
+                                    <c:when test="${isApproved}">
+                                        <a href="javascript:void(0)" onclick="showTab('schedule')" class="text-decoration-none small text-danger fw-bold">View All <i class="bi bi-arrow-right"></i></a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="small text-muted" style="cursor: not-allowed;"><i class="bi bi-lock-fill"></i> Locked</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
 
                             <c:if test="${empty classes}">
@@ -1144,9 +1382,18 @@
                                     <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
                                     <div class="empty-state-title">No upcoming classes scheduled.</div>
                                     <div class="empty-state-desc">${emptyStateDesc}</div>
-                                    <button class="btn btn-sm btn-action btn-action-primary" onclick="showTab('schedule'); focusCreateClass();">
-                                        <i class="bi bi-plus-lg"></i> Create New Class
-                                    </button>
+                                    <c:choose>
+                                        <c:when test="${isApproved}">
+                                            <button class="btn btn-sm btn-action btn-action-primary" onclick="showTab('schedule'); focusCreateClass();">
+                                                <i class="bi bi-plus-lg"></i> Create New Class
+                                            </button>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <button class="btn btn-sm btn-action btn-action-primary" style="opacity: 0.55; cursor: not-allowed;" onclick="showLockedFeatureNotice('Create New Class')">
+                                                <i class="bi bi-lock-fill"></i> Create Class (Locked)
+                                            </button>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </div>
                             </c:if>
 
@@ -1164,7 +1411,14 @@
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                                                     <span class="fw-bold text-danger">₹${c.price}</span>
-                                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="openClassDetailsModal('${c.className}', '${c.dateTime}', '${c.mode}', '₹${c.price}', '${c.meetingLink}', '${c.description}')">Details</button>
+                                                    <c:choose>
+                                                        <c:when test="${isApproved}">
+                                                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem;" onclick="openClassDetailsModal('${c.className}', '${c.dateTime}', '${c.mode}', '₹${c.price}', '${c.meetingLink}', '${c.description}')">Details</button>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.75rem; opacity: 0.6; cursor: not-allowed;" onclick="showLockedFeatureNotice('Class Details')"><i class="bi bi-lock-fill"></i> Details</button>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </div>
                                             </div>
                                         </c:if>
@@ -1179,7 +1433,14 @@
                         <div class="card-custom">
                             <div class="card-title-custom">
                                 <span><i class="bi bi-person-badge me-2 text-primary"></i> Recent Bookings</span>
-                                <a href="javascript:void(0)" onclick="showTab('clients')" class="text-decoration-none small text-primary fw-bold">Manage Clients <i class="bi bi-arrow-right"></i></a>
+                                <c:choose>
+                                    <c:when test="${isApproved}">
+                                        <a href="javascript:void(0)" onclick="showTab('clients')" class="text-decoration-none small text-primary fw-bold">Manage Clients <i class="bi bi-arrow-right"></i></a>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <span class="small text-muted" style="cursor: not-allowed;"><i class="bi bi-lock-fill"></i> Locked</span>
+                                    </c:otherwise>
+                                </c:choose>
                             </div>
 
                             <c:if test="${empty bookings}">
@@ -1223,20 +1484,31 @@
                                 <span><i class="bi bi-plus-circle-fill me-2 text-danger"></i> ${formTitle}</span>
                             </div>
 
+                            <c:if test="${!isApproved}">
+                                <div class="alert alert-warning border-0 shadow-sm rounded-3 mb-3 p-3" style="background: #fffbeb; border-left: 4px solid #f59e0b !important;">
+                                    <div class="d-flex align-items-center gap-2 mb-1 fw-bold text-dark">
+                                        <i class="bi bi-shield-lock-fill text-warning fs-5"></i> Verification Required to Publish Classes
+                                    </div>
+                                    <p class="small text-muted mb-0">
+                                        Your provider account is currently in <strong>${provider.verificationStatus}</strong> status. Only admin-verified providers can publish new classes, workshops, or services to the public marketplace.
+                                    </p>
+                                </div>
+                            </c:if>
+
                             <form action="${pageContext.request.contextPath}/marketplace/provider/classes/add" method="post">
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                                 <div class="row g-3">
                                     <div class="col-12">
                                         <label class="form-label-custom">Class Title</label>
-                                        <input type="text" name="className" class="form-control form-control-custom" placeholder="${classPlaceholder}" required>
+                                        <input type="text" name="className" class="form-control form-control-custom" placeholder="${classPlaceholder}" required ${!isApproved ? 'disabled' : ''}>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label-custom">Duration</label>
-                                        <input type="text" name="duration" class="form-control form-control-custom" placeholder="e.g. 2 Hours" required>
+                                        <input type="text" name="duration" class="form-control form-control-custom" placeholder="e.g. 2 Hours" required ${!isApproved ? 'disabled' : ''}>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label-custom">Session Mode <span class="text-danger">*</span></label>
-                                        <select name="mode" id="sessionModeSelect" class="form-select form-select-custom" required>
+                                        <select name="mode" id="sessionModeSelect" class="form-select form-select-custom" required ${!isApproved ? 'disabled' : ''}>
                                             <option value="" disabled selected>Choose session mode</option>
                                         </select>
                                     </div>
@@ -1247,17 +1519,17 @@
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label-custom">Service Provided <span class="text-danger">*</span></label>
-                                        <select name="serviceProvided" id="serviceProvidedSelect" class="form-select form-select-custom" required>
+                                        <select name="serviceProvided" id="serviceProvidedSelect" class="form-select form-select-custom" required ${!isApproved ? 'disabled' : ''}>
                                             <option value="" disabled selected>Choose a service</option>
                                         </select>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label-custom">Description</label>
-                                        <textarea name="description" class="form-control form-control-custom" placeholder="${descPlaceholder}" rows="3" required></textarea>
+                                        <textarea name="description" class="form-control form-control-custom" placeholder="${descPlaceholder}" rows="3" required ${!isApproved ? 'disabled' : ''}></textarea>
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label-custom">Date &amp; Time</label>
-                                        <input type="datetime-local" name="dateTime" class="form-control form-control-custom" required>
+                                        <input type="datetime-local" name="dateTime" class="form-control form-control-custom" required ${!isApproved ? 'disabled' : ''}>
                                     </div>
                                     <div class="col-12" id="meetingLinkGroup" style="display: none;">
                                         <label class="form-label-custom">Meeting / Online Link <span class="text-danger">*</span></label>
@@ -1269,11 +1541,11 @@
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label-custom">Price (₹)</label>
-                                        <input type="number" name="price" class="form-control form-control-custom" placeholder="e.g. 499.00" step="0.01" required>
+                                        <input type="number" name="price" class="form-control form-control-custom" placeholder="e.g. 499.00" step="0.01" required ${!isApproved ? 'disabled' : ''}>
                                     </div>
                                     <div class="col-12 mt-4">
-                                        <button type="submit" class="btn btn-danger w-100 py-2 fw-bold" style="border-radius: var(--radius-md);">
-                                            <i class="bi bi-check-circle-fill me-2"></i> Launch Class Now
+                                        <button type="submit" class="btn btn-danger w-100 py-2 fw-bold" ${!isApproved ? 'disabled style="cursor: not-allowed; opacity: 0.65;"' : ''} style="border-radius: var(--radius-md);">
+                                            <i class="bi bi-${isApproved ? 'check-circle-fill' : 'lock-fill'} me-2"></i> ${isApproved ? 'Launch Class Now' : 'Verification Required to Launch'}
                                         </button>
                                     </div>
                                 </div>
@@ -1371,28 +1643,37 @@
                                                         <span class="status-pill status-${b.status}">${b.status}</span>
                                                     </td>
                                                     <td id="booking-actions-${b.id}">
-                                                        <div class="d-flex flex-column gap-2">
-                                                            <div class="d-flex align-items-center gap-2">
-                                                                <select class="form-select form-select-sm form-select-custom" id="status-select-${b.id}" style="width: 130px;">
-                                                                    <option value="PENDING" ${b.status.name() == 'PENDING' ? 'selected' : ''}>PENDING</option>
-                                                                    <option value="CONFIRMED" ${b.status.name() == 'CONFIRMED' ? 'selected' : ''}>CONFIRM</option>
-                                                                    <option value="COMPLETED" ${b.status.name() == 'COMPLETED' ? 'selected' : ''}>COMPLETE</option>
-                                                                    <option value="CANCELLED" ${b.status.name() == 'CANCELLED' ? 'selected' : ''}>CANCEL</option>
-                                                                </select>
-                                                                <button class="btn btn-sm btn-primary" onclick="updateStatus(${b.id})" title="Save Status">
-                                                                    <i class="bi bi-check-lg"></i>
-                                                                </button>
-                                                            </div>
+                                                        <c:choose>
+                                                            <c:when test="${isApproved}">
+                                                                <div class="d-flex flex-column gap-2">
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <select class="form-select form-select-sm form-select-custom" id="status-select-${b.id}" style="width: 130px;">
+                                                                            <option value="PENDING" ${b.status.name() == 'PENDING' ? 'selected' : ''}>PENDING</option>
+                                                                            <option value="CONFIRMED" ${b.status.name() == 'CONFIRMED' ? 'selected' : ''}>CONFIRM</option>
+                                                                            <option value="COMPLETED" ${b.status.name() == 'COMPLETED' ? 'selected' : ''}>COMPLETE</option>
+                                                                            <option value="CANCELLED" ${b.status.name() == 'CANCELLED' ? 'selected' : ''}>CANCEL</option>
+                                                                        </select>
+                                                                        <button class="btn btn-sm btn-primary" onclick="updateStatus(${b.id})" title="Save Status">
+                                                                            <i class="bi bi-check-lg"></i>
+                                                                        </button>
+                                                                    </div>
 
-                                                            <div id="comm-buttons-${b.id}" class="${b.status.name() == 'CONFIRMED' ? 'd-flex' : 'd-none'} gap-2">
-                                                                <button class="btn btn-sm btn-outline-primary w-100" onclick="openChat(${b.id}, '${b.user.fullName}')">
-                                                                    <i class="bi bi-chat-dots me-1"></i> Chat
+                                                                    <div id="comm-buttons-${b.id}" class="${b.status.name() == 'CONFIRMED' ? 'd-flex' : 'd-none'} gap-2">
+                                                                        <button class="btn btn-sm btn-outline-primary w-100" onclick="openChat(${b.id}, '${b.user.fullName}')">
+                                                                            <i class="bi bi-chat-dots me-1"></i> Chat
+                                                                        </button>
+                                                                        <button class="btn btn-sm btn-outline-danger w-100" onclick="startVideoCall(${b.id}, '${b.user.fullName}')">
+                                                                            <i class="bi bi-camera-video me-1"></i> Video
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <button class="btn btn-sm btn-outline-secondary" style="opacity: 0.65; cursor: not-allowed;" onclick="showLockedFeatureNotice('Client Bookings')">
+                                                                    <i class="bi bi-lock-fill me-1"></i> Actions Locked
                                                                 </button>
-                                                                <button class="btn btn-sm btn-outline-danger w-100" onclick="startVideoCall(${b.id}, '${b.user.fullName}')">
-                                                                    <i class="bi bi-camera-video me-1"></i> Video
-                                                                </button>
-                                                            </div>
-                                                        </div>
+                                                            </c:otherwise>
+                                                        </c:choose>
                                                     </td>
                                                 </tr>
                                             </c:forEach>
@@ -1826,11 +2107,50 @@
         </div>
     </div>
 
+    <!-- Locked Feature Modal -->
+    <div class="modal fade" id="lockedFeatureModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content border-0 rounded-4 shadow-lg p-3 text-center">
+                <div class="modal-body py-4">
+                    <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 64px; height: 64px; background: #FFF1F2; color: #F43F5E; font-size: 2rem; border: 2px solid #FDA4AF;">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Feature Locked</h5>
+                    <p class="text-secondary small mb-3">
+                        <span id="lockedFeatureName" class="fw-bold text-dark">This feature</span> is non-clickable until your profile details are submitted and verified by an Administrator.
+                    </p>
+                    <div class="alert alert-warning border-0 small text-start py-2 px-3 rounded-3 mb-4">
+                        <i class="bi bi-info-circle-fill me-1 text-warning"></i> Submit your phone, service location, and identity document to activate marketplace features.
+                    </div>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">Close</button>
+                        <a href="${pageContext.request.contextPath}/marketplace/provider/profile-completion" class="btn btn-danger rounded-pill px-4 fw-bold">
+                            <i class="bi bi-pencil-square me-1"></i> Submit Details Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="${pageContext.request.contextPath}/assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <script>
         const ctx = '${pageContext.request.contextPath}';
+        const isApprovedProvider = ${isApproved ? 'true' : 'false'};
+
+        function showLockedFeatureNotice(featureName) {
+            const modalEl = document.getElementById('lockedFeatureModal');
+            if (modalEl) {
+                const targetText = document.getElementById('lockedFeatureName');
+                if (targetText) targetText.innerText = featureName || 'This feature';
+                new bootstrap.Modal(modalEl).show();
+            } else {
+                alert('Locked Feature: ' + featureName + ' is non-clickable until your profile details are submitted and verified by Admin. Click "Complete Profile" to submit your details.');
+            }
+        }
+
         let stompClient = null;
         let currentBookingId = null;
         let localStream = null;
@@ -1890,6 +2210,11 @@
             const sidebar = document.getElementById('sidebar');
             if (sidebar) sidebar.classList.remove('show');
 
+            if (!isApprovedProvider && tabId !== 'overview' && tabId !== 'profile') {
+                showLockedFeatureNotice(tabId.charAt(0).toUpperCase() + tabId.slice(1));
+                return;
+            }
+
             document.querySelectorAll('.dashboard-section').forEach(section => {
                 section.style.display = 'none';
             });
@@ -1947,6 +2272,10 @@
         }
 
         function updateStatus(id) {
+            if (!isApprovedProvider) {
+                showLockedFeatureNotice('Booking Actions');
+                return;
+            }
             const status = document.getElementById('status-select-' + id).value;
             fetch(ctx + '/marketplace/provider/bookings/' + id + '/status', {
                 method: 'POST',
@@ -1964,6 +2293,10 @@
         }
 
         function openChat(bookingId, partnerName) {
+            if (!isApprovedProvider) {
+                showLockedFeatureNotice('Client Messaging');
+                return;
+            }
             document.getElementById('chatPartnerName').innerText = partnerName;
             document.getElementById('chatArea').innerHTML = '';
             initWebSocket(bookingId);
@@ -2014,6 +2347,10 @@
         }
 
         async function startVideoCall(bookingId, partnerName) {
+            if (!isApprovedProvider) {
+                showLockedFeatureNotice('Video Calling');
+                return;
+            }
             document.getElementById('videoPartnerName').innerText = partnerName;
             initWebSocket(bookingId);
             const modal = new bootstrap.Modal(document.getElementById('videoModal'));

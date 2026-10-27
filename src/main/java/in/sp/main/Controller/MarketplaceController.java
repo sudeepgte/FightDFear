@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import in.sp.main.Entities.PartnerProfileStatus;
+import in.sp.main.Entities.OtpPurpose;
+import in.sp.main.Entities.OtpChannel;
 import in.sp.main.Entities.ProviderBooking;
 import in.sp.main.Entities.ProviderBookingStatus;
 import in.sp.main.Entities.ProviderCategory;
@@ -35,6 +38,10 @@ import in.sp.main.Repository.ServiceProviderRepository;
 import in.sp.main.Repository.ProviderClassRepository;
 import in.sp.main.Repository.MarketplaceEnrollmentRepository;
 import in.sp.main.Service.FileUploadService;
+import in.sp.main.Service.OtpVerificationService;
+import in.sp.main.Service.ServiceProviderRegistrationService;
+import in.sp.main.Service.ServiceProviderProfileService;
+import in.sp.main.Service.PartnerLifecycleSupport;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
@@ -43,6 +50,15 @@ public class MarketplaceController {
 
     @Autowired
     private ServiceProviderRepository providerRepo;
+
+    @Autowired
+    private OtpVerificationService otpVerificationService;
+
+    @Autowired
+    private ServiceProviderRegistrationService providerRegistrationService;
+
+    @Autowired
+    private ServiceProviderProfileService providerProfileService;
 
     @Autowired
     private ProviderBookingRepository bookingRepo;
@@ -73,6 +89,9 @@ public class MarketplaceController {
 
     @Autowired
     private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private in.sp.main.Service.LocationDirectoryService locationDirectoryService;
 
     @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:}")
     private String razorpayKeyId;
@@ -107,6 +126,86 @@ public class MarketplaceController {
         }
     }
 
+    public static boolean isProfileIncomplete(ServiceProvider p) {
+        if (p == null) return true;
+        if (p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED) {
+            return false;
+        }
+        if (p.getPartnerProfileStatus() == PartnerProfileStatus.PENDING_ADMIN_APPROVAL
+                || p.getPartnerProfileStatus() == PartnerProfileStatus.READY_FOR_VERIFICATION) {
+            return false;
+        }
+        if (p.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE
+                || p.getPartnerProfileStatus() == PartnerProfileStatus.REGISTERED
+                || p.getPartnerProfileStatus() == null) {
+            return true;
+        }
+        return p.getPhone() == null || p.getPhone().trim().isEmpty()
+                || p.getLocationText() == null || p.getLocationText().trim().isEmpty()
+                || p.getDescription() == null || p.getDescription().trim().isEmpty();
+    }
+
+    @GetMapping(value = "/api/categories", produces = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<Map<String, String>> getCategories() {
+        return java.util.Arrays.stream(ProviderCategory.values())
+                .map(c -> Map.of("code", c.name(), "displayName", c.getDisplayName()))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @PostMapping(value = "/provider/otp/send-email", produces = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> sendRegistrationEmailOtp(@org.springframework.web.bind.annotation.RequestBody(required = false) Map<String, String> body) {
+        Map<String, Object> res = new HashMap<>();
+        String email = body != null ? body.get("email") : null;
+        if (email == null || email.trim().isBlank()) {
+            res.put("success", false);
+            res.put("error", "Email is required");
+            return res;
+        }
+        String normEmail = email.trim().toLowerCase();
+        if (providerRepo.findByEmail(normEmail).isPresent()) {
+            res.put("success", false);
+            res.put("error", "Email already registered");
+            return res;
+        }
+        try {
+            otpVerificationService.sendOtp(normEmail, OtpPurpose.MARKETPLACE_REGISTER, OtpChannel.EMAIL);
+            res.put("success", true);
+            res.put("message", "OTP sent to your email");
+        } catch (IllegalStateException ex) {
+            res.put("success", false);
+            res.put("error", ex.getMessage());
+        } catch (Exception ex) {
+            res.put("success", false);
+            res.put("error", "Failed to send OTP. Please check your email and try again.");
+        }
+        return res;
+    }
+
+    @PostMapping(value = "/provider/otp/verify-email", produces = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> verifyRegistrationEmailOtp(@org.springframework.web.bind.annotation.RequestBody(required = false) Map<String, String> body) {
+        Map<String, Object> res = new HashMap<>();
+        String email = body != null ? body.get("email") : null;
+        String otp = body != null ? body.get("otp") : null;
+        if (email == null || email.trim().isBlank() || otp == null || otp.trim().isBlank()) {
+            res.put("success", false);
+            res.put("error", "Email and OTP are required");
+            return res;
+        }
+        String normEmail = email.trim().toLowerCase();
+        boolean valid = otpVerificationService.verifyOtp(normEmail, otp.trim(), OtpPurpose.MARKETPLACE_REGISTER);
+        if (valid) {
+            res.put("success", true);
+            res.put("message", "Email verified successfully");
+        } else {
+            res.put("success", false);
+            res.put("error", "Invalid or expired OTP");
+        }
+        return res;
+    }
+
     // ==============================
     // Provider registration + login
     // ==============================
@@ -119,65 +218,92 @@ public class MarketplaceController {
     @PostMapping("/provider/register")
     public String providerRegister(@RequestParam String fullName,
                                    @RequestParam String email,
-                                   @RequestParam String phone,
                                    @RequestParam String password,
+                                   @RequestParam String confirmPassword,
                                    @RequestParam String category,
-                                   @RequestParam String description,
-                                   @RequestParam String locationText,
-                                   @RequestParam("identityDoc") MultipartFile identityDoc,
+                                   @RequestParam(required = false) String emailOtp,
+                                   @RequestParam(defaultValue = "false") boolean acceptedTerms,
                                    Model model,
                                    RedirectAttributes redirectAttributes) {
-        if (providerRepo.findByEmail(email.trim().toLowerCase()).isPresent()) {
+        String normEmail = email != null ? email.trim().toLowerCase() : "";
+        if (normEmail.isBlank()) {
+            model.addAttribute("error", "Email is required.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
+            return "marketplace/provider-register";
+        }
+
+        if (providerRepo.findByEmail(normEmail).isPresent()) {
             model.addAttribute("error", "Email already registered.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
             return "marketplace/provider-register";
         }
 
-        if (phone == null || !phone.trim().matches("^\\d{10}$")) {
-            model.addAttribute("error", "Phone number must be exactly 10 digits.");
+        if (fullName == null || fullName.trim().isBlank()) {
+            model.addAttribute("error", "Full name is required.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
             return "marketplace/provider-register";
         }
 
-        if (password == null || password.length() < 8) {
-            model.addAttribute("error", "Password must be at least 8 characters.");
+        if (password == null || password.length() < 6) {
+            model.addAttribute("error", "Password must be at least 6 characters.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
+            return "marketplace/provider-register";
+        }
+
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("error", "Password and confirm password do not match.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
+            return "marketplace/provider-register";
+        }
+
+        ProviderCategory parsedCat = ProviderCategory.fromFlexible(category);
+        if (parsedCat == null) {
+            model.addAttribute("error", "Please select a valid service category.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
+            return "marketplace/provider-register";
+        }
+
+        if (!acceptedTerms) {
+            model.addAttribute("error", "You must agree to the Terms & Conditions and Privacy Policy.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
+            return "marketplace/provider-register";
+        }
+
+        // Verify/consume OTP
+        boolean otpConsumed = otpVerificationService.consumeVerifiedOtp(normEmail, OtpPurpose.MARKETPLACE_REGISTER, 15);
+        if (!otpConsumed && emailOtp != null && !emailOtp.isBlank()) {
+            if (otpVerificationService.verifyOtp(normEmail, emailOtp.trim(), OtpPurpose.MARKETPLACE_REGISTER)) {
+                otpVerificationService.consumeVerifiedOtp(normEmail, OtpPurpose.MARKETPLACE_REGISTER, 15);
+                otpConsumed = true;
+            }
+        }
+
+        if (!otpConsumed) {
+            model.addAttribute("error", "Email not verified. Please verify your email OTP first.");
+            model.addAttribute("providerCategories", ProviderCategory.values());
             return "marketplace/provider-register";
         }
 
         try {
-            validateMarketplaceUpload(identityDoc);
-            String docPath = fileUploadService.saveFile(identityDoc);
-
             ServiceProvider p = new ServiceProvider();
-            p.setFullName(fullName);
-            p.setEmail(email.trim().toLowerCase());
-            p.setPhone(phone);
+            p.setFullName(fullName.trim());
+            p.setEmail(normEmail);
             p.setPassword(passwordService.encode(password));
-            
-            // Robust category parsing
-            ProviderCategory parsedCat = ProviderCategory.fromFlexible(category);
-            if (parsedCat == null) {
-                model.addAttribute("error", "Invalid category: " + category);
-                model.addAttribute("providerCategories", ProviderCategory.values());
-                return "marketplace/provider-register";
-            }
             p.setCategory(parsedCat);
-            
-            p.setDescription(description);
-            p.setLocationText(locationText);
-            p.setIdentityDocumentPath(docPath);
             p.setVerificationStatus(VerificationStatus.PENDING);
+            p.setPartnerProfileStatus(PartnerProfileStatus.PROFILE_INCOMPLETE);
+            p.setProfileCompletionPct(25);
+            p.setAcceptedTermsAt(LocalDateTime.now());
             p.setRating(0.0);
 
             providerRepo.save(p);
-            redirectAttributes.addFlashAttribute("message", "Registration successful! Await admin verification.");
+
+            redirectAttributes.addFlashAttribute("message", "Registration successful. Please sign in to continue.");
+            redirectAttributes.addFlashAttribute("registeredEmail", normEmail);
             return "redirect:/marketplace/provider/login";
-        } catch (IllegalArgumentException e) {
-            model.addAttribute("error", e.getMessage() != null ? e.getMessage() : "Invalid category selected.");
-            return "marketplace/provider-register";
-        } catch (IOException e) {
-            model.addAttribute("error", "Failed to upload identity document.");
-            return "marketplace/provider-register";
         } catch (Exception e) {
             model.addAttribute("error", "A database error occurred: " + e.getMessage());
+            model.addAttribute("providerCategories", ProviderCategory.values());
             return "marketplace/provider-register";
         }
     }
@@ -192,10 +318,13 @@ public class MarketplaceController {
                                 @RequestParam String password,
                                 HttpSession session,
                                 jakarta.servlet.http.HttpServletResponse response,
-                                Model model) {
-        Optional<ServiceProvider> pOpt = providerRepo.findByEmail(email.trim().toLowerCase());
+                                Model model,
+                                RedirectAttributes redirectAttributes) {
+        String normEmail = email != null ? email.trim().toLowerCase() : "";
+        Optional<ServiceProvider> pOpt = providerRepo.findByEmail(normEmail);
         if (pOpt.isEmpty()) {
-            model.addAttribute("error", "Provider not found.");
+            model.addAttribute("error", "Invalid email or password.");
+            model.addAttribute("registeredEmail", normEmail);
             return "marketplace/provider-login";
         }
         ServiceProvider p = pOpt.get();
@@ -204,15 +333,13 @@ public class MarketplaceController {
             providerRepo.save(p);
         });
         if (!ok) {
-            model.addAttribute("error", "Invalid password.");
+            model.addAttribute("error", "Invalid email or password.");
+            model.addAttribute("registeredEmail", normEmail);
             return "marketplace/provider-login";
         }
-        if (p.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            model.addAttribute("error", "Your account is pending verification.");
-            return "marketplace/provider-login";
-        }
+
         session.setAttribute("loggedProvider", p);
-        
+
         // Generate JWT and add to response
         String token = jwtUtil.generateToken(p.getEmail(), "PROVIDER");
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
@@ -220,8 +347,260 @@ public class MarketplaceController {
         cookie.setHttpOnly(true);
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
-        
-        return "redirect:/marketplace/provider/dashboard";
+
+        if (isProfileIncomplete(p)
+                || p.getPartnerProfileStatus() == PartnerProfileStatus.CHANGES_REQUESTED
+                || p.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED) {
+            return "redirect:/marketplace/provider/profile-completion";
+        } else {
+            return "redirect:/marketplace/provider/dashboard";
+        }
+    }
+
+    public static int calculateProfileCompletionPct(ServiceProvider p) {
+        if (p == null) return 0;
+        int score = 0;
+        if (p.getFullName() != null && !p.getFullName().trim().isBlank()) score += 10;
+        if (p.getEmail() != null && !p.getEmail().trim().isBlank()) score += 10;
+        if (p.getCategory() != null) score += 10;
+        if (p.getPhone() != null && p.getPhone().trim().matches("^\\d{10}$")) score += 10;
+        if (p.getState() != null && !p.getState().trim().isBlank()) score += 10;
+        if (p.getCity() != null && !p.getCity().trim().isBlank()) score += 10;
+        if ((p.getServiceArea() != null && !p.getServiceArea().trim().isBlank())
+                || (p.getAddress() != null && !p.getAddress().trim().isBlank())
+                || (p.getLocationText() != null && !p.getLocationText().trim().isBlank())) score += 10;
+        if (p.getDescription() != null && p.getDescription().trim().length() >= 15) score += 10;
+        if ((p.getQualification() != null && !p.getQualification().trim().isBlank())
+                || (p.getExperience() != null && !p.getExperience().trim().isBlank())
+                || (p.getBusinessName() != null && !p.getBusinessName().trim().isBlank())) score += 10;
+        if ((p.getIdentityDocumentPath() != null && !p.getIdentityDocumentPath().trim().isBlank())
+                || (p.getProfilePhoto() != null && !p.getProfilePhoto().trim().isBlank())) score += 10;
+        return Math.min(100, score);
+    }
+
+    @GetMapping("/provider/profile-completion")
+    public String providerProfileCompletionPage(HttpSession session, Model model) {
+        ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
+        if (p == null) {
+            return "redirect:/marketplace/provider/login";
+        }
+        p = providerRepo.findById(p.getId()).orElse(p);
+
+        int pct = calculateProfileCompletionPct(p);
+        boolean changed = false;
+        if (p.getPartnerProfileStatus() == null) {
+            p.setPartnerProfileStatus(PartnerProfileStatus.PROFILE_INCOMPLETE);
+            changed = true;
+        }
+        if (p.getProfileCompletionPct() == null || p.getProfileCompletionPct() != pct) {
+            p.setProfileCompletionPct(pct);
+            changed = true;
+        }
+        if (changed) {
+            providerRepo.save(p);
+        }
+        session.setAttribute("loggedProvider", p);
+
+        model.addAttribute("provider", p);
+        model.addAttribute("providerCategories", ProviderCategory.values());
+        model.addAttribute("indianStates", locationDirectoryService.getStates());
+        return "marketplace/provider-profile-completion";
+    }
+
+    @PostMapping("/provider/profile-completion")
+    public String providerProfileCompletionSubmit(
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String serviceArea,
+            @RequestParam(required = false) String address,
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) String locationText,
+            @RequestParam(required = false) String description,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String businessName,
+            @RequestParam(required = false) String qualification,
+            @RequestParam(required = false) String experience,
+            @RequestParam(required = false) String availableDays,
+            @RequestParam(required = false) String workingHoursFrom,
+            @RequestParam(required = false) String workingHoursTo,
+            @RequestParam(required = false) String languagesSpoken,
+            @RequestParam(required = false) Double consultationFee,
+            @RequestParam(value = "action", required = false) String formAction,
+            @RequestParam(value = "identityDoc", required = false) MultipartFile identityDoc,
+            @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
+            HttpSession session,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+
+        ServiceProvider sessionProvider = (ServiceProvider) session.getAttribute("loggedProvider");
+        if (sessionProvider == null) {
+            return "redirect:/marketplace/provider/login";
+        }
+        Optional<ServiceProvider> optP = providerRepo.findById(sessionProvider.getId());
+        if (optP.isEmpty()) {
+            return "redirect:/marketplace/provider/login";
+        }
+        ServiceProvider p = optP.get();
+
+        String resolvedState = (state != null && !state.trim().isBlank()) ? state.trim() : (p.getState() != null ? p.getState() : "");
+        String resolvedCity = (city != null && !city.trim().isBlank()) ? city.trim() : (p.getCity() != null ? p.getCity() : "");
+        String resolvedArea = (serviceArea != null && !serviceArea.trim().isBlank()) ? serviceArea.trim() : (p.getServiceArea() != null ? p.getServiceArea() : "");
+        String resolvedAddress = (address != null && !address.trim().isBlank()) ? address.trim() : (p.getAddress() != null ? p.getAddress() : "");
+        String resolvedPincode = (pincode != null && !pincode.trim().isBlank()) ? pincode.trim() : (p.getPincode() != null ? p.getPincode() : "");
+
+        boolean isDraft = "draft".equalsIgnoreCase(formAction);
+
+        if (!isDraft) {
+            if (phone == null || !phone.trim().matches("^\\d{10}$")) {
+                model.addAttribute("error", "Official contact phone must be a valid 10-digit number.");
+                model.addAttribute("provider", p);
+                model.addAttribute("providerCategories", ProviderCategory.values());
+                model.addAttribute("indianStates", locationDirectoryService.getStates());
+                return "marketplace/provider-profile-completion";
+            }
+            if (resolvedState.isBlank()) {
+                model.addAttribute("error", "State is a required location field.");
+                model.addAttribute("provider", p);
+                model.addAttribute("providerCategories", ProviderCategory.values());
+                model.addAttribute("indianStates", locationDirectoryService.getStates());
+                return "marketplace/provider-profile-completion";
+            }
+            if (resolvedCity.isBlank()) {
+                model.addAttribute("error", "City / District is a required location field.");
+                model.addAttribute("provider", p);
+                model.addAttribute("providerCategories", ProviderCategory.values());
+                model.addAttribute("indianStates", locationDirectoryService.getStates());
+                return "marketplace/provider-profile-completion";
+            }
+            if (description == null || description.trim().length() < 15) {
+                model.addAttribute("error", "Profile Bio / Description is required (minimum 15 characters).");
+                model.addAttribute("provider", p);
+                model.addAttribute("providerCategories", ProviderCategory.values());
+                model.addAttribute("indianStates", locationDirectoryService.getStates());
+                return "marketplace/provider-profile-completion";
+            }
+        }
+
+        try {
+            if (phone != null && !phone.trim().isBlank()) {
+                p.setPhone(phone.trim());
+            }
+
+            p.setState(resolvedState);
+            p.setCity(resolvedCity);
+            p.setServiceArea(resolvedArea);
+            p.setAddress(resolvedAddress);
+            p.setPincode(resolvedPincode);
+
+            // Construct unified locationText for backward compatibility and display
+            StringBuilder locBuilder = new StringBuilder();
+            if (!resolvedArea.isBlank()) locBuilder.append(resolvedArea).append(", ");
+            if (!resolvedCity.isBlank()) locBuilder.append(resolvedCity).append(", ");
+            if (!resolvedState.isBlank()) locBuilder.append(resolvedState);
+            String calculatedLoc = locBuilder.toString().trim();
+            if (calculatedLoc.endsWith(",")) calculatedLoc = calculatedLoc.substring(0, calculatedLoc.length() - 1);
+            if (!calculatedLoc.isBlank()) {
+                p.setLocationText(calculatedLoc);
+            } else if (locationText != null && !locationText.trim().isBlank()) {
+                p.setLocationText(locationText.trim());
+            }
+
+            if (description != null && !description.trim().isBlank()) {
+                p.setDescription(description.trim());
+            }
+
+            if (category != null && !category.trim().isBlank()) {
+                ProviderCategory cat = ProviderCategory.fromFlexible(category.trim());
+                if (cat != null) {
+                    p.setCategory(cat);
+                }
+            }
+
+            if (businessName != null && !businessName.trim().isBlank()) {
+                p.setBusinessName(businessName.trim());
+            }
+            if (qualification != null && !qualification.trim().isBlank()) {
+                p.setQualification(qualification.trim());
+            }
+            if (experience != null && !experience.trim().isBlank()) {
+                p.setExperience(experience.trim());
+            }
+            if (availableDays != null && !availableDays.trim().isBlank()) {
+                p.setAvailableDays(availableDays.trim());
+            }
+            if (workingHoursFrom != null && !workingHoursFrom.trim().isBlank()) {
+                p.setWorkingHoursFrom(workingHoursFrom.trim());
+            }
+            if (workingHoursTo != null && !workingHoursTo.trim().isBlank()) {
+                p.setWorkingHoursTo(workingHoursTo.trim());
+            }
+            if (languagesSpoken != null && !languagesSpoken.trim().isBlank()) {
+                p.setLanguagesSpoken(languagesSpoken.trim());
+            }
+            if (consultationFee != null && consultationFee >= 0) {
+                p.setConsultationFee(consultationFee);
+            }
+
+            if (identityDoc != null && !identityDoc.isEmpty()) {
+                validateMarketplaceUpload(identityDoc);
+                String docPath = fileUploadService.saveFile(identityDoc);
+                p.setIdentityDocumentPath(docPath);
+            }
+
+            if (profilePhotoFile != null && !profilePhotoFile.isEmpty()) {
+                validateMarketplaceUpload(profilePhotoFile);
+                String photoPath = fileUploadService.saveFile(profilePhotoFile);
+                p.setProfilePhoto(photoPath);
+            }
+
+            // Calculate actual dynamic profile completion percentage
+            int actualPct = calculateProfileCompletionPct(p);
+            p.setProfileCompletionPct(actualPct);
+
+            if (isDraft) {
+                p.setPartnerProfileStatus(PartnerProfileStatus.PROFILE_INCOMPLETE);
+                providerRepo.save(p);
+                session.setAttribute("loggedProvider", p);
+                redirectAttributes.addFlashAttribute("message", "Profile draft saved successfully (" + actualPct + "% complete).");
+                return "redirect:/marketplace/provider/profile-completion";
+            }
+
+            boolean isResubmission = p.getPartnerProfileStatus() == PartnerProfileStatus.CHANGES_REQUESTED
+                    || p.getVerificationStatus() == VerificationStatus.CHANGES_REQUESTED
+                    || p.getPartnerProfileStatus() == PartnerProfileStatus.READY_FOR_VERIFICATION
+                    || p.getVerificationStatus() == VerificationStatus.RE_VERIFICATION;
+
+            if (isResubmission) {
+                p.setPartnerProfileStatus(PartnerProfileStatus.READY_FOR_VERIFICATION);
+                p.setVerificationStatus(VerificationStatus.RE_VERIFICATION);
+            } else {
+                p.setPartnerProfileStatus(PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+                p.setVerificationStatus(VerificationStatus.PENDING);
+            }
+            p.setSubmittedForVerificationAt(LocalDateTime.now());
+
+            providerRepo.save(p);
+            session.setAttribute("loggedProvider", p);
+
+            String successMsg = isResubmission
+                    ? "Updated profile details submitted successfully! Your application has been moved to the re-verification queue."
+                    : "Profile details submitted successfully! Your application has been submitted for administrator verification. Admin needs to verify your details before dashboard features are unlocked.";
+            redirectAttributes.addFlashAttribute("message", successMsg);
+            return "redirect:/marketplace/provider/dashboard";
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("provider", p);
+            model.addAttribute("providerCategories", ProviderCategory.values());
+            model.addAttribute("indianStates", locationDirectoryService.getStates());
+            return "marketplace/provider-profile-completion";
+        } catch (Exception e) {
+            model.addAttribute("error", "Error saving profile details: " + e.getMessage());
+            model.addAttribute("provider", p);
+            model.addAttribute("providerCategories", ProviderCategory.values());
+            model.addAttribute("indianStates", locationDirectoryService.getStates());
+            return "marketplace/provider-profile-completion";
+        }
     }
 
     @GetMapping("/provider/dashboard")
@@ -230,6 +609,8 @@ public class MarketplaceController {
         if (p == null) return "redirect:/marketplace/provider/login";
 
         p = providerRepo.findById(p.getId()).orElse(p);
+        // Providers who click "Skip for now" can access the dashboard in read-only / locked mode.
+        // Protected actions (creating classes, updating bookings, public listings) are strictly gated.
         model.addAttribute("provider", p);
         model.addAttribute("bookings", bookingRepo.findByProviderOrderByRequestedTimeDesc(p));
         // Using findByProviderId from MarketplaceEnrollmentRepository
@@ -317,6 +698,14 @@ public class MarketplaceController {
         if (p == null) {
             response.put("success", false);
             response.put("message", "Not logged in");
+            return response;
+        }
+
+        p = providerRepo.findById(p.getId()).orElse(p);
+        if (p.getVerificationStatus() != VerificationStatus.VERIFIED
+                && p.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            response.put("success", false);
+            response.put("message", "Account verification pending. Access to booking actions is restricted.");
             return response;
         }
 
@@ -645,6 +1034,13 @@ public class MarketplaceController {
                            RedirectAttributes redirectAttributes) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
         if (p == null) return "redirect:/marketplace/provider/login";
+
+        p = providerRepo.findById(p.getId()).orElse(p);
+        if (p.getVerificationStatus() != VerificationStatus.VERIFIED
+                && p.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            redirectAttributes.addFlashAttribute("error", "Your account is not approved yet. Only verified marketplace providers can publish services.");
+            return "redirect:/marketplace/provider/dashboard";
+        }
 
         String normalizedMode = mode != null ? mode.trim() : "";
         boolean isOnline = normalizedMode.equalsIgnoreCase("Online") || normalizedMode.equalsIgnoreCase("Live") || normalizedMode.contains("Online");

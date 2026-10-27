@@ -8,85 +8,95 @@
   <meta name="_csrf_header" content="${_csrf.headerName}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Service Partner Profile — Admin View</title>
+  <title>Service Partner Profile — Admin Verification</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
 <style>
-  body.wp-admin-wp { margin: 0; font-family: 'Outfit', 'Poppins', system-ui, sans-serif; }
+  body.wp-admin-wp { margin: 0; font-family: 'Outfit', 'Poppins', system-ui, sans-serif; background: var(--ap-bg, #F8FAFC); }
   body.wp-admin-wp .layout { display: flex; min-height: 100vh; }
-  body.wp-admin-wp .main { flex: 1; min-width: 0; background: var(--ap-bg); }
-  body.wp-admin-wp .mainInner { max-width: 900px; margin: 0 auto; padding: 22px 24px 48px; }
+  body.wp-admin-wp .main { flex: 1; min-width: 0; background: var(--ap-bg, #F8FAFC); }
+  body.wp-admin-wp .mainInner { max-width: 960px; margin: 0 auto; padding: 22px 24px 60px; }
   body.wp-admin-wp .profile-card {
-      background: var(--ap-card); border-radius: var(--ap-radius); padding: 30px;
-      box-shadow: var(--ap-shadow); border: 1px solid var(--ap-border);
+      background: #FFFFFF; border-radius: 16px; padding: 32px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid var(--ap-border, #E2E8F0);
   }
   body.wp-admin-wp .profile-header {
       display: flex; flex-direction: column; align-items: center; text-align: center;
-      margin-bottom: 30px; padding-bottom: 25px; border-bottom: 1px solid var(--ap-border);
+      margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--ap-border, #E2E8F0);
   }
   body.wp-admin-wp .profile-avatar {
-      width: 100px; height: 100px; background: #FFF1F2; color: var(--ap-accent);
+      width: 104px; height: 104px; background: #FFF1F2; color: #F43F5E;
       border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 2.5rem; margin-bottom: 15px; border: 2px solid #FDA4AF; overflow: hidden;
+      font-size: 2.6rem; font-weight: 800; margin-bottom: 14px; border: 3px solid #FDA4AF; overflow: hidden;
   }
-  body.wp-admin-wp .profile-name { font-size: 1.6rem; font-weight: 800; color: var(--ap-text); margin-bottom: 5px; }
-  body.wp-admin-wp .profile-business { color: var(--ap-accent); font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; }
+  body.wp-admin-wp .profile-name { font-size: 1.65rem; font-weight: 800; color: #0F172A; margin-bottom: 4px; }
+  body.wp-admin-wp .profile-business { color: #F43F5E; font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; }
   body.wp-admin-wp .badge-status {
-    padding: 6px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; display: inline-block;
+    padding: 6px 16px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;
   }
-  body.wp-admin-wp .status-VERIFIED { background: var(--ap-success-bg); color: var(--ap-success); }
-  body.wp-admin-wp .status-APPROVED { background: var(--ap-success-bg); color: var(--ap-success); }
-  body.wp-admin-wp .status-PENDING { background: #FEF3C7; color: #B45309; }
-  body.wp-admin-wp .status-REJECTED { background: var(--ap-danger-bg); color: var(--ap-danger); }
+  body.wp-admin-wp .status-VERIFIED, body.wp-admin-wp .status-APPROVED { background: #DCFCE7; color: #166534; }
+  body.wp-admin-wp .status-PENDING { background: #FEF3C7; color: #92400E; }
+  body.wp-admin-wp .status-RE_VERIFICATION { background: #DBEAFE; color: #1E40AF; }
+  body.wp-admin-wp .status-CHANGES_REQUESTED { background: #F3E8FF; color: #6B21A8; }
+  body.wp-admin-wp .status-REJECTED { background: #FEE2E2; color: #991B1B; }
+
   body.wp-admin-wp .section-title {
-      font-size: 1.05rem; font-weight: 800; color: var(--ap-text); margin-bottom: 15px;
+      font-size: 1.05rem; font-weight: 800; color: #0F172A; margin-bottom: 14px;
       display: flex; align-items: center; gap: 8px;
   }
   body.wp-admin-wp .info-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 16px; margin-bottom: 30px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px; margin-bottom: 26px;
   }
   body.wp-admin-wp .info-item {
-      background: #F8FAFC; padding: 16px; border-radius: 12px; border: 1px solid var(--ap-border);
+      background: #F8FAFC; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--ap-border, #E2E8F0);
   }
   body.wp-admin-wp .info-label {
       font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
-      color: var(--ap-muted); font-weight: 700; margin-bottom: 6px;
+      color: #64748B; font-weight: 700; margin-bottom: 5px;
       display: flex; align-items: center; gap: 6px;
   }
-  body.wp-admin-wp .info-value { font-size: 1rem; font-weight: 600; color: var(--ap-text); word-break: break-word; }
+  body.wp-admin-wp .info-value { font-size: 0.95rem; font-weight: 600; color: #0F172A; word-break: break-word; }
   body.wp-admin-wp .doc-box {
-      background: #F8FAFC; border-radius: 12px; padding: 20px; display: flex; align-items: center;
-      gap: 16px; border: 1px solid var(--ap-border); margin-bottom: 30px;
+      background: #F8FAFC; border-radius: 12px; padding: 18px; display: flex; align-items: center;
+      gap: 16px; border: 1px solid var(--ap-border, #E2E8F0); margin-bottom: 26px;
   }
   body.wp-admin-wp .doc-box-icon {
-      width: 50px; height: 50px; background: #fff; color: var(--ap-accent); border-radius: 10px;
-      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
-      border: 1px solid var(--ap-border);
+      width: 48px; height: 48px; background: #fff; color: #F43F5E; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+      border: 1px solid var(--ap-border, #E2E8F0); flex-shrink: 0;
   }
-  body.wp-admin-wp .doc-box-content .label { font-size: 0.85rem; color: var(--ap-muted); margin-bottom: 4px; }
-  body.wp-admin-wp .doc-link { color: var(--ap-accent); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+  body.wp-admin-wp .doc-box-content .label { font-size: 0.82rem; color: #64748B; margin-bottom: 4px; font-weight: 600; }
+  body.wp-admin-wp .doc-link { color: #F43F5E; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
   body.wp-admin-wp .action-bar {
-      display: flex; justify-content: center; gap: 12px; flex-wrap: wrap;
-      padding-top: 25px; border-top: 1px solid var(--ap-border);
+      display: flex; gap: 12px; flex-wrap: wrap; padding-top: 18px;
   }
   body.wp-admin-wp .btn-verify {
-      background: var(--ap-success); color: #fff; border: none; border-radius: 9px;
-      padding: 10px 20px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 8px;
+      background: #16A34A; color: #fff; border: none; border-radius: 9px;
+      padding: 10px 22px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
   }
+  body.wp-admin-wp .btn-verify:hover { background: #15803D; }
+  body.wp-admin-wp .btn-changes {
+      background: #8B5CF6; color: #fff; border: none; border-radius: 9px;
+      padding: 10px 22px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
+  }
+  body.wp-admin-wp .btn-changes:hover { background: #7C3AED; }
   body.wp-admin-wp .btn-reject {
-      background: var(--ap-danger); color: #fff; border: none; border-radius: 9px;
-      padding: 10px 20px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 8px;
+      background: #DC2626; color: #fff; border: none; border-radius: 9px;
+      padding: 10px 22px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
   }
+  body.wp-admin-wp .btn-reject:hover { background: #B91C1C; }
   body.wp-admin-wp .ap-btn-back {
-      display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 7px 14px;
-      border-radius: 9px; border: 1px solid var(--ap-border); background: #fff; color: var(--ap-text);
-      font-weight: 600; font-size: 0.85rem; text-decoration: none; margin-left: auto;
+      display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 7px 16px;
+      border-radius: 9px; border: 1px solid var(--ap-border, #E2E8F0); background: #fff; color: #0F172A;
+      font-weight: 700; font-size: 0.85rem; text-decoration: none; margin-left: auto; transition: all 0.2s;
   }
+  body.wp-admin-wp .ap-btn-back:hover { background: #F1F5F9; color: #F43F5E; }
   body.wp-admin-wp .ap-page-head { align-items: center; }
   @media (max-width: 700px) { body.wp-admin-wp .mainInner { padding: 16px 14px 40px; } }
 </style>
@@ -117,20 +127,33 @@
       <nav class="ap-crumb">
         <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
         <span class="sep">&gt;</span>
-        <a href="${pageContext.request.contextPath}/admin/pending-providers">Service Partners</a>
+        <a href="${pageContext.request.contextPath}/admin/pending-providers?category=${categoryParam}&filter=${filterParam}&q=${qParam}">Service Partners</a>
         <span class="sep">&gt;</span>
         <span>Provider Profile</span>
       </nav>
       <div class="ap-page-head">
         <div class="ap-page-ico"><i class="fas fa-user-tie"></i></div>
         <div>
-          <h1>Provider Profile</h1>
-          <p>Full verification details for the service partner</p>
+          <h1>Provider Profile Details</h1>
+          <p>Review submitted credentials, documentation, and administer approval</p>
         </div>
-        <a href="${pageContext.request.contextPath}/admin/pending-providers${not empty provider.category ? '?category='.concat(provider.category) : ''}" class="ap-btn-back">
+        <a href="${pageContext.request.contextPath}/admin/pending-providers?category=${categoryParam}&filter=${filterParam}&q=${qParam}" class="ap-btn-back">
             <i class="fas fa-arrow-left"></i> Back to Queue
         </a>
       </div>
+
+      <c:if test="${not empty message}">
+        <div class="alert alert-info alert-dismissible fade show mb-3" style="border-radius:12px;">
+          <i class="fas fa-info-circle me-1"></i> <c:out value="${message}"/>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </c:if>
+      <c:if test="${not empty error}">
+        <div class="alert alert-danger alert-dismissible fade show mb-3" style="border-radius:12px;">
+          <i class="fas fa-exclamation-triangle me-1"></i> <c:out value="${error}"/>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </c:if>
 
       <div class="profile-card">
           <!-- Profile Header -->
@@ -141,182 +164,199 @@
                           <img src="${pageContext.request.contextPath}${provider.profilePhoto}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
                       </c:when>
                       <c:otherwise>
-                          <i class="fas fa-user"></i>
+                          ${not empty provider.fullName ? fn:substring(provider.fullName,0,1) : 'P'}
                       </c:otherwise>
                   </c:choose>
               </div>
 
-              <div class="profile-name">${provider.fullName}</div>
+              <div class="profile-name"><c:out value="${provider.fullName}"/></div>
               <div class="profile-business">
-                  ${not empty provider.category ? provider.category : 'Service Partner'}
-                  ${not empty provider.designation ? ' - '.concat(provider.designation) : ''}
+                  <c:out value="${not empty provider.businessName ? provider.businessName : (not empty provider.category ? provider.category.displayName : 'Service Partner')}"/>
               </div>
               
+              <c:set var="vStat" value="${provider.verificationStatus}"/>
+              <c:set var="pStat" value="${provider.partnerProfileStatus}"/>
               <c:choose>
-                  <c:when test="${provider.verificationStatus == 'VERIFIED' || provider.verificationStatus == 'APPROVED'}">
-                      <span class="badge-status status-VERIFIED"><i class="fas fa-check-circle me-1"></i> VERIFIED</span>
+                  <c:when test="${vStat == 'VERIFIED' || vStat == 'APPROVED' || pStat == 'APPROVED'}">
+                      <span class="badge-status status-VERIFIED"><i class="fas fa-check-circle"></i> APPROVED</span>
                   </c:when>
-                  <c:when test="${provider.verificationStatus == 'REJECTED'}">
-                      <span class="badge-status status-REJECTED"><i class="fas fa-times-circle me-1"></i> REJECTED</span>
+                  <c:when test="${vStat == 'RE_VERIFICATION' || pStat == 'READY_FOR_VERIFICATION'}">
+                      <span class="badge-status status-RE_VERIFICATION"><i class="fas fa-sync"></i> RE-VERIFICATION</span>
+                  </c:when>
+                  <c:when test="${vStat == 'CHANGES_REQUESTED' || pStat == 'CHANGES_REQUESTED'}">
+                      <span class="badge-status status-CHANGES_REQUESTED"><i class="fas fa-edit"></i> CHANGES REQUESTED</span>
+                  </c:when>
+                  <c:when test="${vStat == 'REJECTED' || pStat == 'REJECTED'}">
+                      <span class="badge-status status-REJECTED"><i class="fas fa-times-circle"></i> REJECTED</span>
                   </c:when>
                   <c:otherwise>
-                      <span class="badge-status status-PENDING"><i class="fas fa-clock me-1"></i> PENDING</span>
+                      <span class="badge-status status-PENDING"><i class="fas fa-clock"></i> PENDING VERIFICATION</span>
                   </c:otherwise>
               </c:choose>
           </div>
 
-          <!-- 1. Personal Information -->
-          <div class="section-title"><i class="fas fa-user-circle"></i> 1. Personal Information</div>
+          <!-- 1. Personal & Contact Information -->
+          <div class="section-title"><i class="fas fa-user-circle text-danger"></i> 1. Contact Information</div>
           <div class="info-grid">
               <div class="info-item">
                   <div class="info-label"><i class="fas fa-user"></i> Full Name</div>
-                  <div class="info-value">${not empty provider.fullName ? provider.fullName : '-'}</div>
+                  <div class="info-value"><c:out value="${not empty provider.fullName ? provider.fullName : '-'}"/></div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-envelope"></i> Email</div>
-                  <div class="info-value">${not empty provider.email ? provider.email : '-'}</div>
+                  <div class="info-label"><i class="fas fa-envelope"></i> Email Address</div>
+                  <div class="info-value"><c:out value="${not empty provider.email ? provider.email : '-'}"/></div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-phone"></i> Mobile Number</div>
-                  <div class="info-value">${not empty provider.phone ? provider.phone : '-'}</div>
+                  <div class="info-label"><i class="fas fa-phone"></i> Contact Phone</div>
+                  <div class="info-value"><c:out value="${not empty provider.phone ? provider.phone : '-'}"/></div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fab fa-whatsapp"></i> Whatsapp Number</div>
-                  <div class="info-value">${not empty provider.whatsappNumber ? provider.whatsappNumber : '-'}</div>
+                  <div class="info-label"><i class="fab fa-whatsapp"></i> WhatsApp Number</div>
+                  <div class="info-value"><c:out value="${not empty provider.whatsappNumber ? provider.whatsappNumber : '-'}"/></div>
               </div>
           </div>
 
-          <!-- 2. Professional Details -->
-          <div class="section-title"><i class="fas fa-briefcase"></i> 2. Professional Details</div>
+          <!-- 2. Professional & Business Details -->
+          <div class="section-title"><i class="fas fa-briefcase text-primary"></i> 2. Professional &amp; Business Details</div>
           <div class="info-grid">
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-layer-group"></i> Category</div>
-                  <div class="info-value"><span class="badge bg-light text-dark border">${not empty provider.category ? provider.category : '-'}</span></div>
+                  <div class="info-label"><i class="fas fa-layer-group"></i> Service Category</div>
+                  <div class="info-value">
+                      <span class="badge bg-light text-dark border"><c:out value="${not empty provider.category ? provider.category.displayName : '-'}"/></span>
+                  </div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-gavel"></i> Bar Council ID / License</div>
-                  <div class="info-value">${not empty provider.barCouncilId ? provider.barCouncilId : '-'}</div>
+                  <div class="info-label"><i class="fas fa-store"></i> Business / Brand Name</div>
+                  <div class="info-value"><c:out value="${not empty provider.businessName ? provider.businessName : '-'}"/></div>
               </div>
               <div class="info-item">
                   <div class="info-label"><i class="fas fa-history"></i> Experience</div>
-                  <div class="info-value">${not empty provider.experienceYears ? provider.experienceYears.concat(' Years') : '-'}</div>
+                  <div class="info-value"><c:out value="${not empty provider.experience ? provider.experience : (not empty provider.experienceYears ? provider.experienceYears.toString().concat(' Years') : '-')}"/></div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-rupee-sign"></i> Consultation Fee</div>
-                  <div class="info-value">${not empty provider.consultationFee ? 'Rs '.concat(provider.consultationFee) : '-'}</div>
+                  <div class="info-label"><i class="fas fa-rupee-sign"></i> Consultation / Service Fee</div>
+                  <div class="info-value"><c:out value="${not empty provider.consultationFee ? '₹'.concat(provider.consultationFee.toString()) : '-'}"/></div>
               </div>
               <div class="info-item" style="grid-column: 1 / -1;">
-                  <div class="info-label"><i class="fas fa-tags"></i> Practice Areas / Specializations</div>
-                  <div class="info-value">${not empty provider.practiceAreas ? provider.practiceAreas : '-'}</div>
+                  <div class="info-label"><i class="fas fa-graduation-cap"></i> Qualifications / Certifications</div>
+                  <div class="info-value"><c:out value="${not empty provider.qualification ? provider.qualification : '-'}"/></div>
               </div>
+              <c:if test="${not empty provider.practiceAreas || not empty provider.barCouncilId}">
+                  <div class="info-item">
+                      <div class="info-label"><i class="fas fa-gavel"></i> Bar Council / License ID</div>
+                      <div class="info-value"><c:out value="${not empty provider.barCouncilId ? provider.barCouncilId : '-'}"/></div>
+                  </div>
+                  <div class="info-item" style="grid-column: 2 / -1;">
+                      <div class="info-label"><i class="fas fa-tags"></i> Practice Areas</div>
+                      <div class="info-value"><c:out value="${not empty provider.practiceAreas ? provider.practiceAreas : '-'}"/></div>
+                  </div>
+              </c:if>
               <div class="info-item" style="grid-column: 1 / -1;">
-                  <div class="info-label"><i class="fas fa-align-left"></i> Professional Bio</div>
-                  <div class="info-value">${not empty provider.description ? provider.description : '-'}</div>
+                  <div class="info-label"><i class="fas fa-align-left"></i> Profile Bio / Description</div>
+                  <div class="info-value" style="white-space: pre-line;"><c:out value="${not empty provider.description ? provider.description : (not empty provider.bio ? provider.bio : '-')}"/></div>
               </div>
           </div>
 
-          <!-- 3. Address & Location -->
-          <div class="section-title"><i class="fas fa-map-marker-alt"></i> 3. Address & Location</div>
+          <!-- 3. Location & Availability -->
+          <div class="section-title"><i class="fas fa-map-marker-alt text-success"></i> 3. Location &amp; Availability</div>
           <div class="info-grid">
               <div class="info-item" style="grid-column: 1 / -1;">
-                  <div class="info-label"><i class="fas fa-map"></i> Full Address</div>
-                  <div class="info-value">${not empty provider.address ? provider.address : '-'}</div>
+                  <div class="info-label"><i class="fas fa-map"></i> Location / City / Area</div>
+                  <div class="info-value"><c:out value="${not empty provider.locationText ? provider.locationText : (not empty provider.address ? provider.address : '-')}"/></div>
               </div>
-              <div class="info-item">
-                  <div class="info-label"><i class="fas fa-city"></i> City</div>
-                  <div class="info-value">${not empty provider.city ? provider.city : '-'}</div>
-              </div>
-              <div class="info-item">
-                  <div class="info-label"><i class="fas fa-map-pin"></i> State & Pincode</div>
-                  <div class="info-value">${not empty provider.state ? provider.state : '-'} ${not empty provider.pincode ? '- '.concat(provider.pincode) : ''}</div>
-              </div>
-          </div>
-
-          <!-- 4. Target Audience & Services -->
-          <div class="section-title"><i class="fas fa-users"></i> 4. Services & Audience</div>
-          <div class="info-grid">
-              <div class="info-item">
-                  <div class="info-label"><i class="fas fa-users"></i> Target Audience</div>
-                  <div class="info-value">${not empty provider.audience ? provider.audience : '-'}</div>
-              </div>
-              <div class="info-item">
-                  <div class="info-label"><i class="fas fa-language"></i> Languages</div>
-                  <div class="info-value">${not empty provider.languages ? provider.languages : '-'}</div>
-              </div>
-              <div class="info-item">
-                  <div class="info-label"><i class="fas fa-laptop-medical"></i> Service Mode</div>
-                  <div class="info-value">${not empty provider.serviceMode ? provider.serviceMode : (not empty provider.consultationMode ? provider.consultationMode : '-')}</div>
-              </div>
-              <div class="info-item">
-                  <div class="info-label"><i class="fas fa-concierge-bell"></i> Facilities</div>
-                  <div class="info-value">${not empty provider.facilities ? provider.facilities : '-'}</div>
-              </div>
-          </div>
-
-          <!-- 5. Operating Hours -->
-          <div class="section-title"><i class="fas fa-clock"></i> 5. Operating Hours</div>
-          <div class="info-grid">
               <div class="info-item">
                   <div class="info-label"><i class="fas fa-calendar-alt"></i> Available Days</div>
-                  <div class="info-value">${not empty provider.openDays ? provider.openDays : '-'}</div>
+                  <div class="info-value"><c:out value="${not empty provider.availableDays ? provider.availableDays : (not empty provider.openDays ? provider.openDays : '-')}"/></div>
               </div>
               <div class="info-item">
-                  <div class="info-label"><i class="fas fa-hourglass-half"></i> Working Hours</div>
-                  <div class="info-value">${not empty provider.openTime ? provider.openTime : '-'} to ${not empty provider.closeTime ? provider.closeTime : '-'}</div>
+                  <div class="info-label"><i class="fas fa-clock"></i> Working Hours</div>
+                  <div class="info-value">
+                      <c:choose>
+                          <c:when test="${not empty provider.workingHoursFrom || not empty provider.workingHoursTo}">
+                              <c:out value="${provider.workingHoursFrom}"/> - <c:out value="${provider.workingHoursTo}"/>
+                          </c:when>
+                          <c:when test="${not empty provider.openTime || not empty provider.closeTime}">
+                              <c:out value="${provider.openTime}"/> - <c:out value="${provider.closeTime}"/>
+                          </c:when>
+                          <c:otherwise>-</c:otherwise>
+                      </c:choose>
+                  </div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-language"></i> Languages Spoken</div>
+                  <div class="info-value"><c:out value="${not empty provider.languagesSpoken ? provider.languagesSpoken : (not empty provider.languages ? provider.languages : '-')}"/></div>
               </div>
           </div>
 
-          <!-- 6. Bank & Payment Details -->
-          <div class="section-title"><i class="fas fa-money-check-alt"></i> 6. Bank & Payment Details</div>
-          <div class="info-grid">
-              <div class="info-item">
-                  <div class="info-label"><i class="fas fa-mobile-alt"></i> UPI ID</div>
-                  <div class="info-value">${not empty provider.upiId ? provider.upiId : '-'}</div>
-              </div>
-              <div class="info-item" style="grid-column: span 2;">
-                  <div class="info-label"><i class="fas fa-university"></i> Bank Details</div>
-                  <div class="info-value">${not empty provider.bankDetails ? provider.bankDetails : '-'}</div>
-              </div>
-          </div>
-
-          <!-- 7. Identity Verification -->
-          <div class="section-title"><i class="fas fa-id-card"></i> 7. Identity Verification</div>
+          <!-- 4. Verification Document -->
+          <div class="section-title"><i class="fas fa-id-card text-info"></i> 4. Verification Document</div>
           <div class="doc-box">
               <div class="doc-box-icon"><i class="fas fa-file-contract"></i></div>
               <div class="doc-box-content">
                   <c:choose>
                       <c:when test="${not empty provider.identityDocumentPath && provider.identityDocumentPath != 'web-pending'}">
-                          <div class="label">Identity Proof (Aadhaar/Bar License)</div>
+                          <div class="label">Identification / Professional Certificate Document</div>
                           <a href="${pageContext.request.contextPath}${provider.identityDocumentPath}" target="_blank" class="doc-link">
-                              <i class="fas fa-external-link-alt"></i> View Document
+                              <i class="fas fa-external-link-alt"></i> View Document in New Tab
                           </a>
                       </c:when>
                       <c:otherwise>
-                          <div class="text-muted">No identity document uploaded.</div>
+                          <div class="text-muted">No identification document uploaded.</div>
                       </c:otherwise>
                   </c:choose>
               </div>
           </div>
 
+          <!-- 5. Submission & Review History -->
+          <div class="section-title"><i class="fas fa-history text-secondary"></i> 5. Submission &amp; Review History</div>
+          <div class="info-grid">
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-calendar-check"></i> Submitted At</div>
+                  <div class="info-value"><c:out value="${not empty provider.submittedForVerificationAt ? provider.submittedForVerificationAt : 'Pending submission'}"/></div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-percent"></i> Profile Completion</div>
+                  <div class="info-value">${not empty provider.profileCompletionPct ? provider.profileCompletionPct : 0}%</div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-user-shield"></i> Reviewed By Admin</div>
+                  <div class="info-value"><c:out value="${not empty provider.reviewedByAdminName ? provider.reviewedByAdminName : 'Not yet reviewed'}"/></div>
+              </div>
+              <div class="info-item">
+                  <div class="info-label"><i class="fas fa-clock"></i> Reviewed At</div>
+                  <div class="info-value"><c:out value="${not empty provider.reviewedAt ? provider.reviewedAt : '-'}"/></div>
+              </div>
+          </div>
+
           <!-- Decision Panel -->
-          <div class="section-title mt-4"><i class="fas fa-gavel"></i> Administrator Decision</div>
+          <div class="section-title mt-4"><i class="fas fa-gavel text-danger"></i> Administrator Decision &amp; Actions</div>
           <div class="doc-box" style="display:block;">
               <c:if test="${not empty provider.changesRequestedNote}">
-                  <div class="alert alert-warning py-2 small mb-3"><strong>Previous Changes Requested:</strong> ${provider.changesRequestedNote}</div>
+                  <div class="alert alert-warning py-2 px-3 small mb-3" style="border-radius:10px;">
+                      <strong><i class="fas fa-edit me-1"></i> Changes Requested Feedback:</strong>
+                      <div class="mt-1"><c:out value="${provider.changesRequestedNote}"/></div>
+                  </div>
               </c:if>
               <c:if test="${not empty provider.rejectionReason}">
-                  <div class="alert alert-danger py-2 small mb-3"><strong>Previous Rejection Reason:</strong> ${provider.rejectionReason}</div>
+                  <div class="alert alert-danger py-2 px-3 small mb-3" style="border-radius:10px;">
+                      <strong><i class="fas fa-times-circle me-1"></i> Rejection Reason:</strong>
+                      <div class="mt-1"><c:out value="${provider.rejectionReason}"/></div>
+                  </div>
               </c:if>
               
               <div class="mb-3">
-                  <label class="form-label fw-semibold" style="font-size:0.9rem; color:var(--ap-text);">Decision notes / comments</label>
-                  <textarea id="decisionNotes" class="form-control" rows="3" placeholder="Add comments for the provider (required for reject / request changes)"></textarea>
+                  <label class="form-label fw-bold" style="font-size:0.88rem; color:#0F172A;">Feedback / Explanation (Required for Request Changes and Reject)</label>
+                  <textarea id="decisionNotes" class="form-control" rows="3" placeholder="Enter instructions for the provider or reason for rejection..."></textarea>
               </div>
 
-              <div class="action-bar" style="border-top:none; padding-top:10px; justify-content:flex-start;">
-                  <c:if test="${provider.verificationStatus != 'VERIFIED' && provider.verificationStatus != 'APPROVED'}">
-                      <form id="approveForm" action="${pageContext.request.contextPath}/admin/providers/${provider.id}/verify" method="post" class="m-0 p-0">
+              <div class="action-bar" style="border-top:none; padding-top:4px;">
+                  <c:if test="${vStat != 'VERIFIED' && vStat != 'APPROVED' && pStat != 'APPROVED'}">
+                      <form id="approveForm" action="${pageContext.request.contextPath}/admin/providers/${provider.id}/verify" method="post" class="m-0 p-0"
+                            onsubmit="return confirm('Are you sure you want to approve provider ${fn:escapeXml(provider.fullName)}?');">
                           <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                          <input type="hidden" name="category" value="${categoryParam}"/>
+                          <input type="hidden" name="filter" value="${filterParam}"/>
+                          <input type="hidden" name="q" value="${qParam}"/>
                           <button type="submit" class="btn-verify">
                               <i class="fas fa-check-circle"></i> Approve Provider
                           </button>
@@ -324,18 +364,24 @@
                   </c:if>
 
                   <form id="changesForm" action="${pageContext.request.contextPath}/admin/providers/${provider.id}/request-changes" method="post" class="m-0 p-0"
-                        onsubmit="var n = document.getElementById('decisionNotes').value.trim(); if(!n){alert('Please provide notes to request changes.'); return false;} document.getElementById('changesNote').value=n;">
+                        onsubmit="var n = document.getElementById('decisionNotes').value.trim(); if(!n){alert('Please enter instructions for the provider when requesting changes.'); return false;} document.getElementById('changesNote').value=n;">
                       <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                      <input type="hidden" name="category" value="${categoryParam}"/>
+                      <input type="hidden" name="filter" value="${filterParam}"/>
+                      <input type="hidden" name="q" value="${qParam}"/>
                       <input type="hidden" name="note" id="changesNote">
-                      <button type="submit" class="btn-changes" style="background:#F59E0B; color:#fff; border:none; border-radius:9px; padding:10px 20px; font-size:0.9rem; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                      <button type="submit" class="btn-changes">
                           <i class="fas fa-edit"></i> Request Changes
                       </button>
                   </form>
 
-                  <c:if test="${provider.verificationStatus != 'REJECTED'}">
+                  <c:if test="${vStat != 'REJECTED' && pStat != 'REJECTED'}">
                       <form id="rejectForm" action="${pageContext.request.contextPath}/admin/providers/${provider.id}/reject" method="post" class="m-0 p-0" 
-                            onsubmit="var r = document.getElementById('decisionNotes').value.trim(); if(!r){alert('Please provide a reason to reject the provider.'); return false;} document.getElementById('rejectReason').value=r; return confirm('Are you sure you want to reject this provider?')">
+                            onsubmit="var r = document.getElementById('decisionNotes').value.trim(); if(!r){alert('Please provide a reason to reject this provider.'); return false;} document.getElementById('rejectReason').value=r; return confirm('Are you sure you want to reject this provider application?');">
                           <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                          <input type="hidden" name="category" value="${categoryParam}"/>
+                          <input type="hidden" name="filter" value="${filterParam}"/>
+                          <input type="hidden" name="q" value="${qParam}"/>
                           <input type="hidden" name="reason" id="rejectReason">
                           <button type="submit" class="btn-reject">
                               <i class="fas fa-times-circle"></i> Reject Application
