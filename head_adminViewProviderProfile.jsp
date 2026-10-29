@@ -249,7 +249,7 @@
 </div>
 
 <div class="layout">
-  <%@ include file="globalAdminMenu.jsp" %>
+  <%@ include file="src/main/webapp/WEB-INF/views/globalAdminMenu.jsp" %>
 
   <main class="main">
     <div class="mainInner">

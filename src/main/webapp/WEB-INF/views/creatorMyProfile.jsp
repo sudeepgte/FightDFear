@@ -683,8 +683,22 @@
                     <div class="hl-name">New Post</div>
                 </div>
                 <!-- MY STORIES from server -->
+                <script>
+                    window.creatorMyStories = [
+                        <c:forEach var="s2" items="${myStories}" varStatus="vs2">
+                        {
+                            id: ${s2.id},
+                            mediaPath: "${s2.mediaPath}",
+                            fileType: "${s2.fileType}",
+                            caption: "<c:out value='${s2.caption}'/>",
+                            uploadTime: "${s2.uploadTime}",
+                            viewCount: ${s2.viewCount}
+                        }<c:if test="${!vs2.last}">,</c:if>
+                        </c:forEach>
+                    ];
+                </script>
                 <c:forEach var="story" items="${myStories}" varStatus="vs">
-                    <div class="hl-item" onclick="openStoryViewer([<c:forEach var="s2" items="${myStories}" varStatus="vs2">{id:${s2.id},mediaPath:'${s2.mediaPath}',fileType:'${s2.fileType}',caption:'${fn:replace(s2.caption,"'","\\'")}',uploadTime:'${s2.uploadTime}',viewCount:${s2.viewCount}}<c:if test="${!vs2.last}">,</c:if></c:forEach>], ${vs.index})">
+                    <div class="hl-item" onclick="openStoryViewer(window.creatorMyStories, ${vs.index})">
                         <div class="hl-ring story-ring-active">
                             <c:choose>
                                 <c:when test="${story.fileType eq 'VIDEO'}">

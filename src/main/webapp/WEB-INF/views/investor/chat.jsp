@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -336,16 +338,47 @@
                         <span class="subtitle">${proposal.title}</span>
                     </div>
                 </div>
-                <span class="badge-channel">Direct Channel</span>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-light rounded-pill px-3 py-1 fw-bold text-danger border-0 shadow-sm d-flex align-items-center gap-2" onclick="openInvestModal()">
+                        <i class="bi bi-shield-lock-fill"></i> Release Funds (Razorpay)
+                    </button>
+                    <span class="badge-channel">Direct Channel</span>
+                </div>
+            </div>
+
+            <!-- PROPOSAL & ESCROW RIBBON -->
+            <div class="px-4 py-2 bg-light border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size:0.85rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted">Pitch Desk:</span>
+                    <strong class="text-dark"><c:out value="${proposal.title}"/></strong>
+                    <span class="badge bg-secondary rounded-pill" style="font-size:0.75rem;"><c:out value="${proposal.category}"/></span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div><span class="text-muted">Needed:</span> <strong>₹<fmt:formatNumber value="${proposal.fundingNeeded}" type="number" maxFractionDigits="2"/></strong></div>
+                    <div><span class="text-muted">Raised:</span> <strong class="text-success">₹<fmt:formatNumber value="${proposal.amountRaised}" type="number" maxFractionDigits="2"/></strong></div>
+                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1 fw-bold" onclick="openInvestModal()">
+                        <i class="bi bi-wallet2 me-1"></i> Release Funds
+                    </button>
+                </div>
             </div>
 
             <!-- Messages Area -->
             <div class="chat-messages" id="messageArea">
                 <c:forEach var="msg" items="${chatHistory}">
-                    <div class="message ${msg.senderRole == 'INVESTOR' ? 'sent' : 'received'}">
-                        <div>${msg.message}</div>
-                        <div class="msg-time">${msg.formattedTimestamp}</div>
-                    </div>
+                    <c:choose>
+                        <c:when test="${fn:contains(msg.message, '💰') or fn:contains(msg.message, 'INVESTOR PAYMENT') or fn:contains(msg.message, 'ADMIN DISBURSEMENT')}">
+                            <div class="message" style="max-width:85%; align-self:center; background:#FFFBEB; border:1px solid #FDE68A; color:#92400E; border-radius:14px; padding:12px 18px; text-align:center; font-size:0.88rem; line-height:1.5;">
+                                <div style="font-weight:600;"><c:out value="${msg.message}"/></div>
+                                <div class="msg-time" style="text-align:center; color:#B45309; margin-top:4px;"><c:out value="${msg.formattedTimestamp}"/></div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="message ${msg.senderRole == 'INVESTOR' ? 'sent' : 'received'}">
+                                <div><c:out value="${msg.message}"/></div>
+                                <div class="msg-time"><c:out value="${msg.formattedTimestamp}"/></div>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </c:forEach>
                 <c:if test="${empty chatHistory}">
                     <div class="text-center text-muted my-auto py-5">
@@ -395,6 +428,202 @@
     });
 </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+
+<!-- INVESTOR ESCROW RELEASE MODAL -->
+<div class="modal fade" id="investFundsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header text-white p-3 border-0" style="background:#2E1B33;">
+                <div>
+                    <h6 class="modal-title fw-bold m-0"><i class="bi bi-shield-check text-rose me-2"></i>Release Funds via Razorpay</h6>
+                    <small class="text-white-50">Transferred to Admin Escrow until verified &amp; released</small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-muted">Selected Proposal</label>
+                    <div class="p-2 bg-light rounded-3 fw-bold text-dark"><c:out value="${proposal.title}"/></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small" for="chatInvestAmount">Amount to Release to Admin Escrow (₹) *</label>
+                    <input type="number" id="chatInvestAmount" class="form-control form-control-lg rounded-3 fw-bold" placeholder="e.g. 10000" min="1" step="100" required>
+                    <div class="form-text">This payment goes directly to the Admin Escrow account via Razorpay. Admin will manually disburse funds to the entrepreneur.</div>
+                </div>
+                <div class="p-3 bg-light rounded-3 d-flex align-items-center gap-3 mb-3 border">
+                    <i class="bi bi-shield-lock-fill text-success fs-3"></i>
+                    <div class="small text-muted">
+                        Secured with Razorpay payment gateway. Traceable transaction recorded in Admin Escrow.
+                    </div>
+                </div>
+                <div id="paymentAlert" class="alert alert-danger d-none py-2 small"></div>
+                <button type="button" class="btn btn-danger w-100 py-3 rounded-pill fw-bold" id="btnPayRazorpay" onclick="triggerChatRazorpay()" style="background:var(--primary-rose); border-color:var(--primary-rose);">
+                    <i class="bi bi-credit-card-2-front me-2"></i> Pay &amp; Transfer to Admin Escrow
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MOCK CHECKOUT MODAL (TEST FALLBACK) -->
+<div class="modal fade" id="mockCheckoutModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-dark text-white p-3 border-0" style="background:#0c2340 !important;">
+                <div>
+                    <h6 class="modal-title fw-bold m-0" style="letter-spacing:1px;">RAZORPAY GATEWAY</h6>
+                    <span class="text-white-50 small" style="font-size:11px;">Simulation Environment</span>
+                </div>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="spinner-border text-primary my-3" role="status"></div>
+                <h6 class="fw-bold">Processing Escrow Payment...</h6>
+                <p class="text-muted small">Transacting with Fight D Fear Admin Escrow.</p>
+                <div class="badge bg-success-subtle text-success fs-6 px-3 py-2 border rounded-pill my-2" id="mockAmountDisplay">₹0</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    var investModalInstance = null;
+    var mockModalInstance = null;
+    var ctxPath = '${pageContext.request.contextPath}';
+    var proposalId = ${proposal.id};
+    var razorpayKeyId = '${not empty razorpayKeyId ? razorpayKeyId : "rzp_test_RIlD5bEKRjyn3h"}';
+
+    function openInvestModal() {
+        if (!investModalInstance) {
+            investModalInstance = new bootstrap.Modal(document.getElementById('investFundsModal'));
+        }
+        document.getElementById('paymentAlert').classList.add('d-none');
+        document.getElementById('chatInvestAmount').value = '';
+        investModalInstance.show();
+    }
+
+    function triggerChatRazorpay() {
+        var amtInput = document.getElementById('chatInvestAmount');
+        var amount = parseFloat(amtInput.value);
+        var alertBox = document.getElementById('paymentAlert');
+        alertBox.classList.add('d-none');
+
+        if (isNaN(amount) || amount <= 0) {
+            alertBox.textContent = 'Please enter a valid investment amount greater than 0.';
+            alertBox.classList.remove('d-none');
+            return;
+        }
+
+        var btn = document.getElementById('btnPayRazorpay');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Initiating Razorpay...';
+
+        var csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        // Step 1: Create Order
+        fetch(ctxPath + '/investor/proposal/' + proposalId + '/create-order', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({ amount: amount })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-credit-card-2-front me-2"></i> Pay &amp; Transfer to Admin Escrow';
+
+            if (data.error) {
+                alertBox.textContent = data.error;
+                alertBox.classList.remove('d-none');
+                return;
+            }
+
+            investModalInstance.hide();
+
+            if (data.isMock) {
+                showMockDialog(data.orderId, amount);
+            } else {
+                var options = {
+                    key: data.keyId || razorpayKeyId,
+                    amount: data.amount,
+                    currency: data.currency || 'INR',
+                    name: 'Fight D Fear Admin Escrow',
+                    description: 'Escrow Fund Release for ' + '${proposal.title}',
+                    order_id: data.orderId,
+                    prefill: {
+                        name: '${investor.fullName}',
+                        email: '${investor.email}',
+                        contact: '${investor.phone}'
+                    },
+                    theme: { color: '#F43F5E' },
+                    handler: function(response) {
+                        verifyChatPayment(response, amount);
+                    }
+                };
+                var rzp = new Razorpay(options);
+                rzp.open();
+            }
+        })
+        .catch(function(err) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-credit-card-2-front me-2"></i> Pay &amp; Transfer to Admin Escrow';
+            alertBox.textContent = 'Network error: ' + err.message;
+            alertBox.classList.remove('d-none');
+        });
+    }
+
+    function verifyChatPayment(rzpResponse, amount) {
+        var csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        fetch(ctxPath + '/investor/proposal/' + proposalId + '/verify-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({
+                razorpay_payment_id: rzpResponse.razorpay_payment_id,
+                razorpay_order_id: rzpResponse.razorpay_order_id,
+                razorpay_signature: rzpResponse.razorpay_signature,
+                amount: amount
+            })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res.success) {
+                window.location.reload();
+            } else {
+                alert('Payment verification failed: ' + (res.error || 'Unknown error'));
+            }
+        })
+        .catch(function(err) {
+            alert('Error verifying payment: ' + err.message);
+        });
+    }
+
+    function showMockDialog(orderId, amount) {
+        if (!mockModalInstance) {
+            mockModalInstance = new bootstrap.Modal(document.getElementById('mockCheckoutModal'));
+        }
+        document.getElementById('mockAmountDisplay').textContent = '₹' + amount.toFixed(2);
+        mockModalInstance.show();
+
+        setTimeout(function() {
+            mockModalInstance.hide();
+            verifyChatPayment({
+                razorpay_payment_id: 'pay_mock_' + Date.now(),
+                razorpay_order_id: orderId,
+                razorpay_signature: 'mock_signature'
+            }, amount);
+        }, 1200);
+    }
+</script>
+
 </body>
 </html>
 

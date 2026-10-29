@@ -1414,7 +1414,7 @@
                 <p class="section-desc">Select the themes and categories of women-focused events you organize (at least 1 required).</p>
 
                 <div class="chip-grid">
-                    <c:forEach var="cat" items="${['Health & Wellness', 'Entrepreneurship & Career', 'Fitness & Sports', 'Education & Skills', 'Social & Community', 'Safety & Awareness', 'Arts & Culture', 'Financial Literacy', 'Motherhood & Parenting']}">
+                    <c:forEach var="cat" items="Health & Wellness,Entrepreneurship & Career,Fitness & Sports,Education & Skills,Social & Community,Safety & Awareness,Arts & Culture,Financial Literacy,Motherhood & Parenting">
                         <label class="chip-item ${host.eventCategories != null && host.eventCategories.contains(cat) ? 'active' : ''}">
                             <input type="checkbox" name="eventCategories" class="cb-category" value="${cat}" ${host.eventCategories != null && host.eventCategories.contains(cat) ? 'checked' : ''} onchange="toggleChipActive(this); recalculateProgress();">
                             <i class="bi ${host.eventCategories != null && host.eventCategories.contains(cat) ? 'bi-check-circle-fill' : 'bi-circle'}"></i>
@@ -1434,7 +1434,7 @@
                 <p class="section-desc">Select the attendee groups you primarily cater to (at least 1 required).</p>
 
                 <div class="chip-grid">
-                    <c:forEach var="aud" items="${['Women Only', 'College Girls', 'Working Professionals', 'Mothers & Homemakers', 'Senior Citizens', 'Entrepreneurs & Founders', 'Young Girls (Teens)']}">
+                    <c:forEach var="aud" items="Women Only,College Girls,Working Professionals,Mothers & Homemakers,Senior Citizens,Entrepreneurs & Founders,Young Girls (Teens)">
                         <label class="chip-item ${host.audience != null && host.audience.contains(aud) ? 'active' : ''}">
                             <input type="checkbox" name="audience" class="cb-audience" value="${aud}" ${host.audience != null && host.audience.contains(aud) ? 'checked' : ''} onchange="toggleChipActive(this); recalculateProgress();">
                             <i class="bi ${host.audience != null && host.audience.contains(aud) ? 'bi-check-circle-fill' : 'bi-circle'}"></i>
@@ -1465,7 +1465,7 @@
                 <p class="section-desc">Select the facilities available at your venue for attendees.</p>
 
                 <div class="chip-grid">
-                    <c:forEach var="fac" items="${['Parking', 'Wi-Fi', 'Projector / Screen', 'Air Conditioned', 'Clean Restroom', 'Refreshments', 'First Aid Kit', 'Sound System', 'Wheelchair Accessible', 'CCTV & Security', 'Childcare Corner']}">
+                    <c:forEach var="fac" items="Parking,Wi-Fi,Projector / Screen,Air Conditioned,Clean Restroom,Refreshments,First Aid Kit,Sound System,Wheelchair Accessible,CCTV & Security,Childcare Corner">
                         <label class="chip-item ${host.facilities != null && host.facilities.contains(fac) ? 'active' : ''}">
                             <input type="checkbox" name="facilities" class="cb-facility" value="${fac}" ${host.facilities != null && host.facilities.contains(fac) ? 'checked' : ''} onchange="toggleChipActive(this);">
                             <i class="bi ${host.facilities != null && host.facilities.contains(fac) ? 'bi-check-circle-fill' : 'bi-circle'}"></i>
@@ -1486,7 +1486,7 @@
                 <div class="form-group full">
                     <label>6.1 Open Days <span class="req">*</span></label>
                     <div class="chip-grid">
-                        <c:forEach var="day" items="${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}">
+                        <c:forEach var="day" items="Mon,Tue,Wed,Thu,Fri,Sat,Sun">
                             <label class="chip-item ${host.openDays != null && host.openDays.contains(day) ? 'active' : ''}">
                                 <input type="checkbox" name="openDays" class="cb-day" value="${day}" ${host.openDays != null && host.openDays.contains(day) ? 'checked' : ''} onchange="toggleChipActive(this); recalculateProgress();">
                                 <i class="bi ${host.openDays != null && host.openDays.contains(day) ? 'bi-check-circle-fill' : 'bi-circle'}"></i>

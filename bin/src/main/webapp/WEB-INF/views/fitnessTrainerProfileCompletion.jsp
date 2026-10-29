@@ -626,7 +626,7 @@
                     <div class="section-card">
                         <div class="section-header">3. Specializations & Categories *</div>
                         <div class="chips-container">
-                            <c:forEach var="cat" items="${['Weight Loss', 'HIIT', 'Yoga', 'Strength Training', 'Zumba', 'Aerobics', 'Pilates', 'Self-Defense Fitness', 'Pre/Post Natal', 'Senior Fitness']}">
+                            <c:forEach var="cat" items="Weight Loss,HIIT,Yoga,Strength Training,Zumba,Aerobics,Pilates,Self-Defense Fitness,Pre/Post Natal,Senior Fitness">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="specializations" class="spec-checkbox" value="${cat}" ${trainer.specializations != null && trainer.specializations.contains(cat) ? 'checked' : ''}>
                                     <span class="chip-label">${cat}</span>
@@ -640,7 +640,7 @@
                         <div class="section-header">4. Who I serve</div>
                         <label style="font-size: 0.82rem; font-weight: 600; color: var(--navy);">4.1 Target Audience *</label>
                         <div class="chips-container" style="margin-bottom: 14px;">
-                            <c:forEach var="aud" items="${['Women Only', 'Beginners', 'All Fitness Levels', 'Post-Rehab']}">
+                            <c:forEach var="aud" items="Women Only,Beginners,All Fitness Levels,Post-Rehab">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="audience" class="aud-checkbox" value="${aud}" ${trainer.audience != null && trainer.audience.contains(aud) ? 'checked' : ''}>
                                     <span class="chip-label">${aud}</span>
@@ -660,7 +660,7 @@
                     <div class="section-card">
                         <div class="section-header">5. Studio Amenities</div>
                         <div class="chips-container">
-                            <c:forEach var="fac" items="${['Private Studio', 'Changing Room', 'Shower', 'Locker', 'AC', 'Free Weights', 'Cardio Equipment', 'Mirrors', 'Parking']}">
+                            <c:forEach var="fac" items="Private Studio,Changing Room,Shower,Locker,AC,Free Weights,Cardio Equipment,Mirrors,Parking">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="facilities" class="fac-checkbox" value="${fac}" ${trainer.facilities != null && trainer.facilities.contains(fac) ? 'checked' : ''}>
                                     <span class="chip-label">${fac}</span>
@@ -674,7 +674,7 @@
                         <div class="section-header">6. Hours & calendar</div>
                         <label style="font-size: 0.82rem; font-weight: 600; color: var(--navy);">6.1 Open days *</label>
                         <div class="chips-container" style="margin-bottom: 14px;">
-                            <c:forEach var="day" items="${['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']}">
+                            <c:forEach var="day" items="MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="availableDays" value="${day}" ${trainer.openDays != null && trainer.openDays.contains(day) ? 'checked' : ''}>
                                     <span class="chip-label">${day.substring(0, 3)}</span>

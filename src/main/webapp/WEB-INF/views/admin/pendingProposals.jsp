@@ -398,6 +398,7 @@
                       <td class="actions-col">
                         <div style="display:flex;gap:6px;flex-wrap:wrap;">
                           <a href="${pageContext.request.contextPath}/admin/investors/about/${inv.id}" class="pv-btn pv-btn-view"><i class="fas fa-eye"></i> View</a>
+                          <a href="${pageContext.request.contextPath}/admin/proposal-chats" class="pv-btn pv-btn-view" style="color:#2563EB; border-color:#BFDBFE; background:#EFF6FF;"><i class="fas fa-comments"></i> Chats</a>
                           <c:if test="${inv.verificationStatus != 'VERIFIED'}">
                             <form method="post" action="${pageContext.request.contextPath}/admin/investors/${inv.id}/approve" style="display:inline;">
                               <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
@@ -611,9 +612,14 @@
                           <c:out value="${inv.formattedCreatedAt}"/>
                         </td>
                         <td class="actions-col">
-                          <button class="pv-btn pv-btn-release" onclick="openReleaseModal(${inv.id}, ${inv.amount}, '${inv.proposal.entrepreneur.fullName}', '${inv.investor.fullName}')">
-                            <i class="fas fa-paper-plane"></i> Release Funds
-                          </button>
+                          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                            <button type="button" class="pv-btn pv-btn-release" onclick="openReleaseModal(${inv.id}, ${inv.amount}, '${fn:escapeXml(inv.proposal.entrepreneur.fullName)}', '${fn:escapeXml(inv.investor.fullName)}', ${inv.proposal.id}, ${inv.investor.id}, '${fn:escapeXml(inv.proposal.title)}')">
+                              <i class="fas fa-paper-plane"></i> Release Funds
+                            </button>
+                            <button type="button" class="pv-btn pv-btn-view" style="color:#2563EB; border-color:#BFDBFE; background:#EFF6FF;" onclick="openAdminChatModal(${inv.proposal.id}, ${inv.investor.id}, '${fn:escapeXml(inv.proposal.title)}', '${fn:escapeXml(inv.investor.fullName)}', '${fn:escapeXml(inv.proposal.entrepreneur.fullName)}')">
+                              <i class="fas fa-comments"></i> Chat
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     </c:if>
@@ -648,7 +654,12 @@
                     <td class="pv-detail">
                       <c:out value="${inv.formattedCreatedAt}"/>
                     </td>
-                    <td><span class="pv-badge badge-released">✓ Released</span></td>
+                    <td>
+                      <span class="pv-badge badge-released mb-1">✓ Released</span>
+                      <button type="button" class="pv-btn pv-btn-view" style="color:#2563EB; border-color:#BFDBFE; background:#EFF6FF; font-size:0.75rem; padding:4px 8px;" onclick="openAdminChatModal(${inv.proposal.id}, ${inv.investor.id}, '${fn:escapeXml(inv.proposal.title)}', '${fn:escapeXml(inv.investor.fullName)}', '${fn:escapeXml(inv.proposal.entrepreneur.fullName)}')">
+                        <i class="fas fa-comments"></i> Chat
+                      </button>
+                    </td>
                   </tr>
                 </c:if>
               </c:forEach>
@@ -666,9 +677,14 @@
 <div class="pv-modal-overlay" id="releaseModalOverlay">
   <div class="pv-modal">
     <h3><i class="fas fa-paper-plane me-2" style="color:#A855F7;"></i>Release Escrow Funds</h3>
-    <p style="font-size:0.85rem;color:#64748B;margin-bottom:16px;">
-      Releasing funds for <strong id="releaseEntrepreneurName">—</strong> committed by investor <strong id="releaseInvestorName">—</strong>.
-    </p>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <p style="font-size:0.85rem;color:#64748B;margin:0;">
+        Releasing funds for <strong id="releaseEntrepreneurName">—</strong> committed by investor <strong id="releaseInvestorName">—</strong>.
+      </p>
+      <button type="button" class="pv-btn pv-btn-view" id="btnReleaseModalChat" style="font-size:0.75rem; color:#2563EB; border-color:#BFDBFE; background:#EFF6FF;">
+        <i class="fas fa-comments me-1"></i> View Chat
+      </button>
+    </div>
     <p style="font-size:0.85rem;color:#64748B;">Total held in escrow: <strong id="releaseTotalAmount" style="color:#7C3AED;">₹0</strong></p>
     <form id="releaseForm" method="post" action="">
       <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
@@ -694,7 +710,7 @@
   }
 
   // ── Release modal ──
-  function openReleaseModal(investmentId, amount, entrepreneurName, investorName) {
+  function openReleaseModal(investmentId, amount, entrepreneurName, investorName, proposalId, investorId, proposalTitle) {
     document.getElementById('releaseEntrepreneurName').textContent = entrepreneurName;
     document.getElementById('releaseInvestorName').textContent = investorName;
     document.getElementById('releaseTotalAmount').textContent = '₹' + amount.toFixed(2);
@@ -702,7 +718,64 @@
     document.getElementById('releasedAmount').value = amount;
     document.getElementById('releaseForm').action =
       '${pageContext.request.contextPath}/admin/investments/' + investmentId + '/release';
+    
+    var chatBtn = document.getElementById('btnReleaseModalChat');
+    if (chatBtn) {
+      chatBtn.onclick = function() {
+        openAdminChatModal(proposalId, investorId, proposalTitle, investorName, entrepreneurName);
+      };
+    }
     document.getElementById('releaseModalOverlay').classList.add('open');
+  }
+
+  function openAdminChatModal(proposalId, investorId, proposalTitle, investorName, entrepreneurName) {
+    document.getElementById('chatModalTitle').textContent = (investorName || 'Investor') + ' & ' + (entrepreneurName || 'Entrepreneur');
+    document.getElementById('chatModalSubtitle').textContent = 'Pitch Desk: ' + (proposalTitle || 'Proposal');
+    var list = document.getElementById('adminChatMessagesList');
+    list.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading chat transcript...</div>';
+    document.getElementById('adminChatModalOverlay').classList.add('open');
+
+    fetch('${pageContext.request.contextPath}/admin/chats/history?proposalId=' + proposalId + '&investorId=' + investorId)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || data.length === 0) {
+          list.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-comment-slash d-block mb-2" style="font-size:2rem;opacity:0.3;"></i>No messages exchanged yet between this investor and entrepreneur.</div>';
+          return;
+        }
+        var html = '';
+        data.forEach(function(m) {
+          var isInv = m.role === 'INVESTOR';
+          var isMilestone = m.message.indexOf('💰') !== -1 || m.message.indexOf('INVESTOR PAYMENT') !== -1 || m.message.indexOf('ADMIN DISBURSEMENT') !== -1;
+          if (isMilestone) {
+            html += '<div style="align-self:center; max-width:88%; background:#FFFBEB; border:1px solid #FDE68A; color:#92400E; border-radius:10px; padding:10px 14px; font-size:0.83rem; text-align:center;">' +
+                    '<div style="font-weight:600;">' + escHtml(m.message) + '</div>' +
+                    '<div style="font-size:0.7rem; color:#B45309; margin-top:4px;">' + escHtml(m.timestamp) + '</div></div>';
+          } else {
+            var bg = isInv ? '#F0FDF4' : '#F1F5F9';
+            var color = isInv ? '#15803D' : '#1E293B';
+            var align = isInv ? 'flex-end' : 'flex-start';
+            var icon = isInv ? '<i class="fas fa-user-tie me-1" style="color:#3B82F6;"></i>' : '<i class="fas fa-lightbulb me-1" style="color:#F59E0B;"></i>';
+            html += '<div style="display:flex; flex-direction:column; align-items:' + align + '; max-width:75%; align-self:' + align + ';">' +
+                    '<div style="background:' + bg + '; color:' + color + '; padding:9px 14px; border-radius:12px; font-size:0.88rem; line-height:1.4;">' + escHtml(m.message) + '</div>' +
+                    '<div style="font-size:0.7rem; color:#94A3B8; margin-top:3px;">' + icon + escHtml(m.sender) + ' • ' + escHtml(m.timestamp) + '</div>' +
+                    '</div>';
+          }
+        });
+        list.innerHTML = html;
+        list.scrollTop = list.scrollHeight;
+      })
+      .catch(function(err) {
+        list.innerHTML = '<div class="text-danger text-center py-4">Failed to load chat: ' + err.message + '</div>';
+      });
+  }
+
+  function closeAdminChatModal() {
+    document.getElementById('adminChatModalOverlay').classList.remove('open');
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
   function closeReleaseModal() {
     document.getElementById('releaseModalOverlay').classList.remove('open');
@@ -725,5 +798,25 @@
     });
   }
 </script>
+
+<%-- Admin Chat Transcript Modal --%>
+<div class="pv-modal-overlay" id="adminChatModalOverlay">
+  <div class="pv-modal" style="max-width: 650px; width: 95%; max-height: 85vh; display: flex; flex-direction: column;">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; padding-bottom:12px; margin-bottom:14px;">
+      <div>
+        <h3 style="margin:0; font-size:1.15rem; color:#1E293B;"><i class="fas fa-comments text-danger me-2"></i><span id="chatModalTitle">Investor - Entrepreneur Chat</span></h3>
+        <p style="margin:4px 0 0; font-size:0.78rem; color:#64748B;" id="chatModalSubtitle"></p>
+      </div>
+      <button type="button" onclick="closeAdminChatModal()" style="border:none; background:none; font-size:1.4rem; color:#94A3B8; cursor:pointer;">&times;</button>
+    </div>
+    <div id="adminChatMessagesList" style="flex:1; overflow-y:auto; padding:10px 5px; min-height:260px; max-height:420px; display:flex; flex-direction:column; gap:10px;">
+      <div class="text-center text-muted py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading transcript...</div>
+    </div>
+    <div style="border-top:1px solid #E2E8F0; padding-top:12px; margin-top:14px; display:flex; justify-content:flex-end;">
+      <button type="button" class="pv-btn pv-btn-view" onclick="closeAdminChatModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -209,7 +209,7 @@
 
 <div class="layout">
   <!-- Shared Navigation Sidebar -->
-  <%@ include file="globalAdminMenu.jsp" %>
+  <%@ include file="src/main/webapp/WEB-INF/views/globalAdminMenu.jsp" %>
 
   <!-- Main Content Dashboard -->
   <main class="main w-100">

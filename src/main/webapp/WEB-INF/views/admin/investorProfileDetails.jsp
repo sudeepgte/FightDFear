@@ -7,7 +7,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><c:out value="${investor.fullName}"/> � Investor Profile Details | Fight D Fear Admin</title>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
+  <title><c:out value="${investor.fullName}" /> � Investor Profile Details | Fight D Fear Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -555,6 +557,7 @@
             <!-- Approve -->
             <c:if test="${investor.partnerProfileStatus != 'APPROVED'}">
             <form action="${pageContext.request.contextPath}/admin/investors/${investor.id}/approve" method="post" class="m-0">
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                 <button type="submit" class="btn-action-approve" onclick="return confirm('Approve this investor for platform access?');">
                     <i class="bi bi-check-circle-fill me-1"></i> Approve Investor
                 </button>
@@ -579,6 +582,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/investors/${investor.id}/request-changes" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square text-warning me-2"></i> Request Profile Changes</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -604,6 +608,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <form action="${pageContext.request.contextPath}/admin/investors/${investor.id}/reject" method="post">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
                     <div class="modal-header">
                         <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-octagon me-2"></i> Reject Application</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -625,6 +630,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </div></main></div></body>
 </html>
 

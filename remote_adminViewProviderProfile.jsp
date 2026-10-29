@@ -105,7 +105,7 @@
 <c:set var="apAdmin" value="${empty admin ? sessionScope.admin : admin}"/>
 
 <div class="layout">
-  <%@ include file="globalAdminMenu.jsp" %>
+  <%@ include file="src/main/webapp/WEB-INF/views/globalAdminMenu.jsp" %>
   <main class="main">
     <div class="ap-topbar topbar">
       <div class="ap-topbar-left">

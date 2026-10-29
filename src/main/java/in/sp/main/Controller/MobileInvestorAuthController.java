@@ -177,9 +177,10 @@ public class MobileInvestorAuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error("Investor not found"));
         }
         Investor inv = opt.get();
-        boolean ok = passwordService.matchesAndUpgrade(password, inv.getPassword(), hashed -> {
-            inv.setPassword(hashed);
-            investorRepository.save(inv);
+        final Investor authInv = inv;
+        boolean ok = passwordService.matchesAndUpgrade(password, authInv.getPassword(), hashed -> {
+            authInv.setPassword(hashed);
+            investorRepository.save(authInv);
         });
         if (!ok) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error("Invalid password"));
 
@@ -276,6 +277,7 @@ public class MobileInvestorAuthController {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
         inv = investorRepository.findById(inv.getId()).orElse(inv);
+        inv = investorProfileService.healApproval(inv);
         session.setAttribute("loggedInvestor", inv);
         final Investor investor = inv;
 
@@ -306,9 +308,6 @@ public class MobileInvestorAuthController {
                 .toList();
 
         List<Map<String, Object>> marketplace = publicMarketplace(investor, null, null, "newest");
-
-        investor = investorProfileService.healApproval(investor);
-        session.setAttribute("loggedInvestor", investor);
         boolean approved = InvestorProfileService.isApproved(investor);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("investor", investorSummary(investor));

@@ -2744,7 +2744,7 @@ public class AdminController {
             investorProfileService.healApproval(i);
         });
         ra.addFlashAttribute("message", "Investor approved & verified successfully. Dashboard is now unlocked.");
-        return "redirect:/admin/pending-proposals";
+        return "redirect:/admin/pending-proposals#investors";
     }
 
     @PostMapping("/investors/{id}/reject")
@@ -2756,7 +2756,24 @@ public class AdminController {
             investorRepository.save(i);
         });
         ra.addFlashAttribute("message", "Investor verification rejected.");
-        return "redirect:/admin/pending-proposals";
+        return "redirect:/admin/pending-proposals#investors";
+    }
+
+    @PostMapping("/investors/{id}/request-changes")
+    @Transactional
+    public String requestInvestorChanges(
+            @PathVariable Long id,
+            @RequestParam(value = "note", required = false) String note,
+            HttpSession session,
+            RedirectAttributes ra) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        investorRepository.findById(id).ifPresent(i -> {
+            investorProfileService.setLifecycleStatus(i, PartnerProfileStatus.CHANGES_REQUESTED);
+            i.setChangesRequestedNote(note);
+            investorRepository.save(i);
+        });
+        ra.addFlashAttribute("message", "Profile change request sent to investor.");
+        return "redirect:/admin/pending-proposals#investors";
     }
 
     @GetMapping({"/investors/about/{id}", "/investors/{id}/details"})
@@ -2905,6 +2922,16 @@ public class AdminController {
                 BusinessProposal proposal = inv.getProposal();
                 proposal.setAmountRaised(proposal.getAmountRaised() + releasedAmount);
                 businessProposalRepository.save(proposal);
+
+                // Notify chat thread of the admin escrow release
+                try {
+                    ProposalChatMessage adminMsg = new ProposalChatMessage();
+                    adminMsg.setProposal(proposal);
+                    adminMsg.setInvestor(inv.getInvestor());
+                    adminMsg.setSenderRole("ENTREPRENEUR");
+                    adminMsg.setMessage("🏛️ ADMIN DISBURSEMENT: Admin has released ₹" + String.format("%.2f", releasedAmount) + " from escrow to Entrepreneur " + proposal.getEntrepreneur().getFullName() + (adminAmount > 0 ? " [₹" + String.format("%.2f", adminAmount) + " retained by Admin as platform commission]" : "") + ".");
+                    proposalChatMessageRepository.save(adminMsg);
+                } catch (Exception ignored) {}
                 
                 String msg = "Successfully processed investment release: ₹" + releasedAmount + " released to entrepreneur " + proposal.getEntrepreneur().getFullName();
                 if (adminAmount > 0) {

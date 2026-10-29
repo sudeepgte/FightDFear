@@ -4,6 +4,7 @@ import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Service.InvestorRegistrationService;
+import in.sp.main.Service.InvestorProfileService;
 import in.sp.main.Config.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -114,9 +115,9 @@ public class InvestorController {
         Investor existing = getLoggedInvestor(session);
         if (existing != null) {
             Investor fresh = investorRepository.findById(existing.getId()).orElse(existing);
-            investorProfileService.healApproval(fresh);
+            fresh = investorProfileService.healApproval(fresh);
             session.setAttribute("loggedInvestor", fresh);
-            if (!InvestorProfileService.shouldForceProfileCompletion(fresh)) {
+            if (InvestorProfileService.isApproved(fresh) || !InvestorProfileService.shouldForceProfileCompletion(fresh)) {
                 return "redirect:/investor/dashboard";
             }
             return "redirect:/investor/complete-profile";
@@ -177,6 +178,9 @@ public class InvestorController {
                 Investor freshInv = investorRepository.findById(inv.getId()).orElse(inv);
                 freshInv = investorProfileService.healApproval(freshInv);
                 session.setAttribute("loggedInvestor", freshInv);
+                if (InvestorProfileService.isApproved(freshInv)) {
+                    return "redirect:/investor/dashboard";
+                }
                 if (InvestorProfileService.shouldForceProfileCompletion(freshInv)) {
                     return "redirect:/investor/complete-profile";
                 }
@@ -213,9 +217,9 @@ public class InvestorController {
         refreshedInv = investorProfileService.healApproval(refreshedInv);
         session.setAttribute("loggedInvestor", refreshedInv);
 
-        // Approved and pending-admin investors go to dashboard, not this form
-        if (!InvestorProfileService.shouldForceProfileCompletion(refreshedInv)
-                && InvestorProfileService.isApproved(refreshedInv)) {
+        // Approved investors always go to dashboard, not this form
+        if (InvestorProfileService.isApproved(refreshedInv)
+                || !InvestorProfileService.shouldForceProfileCompletion(refreshedInv)) {
             return "redirect:/investor/dashboard";
         }
 
@@ -365,8 +369,9 @@ public class InvestorController {
         List<Investment> investments = investmentRepository.findByInvestor(refreshedInv);
 
         // Query proposal questions asked by this investor
+        final Long currentInvestorId = refreshedInv.getId();
         List<ProposalQuestion> questionsAsked = proposalQuestionRepository.findAll().stream()
-                .filter(q -> q.getInvestor().getId().equals(refreshedInv.getId()))
+                .filter(q -> q.getInvestor() != null && currentInvestorId.equals(q.getInvestor().getId()))
                 .collect(Collectors.toList());
 
         double totalInvested = investments.stream().mapToDouble(Investment::getAmount).sum();
@@ -608,6 +613,16 @@ public class InvestorController {
             investment.setRazorpayOrderId(razorpayOrderId);
             investmentRepository.save(investment);
 
+            // Post milestone notification to chat thread between investor and entrepreneur
+            try {
+                in.sp.main.Entities.ProposalChatMessage sysMsg = new in.sp.main.Entities.ProposalChatMessage();
+                sysMsg.setProposal(proposal);
+                sysMsg.setInvestor(freshInv);
+                sysMsg.setSenderRole("INVESTOR");
+                sysMsg.setMessage("💰 INVESTOR PAYMENT: ₹" + String.format("%.2f", amount) + " committed and transferred to Admin Escrow via Razorpay [Payment ID: " + razorpayPaymentId + "]. Admin will verify and disburse funds to entrepreneur.");
+                proposalChatMessageRepository.save(sysMsg);
+            } catch (Exception ignored) {}
+
             result.put("success", true);
             result.put("message", "Payment of ₹" + amount + " received and held in Admin Escrow. Admin will verify and release funds to the entrepreneur.");
             return ResponseEntity.ok(result);
@@ -821,6 +836,7 @@ public class InvestorController {
         model.addAttribute("investor", freshInv);
         model.addAttribute("chatHistory", chatHistory);
         model.addAttribute("senderRole", "INVESTOR");
+        model.addAttribute("razorpayKeyId", razorpayKeyId);
         return "investor/chat";
     }
 

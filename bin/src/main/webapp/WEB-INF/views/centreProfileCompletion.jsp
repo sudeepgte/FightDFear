@@ -589,7 +589,7 @@
                             <c:if test="${empty center.about}"><span class="chip-missing"><i class="bi bi-exclamation-circle me-1"></i> Add Description</span></c:if>
                             <c:if test="${empty center.openTime or empty center.closeTime}"><span class="chip-missing"><i class="bi bi-exclamation-circle me-1"></i> Set Hours</span></c:if>
                             <c:if test="${empty center.profilePhoto}"><span class="chip-missing"><i class="bi bi-exclamation-circle me-1"></i> Upload Logo</span></c:if>
-                            <c:if test="${empty center.galleryPhotos or center.galleryPhotos.size() == 0}"><span class="chip-missing"><i class="bi bi-exclamation-circle me-1"></i> Upload Gallery</span></c:if>
+                            <c:if test="${empty center.galleryPhotos}"><span class="chip-missing"><i class="bi bi-exclamation-circle me-1"></i> Upload Gallery</span></c:if>
                             <c:if test="${empty center.stylesTaught}"><span class="chip-missing"><i class="bi bi-exclamation-circle me-1"></i> Select Styles</span></c:if>
                             <c:if test="${empty center.facilities}"><span class="chip-missing"><i class="bi bi-exclamation-circle me-1"></i> Add Amenities</span></c:if>
                         </div>
@@ -742,7 +742,7 @@
                         <div class="section-header">3. Styles taught *</div>
                         <p style="font-size: 0.8rem; color: var(--text-gray); margin-bottom: 8px;">Select all martial arts programs offered at your centre:</p>
                         <div class="chips-container">
-                            <c:forEach var="style" items="${['Karate', 'Taekwondo', 'Judo', 'Kung Fu', 'Self-Defence', 'MMA', 'Boxing', 'Kickboxing', 'Muay Thai', 'Krav Maga', 'Aikido', 'Kalaripayattu', 'Wrestling', 'Jiu-Jitsu']}">
+                            <c:forEach var="style" items="Karate,Taekwondo,Judo,Kung Fu,Self-Defence,MMA,Boxing,Kickboxing,Muay Thai,Krav Maga,Aikido,Kalaripayattu,Wrestling,Jiu-Jitsu">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="styles" class="style-checkbox" value="${style}" ${center.stylesTaught != null && center.stylesTaught.contains(style) ? 'checked' : ''}>
                                     <span class="chip-label">${style}</span>
@@ -756,7 +756,7 @@
                         <div class="section-header">4. Who can join</div>
                         <label style="font-size: 0.82rem; font-weight: 600; color: var(--navy);">4.1 Target Audience *</label>
                         <div class="chips-container" style="margin-bottom: 16px;">
-                            <c:forEach var="aud" items="${['Women', 'Girls (under 16)', 'Mixed', 'Men']}">
+                            <c:forEach var="aud" items="Women,Girls (under 16),Mixed,Men">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="audience" class="aud-checkbox" value="${aud}" ${center.audience != null && center.audience.contains(aud) ? 'checked' : ''}>
                                     <span class="chip-label">${aud}</span>
@@ -782,7 +782,7 @@
 
                         <label style="font-size: 0.82rem; font-weight: 600; color: var(--navy); margin-top: 14px; display: block;">4.4 Age groups</label>
                         <div class="chips-container">
-                            <c:forEach var="age" items="${['Kids 6–12', 'Teens 13–17', 'Adults 18+', '40+']}">
+                            <c:forEach var="age" items="Kids 6–12,Teens 13–17,Adults 18+,40+">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="ageGroups" value="${age}" ${center.ageGroups != null && center.ageGroups.contains(age) ? 'checked' : ''}>
                                     <span class="chip-label">${age}</span>
@@ -795,7 +795,7 @@
                     <div class="section-card">
                         <div class="section-header">5. Facilities & Amenities</div>
                         <div class="chips-container">
-                            <c:forEach var="fac" items="${['Mats', 'Changing room', 'Washroom', 'Drinking water', 'CCTV', 'First-aid', 'Parking', 'AC', 'Women-only hours', 'Beginner-friendly']}">
+                            <c:forEach var="fac" items="Mats,Changing room,Washroom,Drinking water,CCTV,First-aid,Parking,AC,Women-only hours,Beginner-friendly">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="facilities" class="fac-checkbox" value="${fac}" ${center.facilities != null && center.facilities.contains(fac) ? 'checked' : ''}>
                                     <span class="chip-label">${fac}</span>
@@ -809,7 +809,7 @@
                         <div class="section-header">6. Hours & calendar</div>
                         <label style="font-size: 0.82rem; font-weight: 600; color: var(--navy);">6.1 Open days *</label>
                         <div class="chips-container" style="margin-bottom: 14px;">
-                            <c:forEach var="day" items="${['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']}">
+                            <c:forEach var="day" items="MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="availableDays" class="day-checkbox" value="${day}">
                                     <span class="chip-label">${day.substring(0, 3)}</span>
@@ -842,7 +842,7 @@
                         </div>
                         <label style="font-size: 0.82rem; font-weight: 600; color: var(--navy);">7.3 What we offer *</label>
                         <div class="chips-container">
-                            <c:forEach var="offer" items="${['Regular class', 'Trial class', 'Belt grading', 'Workshops', 'Self-defence crash course']}">
+                            <c:forEach var="offer" items="Regular class,Trial class,Belt grading,Workshops,Self-defence crash course">
                                 <label class="chip-checkbox">
                                     <input type="checkbox" name="offers" value="${offer}" ${center.whatWeOffer != null && center.whatWeOffer.contains(offer) ? 'checked' : ''}>
                                     <span class="chip-label">${offer}</span>

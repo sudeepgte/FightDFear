@@ -2119,7 +2119,7 @@
 <div class="col-lg-4 col-md-12">
   <h4>Follow Us</h4>
   <p>Stay connected with us for safety updates, resources, and tips. Empower yourself and others!</p>
-  <jsp:include page="/WEB-INF/views/fragments/social-follow.jsp" />
+  <jsp:include page="../src/main/webapp/WEB-INF/views/fragments/social-follow.jsp" />
 </div>
 
 

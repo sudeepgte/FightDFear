@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -690,11 +691,13 @@
                     <div class="reviews-summary-box">
                         <div>
                             <div class="avg-rating-value">${avgRating > 0 ? avgRating : '—'}</div>
+                            <c:set var="starsCount" value="${avgRating > 0 ? (avgRating - (avgRating % 1)) : 0}"/>
+                            <c:set var="revCount" value="${not empty reviews ? fn:length(reviews) : 0}"/>
                             <div class="avg-rating-stars">
-                                <c:forEach begin="1" end="${avgRating.intValue() > 0 ? avgRating.intValue() : 0}" var="s"><i class="bi bi-star-fill"></i></c:forEach>
-                                <c:forEach begin="${(avgRating.intValue() > 0 ? avgRating.intValue() : 0) + 1}" end="5" var="s"><i class="bi bi-star star-empty"></i></c:forEach>
+                                <c:forEach begin="1" end="${starsCount}" var="s"><i class="bi bi-star-fill"></i></c:forEach>
+                                <c:forEach begin="${starsCount + 1}" end="5" var="s"><i class="bi bi-star star-empty"></i></c:forEach>
                             </div>
-                            <div class="text-muted text-center mt-2 small" style="font-weight: 600;">${reviews.size()} review${reviews.size() != 1 ? 's' : ''}</div>
+                            <div class="text-muted text-center mt-2 small" style="font-weight: 600;">${revCount} review${revCount != 1 ? 's' : ''}</div>
                         </div>
                     </div>
 
@@ -705,7 +708,7 @@
                                     <div class="premium-review-card">
                                         <div class="review-card-header">
                                             <div class="reviewer-avatar-box">
-                                                <div class="reviewer-avatar">${rev.user.fullName.substring(0,1).toUpperCase()}</div>
+                                                <div class="reviewer-avatar">${not empty rev.user.fullName ? fn:toUpperCase(fn:substring(rev.user.fullName, 0, 1)) : "U"}</div>
                                                 <div>
                                                     <div class="reviewer-title-name">${rev.user.fullName}</div>
                                                     <div class="review-stars-metric">

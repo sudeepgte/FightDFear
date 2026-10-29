@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -292,13 +294,36 @@
                 <span class="badge-channel">Direct Channel</span>
             </div>
 
+            <!-- PROPOSAL RIBBON -->
+            <div class="px-4 py-2 bg-light border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2" style="font-size:0.85rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted">Pitch Desk:</span>
+                    <strong class="text-dark"><c:out value="${proposal.title}"/></strong>
+                    <span class="badge bg-secondary rounded-pill" style="font-size:0.75rem;"><c:out value="${proposal.category}"/></span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <div><span class="text-muted">Needed:</span> <strong>₹<fmt:formatNumber value="${proposal.fundingNeeded}" type="number" maxFractionDigits="2"/></strong></div>
+                    <div><span class="text-muted">Raised:</span> <strong class="text-success">₹<fmt:formatNumber value="${proposal.amountRaised}" type="number" maxFractionDigits="2"/></strong></div>
+                </div>
+            </div>
+
             <!-- Messages Area -->
             <div class="chat-messages" id="messageArea">
                 <c:forEach var="msg" items="${chatHistory}">
-                    <div class="message ${msg.senderRole == 'ENTREPRENEUR' ? 'sent' : 'received'}">
-                        <div>${msg.message}</div>
-                        <div class="msg-time">${msg.formattedTimestamp}</div>
-                    </div>
+                    <c:choose>
+                        <c:when test="${fn:contains(msg.message, '💰') or fn:contains(msg.message, 'INVESTOR PAYMENT') or fn:contains(msg.message, 'ADMIN DISBURSEMENT')}">
+                            <div class="message" style="max-width:85%; align-self:center; background:#FFFBEB; border:1px solid #FDE68A; color:#92400E; border-radius:14px; padding:12px 18px; text-align:center; font-size:0.88rem; line-height:1.5;">
+                                <div style="font-weight:600;"><c:out value="${msg.message}"/></div>
+                                <div class="msg-time" style="text-align:center; color:#B45309; margin-top:4px;"><c:out value="${msg.formattedTimestamp}"/></div>
+                            </div>
+                        </c:when>
+                        <c:otherwise>
+                            <div class="message ${msg.senderRole == 'ENTREPRENEUR' ? 'sent' : 'received'}">
+                                <div><c:out value="${msg.message}"/></div>
+                                <div class="msg-time"><c:out value="${msg.formattedTimestamp}"/></div>
+                            </div>
+                        </c:otherwise>
+                    </c:choose>
                 </c:forEach>
                 <c:if test="${empty chatHistory}">
                     <div class="text-center text-muted my-auto py-5">

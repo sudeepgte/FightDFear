@@ -119,19 +119,19 @@
       <div class="ap-stats">
         <div class="ap-stat amber">
           <div class="ico"><i class="fas fa-clock"></i></div>
-          <div class="val">${(not empty pending ? pending.size() : 0) + (not empty pendingMarketplace ? pendingMarketplace.size() : 0)}</div>
+          <div class="val">${(not empty pending ? fn:length(pending) : 0) + (not empty pendingMarketplace ? fn:length(pendingMarketplace) : 0)}</div>
           <div class="lbl">Pending</div>
           <div class="sub">Requires review</div>
         </div>
         <div class="ap-stat green">
           <div class="ico"><i class="fas fa-check-circle"></i></div>
-          <div class="val">${(not empty verified ? verified.size() : 0) + (not empty verifiedMarketplace ? verifiedMarketplace.size() : 0)}</div>
+          <div class="val">${(not empty verified ? fn:length(verified) : 0) + (not empty verifiedMarketplace ? fn:length(verifiedMarketplace) : 0)}</div>
           <div class="lbl">Verified</div>
           <div class="sub">Live on shop</div>
         </div>
         <div class="ap-stat rose">
           <div class="ico"><i class="fas fa-times-circle"></i></div>
-          <div class="val">${(not empty rejected ? rejected.size() : 0) + (not empty rejectedMarketplace ? rejectedMarketplace.size() : 0)}</div>
+          <div class="val">${(not empty rejected ? fn:length(rejected) : 0) + (not empty rejectedMarketplace ? fn:length(rejectedMarketplace) : 0)}</div>
           <div class="lbl">Rejected</div>
           <div class="sub">Not listed</div>
         </div>
@@ -208,7 +208,7 @@
                           <span class="av">
                             <c:choose>
                               <c:when test="${not empty s.profilePhotoPath}">
-                                <img src="${fn:startsWith(s.profilePhotoPath,'http') ? s.profilePhotoPath : pageContext.request.contextPath.concat(s.profilePhotoPath)}" alt="">
+                                <img src="${fn:startsWith(s.profilePhotoPath,'http') ? s.profilePhotoPath : pageContext.request.contextPath}${fn:startsWith(s.profilePhotoPath,'http') ? '' : s.profilePhotoPath}" alt="">
                               </c:when>
                               <c:otherwise>${fn:substring(s.fullName,0,1)}</c:otherwise>
                             </c:choose>
@@ -272,7 +272,7 @@
                           <span class="av">
                             <c:choose>
                               <c:when test="${not empty p.profilePhotoPath}">
-                                <img src="${fn:startsWith(p.profilePhotoPath,'http') ? p.profilePhotoPath : pageContext.request.contextPath.concat(p.profilePhotoPath)}" alt="">
+                                <img src="${fn:startsWith(p.profilePhotoPath,'http') ? p.profilePhotoPath : pageContext.request.contextPath}${fn:startsWith(p.profilePhotoPath,'http') ? '' : p.profilePhotoPath}" alt="">
                               </c:when>
                               <c:otherwise>${fn:substring(p.fullName,0,1)}</c:otherwise>
                             </c:choose>

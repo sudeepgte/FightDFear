@@ -861,7 +861,7 @@
                         <label for="inputDesignation">Primary Designation <span class="req">*</span></label>
                         <select name="designation" id="inputDesignation" class="form-select">
                             <option value="">-- Select Coaching Designation --</option>
-                            <c:forEach var="desig" items="${['Certified Fitness Coach', 'Yoga & Meditation Instructor', 'Strength & Conditioning Coach', 'Functional Training Specialist', 'Pilates Instructor', 'Weight Loss & Nutrition Coach', 'Martial Arts & Self-Defense Coach', 'Senior Fitness Specialist', 'Post-Rehab & Corrective Exercise Coach', 'Personal Trainer']}">
+                            <c:forEach var="desig" items="Certified Fitness Coach,Yoga & Meditation Instructor,Strength & Conditioning Coach,Functional Training Specialist,Pilates Instructor,Weight Loss & Nutrition Coach,Martial Arts & Self-Defense Coach,Senior Fitness Specialist,Post-Rehab & Corrective Exercise Coach,Personal Trainer">
                                 <option value="${desig}" ${trainer.designation == desig ? 'selected' : ''}>${desig}</option>
                             </c:forEach>
                         </select>
@@ -983,7 +983,7 @@
                 <p class="section-desc">Select the fitness categories and workout styles you offer (minimum 1 required).</p>
 
                 <div class="chip-grid">
-                    <c:forEach var="cat" items="${['Yoga', 'Pilates', 'HIIT', 'Strength Training', 'Zumba / Dance Fitness', 'Cardio / Aerobics', 'CrossFit', 'Weight Loss', 'Post-Natal Fitness', 'Self-Defense & Kickboxing', 'Nutrition & Diet Coaching', 'Flexibility & Mobility']}">
+                    <c:forEach var="cat" items="Yoga,Pilates,HIIT,Strength Training,Zumba / Dance Fitness,Cardio / Aerobics,CrossFit,Weight Loss,Post-Natal Fitness,Self-Defense & Kickboxing,Nutrition & Diet Coaching,Flexibility & Mobility">
                         <label class="chip-item ${trainer.specializations != null && trainer.specializations.contains(cat) ? 'active' : ''}">
                             <input type="checkbox" name="specializations" class="spec-checkbox" value="${cat}" ${trainer.specializations != null && trainer.specializations.contains(cat) ? 'checked' : ''} onchange="toggleChipActive(this); recalculateProgress();">
                             <span>${cat}</span>
@@ -1003,7 +1003,7 @@
 
                 <label style="margin-bottom: 8px;">Target Client Audience <span class="req">*</span></label>
                 <div class="chip-grid">
-                    <c:forEach var="aud" items="${['Women Only', 'Beginners', 'Intermediate & Advanced', 'Teens (13-19)', 'Seniors (50+)', 'Post-Natal Mothers', 'Corporate Employees']}">
+                    <c:forEach var="aud" items="Women Only,Beginners,Intermediate & Advanced,Teens (13-19),Seniors (50+),Post-Natal Mothers,Corporate Employees">
                         <label class="chip-item ${trainer.audience != null && trainer.audience.contains(aud) ? 'active' : ''}">
                             <input type="checkbox" name="audience" class="aud-checkbox" value="${aud}" ${trainer.audience != null && trainer.audience.contains(aud) ? 'checked' : ''} onchange="toggleChipActive(this); recalculateProgress();">
                             <span>${aud}</span>
@@ -1029,7 +1029,7 @@
                 <p class="section-desc">Select available facilities at your studio location (optional).</p>
 
                 <div class="chip-grid">
-                    <c:forEach var="fac" items="${['Private Studio', 'Changing Room', 'Shower', 'Locker', 'AC', 'Free Weights', 'Cardio Equipment', 'Mirrors', 'Parking']}">
+                    <c:forEach var="fac" items="Private Studio,Changing Room,Shower,Locker,AC,Free Weights,Cardio Equipment,Mirrors,Parking">
                         <label class="chip-item ${trainer.facilities != null && trainer.facilities.contains(fac) ? 'active' : ''}">
                             <input type="checkbox" name="facilities" class="fac-checkbox" value="${fac}" ${trainer.facilities != null && trainer.facilities.contains(fac) ? 'checked' : ''} onchange="toggleChipActive(this);">
                             <span>${fac}</span>
@@ -1048,7 +1048,7 @@
 
                 <label style="margin-bottom: 8px;">Available Operating Days <span class="req">*</span></label>
                 <div class="chip-grid" style="grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));">
-                    <c:forEach var="day" items="${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}">
+                    <c:forEach var="day" items="Mon,Tue,Wed,Thu,Fri,Sat,Sun">
                         <label class="chip-item ${trainer.openDays != null && trainer.openDays.contains(day) ? 'active' : ''}">
                             <input type="checkbox" name="availableDays" class="day-checkbox" value="${day}" ${trainer.openDays != null && trainer.openDays.contains(day) ? 'checked' : ''} onchange="toggleChipActive(this); recalculateProgress();">
                             <span>${day}</span>
