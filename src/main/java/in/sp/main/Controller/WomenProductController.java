@@ -58,6 +58,9 @@ public class WomenProductController {
     @Autowired
     private in.sp.main.Service.WomenProductOrderService womenProductOrderService;
 
+    @Autowired
+    private in.sp.main.Service.WomenProductSellerProfileService sellerProfileService;
+
     private static final String BUY_NOW_PRODUCT_ID = "wpBuyNowProductId";
     private static final String BUY_NOW_QTY = "wpBuyNowQty";
     private static final String JUST_PLACED_ORDER_IDS = "wpJustPlacedOrderIds";
@@ -216,7 +219,7 @@ public class WomenProductController {
         } catch (IOException e) {
             model.addAttribute("error", "Registration failed: could not upload files. Please try again.");
             return "women-products/seller-register";
-        } catch (Exception e) {
+        } catch (Throwable e) {
             model.addAttribute("error", "Registration failed. Please check your details and try again.");
             return "women-products/seller-register";
         }
@@ -289,8 +292,23 @@ public class WomenProductController {
     @GetMapping("/seller/profile")
     public String sellerProfilePage(HttpSession session, Model model) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
+        if (s == null) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+                java.util.Optional<WomenProductSeller> opt = sellerRepo.findByEmail(auth.getName().toLowerCase().trim());
+                if (opt.isPresent()) {
+                    s = opt.get();
+                    session.setAttribute("loggedSeller", s);
+                }
+            }
+        }
         if (s == null) return "redirect:/women-products/seller/login";
         s = sellerRepo.findById(s.getId()).orElse(s);
+        if (sellerProfileService != null) {
+            s = sellerProfileService.refreshCompletion(s);
+        }
+        session.setAttribute("loggedSeller", s);
         model.addAttribute("seller", s);
         return "women-products/seller-profile";
     }
@@ -396,6 +414,8 @@ public class WomenProductController {
                                      @RequestParam(required = false) String city,
                                      @RequestParam(required = false) String state,
                                      @RequestParam(required = false) String pincode,
+                                     @RequestParam(required = false) Double latitude,
+                                     @RequestParam(required = false) Double longitude,
                                      @RequestParam(required = false) String audience,
                                      @RequestParam(required = false) String facilities,
                                      @RequestParam(required = false) String brandType,
@@ -512,6 +532,9 @@ public class WomenProductController {
                     existing.setPincode("");
                 }
 
+                if (latitude != null) existing.setLatitude(latitude);
+                if (longitude != null) existing.setLongitude(longitude);
+
                 if (facilities != null) existing.setFacilities(facilities.trim());
 
                 if (brandType != null && !brandType.trim().isEmpty()) {
@@ -570,7 +593,11 @@ public class WomenProductController {
                     existing.setGalleryPhotos(String.join(",", existingGallery.stream().map(String::trim).filter(part -> !part.isEmpty()).toList()));
                 }
 
-                sellerRepo.save(existing);
+                if (sellerProfileService != null) {
+                    existing = sellerProfileService.refreshCompletion(existing);
+                } else {
+                    sellerRepo.save(existing);
+                }
                 session.setAttribute("loggedSeller", existing);
                 ra.addFlashAttribute("message", "Profile updated successfully!");
             }

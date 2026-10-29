@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import in.sp.main.Entities.EventHost;
 import in.sp.main.Entities.EventLifecycleStatus;
 import in.sp.main.Entities.EventTicketType;
 import in.sp.main.Entities.User;
@@ -199,11 +200,8 @@ public class WomenEventBookingService {
         LocalDateTime start = WomenEventSupport.eventStart(event);
         LocalDateTime end = WomenEventSupport.eventEnd(event);
         LocalDateTime now = LocalDateTime.now();
-        if (end != null && now.isAfter(end.plusHours(6))) {
+        if (end != null && now.isAfter(end.plusHours(48))) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Expired ticket");
-        }
-        if (start != null && now.isBefore(start.minusHours(6))) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ticket is not yet valid for check-in");
         }
         reg.setCheckedIn(true);
         reg.setStatus("ATTENDED");
@@ -213,6 +211,39 @@ public class WomenEventBookingService {
                 event.getOrganizer() == null ? null : event.getOrganizer().getId(),
                 event.getOrganizer() == null ? null : event.getOrganizer().getEmail(),
                 "CHECK_IN", "BOOKING", reg.getId(), null, "{\"ticket\":\"" + reg.getTicketCode() + "\"}");
+        return reg;
+    }
+
+    @Transactional
+    public WomenEventRegistration toggleAttendanceByOrganizer(Long registrationId, EventHost host) {
+        if (registrationId == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Registration ID required");
+        WomenEventRegistration reg = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registration not found"));
+
+        WomenEvent event = reg.getEvent();
+        if (event == null || event.getOrganizer() == null || host == null || !event.getOrganizer().getId().equals(host.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not authorized to manage attendance for this event");
+        }
+        if ("CANCELLED".equalsIgnoreCase(reg.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot mark attendance for cancelled registration");
+        }
+        if (Boolean.TRUE.equals(reg.getRefunded())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot mark attendance for refunded registration");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (reg.isCheckedIn() || "ATTENDED".equalsIgnoreCase(reg.getStatus())) {
+            reg.setCheckedIn(false);
+            reg.setStatus("REGISTERED");
+            reg.setCheckedInAt(null);
+        } else {
+            reg.setCheckedIn(true);
+            reg.setStatus("ATTENDED");
+            reg.setCheckedInAt(now);
+        }
+        registrationRepository.save(reg);
+        auditService.log("EVENT_HOST", host.getId(), host.getEmail(), "ATTENDANCE_UPDATE", "BOOKING",
+                reg.getId(), null, "{\"ticket\":\"" + reg.getTicketCode() + "\",\"checkedIn\":" + reg.isCheckedIn() + "}");
         return reg;
     }
 

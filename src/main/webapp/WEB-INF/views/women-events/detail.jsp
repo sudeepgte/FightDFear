@@ -18,153 +18,443 @@
     
     <!-- Event detail theme only — cream / plum / pink. No global palette. -->
     <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/detail-premium.css?v=20260901"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
     <style>
         :root {
-            --bg-primary: #FFF4F6;
+            --bg-primary: #F8FAFC;
             --bg-card: #FFFFFF;
             --bg-secondary: #FFF1F2;
-            --border-neutral: #F3D4DC;
+            --border-neutral: #E2E8F0;
             --border-secondary: #FDA4AF;
             --color-accent: #F43F5E;
             --color-accent-hover: #E11D48;
-            --text-primary: #2D142C;
-            --text-secondary: #6B3A4A;
-            --shadow-sm: 0 4px 12px rgba(45, 20, 44, 0.04);
-            --shadow-md: 0 12px 30px rgba(45, 20, 44, 0.07);
-            --shadow-lg: 0 20px 48px rgba(45, 20, 44, 0.1);
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.07);
+            --shadow-lg: 0 20px 48px rgba(15, 23, 42, 0.1);
         }
-        body, #page-content-wrapper {
-            background-color: #FFF4F6 !important;
-            color: #2D142C !important;
+        body {
+            background-color: #F8FAFC !important;
+            color: #0F172A !important;
+            font-family: 'Outfit', sans-serif;
         }
-        .event-hero { 
-            background: #FFFFFF !important;
-            height: 340px !important; 
+        #page-content-wrapper {
+            background-color: #F8FAFC !important;
+            color: #0F172A !important;
+            padding: 0 0 80px 0 !important;
+            min-height: 100vh;
         }
-        .hero-overlay {
-            background: linear-gradient(to bottom, #FFF4F6 0%, #FFFFFF 100%) !important;
-            opacity: 0.8;
-        }
-        .block-title, .event-title, .sidebar-price, .feature-card h4, .timeline-content h4,
-        .facilitator-info h4, .expect-item h5, .avg-rating-value, .reviewer-title-name,
-        .breadcrumb-container .breadcrumb-item.active, .sidebar-meta-item .meta-value {
-            color: #2D142C !important;
-        }
-        .hero-meta span {
-            color: #2D142C !important;
-        }
-        .hero-cat-badge {
-            background-color: #FFF1F2 !important;
-            border: 1px solid #FDA4AF !important;
-            color: #F43F5E !important;
-        }
-        .register-sidebar {
-            position: static !important;
-            top: auto !important;
-        }
-        .feature-card, .feature-card:hover,
-        .btn-premium-cta, .btn-premium-cta:hover,
-        .gallery-card-item img, .gallery-card-item:hover img,
-        .btn-map-guide, .btn-map-guide:hover {
-            transform: none !important;
-            transition: none !important;
-        }
-        .gallery-overlay-effect { background: rgba(45, 20, 44, 0.35) !important; }
-        .registered-badge-box {
-            background: #FFF1F2 !important;
-            border-color: #FDA4AF !important;
-            color: #F43F5E !important;
-        }
-        .avg-rating-stars, .rating-bar-fill, .review-stars-metric,
-        .star-input input:checked ~ label,
-        .star-input label:hover,
-        .star-input label:hover ~ label {
-            color: #F43F5E !important;
-            background-color: #F43F5E;
-        }
-        .avg-rating-stars, .review-stars-metric { background-color: transparent !important; }
-        .bottom-registration-cta {
-            background: linear-gradient(to bottom, #FFF4F6 0%, #FFFFFF 100%) !important;
-            border: 1px solid #F3D4DC !important;
-            color: #2D142C !important;
+        .top-action-bar {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 20px 24px 16px;
             display: flex;
-            flex-direction: column;
             align-items: center;
+            justify-content: space-between;
             gap: 16px;
+            flex-wrap: wrap;
         }
-        .bottom-registration-cta h3 {
-            color: #2D142C !important;
-            margin-bottom: 0 !important;
-        }
-        .bottom-registration-cta p {
-            color: #6B3A4A !important;
-            margin-bottom: 4px !important;
-        }
-        .bottom-registration-cta .btn-premium-cta {
-            max-width: 320px;
-        }
-        #page-content-wrapper .text-primary,
-        #page-content-wrapper .text-success,
-        #page-content-wrapper .text-warning,
-        #page-content-wrapper .text-danger { color: #F43F5E !important; }
-        #page-content-wrapper .bg-success { background-color: #F43F5E !important; }
-        #page-content-wrapper .bg-light { background-color: #FFF1F2 !important; }
-        #page-content-wrapper a { color: #F43F5E; }
-        #page-content-wrapper .btn-premium-cta,
-        #page-content-wrapper .btn-share-pill { color: #FFFFFF !important; }
-        .hero-featured-badge {
-            background: rgba(244, 63, 94, 0.22);
-            border: 1px solid #FDA4AF;
-            padding: 2px 10px;
-            border-radius: 99px;
-            font-weight: 700;
-            color: #FFFFFF;
-        }
-        .reserved-pill {
+        .btn-back-pill {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: #F43F5E;
-            color: #FFFFFF;
-            padding: 14px 28px;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            color: #0F172A;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 8px 18px;
             border-radius: 99px;
-            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .btn-back-pill:hover {
+            background: #F1F5F9;
+            color: #F43F5E;
+            transform: translateX(-2px);
+        }
+        /* Event Hero */
+        .event-hero { 
+            position: relative !important;
+            width: 100% !important;
+            min-height: 420px !important;
+            height: auto !important;
+            background: #0F172A !important;
+            overflow: hidden !important;
+            display: flex !important;
+            align-items: flex-end !important;
+        }
+        .event-hero .hero-bg-img {
+            position: absolute !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            z-index: 0 !important;
+        }
+        .hero-overlay {
+            position: absolute !important;
+            inset: 0 !important;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.35) 0%, rgba(15, 23, 42, 0.75) 55%, rgba(15, 23, 42, 0.95) 100%) !important;
+            z-index: 1 !important;
+            opacity: 1 !important;
+        }
+        .hero-content {
+            position: relative !important;
+            z-index: 2 !important;
+            padding: 48px 24px 40px !important;
+            max-width: 1240px !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .hero-cat-badge {
+            background-color: #F43F5E !important;
+            color: #FFFFFF !important;
+            font-weight: 700 !important;
+            font-size: 0.82rem !important;
+            padding: 6px 16px !important;
+            border-radius: 99px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            margin-bottom: 14px !important;
+            border: none !important;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.4) !important;
+        }
+        .event-title {
+            font-size: clamp(2rem, 4.5vw, 3.2rem) !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+            margin-bottom: 16px !important;
+            color: #FFFFFF !important;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45) !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .hero-meta {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            font-size: 0.92rem !important;
+            font-weight: 500 !important;
+        }
+        .hero-meta span {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: rgba(255, 255, 255, 0.14) !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.22) !important;
+            border-radius: 99px !important;
+            padding: 6px 16px !important;
+            color: #FFFFFF !important;
+        }
+        .hero-meta span i {
+            color: #FDA4AF !important;
+        }
+        .hero-featured-badge {
+            background: linear-gradient(135deg, #F59E0B, #D97706) !important;
+            border: none !important;
+            padding: 6px 16px !important;
+            border-radius: 99px !important;
+            font-weight: 700 !important;
+            color: #FFFFFF !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+        }
+        /* Detail Grid */
+        .detail-grid { 
+            display: grid !important; 
+            grid-template-columns: minmax(0, 1fr) 380px !important; 
+            gap: 32px !important;
+            max-width: 1240px !important; 
+            margin: 28px auto 0 !important; 
+            padding: 0 24px 60px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .main-content-column {
+            min-width: 0 !important;
+            width: 100% !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .sidebar-column {
+            width: 380px !important;
+            max-width: 100% !important;
+        }
+        .register-sidebar {
+            position: sticky !important;
+            top: 96px !important;
+            z-index: 10 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 20px !important;
+        }
+        .card-block {
+            background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 20px !important;
+            padding: 32px !important;
+            margin-bottom: 24px !important;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03) !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .card-block p {
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .block-title {
+            font-size: 1.2rem !important;
+            font-weight: 800 !important;
+            color: #0F172A !important;
+            margin-bottom: 20px !important;
+            padding-bottom: 12px !important;
+            border-bottom: 1px solid #F1F5F9 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+        }
+        .block-title i {
+            color: #F43F5E !important;
+        }
+        .sidebar-card {
+            background-color: #FFFFFF !important;
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 20px !important;
+            padding: 32px !important;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04) !important;
+            margin-bottom: 0 !important;
+        }
+        .sidebar-price {
+            font-size: 2.25rem !important;
+            font-weight: 800 !important;
+            color: #0F172A !important;
+            margin-bottom: 2px !important;
+        }
+        .sidebar-price-sub {
+            font-size: 0.88rem !important;
+            color: #64748B !important;
+            margin-bottom: 24px !important;
+        }
+        .sidebar-meta-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 16px !important;
+            margin-bottom: 24px !important;
+        }
+        .sidebar-meta-item {
+            display: flex !important;
+            align-items: flex-start !important;
+            gap: 14px !important;
+            font-size: 0.92rem !important;
+            padding-bottom: 12px !important;
+            border-bottom: 1px solid #F1F5F9 !important;
+        }
+        .sidebar-meta-item:last-child {
+            border-bottom: none !important;
+            padding-bottom: 0 !important;
+        }
+        .sidebar-meta-item i {
+            color: #F43F5E !important;
+            font-size: 1.2rem !important;
+            margin-top: 2px !important;
+        }
+        .sidebar-meta-item .meta-label {
+            color: #64748B !important;
+            font-weight: 600 !important;
+            font-size: 0.8rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+        }
+        .sidebar-meta-item .meta-value {
+            color: #0F172A !important;
+            font-weight: 700 !important;
+            margin-top: 2px !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .btn-premium-cta {
+            width: 100% !important;
+            background: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            padding: 16px 24px !important;
+            border-radius: 99px !important;
+            font-weight: 700 !important;
+            font-size: 1.05rem !important;
+            box-shadow: 0 8px 24px rgba(244, 63, 94, 0.35) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            text-decoration: none !important;
+            transition: all 0.25s ease !important;
+        }
+        .btn-premium-cta:hover {
+            background: linear-gradient(135deg, #E11D48 0%, #BE123C 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 28px rgba(244, 63, 94, 0.45) !important;
+            color: #FFFFFF !important;
+        }
+        .btn-premium-cta:disabled {
+            background: #94A3B8 !important;
+            box-shadow: none !important;
+            transform: none !important;
+            cursor: not-allowed !important;
+        }
+        .we-fact-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)) !important;
+            gap: 16px !important;
+        }
+        .we-fact {
+            background: #F8FAFC !important;
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 14px !important;
+            padding: 14px 18px !important;
+        }
+        .we-fact .k {
+            font-size: 0.78rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.05em !important;
+            font-weight: 700 !important;
+            color: #64748B !important;
+            margin-bottom: 4px !important;
+        }
+        .we-fact .v {
+            font-size: 1.02rem !important;
+            font-weight: 700 !important;
+            color: #0F172A !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .bottom-registration-cta {
+            background: linear-gradient(135deg, #FFFFFF 0%, #FFF1F2 100%) !important;
+            border: 1px solid #FDA4AF !important;
+            border-radius: 24px !important;
+            padding: 40px 24px !important;
+            text-align: center !important;
+            box-shadow: 0 10px 30px rgba(244, 63, 94, 0.06) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 16px !important;
+        }
+        .bottom-registration-cta h3 {
+            color: #0F172A !important;
+            font-weight: 800 !important;
+            font-size: 1.8rem !important;
+            margin-bottom: 0 !important;
+        }
+        .bottom-registration-cta p {
+            color: #64748B !important;
+            max-width: 600px !important;
+            margin-bottom: 4px !important;
+        }
+        .bottom-registration-cta .btn-premium-cta {
+            max-width: 340px !important;
+        }
+        .reserved-pill {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: #16A34A !important;
+            color: #FFFFFF !important;
+            padding: 12px 24px !important;
+            border-radius: 99px !important;
+            font-weight: 700 !important;
         }
         .btn-share-pill {
-            background: #F43F5E;
+            background: #F43F5E !important;
             color: #FFFFFF !important;
-            border: none;
-            border-radius: 99px;
-            padding: 8px 16px;
-            font-weight: 700;
-            text-decoration: none;
+            border: none !important;
+            border-radius: 99px !important;
+            padding: 10px 20px !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            transition: all 0.2s ease !important;
         }
-        #page-content-wrapper .btn-share-outline {
+        .btn-share-pill:hover {
+            background: #E11D48 !important;
+            color: #FFFFFF !important;
+        }
+        .btn-share-outline {
             background: transparent !important;
             color: #F43F5E !important;
             border: 1px solid #FDA4AF !important;
+        }
+        .btn-share-outline:hover {
+            background: #FFF1F2 !important;
+            color: #E11D48 !important;
+        }
+        .registered-badge-box {
+            background: #F0FDF4 !important;
+            border: 1px solid #86EFAC !important;
+            color: #166534 !important;
+            border-radius: 16px !important;
+            padding: 20px !important;
+            text-align: center !important;
+        }
+        .registered-badge-box i {
+            font-size: 2rem !important;
+            color: #16A34A !important;
+            margin-bottom: 8px !important;
+            display: block !important;
+        }
+        .registered-badge-box h5 {
+            font-weight: 800 !important;
+            color: #166534 !important;
+            margin-bottom: 8px !important;
+        }
+        .ticket-link {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            color: #16A34A !important;
+            font-weight: 700 !important;
+            text-decoration: none !important;
+            border: 1px solid #86EFAC !important;
+            padding: 6px 14px !important;
+            border-radius: 99px !important;
+            background: #FFFFFF !important;
         }
         .mobile-sticky-action-bar { display: none; }
         @media (max-width: 991px) {
             .detail-grid { 
                 grid-template-columns: 1fr !important; 
                 gap: 24px !important;
-                padding-bottom: 40px !important; 
+                padding: 0 16px 40px !important; 
             }
-            .sidebar-column { margin-top: 10px; }
+            .sidebar-column { 
+                width: 100% !important;
+                margin-top: 10px !important; 
+            }
+            .register-sidebar { 
+                position: static !important; 
+            }
             .mobile-sticky-action-bar { display: none !important; }
-            .event-hero { height: auto !important; min-height: 260px !important; padding-bottom: 24px; }
-            .hero-content { padding: 32px 16px 16px !important; }
+            .event-hero { min-height: 320px !important; }
+            .hero-content { padding: 32px 16px 24px !important; }
         }
         @media (max-width: 575px) {
-            .event-title { font-size: 2.2rem !important; }
-            .we-fact-grid { display: flex !important; flex-direction: column !important; gap: 12px !important; }
-            .we-fact { display: flex; justify-content: space-between; border-bottom: 1px solid #F3D4DC; padding-bottom: 8px; }
-            .bottom-registration-cta { padding: 32px 16px !important; }
-            .bottom-registration-cta h3 { font-size: 1.6rem !important; }
-            .hero-meta { flex-direction: column; gap: 10px; }
-            .reviews-summary-box { grid-template-columns: 1fr !important; text-align: center; gap: 16px; }
-            .card-block { padding: 24px 16px !important; }
+            .event-title { font-size: 1.8rem !important; }
+            .we-fact-grid { grid-template-columns: 1fr !important; }
+            .bottom-registration-cta { padding: 28px 16px !important; }
+            .bottom-registration-cta h3 { font-size: 1.4rem !important; }
+            .hero-meta { flex-direction: column !important; gap: 8px !important; }
+            .hero-meta span { width: 100% !important; }
+            .card-block { padding: 20px 16px !important; }
         }
     </style>
     <!-- Custom Theme & Detail Stylesheets -->
@@ -186,19 +476,29 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip;" data-skip-global-back="true">
-        <div id="global-back-btn" style="padding: 20px 20px 24px;">
-            <a href="${pageContext.request.contextPath}/women-events" class="btn btn-sm" style="background: white; border: 1px solid #ddd; color: #1e1b4b; font-weight: 600; padding: 6px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);"><i class="bi bi-arrow-left"></i> Go Back</a>
+        <!-- Top Action & Navigation Bar -->
+        <div class="top-action-bar">
+            <a href="${pageContext.request.contextPath}/women-events" class="btn-back-pill">
+                <i class="bi bi-arrow-left"></i> Back to Events
+            </a>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0" style="font-size: 0.88rem;">
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events" style="color: #64748B; text-decoration: none;">Events</a></li>
+                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events?category=${event.category}" style="color: #64748B; text-decoration: none;">${event.category.displayName}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page" style="color: #0F172A; font-weight: 600;">${event.name}</li>
+                </ol>
+            </nav>
         </div>
 
         <!-- Alert Banners -->
         <c:if test="${not empty success}">
-            <div class="flash-alert alert alert-dismissible fade show m-3" role="alert" style="background:#FFF1F2; border:1px solid #FDA4AF; color:#2D142C; border-radius: 12px;">
+            <div class="flash-alert alert alert-dismissible fade show mx-4 mt-2 mb-3" role="alert" style="background:#F0FDF4; border:1px solid #86EFAC; color:#166534; border-radius: 14px;">
                 <i class="bi bi-check-circle-fill me-2"></i>${success}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         </c:if>
         <c:if test="${not empty error}">
-            <div class="flash-alert alert alert-dismissible fade show m-3" role="alert" style="background:#FFF1F2; border:1px solid #F43F5E; color:#2D142C; border-radius: 12px;">
+            <div class="flash-alert alert alert-dismissible fade show mx-4 mt-2 mb-3" role="alert" style="background:#FFF1F2; border:1px solid #FDA4AF; color:#9F1239; border-radius: 14px;">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>${error}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
@@ -208,12 +508,26 @@
         <div class="event-hero">
             <c:choose>
                 <c:when test="${not empty event.bannerImage}">
-                    <img src="${pageContext.request.contextPath}/uploads/${event.bannerImage}" alt="${event.name}" onerror="this.style.display='none';"/>
+                    <c:set var="bannerImg" value="${event.bannerImage}" />
+                    <c:choose>
+                        <c:when test="${bannerImg.startsWith('http://') or bannerImg.startsWith('https://')}">
+                            <c:set var="resolvedBanner" value="${bannerImg}" />
+                        </c:when>
+                        <c:when test="${bannerImg.startsWith('/uploads/')}">
+                            <c:set var="resolvedBanner" value="${pageContext.request.contextPath}${bannerImg}" />
+                        </c:when>
+                        <c:when test="${bannerImg.startsWith('/')}">
+                            <c:set var="resolvedBanner" value="${pageContext.request.contextPath}${bannerImg}" />
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="resolvedBanner" value="${pageContext.request.contextPath}/uploads/${bannerImg}" />
+                        </c:otherwise>
+                    </c:choose>
+                    <img class="hero-bg-img" src="${resolvedBanner}" alt="${event.name}" onerror="this.style.display='none';"/>
                 </c:when>
                 <c:otherwise>
                     <!-- Fallback abstract premium background pattern if banner is missing -->
-                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #FFF4F6 0%, #FFFFFF 55%, #FFF1F2 100%);"></div>
-                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #FFFFFF 0%, #FFF4F6 60%, #FDA4AF 140%); opacity: 0.5;"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(135deg, #0F172A 0%, #1E293B 55%, #334155 100%);"></div>
                 </c:otherwise>
             </c:choose>
             <div class="hero-overlay"></div>
@@ -233,17 +547,6 @@
                     </c:if>
                 </div>
             </div>
-        </div>
-
-        <!-- Breadcrumb Navigation -->
-        <div class="breadcrumb-container">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb" style="font-size:0.88rem; margin: 0;">
-                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events">Events</a></li>
-                    <li class="breadcrumb-item"><a href="${pageContext.request.contextPath}/women-events?category=${event.category}">${event.category.displayName}</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">${event.name}</li>
-                </ol>
-            </nav>
         </div>
 
         <!-- Two-Column Page Layout -->
@@ -290,22 +593,37 @@
                 </div>
 
                 <!-- Map & Directions -->
-                <c:if test="${not empty event.mapsLocation}">
+                <c:if test="${not empty event.mapsLocation || (not empty event.venue and not empty event.city)}">
+                    <c:set var="cleanMapQuery" value="${event.mapsLocation}" />
+                    <c:if test="${not empty cleanMapQuery and cleanMapQuery.contains('q=')}">
+                        <c:set var="cleanMapQuery" value="${cleanMapQuery.substring(cleanMapQuery.indexOf('q=') + 2)}" />
+                        <c:if test="${cleanMapQuery.contains('&')}">
+                            <c:set var="cleanMapQuery" value="${cleanMapQuery.substring(0, cleanMapQuery.indexOf('&'))}" />
+                        </c:if>
+                    </c:if>
+                    <c:if test="${empty cleanMapQuery}">
+                        <c:set var="cleanMapQuery" value="${event.venue}, ${event.city}" />
+                    </c:if>
+                    <c:set var="directionsLink" value="${event.mapsLocation}" />
+                    <c:if test="${empty directionsLink || !directionsLink.startsWith('http')}">
+                        <c:set var="directionsLink" value="https://maps.google.com/?q=${cleanMapQuery}" />
+                    </c:if>
+
                     <div class="card-block">
                         <div class="block-title"><i class="bi bi-map-fill"></i> Location &amp; Directions</div>
-                        <div class="map-container">
-                            <iframe class="map-frame"
-                                    src="https://maps.google.com/maps?q=${event.mapsLocation}&output=embed"
-                                    allowfullscreen loading="lazy"></iframe>
-                            <div class="map-address-block">
+                        <div class="map-container" style="position:relative; overflow:hidden; border-radius:18px; border:1px solid var(--border-neutral);">
+                            <div id="eventDetailMap" style="width:100%; height:320px; background:#F1F5F9; z-index:1;"></div>
+                            <div class="map-address-block" style="padding:16px 20px; background:#FFFFFF; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; border-top:1px solid var(--border-neutral);">
                                 <div>
-                                    <h5 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-geo-alt-fill me-1" style="color:#F43F5E;"></i> ${event.venue}</h5>
-                                    <p class="text-muted small mb-0">${event.city}, Safe Zone Mapping Enabled</p>
-                                    <h5 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1rem;"><i class="bi bi-geo-alt-fill text-danger me-1"></i> ${event.venue}</h5>
-                                    <p class="text-muted small mb-0">${not empty event.city ? event.city : 'Not provided'}</p>
+                                    <h5 class="fw-bold mb-1" style="color: var(--text-primary); font-size: 1.05rem;">
+                                        <i class="bi bi-geo-alt-fill me-2" style="color:#F43F5E;"></i> ${event.venue}
+                                    </h5>
+                                    <p class="text-muted small mb-0">
+                                        <i class="bi bi-shield-check text-success me-1"></i> ${event.city} &bull; Safe Zone Verified
+                                    </p>
                                 </div>
-                                <a href="https://maps.google.com/maps?q=${event.mapsLocation}" target="_blank" class="btn-map-guide">
-                                    <i class="bi bi-box-arrow-up-right"></i> Get Directions
+                                <a href="${directionsLink}" target="_blank" rel="noopener noreferrer" class="btn-map-guide">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> Get Directions in Google Maps
                                 </a>
                             </div>
                         </div>
@@ -551,10 +869,8 @@
 
                         <hr style="margin: 24px 0; border-color: var(--border-neutral);"/>
                         <div class="sidebar-extra">
-                            <p class="mb-1"><i class="bi bi-shield-lock-fill"></i> Highly secure identity protection system</p>
-                            <p class="mb-0"><i class="bi bi-ticket-detailed-fill"></i> Digital secure ticket code issued instantly</p>
-                            <p class="mb-1"><i class="bi bi-ticket-detailed-fill" style="color:var(--we-accent);"></i> A ticket code is issued after registration</p>
-                            <p class="mb-0"><i class="bi bi-shield-check" style="color:var(--we-success);"></i> Show your ticket at entry</p>
+                            <p class="mb-2"><i class="bi bi-shield-lock-fill me-2" style="color: #F43F5E;"></i> Verified identity protection system</p>
+                            <p class="mb-0"><i class="bi bi-ticket-perforated-fill me-2" style="color: #16A34A;"></i> Digital ticket issued instantly upon confirmation</p>
                         </div>
                     </div>
 
@@ -706,7 +1022,6 @@
                                 <i class="bi bi-wallet2"></i>
                             </div>
                             <div class="ms-3">
-                                <h5 class="modal-title fw-bold" style="color: #2D142C; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
                                 <h5 class="modal-title fw-bold" style="color: #0F172A; font-size: 1.15rem; font-family:'Outfit',sans-serif;">Razorpay Secure Gateway</h5>
                                 <p class="text-muted small mb-0" style="font-size:0.75rem;">Simulated Test Transaction Mode</p>
                             </div>
@@ -722,19 +1037,12 @@
                             </div>
                             <div class="d-flex justify-content-between mb-2 small text-muted">
                                 <span>Processing/Internet charge</span>
-                                <span class="fw-bold" style="color:#F43F5E;">₹0.00</span>
-                            </div>
-                            <hr style="border-style: dashed; margin: 12px 0;">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-semibold" style="color: #2D142C;">Total Payment</span>
-                                <span class="fs-5 fw-bold" style="font-family:'Outfit',sans-serif;color:#F43F5E;">₹${event.entryFee}</span>
-                                <span>Processing charge</span>
                                 <span class="fw-bold" style="color:#16A34A;">₹0.00</span>
                             </div>
                             <hr style="border-style: dashed; margin: 12px 0;">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-semibold" style="color: #0F172A;">Total</span>
-                                <span class="fs-5 fw-bold" style="font-family:'Outfit',sans-serif; color:#0F172A;">₹${event.entryFee}</span>
+                                <span class="fw-semibold" style="color: #0F172A;">Total Payment</span>
+                                <span class="fs-5 fw-bold" style="font-family:'Outfit',sans-serif; color:#F43F5E;">₹${event.entryFee}</span>
                             </div>
                         </div>
                         <div class="mb-3">
@@ -742,12 +1050,10 @@
                             <div class="d-grid gap-2">
                                 <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #FDA4AF; cursor: pointer;">
                                     <input type="radio" name="eventPayMode" value="upi" checked class="me-3">
-                                    <i class="bi bi-qr-code me-2" style="font-size:1.15rem;color:#F43F5E;"></i> UPI (PhonePe / GPay / Paytm / BHIM)
                                     <i class="bi bi-qr-code me-2" style="font-size:1.15rem; color:#F43F5E;"></i> UPI (PhonePe / GPay / Paytm / BHIM)
                                 </div>
-                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #FDA4AF; cursor: pointer;">
+                                <div class="border rounded-3 p-3 d-flex align-items-center bg-white" style="font-size: 0.88rem; border-color: #E2E8F0; cursor: pointer;">
                                     <input type="radio" name="eventPayMode" value="card" class="me-3">
-                                    <i class="bi bi-credit-card me-2" style="font-size:1.15rem;color:#F43F5E;"></i> Credit or Debit Card checkout
                                     <i class="bi bi-credit-card me-2" style="font-size:1.15rem; color:#16A34A;"></i> Credit or Debit Card checkout
                                 </div>
                             </div>
@@ -760,8 +1066,6 @@
                     </div>
                     <!-- Modal Footer -->
                     <div class="modal-footer border-0 pt-0" style="padding: 0 24px 24px;">
-                        <button type="button" class="btn-share-outline w-100 mb-2 rounded-pill small" data-bs-dismiss="modal" style="padding:10px;">Cancel Transaction</button>
-                        <button type="button" class="btn-premium-cta" id="eventPayBtn" onclick="processEventBookingPayment()">
                         <button type="button" class="btn btn-outline-secondary w-100 mb-2 rounded-pill small" data-bs-dismiss="modal">Cancel Transaction</button>
                         <button type="button" class="btn w-100 rounded-pill fw-semibold py-2 btn-premium-cta" id="eventPayBtn" onclick="processEventBookingPayment()" style="background: var(--we-accent); border: none; box-shadow: none;">
                             Proceed Payment of ₹${event.entryFee} Securely
@@ -831,6 +1135,75 @@
         </script>
     </div>
 </div>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var mapEl = document.getElementById('eventDetailMap');
+        if (!mapEl) return;
+
+        var rawLocation = '${cleanMapQuery}'.trim();
+        var venueText = '${event.venue}'.trim();
+        var cityText = '${event.city}'.trim();
+        var eventTitle = '${event.name}'.trim();
+
+        // Default coordinates (Mysuru / South India)
+        var defaultLat = 12.2958;
+        var defaultLng = 76.6394;
+
+        // Check if rawLocation contains explicit coordinates like "12.3051, 76.6554"
+        var coordMatch = rawLocation.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+        if (coordMatch) {
+            initLeafletMap(parseFloat(coordMatch[1]), parseFloat(coordMatch[2]), 15);
+        } else {
+            var query = (venueText ? venueText + ', ' : '') + cityText + ', India';
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query))
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data && data.length > 0) {
+                        initLeafletMap(parseFloat(data[0].lat), parseFloat(data[0].lon), 15);
+                    } else if (cityText) {
+                        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(cityText + ', India'))
+                            .then(function(r) { return r.json(); })
+                            .then(function(cdata) {
+                                if (cdata && cdata.length > 0) {
+                                    initLeafletMap(parseFloat(cdata[0].lat), parseFloat(cdata[0].lon), 13);
+                                } else {
+                                    initLeafletMap(defaultLat, defaultLng, 13);
+                                }
+                            })
+                            .catch(function() { initLeafletMap(defaultLat, defaultLng, 13); });
+                    } else {
+                        initLeafletMap(defaultLat, defaultLng, 13);
+                    }
+                })
+                .catch(function() {
+                    initLeafletMap(defaultLat, defaultLng, 13);
+                });
+        }
+
+        function initLeafletMap(lat, lng, zoom) {
+            var map = L.map('eventDetailMap').setView([lat, lng], zoom);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            var pinHtml = '<div style="background:#F43F5E; color:#FFFFFF; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(244,63,94,0.45); border:2.5px solid #FFFFFF;"><i class="bi bi-geo-alt-fill" style="font-size:18px;"></i></div>';
+            var customIcon = L.divIcon({
+                html: pinHtml,
+                className: '',
+                iconSize: [36, 36],
+                iconAnchor: [18, 36],
+                popupAnchor: [0, -36]
+            });
+
+            var marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+            marker.bindPopup('<div style="font-family:Outfit,sans-serif; padding:4px 2px;"><strong style="font-size:13px; color:#0F172A; display:block; margin-bottom:2px;">' + eventTitle + '</strong><span style="font-size:12px; color:#64748B;">' + venueText + (cityText ? ', ' + cityText : '') + '</span></div>').openPopup();
+
+            setTimeout(function() { map.invalidateSize(); }, 400);
+        }
+    });
+    </script>
     <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

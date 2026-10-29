@@ -201,7 +201,6 @@ public class LoginController {
                 session.removeAttribute("user");
                 session.removeAttribute("loggedCentre");
                 session.setAttribute("loggedTrainer", trainer);
-                session.setAttribute("postLoginOpenProfile", Boolean.TRUE);
 
                 String token = jwtUtil.generateToken(trainer.getEmail(), "TRAINER");
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
@@ -210,6 +209,12 @@ public class LoginController {
                 cookie.setMaxAge(365 * 24 * 60 * 60);
                 response.addCookie(cookie);
 
+                if (in.sp.main.Service.FitnessTrainerProfileService.isApproved(trainer)) {
+                    session.removeAttribute("postLoginOpenProfile");
+                    return "redirect:/fitness/trainer/dashboard";
+                }
+
+                session.setAttribute("postLoginOpenProfile", Boolean.TRUE);
                 return "redirect:/fitness/trainer/profile-completion";
             }
         }

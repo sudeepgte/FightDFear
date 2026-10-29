@@ -217,10 +217,86 @@ public class FitnessTrainerProfileService {
     }
 
     public static boolean isApproved(FitnessTrainer trainer) {
-        return trainer != null && trainer.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
+        if (trainer == null) return false;
+        return trainer.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED
+                || trainer.getVerificationStatus() == in.sp.main.Entities.VerificationStatus.VERIFIED;
     }
 
-    public void applyExtraFields(FitnessTrainer trainer, Map<String, Object> m) {
-        putExtra(m, trainer);
+    @Transactional
+    public FitnessTrainer applyExtraFields(FitnessTrainer t, Map<String, Object> body) {
+        if (t == null || body == null) return t;
+        if (body.get("fullName") != null) t.setFullName(blankToNull(str(body.get("fullName"))));
+        if (body.get("phone") != null) t.setPhone(blankToNull(str(body.get("phone"))));
+        if (body.get("designation") != null) t.setDesignation(blankToNull(str(body.get("designation"))));
+        if (body.get("whatsappNumber") != null) t.setWhatsappNumber(blankToNull(str(body.get("whatsappNumber"))));
+        if (body.get("experience") != null) {
+            String expStr = str(body.get("experience"));
+            if (!expStr.isBlank()) {
+                try { t.setExperience(Integer.parseInt(expStr)); } catch (Exception ignored) {}
+            }
+        }
+        if (body.get("credentialNumber") != null) t.setCredentialNumber(blankToNull(str(body.get("credentialNumber"))));
+        if (body.get("address") != null) t.setAddress(blankToNull(str(body.get("address"))));
+        if (body.get("city") != null) t.setCity(blankToNull(str(body.get("city"))));
+        if (body.get("state") != null) t.setState(blankToNull(str(body.get("state"))));
+        if (body.get("pincode") != null) t.setPincode(blankToNull(str(body.get("pincode"))));
+        if (body.get("latitude") != null && !str(body.get("latitude")).isBlank()) {
+            try { t.setLatitude(Double.parseDouble(str(body.get("latitude")))); } catch (Exception ignored) {}
+        }
+        if (body.get("longitude") != null && !str(body.get("longitude")).isBlank()) {
+            try { t.setLongitude(Double.parseDouble(str(body.get("longitude")))); } catch (Exception ignored) {}
+        }
+        if (body.get("specializations") != null || body.get("categoriesOffered") != null) {
+            t.setSpecializations(csv(body.get("specializations") != null ? body.get("specializations") : body.get("categoriesOffered")));
+        }
+        if (body.get("audience") != null) t.setAudience(csv(body.get("audience")));
+        if (body.get("doorService") != null || body.get("doorstepService") != null) {
+            Object ds = body.get("doorService") != null ? body.get("doorService") : body.get("doorstepService");
+            t.setDoorService(Boolean.TRUE.equals(ds) || "true".equalsIgnoreCase(str(ds)));
+        }
+        if (body.get("facilities") != null) t.setFacilities(csv(body.get("facilities")));
+        if (body.get("openDays") != null) t.setOpenDays(csv(body.get("openDays")));
+        if (body.get("openTime") != null) t.setOpenTime(parseTime(body.get("openTime")));
+        if (body.get("closeTime") != null) t.setCloseTime(parseTime(body.get("closeTime")));
+        if (body.get("breakStart") != null) t.setBreakStart(parseTime(body.get("breakStart")));
+        if (body.get("breakEnd") != null) t.setBreakEnd(parseTime(body.get("breakEnd")));
+        if (body.get("blockedDates") != null) t.setBlockedDates(csv(body.get("blockedDates")));
+        if (body.get("bio") != null) t.setBio(blankToNull(str(body.get("bio"))));
+        if (body.get("sessionMode") != null) t.setSessionMode(blankToNull(str(body.get("sessionMode"))));
+        if (body.get("durationMinutes") != null && !str(body.get("durationMinutes")).isBlank()) {
+            try { t.setDurationMinutes(Integer.parseInt(str(body.get("durationMinutes")))); } catch (Exception ignored) {}
+        }
+        if (body.get("typicalPrice") != null && !str(body.get("typicalPrice")).isBlank()) {
+            try {
+                double pr = Double.parseDouble(str(body.get("typicalPrice")));
+                t.setTypicalPrice(pr);
+                t.setSessionFees(pr);
+            } catch (Exception ignored) {}
+        }
+        if (body.get("upiId") != null) t.setUpiId(blankToNull(str(body.get("upiId"))));
+        if (body.get("bankDetails") != null) t.setBankDetails(blankToNull(str(body.get("bankDetails"))));
+        return t;
+    }
+
+    private static String str(Object v) { return v == null ? "" : String.valueOf(v).trim(); }
+    private static String blankToNull(String v) { return v == null || v.isBlank() ? null : v.trim(); }
+
+    private static String csv(Object v) {
+        if (v instanceof List<?> list) {
+            return list.stream().map(String::valueOf).map(String::trim).filter(s -> !s.isEmpty())
+                    .reduce((a, b) -> a + "," + b).orElse("");
+        }
+        return str(v);
+    }
+
+    private static java.time.LocalTime parseTime(Object v) {
+        String s = str(v);
+        if (s.isBlank()) return null;
+        try {
+            if (s.length() >= 5) return java.time.LocalTime.parse(s.substring(0, 5));
+            return java.time.LocalTime.parse(s, TIME_FMT);
+        } catch (Exception e) {
+            try { return java.time.LocalTime.parse(s); } catch (Exception ignored) { return null; }
+        }
     }
 }

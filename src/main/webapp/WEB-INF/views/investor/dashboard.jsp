@@ -318,7 +318,22 @@
                 </button>
             </div>
 
-            <!-- Alerts -->
+            <%-- ═══ LOCKED STATE BANNER ═══ --%>
+            <c:if test="${isLocked}">
+              <div style="background:linear-gradient(135deg,#FFF7ED 0%,#FEF3C7 100%);border:2px solid #F59E0B;border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;gap:18px;align-items:flex-start;">
+                <div style="font-size:2.5rem;line-height:1;">🔒</div>
+                <div>
+                  <h5 style="margin:0 0 6px;font-weight:800;color:#92400E;">Verification Pending — Dashboard Locked</h5>
+                  <p style="margin:0;color:#78350F;font-size:0.9rem;line-height:1.6;">
+                    Your investor profile has been submitted and is <strong>awaiting review and approval</strong> by the Fight D Fear Admin team.
+                    Marketplace access, investment actions, and portfolio features will unlock once your account is verified.<br>
+                    <span style="font-size:0.82rem;opacity:0.75;">Please check back shortly. If you have questions, contact <a href="mailto:support@fightdfear.com" style="color:#92400E;">support@fightdfear.com</a>.</span>
+                  </p>
+                </div>
+              </div>
+            </c:if>
+
+            <%-- ═══ ALERTS ═══ --%>
             <c:if test="${not empty success}">
                 <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
                     <i class="bi bi-check-circle-fill"></i> ${success}
@@ -372,11 +387,11 @@
                 <div class="col-6 col-md-3">
                     <div class="stat-card">
                         <div class="stat-icon" style="background-color: #fef3c7; color: #d97706;">
-                            <i class="bi bi-calendar2-check"></i>
+                            <i class="bi bi-safe2-fill"></i>
                         </div>
                         <div class="stat-info">
-                            <div class="stat-value">${fn:length(meetings)}</div>
-                            <div class="stat-label">Meetings</div>
+                            <div class="stat-value">₹<fmt:formatNumber value="${escrowHeld}" maxFractionDigits="0"/></div>
+                            <div class="stat-label">Escrow Held</div>
                         </div>
                     </div>
                 </div>

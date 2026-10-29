@@ -53,9 +53,10 @@ public final class PartnerLifecycleSupport {
     }
 
     public static boolean needsProfileCompletion(PartnerProfileStatus status) {
-        return status != PartnerProfileStatus.APPROVED
-                && status != PartnerProfileStatus.PENDING_ADMIN_APPROVAL
-                && status != PartnerProfileStatus.SUSPENDED;
+        return status == null
+                || status == PartnerProfileStatus.PROFILE_INCOMPLETE
+                || status == PartnerProfileStatus.REGISTERED
+                || status == PartnerProfileStatus.CHANGES_REQUESTED;
     }
 
     public static boolean isPendingAdminQueue(PartnerProfileStatus status) {

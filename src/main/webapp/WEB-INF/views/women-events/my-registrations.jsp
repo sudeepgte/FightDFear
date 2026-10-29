@@ -105,6 +105,7 @@
     <c:choose>
         <c:when test="${not empty registrations}">
             <c:forEach var="reg" items="${registrations}">
+                <c:set var="isAttended" value="${reg.checkedIn or reg.status == 'ATTENDED'}"/>
                 <div class="ticket" onclick="openTicketPreview(this)"
                      data-name="${reg.event.name}"
                      data-organizer="${reg.event.organizerName}"
@@ -117,7 +118,7 @@
                      data-code="${reg.ticketCode}"
                      data-paid="${reg.paid}"
                      data-amount="${reg.amountPaid}"
-                     data-checked="${reg.checkedIn}"
+                     data-checked="${isAttended}"
                      data-registered="${reg.registeredAt}"
                      data-event-id="${reg.event.id}"
                      data-can-cancel="${reg.status == 'REGISTERED'}">
@@ -126,7 +127,21 @@
                             <div class="ticket-name">${reg.event.name}</div>
                             <div class="ticket-cat"><i class="bi bi-tag-fill me-1"></i>${reg.event.category.displayName}</div>
                         </div>
-                        <span class="we-status ${reg.status == 'REGISTERED' ? 'registered' : (reg.status == 'ATTENDED' ? 'attended' : 'cancelled')}">${reg.status}</span>
+                        <div>
+                            <c:choose>
+                                <c:when test="${isAttended}">
+                                    <span class="badge" style="background:#DCFCE7; color:#15803D; font-weight:700; padding:6px 14px; border-radius:99px; font-size:0.8rem; border:1px solid #BBF7D0;">
+                                        <i class="bi bi-patch-check-fill me-1"></i> ATTENDED
+                                    </span>
+                                </c:when>
+                                <c:when test="${reg.status == 'CANCELLED'}">
+                                    <span class="we-status cancelled">CANCELLED</span>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="we-status registered">REGISTERED</span>
+                                </c:otherwise>
+                            </c:choose>
+                        </div>
                     </div>
 
                     <div class="ticket-body">
@@ -155,6 +170,26 @@
                                 <i class="bi bi-person-badge icon"></i>
                                 <span class="detail-label">Role</span>
                                 <span class="detail-value">${not empty reg.role ? reg.role : 'ATTENDEE'}</span>
+                            </div>
+                            <div class="detail-row">
+                                <i class="bi bi-patch-check-fill icon" style="color:${isAttended ? '#10B981' : '#94A3B8'};"></i>
+                                <span class="detail-label">Attendance</span>
+                                <span class="detail-value">
+                                    <c:choose>
+                                        <c:when test="${isAttended}">
+                                            <span style="color:#059669; font-weight:700;"><i class="bi bi-check-circle-fill me-1"></i> Verified &amp; Attended</span>
+                                            <c:if test="${not empty reg.checkedInAt}">
+                                                <span class="text-muted" style="font-size:0.8rem; font-weight:normal;"> (${reg.checkedInAt})</span>
+                                            </c:if>
+                                        </c:when>
+                                        <c:when test="${reg.status == 'CANCELLED'}">
+                                            <span class="text-danger">Cancelled</span>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <span class="text-muted" style="font-weight:600;"><i class="bi bi-hourglass-split me-1"></i> Not Yet Checked In</span>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </span>
                             </div>
                         </div>
 
@@ -235,7 +270,7 @@ function openTicketPreview(el) {
         row('Venue', valOr(el.dataset.venue) + (el.dataset.city ? ', ' + el.dataset.city : '')) +
         row('Paid', el.dataset.paid === 'true' ? 'Yes' : 'No') +
         row('Amount paid', el.dataset.amount ? '₹' + el.dataset.amount : '—') +
-        row('Checked in', el.dataset.checked === 'true' ? 'Yes' : 'No') +
+        row('Attendance', el.dataset.checked === 'true' ? '<strong style="color:#059669;">✓ Verified &amp; Attended</strong>' : '<span style="color:#64748B;">Not Checked In</span>') +
         row('Registered at', valOr(el.dataset.registered));
 
     var cancel = document.getElementById('tpCancelForm');

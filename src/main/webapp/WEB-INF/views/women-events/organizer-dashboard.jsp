@@ -143,7 +143,12 @@
             <div class="org-card">
                 <div class="org-card-header">
                     <div class="org-card-title"><i class="bi bi-calendar3"></i> My Events</div>
-                    <a href="${pageContext.request.contextPath}/women-events/organizer/my-events" class="org-link-accent">View all</a>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <a href="${pageContext.request.contextPath}/women-events/organizer/registrations" class="org-btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 8px; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                            <i class="bi bi-person-check-fill" style="color:#059669;"></i> Attendance &amp; Registrations
+                        </a>
+                        <a href="${pageContext.request.contextPath}/women-events/organizer/my-events" class="org-link-accent">View all</a>
+                    </div>
                 </div>
                 <c:if test="${not empty myEvents}">
                     <div class="org-table-toolbar">
@@ -193,7 +198,8 @@
                                             <td><c:choose><c:when test="${ev.free}">FREE</c:when><c:otherwise>₹${ev.entryFee}</c:otherwise></c:choose></td>
                                             <td>
                                                 <div class="action-btns">
-                                                    <a href="${pageContext.request.contextPath}/women-events/${ev.id}" class="action-btn" title="View"><i class="bi bi-eye"></i></a>
+                                                    <a href="${pageContext.request.contextPath}/women-events/${ev.id}" class="action-btn" title="View Event"><i class="bi bi-eye"></i></a>
+                                                    <a href="${pageContext.request.contextPath}/women-events/organizer/${ev.id}/attendees" class="action-btn" title="Mark Attendance / Attendees" style="color: #059669; border-color: #A7F3D0; background: #ECFDF5;"><i class="bi bi-person-check-fill"></i></a>
                                                 </div>
                                             </td>
                                         </tr>

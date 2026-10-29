@@ -23,6 +23,8 @@ public class Investment {
     private Double releasedAmount;
     private Double adminAmount;
     private String status; // PENDING, COMPLETED
+    private String razorpayPaymentId;
+    private String razorpayOrderId;
 
     private boolean commissionPaid = false;
     private Boolean payoutCredited = false;
@@ -122,4 +124,13 @@ public class Investment {
     public void setRating(Integer rating) { this.rating = rating; }
     public String getReview() { return review; }
     public void setReview(String review) { this.review = review; }
+    public String getRazorpayPaymentId() { return razorpayPaymentId; }
+    public void setRazorpayPaymentId(String razorpayPaymentId) { this.razorpayPaymentId = razorpayPaymentId; }
+    public String getRazorpayOrderId() { return razorpayOrderId; }
+    public void setRazorpayOrderId(String razorpayOrderId) { this.razorpayOrderId = razorpayOrderId; }
+
+    public String getFormattedCreatedAt() {
+        if (createdAt == null) return "—";
+        return createdAt.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy"));
+    }
 }

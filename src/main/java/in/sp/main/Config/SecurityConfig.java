@@ -190,6 +190,8 @@ public class SecurityConfig {
             "/investor/login",
             "/investor/register",
             "/investor/register/**",
+            "/investor/marketplace",
+            "/investor/proposal/**",
             "/women-events",
             "/women-events/*",
             "/women-events/**",
@@ -275,6 +277,10 @@ public class SecurityConfig {
                         response.sendRedirect("/doctors/login");
                     } else if (path != null && path.startsWith("/marketplace/provider/")) {
                         response.sendRedirect("/marketplace/provider/login");
+                    } else if (path != null && path.startsWith("/investor/")) {
+                        response.sendRedirect("/investor/login");
+                    } else if (path != null && path.startsWith("/entrepreneur/")) {
+                        response.sendRedirect("/entrepreneur/login");
                     } else {
                         response.sendRedirect("/login");
                     }

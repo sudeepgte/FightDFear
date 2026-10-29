@@ -309,6 +309,8 @@ public class Entrepreneur {
         this.upiId = upiId;
     }
 
+
+
     public VerificationStatus getVerificationStatus() {
         return verificationStatus;
     }
@@ -433,7 +435,17 @@ public class Entrepreneur {
     public void setDurationMinutes(Integer durationMinutes) { this.durationMinutes = durationMinutes; }
     public Integer getBufferMinutes() { return bufferMinutes; }
     public void setBufferMinutes(Integer bufferMinutes) { this.bufferMinutes = bufferMinutes; }
-    public String getBankDetails() { return bankDetails; }
+    public String getBankDetails() {
+        if (bankDetails != null && !bankDetails.isBlank()) {
+            return bankDetails;
+        }
+        if (bankName != null || accountNumber != null || ifscCode != null) {
+            return (bankName != null ? bankName : "") + " | " + 
+                   (accountNumber != null ? accountNumber : "") + " | " + 
+                   (ifscCode != null ? ifscCode : "");
+        }
+        return "";
+    }
     public void setBankDetails(String bankDetails) { this.bankDetails = bankDetails; }
     public Double getPayoutBalance() { return payoutBalance == null ? 0d : payoutBalance; }
     public void setPayoutBalance(Double payoutBalance) { this.payoutBalance = payoutBalance; }
@@ -445,4 +457,14 @@ public class Entrepreneur {
     public void setRating(Double rating) { this.rating = rating; }
     public Integer getReviewCount() { return reviewCount == null ? 0 : reviewCount; }
     public void setReviewCount(Integer reviewCount) { this.reviewCount = reviewCount; }
+
+    public boolean isApproved() {
+        if (partnerProfileStatus == PartnerProfileStatus.SUSPENDED 
+                || partnerProfileStatus == PartnerProfileStatus.REJECTED 
+                || verificationStatus == VerificationStatus.REJECTED) {
+            return false;
+        }
+        return verificationStatus == VerificationStatus.VERIFIED 
+                || partnerProfileStatus == PartnerProfileStatus.APPROVED;
+    }
 }

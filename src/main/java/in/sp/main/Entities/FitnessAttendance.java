@@ -17,7 +17,7 @@ public class FitnessAttendance {
     private FitnessBooking booking;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trainer_id", nullable = false)
+    @JoinColumn(name = "trainer_id", nullable = true)
     private FitnessTrainer trainer;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -36,6 +36,9 @@ public class FitnessAttendance {
     private String notes;
 
     private LocalDateTime checkInTime = LocalDateTime.now();
+
+    @Column(name = "credits_deducted")
+    private Integer creditsDeducted = 1;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -63,4 +66,8 @@ public class FitnessAttendance {
 
     public LocalDateTime getCheckInTime() { return checkInTime; }
     public void setCheckInTime(LocalDateTime checkInTime) { this.checkInTime = checkInTime; }
+
+    public Integer getCreditsDeducted() { return creditsDeducted; }
+    public void setCreditsDeducted(Integer creditsDeducted) { this.creditsDeducted = creditsDeducted; }
+    public void setCreditsDeducted(int creditsDeducted) { this.creditsDeducted = creditsDeducted; }
 }

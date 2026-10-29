@@ -44,9 +44,25 @@ public class FitnessBooking {
     private Boolean payoutCredited = false;
     @Column(columnDefinition = "TEXT")
     private String coachNotes;
+    private String paymentMode; // WALLET or RAZORPAY
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+    private String razorpaySignature;
 
 
     // Getters and Setters
+    public String getPaymentMode() { return paymentMode; }
+    public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }
+
+    public String getRazorpayOrderId() { return razorpayOrderId; }
+    public void setRazorpayOrderId(String razorpayOrderId) { this.razorpayOrderId = razorpayOrderId; }
+
+    public String getRazorpayPaymentId() { return razorpayPaymentId; }
+    public void setRazorpayPaymentId(String razorpayPaymentId) { this.razorpayPaymentId = razorpayPaymentId; }
+
+    public String getRazorpaySignature() { return razorpaySignature; }
+    public void setRazorpaySignature(String razorpaySignature) { this.razorpaySignature = razorpaySignature; }
+
     public String getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(String paymentStatus) { this.paymentStatus = paymentStatus; }
 

@@ -46,6 +46,8 @@ public class EventHost {
     private String logoPath;
     private String documentPath;
     private String portfolioPath;
+    @Column(name = "profile_photo_path")
+    private String profilePhotoPath;
 
     @Enumerated(EnumType.STRING)
     private VerificationStatus verificationStatus = VerificationStatus.PENDING;
@@ -287,4 +289,14 @@ public class EventHost {
     public void setEventsConducted(Integer eventsConducted) { this.eventsConducted = eventsConducted; }
     public String getPreviousEventDetails() { return previousEventDetails; }
     public void setPreviousEventDetails(String previousEventDetails) { this.previousEventDetails = previousEventDetails; }
+
+    public String getAddress() { return officeAddress; }
+    public void setAddress(String address) { this.officeAddress = address; }
+
+    public String getProfilePhotoPath() { return profilePhotoPath; }
+    public void setProfilePhotoPath(String profilePhotoPath) { this.profilePhotoPath = profilePhotoPath; }
+    public String getProfilePhoto() { return profilePhotoPath; }
+    public void setProfilePhoto(String profilePhoto) { this.profilePhotoPath = profilePhoto; }
+    public String getProfileImagePath() { return profilePhotoPath; }
+    public void setProfileImagePath(String profileImagePath) { this.profilePhotoPath = profileImagePath; }
 }

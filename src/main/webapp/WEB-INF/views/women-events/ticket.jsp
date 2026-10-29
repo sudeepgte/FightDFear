@@ -61,7 +61,25 @@
             <div class="row"><span class="label">Ticket type</span><span class="val"><c:out value="${empty reg.ticketTypeName ? 'General' : reg.ticketTypeName}"/></span></div>
             <div class="row"><span class="label">Date</span><span class="val">${event.eventDate} <c:if test="${not empty event.eventTime}">${event.eventTime}</c:if></span></div>
             <div class="row"><span class="label">Venue</span><span class="val"><c:out value="${event.venue}"/>, <c:out value="${event.city}"/></span></div>
-            <div class="row"><span class="label">Status</span><span class="val">${reg.status}</span></div>
+            <div class="row">
+                <span class="label">Attendance</span>
+                <span class="val">
+                    <c:choose>
+                        <c:when test="${reg.checkedIn or reg.status == 'ATTENDED'}">
+                            <span style="color: #059669; font-weight:700;"><i class="bi bi-patch-check-fill"></i> Verified &amp; Attended</span>
+                        </c:when>
+                        <c:when test="${reg.status == 'CANCELLED'}">
+                            <span style="color: #DC2626;">Cancelled</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span style="color: #64748B;">Registered (Not Checked In)</span>
+                        </c:otherwise>
+                    </c:choose>
+                </span>
+            </div>
+            <c:if test="${not empty reg.checkedInAt}">
+                <div class="row"><span class="label">Checked In At</span><span class="val">${reg.checkedInAt}</span></div>
+            </c:if>
             <div class="row"><span class="label">Amount paid</span><span class="val">₹${empty reg.amountPaid ? 0 : reg.amountPaid}</span></div>
             <c:if test="${reg.coinsUsed != null && reg.coinsUsed > 0}">
                 <div class="row"><span class="label">Coins used</span><span class="val">${reg.coinsUsed}</span></div>

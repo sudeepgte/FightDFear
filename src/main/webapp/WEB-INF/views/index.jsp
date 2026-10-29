@@ -2154,9 +2154,13 @@
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty &amp; Wellness</a>
                     <a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/women-jobs/login" class="dropdown-item">Women Jobs</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/women-products/seller/login" class="dropdown-item">Product Seller</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="${pageContext.request.contextPath}/investor/login" class="dropdown-item">Investor</a>
                     <a href="${pageContext.request.contextPath}/women-events/host/login" class="dropdown-item">Event Host</a>
@@ -2174,9 +2178,13 @@
                     <a href="${pageContext.request.contextPath}/centres/registerCentre" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/register" class="dropdown-item">Beauty &amp; Wellness</a>
                     <a href="${pageContext.request.contextPath}/lawyer/register" class="dropdown-item">Women Lawyer</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/women-jobs/register" class="dropdown-item">Women Jobs</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/women-products/seller/register" class="dropdown-item">Product Seller</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/marketplace/provider/register" class="dropdown-item">Marketplace Provider</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/entrepreneur/register" class="dropdown-item">Entrepreneur</a>
                     <a href="${pageContext.request.contextPath}/investor/register" class="dropdown-item">Investor</a>
                     <a href="${pageContext.request.contextPath}/women-events/host/register" class="dropdown-item">Event Host</a>
@@ -2206,9 +2214,13 @@
                     <a href="${pageContext.request.contextPath}/centres/login" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/login" class="dropdown-item">Beauty &amp; Wellness</a>
                     <a href="${pageContext.request.contextPath}/lawyer/login" class="dropdown-item">Women Lawyer</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/women-jobs/login" class="dropdown-item">Women Jobs</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/women-products/seller/login" class="dropdown-item">Product Seller</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/marketplace/provider/login" class="dropdown-item">Marketplace Provider</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/entrepreneur/login" class="dropdown-item">Entrepreneur</a>
                     <a href="${pageContext.request.contextPath}/investor/login" class="dropdown-item">Investor</a>
                     <a href="${pageContext.request.contextPath}/women-events/host/login" class="dropdown-item">Event Host</a>
@@ -2227,9 +2239,13 @@
                     <a href="${pageContext.request.contextPath}/centres/registerCentre" class="dropdown-item">Self-Defense Trainer</a>
                     <a href="${pageContext.request.contextPath}/salons/register" class="dropdown-item">Beauty &amp; Wellness</a>
                     <a href="${pageContext.request.contextPath}/lawyer/register" class="dropdown-item">Women Lawyer</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/women-jobs/register" class="dropdown-item">Women Jobs</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/women-products/seller/register" class="dropdown-item">Product Seller</a>
+                    <%-- Preserved for future updates:
                     <a href="${pageContext.request.contextPath}/marketplace/provider/register" class="dropdown-item">Marketplace Provider</a>
+                    --%>
                     <a href="${pageContext.request.contextPath}/entrepreneur/register" class="dropdown-item">Entrepreneur</a>
                     <a href="${pageContext.request.contextPath}/investor/register" class="dropdown-item">Investor</a>
                     <a href="${pageContext.request.contextPath}/women-events/host/register" class="dropdown-item">Event Host</a>

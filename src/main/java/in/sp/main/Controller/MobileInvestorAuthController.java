@@ -201,6 +201,7 @@ public class MobileInvestorAuthController {
         } else {
             investorProfileService.refreshCompletion(inv);
         }
+        inv = investorProfileService.healApproval(inv);
 
         session.setAttribute("loggedInvestor", inv);
         String token = jwtUtil.generateToken(inv.getEmail(), "INVESTOR");
@@ -210,8 +211,7 @@ public class MobileInvestorAuthController {
         res.put("tokenType", "Bearer");
         res.put("role", "INVESTOR");
         res.put("investor", investorSummary(inv));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(inv.getPartnerProfileStatus()));
+        res.put("needsProfileCompletion", InvestorProfileService.shouldForceProfileCompletion(inv));
         res.put("canSubmitForVerification",
                 investorProfileService.isReadyForVerification(inv)
                         && inv.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
@@ -307,7 +307,9 @@ public class MobileInvestorAuthController {
 
         List<Map<String, Object>> marketplace = publicMarketplace(investor, null, null, "newest");
 
-        boolean approved = investor.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
+        investor = investorProfileService.healApproval(investor);
+        session.setAttribute("loggedInvestor", investor);
+        boolean approved = InvestorProfileService.isApproved(investor);
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("investor", investorSummary(investor));
         data.put("portfolio", portfolio);
@@ -319,8 +321,7 @@ public class MobileInvestorAuthController {
         data.put("pendingDeals", pendingCount);
         data.put("completedDeals", completedCount);
         data.put("canInvest", approved);
-        data.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(investor.getPartnerProfileStatus()));
+        data.put("needsProfileCompletion", InvestorProfileService.shouldForceProfileCompletion(investor));
         data.put("cancelPolicy", in.sp.main.Service.FundingCareService.CANCEL_POLICY);
         data.put("categories", FundingCatalog.categories());
         return ResponseEntity.ok(ok(data));
@@ -383,7 +384,7 @@ public class MobileInvestorAuthController {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
         inv = investorRepository.findById(inv.getId()).orElse(inv);
-        if (inv.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+        if (!InvestorProfileService.isApproved(inv)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(error("Investor must be verified before expressing interest"));
         }
@@ -525,8 +526,8 @@ public class MobileInvestorAuthController {
         m.put("profileCompletionPct", inv.getProfileCompletionPct() == null ? 0 : inv.getProfileCompletionPct());
         m.put("rejectionReason", inv.getRejectionReason());
         m.put("changesRequestedNote", inv.getChangesRequestedNote());
-        m.put("canInvest", inv.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED);
-        m.put("verified", inv.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED);
+        m.put("canInvest", InvestorProfileService.isApproved(inv));
+        m.put("verified", InvestorProfileService.isApproved(inv));
         InvestorProfileService.putExtra(m, inv);
         m.put("cancelPolicy", in.sp.main.Service.FundingCareService.CANCEL_POLICY);
         return m;

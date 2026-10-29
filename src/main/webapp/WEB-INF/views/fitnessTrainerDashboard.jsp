@@ -1065,6 +1065,15 @@
                                     <div class="badge px-3 py-2 rounded-pill mb-2" style="background: #ecfdf5; color: #047857; font-size: 0.82rem; border: 1px solid #a7f3d0;">
                                         <i class="bi bi-broadcast me-1"></i> Live Active Session
                                     </div>
+                                    <div class="my-2 p-2 bg-white rounded-3 border w-100" style="max-width: 290px;">
+                                        <span class="small text-muted d-block fw-semibold" style="font-size: 0.72rem;">Session Code for Clients:</span>
+                                        <div class="d-flex align-items-center justify-content-center gap-2 mt-1">
+                                            <span class="fw-bold font-monospace text-dark px-2 py-1 bg-light rounded" id="fitnessQrTokenDisplay" style="font-size: 0.85rem; word-break: break-all;">—</span>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary p-1 px-2 rounded-pill" onclick="copyFitnessQrToken()" title="Copy Code">
+                                                <i class="bi bi-clipboard me-1"></i> Copy
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div class="small fw-bold text-dark mb-3">
                                         Expires in: <span id="fitnessQrTimer" style="color: var(--fitness-rose-dark);" class="fs-6 fw-extrabold">15:00</span>
                                     </div>
@@ -1098,12 +1107,20 @@
                         </div>
                     </div>
 
-                    <!-- Client Roster Table (Manual Fallback) -->
-                    <h6 class="fw-bold mb-3" style="color: var(--fitness-text);"><i class="bi bi-people-fill text-danger me-2" style="color: var(--fitness-rose) !important;"></i> Active Trainees</h6>
+                    <!-- Client Roster Table (Manual Session Check-in) -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0" style="color: var(--fitness-text);"><i class="bi bi-person-check-fill me-2" style="color: var(--fitness-rose);"></i> Active Trainee Passes &amp; Sessions</h6>
+                        <span class="badge rounded-pill px-3 py-1" style="background: var(--fitness-rose-soft); color: var(--fitness-rose-dark); border: 1px solid #fecdd3; font-size: 0.75rem;">
+                            1 Check-In = 1 Package Session Deducted
+                        </span>
+                    </div>
+
                     <c:choose>
                         <c:when test="${empty activeBookings}">
-                            <div class="text-center py-4 bg-light rounded-4 mb-4">
-                                <p class="text-muted mb-0 fw-medium">No active student bookings to take attendance for.</p>
+                            <div class="text-center py-5 bg-white border rounded-4 mb-4 shadow-sm">
+                                <i class="bi bi-calendar-x text-muted" style="font-size: 2.5rem; opacity: 0.4;"></i>
+                                <p class="text-muted mt-2 mb-0 fw-medium">No active student bookings to take attendance for.</p>
+                                <small class="text-muted">Approved client bookings with valid pass credits will appear here.</small>
                             </div>
                         </c:when>
                         <c:otherwise>
@@ -1112,31 +1129,67 @@
                                     <thead style="font-size: 0.82rem; border-bottom: 1px solid var(--fitness-border); color: var(--fitness-muted);">
                                         <tr>
                                             <th>Client Name</th>
-                                            <th>Program / Category</th>
-                                            <th>Session Usage</th>
-                                            <th>Time Slot</th>
-                                            <th>Action</th>
+                                            <th>Program &amp; Plan</th>
+                                            <th>Session Package Credits</th>
+                                            <th>Scheduled Slot</th>
+                                            <th class="text-end">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <c:forEach var="b" items="${activeBookings}">
+                                            <c:set var="compCount" value="${b.completedSessions != null ? b.completedSessions : 0}" />
+                                            <c:set var="totCount" value="${b.totalSessions != null && b.totalSessions > 0 ? b.totalSessions : 1}" />
+                                            <c:set var="remCount" value="${b.remainingSessions != null ? b.remainingSessions : (totCount - compCount)}" />
+                                            <c:if test="${remCount < 0}"><c:set var="remCount" value="0" /></c:if>
                                             <tr>
-                                                <td class="fw-bold text-dark">
-                                                    <i class="bi bi-person-circle text-secondary me-2 fs-5"></i>${b.user.fullName}
-                                                </td>
-                                                <td><span class="badge px-2 py-1 rounded-pill" style="background: var(--fitness-rose-soft); color: var(--fitness-rose-dark); border: 1px solid #fecdd3;">${b.category}</span></td>
                                                 <td>
-                                                    <div class="small fw-bold text-dark mb-1">${b.completedSessions} / ${b.totalSessions} attended</div>
-                                                    <div class="progress rounded-pill" style="height: 6px; width: 140px; background: #f1f5f9;">
-                                                        <div class="progress-bar rounded-pill" style="width: ${(b.completedSessions * 100) / (b.totalSessions > 0 ? b.totalSessions : 1)}%; background: var(--fitness-rose);"></div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: var(--fitness-rose-soft); color: var(--fitness-rose-dark); font-weight: 700; font-size: 0.85rem;">
+                                                            ${not empty b.user.fullName ? b.user.fullName.substring(0, 1).toUpperCase() : 'U'}
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-dark">${b.user.fullName}</div>
+                                                            <div class="small text-muted" style="font-size: 0.75rem;">${b.user.email}</div>
+                                                        </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-muted small">${b.bookingTime}</td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-submit rounded-pill px-3"
-                                                            onclick="openAttendanceModal(${b.id}, '${b.user.fullName}', '${b.bookingTime}')">
-                                                        <i class="bi bi-check2-circle me-1"></i> Check In
-                                                    </button>
+                                                    <span class="badge px-2 py-1 rounded-pill mb-1" style="background: var(--fitness-rose-soft); color: var(--fitness-rose-dark); border: 1px solid #fecdd3;">${b.category}</span>
+                                                    <c:if test="${not empty b.fitnessPackage}">
+                                                        <div class="small text-muted" style="font-size: 0.75rem;"><i class="bi bi-box-seam me-1"></i>${b.fitnessPackage.packageName}</div>
+                                                    </c:if>
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex justify-content-between align-items-center mb-1" style="max-width: 170px;">
+                                                        <span class="small fw-bold text-dark">${compCount} / ${totCount} used</span>
+                                                        <span class="badge rounded-pill ${remCount > 0 ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary'}" style="font-size: 0.7rem;">
+                                                            ${remCount} left
+                                                        </span>
+                                                    </div>
+                                                    <div class="progress rounded-pill" style="height: 6px; width: 170px; background: #f1f5f9;">
+                                                        <div class="progress-bar rounded-pill" style="width: ${(compCount * 100) / totCount}%; background: var(--fitness-rose);"></div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div class="text-dark fw-medium small">${b.bookingTime}</div>
+                                                    <c:if test="${not empty b.validUntil}">
+                                                        <div class="text-muted" style="font-size: 0.75rem;">Valid till: ${b.validUntil}</div>
+                                                    </c:if>
+                                                </td>
+                                                <td class="text-end">
+                                                    <c:choose>
+                                                        <c:when test="${remCount <= 0 || compCount >= totCount}">
+                                                            <span class="badge bg-light text-muted border rounded-pill px-3 py-2 small">
+                                                                <i class="bi bi-check-all me-1 text-success"></i> Pass Completed
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <button class="btn btn-sm btn-submit rounded-pill px-3 shadow-sm"
+                                                                    onclick="openAttendanceModal(${b.id}, '<c:out value="${b.user.fullName}"/>', '<c:out value="${b.bookingTime}"/>', ${compCount}, ${totCount}, ${remCount}, '<c:out value="${b.category}"/>')">
+                                                                <i class="bi bi-check2-circle me-1"></i> Check In
+                                                            </button>
+                                                        </c:otherwise>
+                                                    </c:choose>
                                                 </td>
                                             </tr>
                                         </c:forEach>
@@ -1147,38 +1200,64 @@
                     </c:choose>
 
                     <!-- Recent Check-In History -->
-                    <h6 class="fw-bold mb-3" style="color: var(--fitness-text);"><i class="bi bi-clock-history text-secondary me-2"></i> Recent Attendance Logs</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0" style="color: var(--fitness-text);"><i class="bi bi-clock-history me-2 text-secondary"></i> Recent Workout Session Attendance Logs</h6>
+                        <span class="small text-muted">${attendanceList.size()} total session check-in logs</span>
+                    </div>
+
                     <c:choose>
                         <c:when test="${empty attendanceList}">
                             <div class="text-center py-4 bg-light rounded-4">
                                 <p class="text-muted mb-0 fw-medium">No check-in attendance logs recorded yet.</p>
+                                <small class="text-muted">Once clients scan the QR code or you click "Check In", history will be logged here.</small>
                             </div>
                         </c:when>
                         <c:otherwise>
                             <div class="table-responsive bg-white border rounded-4 p-3 shadow-sm">
-                                <table class="table table-sm table-borderless align-middle mb-0">
+                                <table class="table table-hover table-sm align-middle mb-0">
                                     <thead style="font-size: 0.82rem; border-bottom: 1px solid var(--fitness-border); color: var(--fitness-muted);">
                                         <tr>
-                                            <th>Date</th>
+                                            <th>Date &amp; Time</th>
                                             <th>Client Name</th>
-                                            <th>Session Time</th>
-                                            <th>Status</th>
-                                            <th>Coach Notes</th>
+                                            <th>Session Slot</th>
+                                            <th>Attendance Status</th>
+                                            <th>Pass Credit</th>
+                                            <th>Coach Workout Notes</th>
                                         </tr>
                                     </thead>
-                                    <tbody style="font-size: 0.9rem;">
+                                    <tbody style="font-size: 0.88rem;">
                                         <c:forEach var="att" items="${attendanceList}">
                                             <tr style="border-bottom: 1px solid #f8f9fa;">
-                                                <td class="fw-medium text-dark">${att.sessionDate}</td>
-                                                <td class="fw-bold text-dark">${att.user.fullName}</td>
+                                                <td>
+                                                    <div class="fw-bold text-dark">${att.sessionDate}</div>
+                                                    <c:if test="${not empty att.checkInTime}">
+                                                        <div class="text-muted" style="font-size: 0.75rem;"><i class="bi bi-clock me-1"></i>${att.checkInTime.toLocalTime().toString().substring(0, 5)}</div>
+                                                    </c:if>
+                                                </td>
+                                                <td class="fw-bold text-dark">
+                                                    <i class="bi bi-person-fill text-muted me-1"></i>${att.user.fullName}
+                                                </td>
                                                 <td class="text-muted">${att.sessionTime}</td>
                                                 <td>
-                                                    <span class="badge px-2 py-1 rounded-pill" style="background: ${att.status == 'PRESENT' ? '#ecfdf5' : (att.status == 'LATE' ? '#fffbeb' : '#fef2f2')}; color: ${att.status == 'PRESENT' ? '#047857' : (att.status == 'LATE' ? '#b45309' : '#b91c1c')}; border: 1px solid ${att.status == 'PRESENT' ? '#a7f3d0' : (att.status == 'LATE' ? '#fde68a' : '#fecaca')};">
-                                                        ${att.status}
+                                                    <span class="badge px-2 py-1 rounded-pill" style="background: ${att.status == 'PRESENT' ? '#ecfdf5' : (att.status == 'LATE' ? '#fffbeb' : '#f8fafc')}; color: ${att.status == 'PRESENT' ? '#047857' : (att.status == 'LATE' ? '#b45309' : '#64748b')}; border: 1px solid ${att.status == 'PRESENT' ? '#a7f3d0' : (att.status == 'LATE' ? '#fde68a' : '#e2e8f0')};">
+                                                        <i class="bi ${att.status == 'PRESENT' ? 'bi-check-circle-fill' : (att.status == 'LATE' ? 'bi-clock-history' : 'bi-x-circle')} me-1"></i>${att.status}
                                                     </span>
                                                 </td>
-
-                                                <td class="text-muted small">${att.notes != null ? att.notes : '—'}</td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${att.status == 'PRESENT' || att.status == 'LATE'}">
+                                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                                                &minus;1 Pass Session
+                                                            </span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge bg-light text-muted border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                                                Credit Preserved
+                                                            </span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                                <td class="text-muted small">${att.notes != null && !att.notes.isEmpty() ? att.notes : '—'}</td>
                                             </tr>
                                         </c:forEach>
                                     </tbody>
@@ -1998,6 +2077,99 @@
   </div>
 </div>
 
+<!-- Mark Session Attendance & Package Deduction Modal -->
+<div class="modal fade" id="markAttendanceModal" tabindex="-1" aria-labelledby="markAttendanceModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 shadow">
+      <div class="modal-header border-0 rounded-top-4" style="background: var(--fitness-rose-soft); border-bottom: 1px solid #fecdd3 !important;">
+        <div>
+          <h5 class="modal-title fw-bold text-dark mb-0" id="markAttendanceModalLabel">
+            <i class="bi bi-clipboard-check-fill me-2" style="color: var(--fitness-rose);"></i> Record Session Check-In
+          </h5>
+          <p class="small text-muted mb-0 mt-1">Deduct 1 session credit from client's package and log today's workout.</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form id="markAttendanceForm" action="${pageContext.request.contextPath}/fitness/trainer/attendance/mark" method="POST">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+        <input type="hidden" name="bookingId" id="attBookingId">
+
+        <div class="modal-body p-4">
+          <!-- Inline Alert Message for Feedback -->
+          <div id="attAlertMsg" class="alert d-none mb-3 py-2 px-3 small rounded-3" role="alert"></div>
+
+          <!-- Client & Pass Summary Card -->
+          <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid var(--fitness-border);">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; background: var(--fitness-rose-light); color: var(--fitness-rose);">
+                  <i class="bi bi-person-fill fs-5"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-dark" id="attClientNameDisplay">—</div>
+                  <div class="small text-muted" id="attCategoryDisplay">Personal Training</div>
+                </div>
+              </div>
+              <div class="text-end">
+                <span class="badge rounded-pill px-3 py-1" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;" id="attRemainingBadge">
+                  <span id="attRemainingCount">0</span> Remaining
+                </span>
+                <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                  <span id="attCompletedCount">0</span> of <span id="attTotalCount">0</span> completed
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Session Date -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Session Date *</label>
+            <input type="date" name="sessionDate" id="attSessionDate" class="form-control" required>
+            <div class="form-text text-muted small">Only one attendance check-in can be recorded per day for this package.</div>
+          </div>
+
+          <!-- Session Time Slot -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Session Time Slot</label>
+            <input type="text" name="sessionTime" id="attSessionTime" class="form-control" placeholder="e.g. 07:00 AM - 08:00 AM">
+          </div>
+
+          <!-- Status -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Session Attendance Status *</label>
+            <select name="status" id="attStatus" class="form-select" onchange="updateDeductionNotice()">
+              <option value="PRESENT" selected>PRESENT &mdash; Workout Completed (&minus;1 Pass Credit)</option>
+              <option value="LATE">LATE &mdash; Attended Late (&minus;1 Pass Credit)</option>
+              <option value="EXCUSED">EXCUSED / RESCHEDULED &mdash; Cancelled (No Credit Deducted)</option>
+            </select>
+          </div>
+
+          <!-- Notes -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Coach Workout Notes</label>
+            <textarea name="notes" id="attNotes" class="form-control" rows="3" placeholder="e.g. Upper body push workout, Bench Press 60kg, Triceps Pushdowns, Core plank 3 mins..."></textarea>
+          </div>
+
+          <!-- Credit Deduction Info Banner -->
+          <div class="p-2 px-3 rounded-3 small" id="attNoticeBanner" style="background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3;">
+            <i class="bi bi-info-circle-fill me-1"></i>
+            <span id="attNoticeText">Submitting will decrement 1 pass credit from client's package and advance completed workouts counter.</span>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" id="attSubmitBtn" class="btn btn-submit rounded-pill px-4">
+            <span id="attBtnSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status" aria-hidden="true"></span>
+            <span id="attBtnText">Confirm Check-In</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 
 <script>
     (function initClientPicker() {
@@ -2081,15 +2253,155 @@
         modal.show();
     }
 
-    function openAttendanceModal(bookingId, clientName, bookingTime) {
-        document.getElementById('attBookingId').value = bookingId;
-        document.getElementById('attClientName').value = clientName;
-        document.getElementById('attSessionTime').value = bookingTime;
+    function openAttendanceModal(bookingId, clientName, bookingTime, completed, total, remaining, category) {
+        var idInput = document.getElementById('attBookingId');
+        if (idInput) idInput.value = bookingId || '';
 
-        document.getElementById('attSessionDate').value = new Date().toISOString().split('T')[0];
+        var nameEl = document.getElementById('attClientNameDisplay');
+        if (nameEl) nameEl.textContent = clientName || 'Client';
+
+        var catEl = document.getElementById('attCategoryDisplay');
+        if (catEl) catEl.textContent = category || 'Fitness Session';
+
+        var compEl = document.getElementById('attCompletedCount');
+        if (compEl) compEl.textContent = (completed != null ? completed : 0);
+
+        var totEl = document.getElementById('attTotalCount');
+        if (totEl) totEl.textContent = (total != null && total > 0 ? total : 1);
+
+        var remEl = document.getElementById('attRemainingCount');
+        if (remEl) remEl.textContent = (remaining != null ? remaining : 1);
+
+        var timeInput = document.getElementById('attSessionTime');
+        if (timeInput) timeInput.value = bookingTime || '';
+
+        var dateInput = document.getElementById('attSessionDate');
+        if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+        var notesInput = document.getElementById('attNotes');
+        if (notesInput) notesInput.value = '';
+
+        var statusSelect = document.getElementById('attStatus');
+        if (statusSelect) statusSelect.value = 'PRESENT';
+
+        var alertMsg = document.getElementById('attAlertMsg');
+        if (alertMsg) {
+            alertMsg.className = 'alert d-none mb-3 py-2 px-3 small rounded-3';
+            alertMsg.textContent = '';
+        }
+
+        var submitBtn = document.getElementById('attSubmitBtn');
+        if (submitBtn) submitBtn.disabled = false;
+        var spinner = document.getElementById('attBtnSpinner');
+        if (spinner) spinner.classList.add('d-none');
+        var btnText = document.getElementById('attBtnText');
+        if (btnText) btnText.textContent = 'Confirm Check-In';
+
+        updateDeductionNotice();
+
         var attModal = new bootstrap.Modal(document.getElementById('markAttendanceModal'));
         attModal.show();
     }
+
+    function updateDeductionNotice() {
+        var statusSelect = document.getElementById('attStatus');
+        var banner = document.getElementById('attNoticeBanner');
+        var noticeText = document.getElementById('attNoticeText');
+        if (!statusSelect || !banner || !noticeText) return;
+
+        var status = statusSelect.value;
+        if (status === 'PRESENT' || status === 'LATE') {
+            banner.style.background = '#fff1f2';
+            banner.style.color = '#9f1239';
+            banner.style.borderColor = '#fecdd3';
+            noticeText.textContent = 'Submitting will decrement 1 session credit from the client\'s package and advance their progress counter.';
+        } else {
+            banner.style.background = '#f8fafc';
+            banner.style.color = '#475569';
+            banner.style.borderColor = '#e2e8f0';
+            noticeText.textContent = 'Session rescheduled/excused. No pass credit will be deducted.';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var attForm = document.getElementById('markAttendanceForm');
+        if (!attForm) return;
+
+        attForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            var submitBtn = document.getElementById('attSubmitBtn');
+            var spinner = document.getElementById('attBtnSpinner');
+            var btnText = document.getElementById('attBtnText');
+            var alertMsg = document.getElementById('attAlertMsg');
+
+            var bookingId = document.getElementById('attBookingId').value;
+            var sessionDate = document.getElementById('attSessionDate').value;
+            var sessionTime = document.getElementById('attSessionTime').value;
+            var status = document.getElementById('attStatus').value;
+            var notes = document.getElementById('attNotes').value;
+
+            if (!bookingId) {
+                alert('Invalid booking record');
+                return;
+            }
+
+            if (submitBtn) submitBtn.disabled = true;
+            if (spinner) spinner.classList.remove('d-none');
+            if (btnText) btnText.textContent = 'Saving...';
+
+            var csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+
+            var headers = {
+                'Content-Type': 'application/json'
+            };
+            if (csrfToken) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            try {
+                var res = await fetch('${pageContext.request.contextPath}/api/fitness/trainer/attendance', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        bookingId: bookingId,
+                        sessionDate: sessionDate,
+                        sessionTime: sessionTime,
+                        status: status,
+                        notes: notes
+                    })
+                });
+
+                var data = await res.json().catch(function() { return {}; });
+
+                if (res.ok && data.success) {
+                    if (alertMsg) {
+                        alertMsg.className = 'alert alert-success py-2 px-3 small rounded-3';
+                        alertMsg.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Session attendance recorded and 1 pass credit deducted!';
+                    }
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 700);
+                } else {
+                    if (alertMsg) {
+                        alertMsg.className = 'alert alert-danger py-2 px-3 small rounded-3';
+                        var errText = data.error || data.message || 'Failed to record attendance.';
+                        if (errText.toLowerCase().includes('already recorded')) {
+                            errText = 'Attendance has already been recorded for this client on ' + sessionDate + '. (1 check-in per day allowed)';
+                        }
+                        alertMsg.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> ' + errText;
+                    }
+                    if (submitBtn) submitBtn.disabled = false;
+                    if (spinner) spinner.classList.add('d-none');
+                    if (btnText) btnText.textContent = 'Confirm Check-In';
+                }
+            } catch (err) {
+                console.warn('AJAX attendance submit error, falling back to form submit:', err);
+                attForm.submit();
+            }
+        });
+    });
 
     function switchTab(tabId, clickedBtn) {
         document.querySelectorAll('.tab-section').forEach(function(section) {
@@ -2170,6 +2482,9 @@
             panel.style.display = 'block';
             canvasContainer.innerHTML = '';
 
+            const tokenDisplay = document.getElementById('fitnessQrTokenDisplay');
+            if (tokenDisplay) tokenDisplay.innerText = res.token || '—';
+
             // Render QR Code using qrcodejs
             if (typeof QRCode !== 'undefined') {
                 new QRCode(canvasContainer, {
@@ -2195,6 +2510,14 @@
         .catch(err => {
             alert('Network error while generating QR: ' + err);
         });
+    }
+
+    function copyFitnessQrToken() {
+        const token = document.getElementById('fitnessQrTokenDisplay')?.innerText;
+        if (token && token !== '—') {
+            navigator.clipboard.writeText(token);
+            alert('Session Code copied to clipboard: ' + token);
+        }
     }
 
     function startFitnessQrCountdown(expiresAtStr) {

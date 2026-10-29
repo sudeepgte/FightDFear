@@ -44,7 +44,7 @@ public class Investor {
     private String verificationDocuments; // Document paths
 
     @Enumerated(EnumType.STRING)
-    private VerificationStatus verificationStatus = VerificationStatus.VERIFIED;
+    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "partner_profile_status", length = 40)
@@ -357,5 +357,15 @@ public class Investor {
         if (bio != null) {
             bio = bio.replace("₹", "INR ").replace("\u20B9", "INR ");
         }
+    }
+
+    public boolean isApproved() {
+        if (partnerProfileStatus == PartnerProfileStatus.SUSPENDED 
+                || partnerProfileStatus == PartnerProfileStatus.REJECTED 
+                || verificationStatus == VerificationStatus.REJECTED) {
+            return false;
+        }
+        return verificationStatus == VerificationStatus.VERIFIED 
+                || partnerProfileStatus == PartnerProfileStatus.APPROVED;
     }
 }

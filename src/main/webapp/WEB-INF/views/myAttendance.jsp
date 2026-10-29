@@ -119,20 +119,19 @@
 
                 <!-- Check-in -->
                 <div class="card-panel">
-                    <h5 class="fw-bold mb-1">Check in to your Martial Arts class</h5>
+                    <h5 class="fw-bold mb-1">Check in to your Class or Workout Session</h5>
                     <p class="text-muted small mb-3">
-                        Scan the QR displayed by your Martial Arts centre using the Fight D Fear mobile app,
-                        or enter the session code manually below.
+                        Scan the QR code displayed by your centre or fitness coach, or enter the session code manually below.
                     </p>
                     <div class="d-flex flex-wrap align-items-center gap-4 qr-checkin-inner">
                         <div class="qr-visual" aria-hidden="true">
                             <i class="bi bi-qr-code-scan"></i>
                         </div>
                         <div class="flex-grow-1" style="min-width:240px;">
-                            <p class="small text-muted mb-2"><strong>Mobile:</strong> Open Martial Arts → Scan QR to Check In</p>
+                            <p class="small text-muted mb-2"><strong>Tip:</strong> You can enter both Martial Arts Dojo tokens and Fitness Coach codes (FIT-...)</p>
                             <label class="form-label small fw-semibold mb-1">Session Code</label>
                             <div class="d-flex flex-wrap gap-2">
-                                <input type="text" id="qrTokenInput" class="form-control" style="max-width:320px;" placeholder="Paste or enter session token">
+                                <input type="text" id="qrTokenInput" class="form-control" style="max-width:320px;" placeholder="Paste session code (e.g. FIT-...)">
                                 <button type="button" class="btn-rose" onclick="submitQrCheckIn()">Check In</button>
                             </div>
                             <p id="qrCheckInMsg" class="small mt-2 mb-0"></p>

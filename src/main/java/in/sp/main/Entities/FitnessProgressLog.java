@@ -64,6 +64,13 @@ public class FitnessProgressLog {
     public String getWorkoutNotes() { return workoutNotes; }
     public void setWorkoutNotes(String workoutNotes) { this.workoutNotes = workoutNotes; }
 
+    // Aliases for compatibility
+    public Double getCurrentWeight() { return weightKg; }
+    public void setCurrentWeight(Double currentWeight) { this.weightKg = currentWeight; }
+
+    public String getCoachNotes() { return workoutNotes; }
+    public void setCoachNotes(String coachNotes) { this.workoutNotes = coachNotes; }
+
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

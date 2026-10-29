@@ -298,7 +298,7 @@
             <a href="${pageContext.request.contextPath}/investor/dashboard" class="sidebar-link">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
-            <a href="${pageContext.request.contextPath}/investor/chat/2?proposalId=1" class="sidebar-link active">
+            <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link active">
                 <i class="bi bi-chat-dots"></i> Chat
             </a>
             <a href="${pageContext.request.contextPath}/investor/marketplace" class="sidebar-link">
@@ -344,7 +344,7 @@
                 <c:forEach var="msg" items="${chatHistory}">
                     <div class="message ${msg.senderRole == 'INVESTOR' ? 'sent' : 'received'}">
                         <div>${msg.message}</div>
-                        <div class="msg-time">${msg.timestamp}</div>
+                        <div class="msg-time">${msg.formattedTimestamp}</div>
                     </div>
                 </c:forEach>
                 <c:if test="${empty chatHistory}">

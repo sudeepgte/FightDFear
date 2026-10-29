@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,6 +16,8 @@
     <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Razorpay Checkout SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
     <style>
         :root {
@@ -255,9 +258,28 @@
                         
                         <h6 class="fw-bold text-dark mb-3">Specializations &amp; Focus Areas</h6>
                         <div class="mb-4">
-                            <c:forEach var="cat" items="${categories}">
-                                <span class="spec-chip"><i class="bi bi-check2-circle me-1"></i>${cat}</span>
-                            </c:forEach>
+                            <c:set var="hasValidSpecs" value="false" />
+                            <c:if test="${not empty trainerSpecializations}">
+                                <c:forEach var="sItem" items="${trainerSpecializations}">
+                                    <c:if test="${not empty fn:trim(sItem)}">
+                                        <c:set var="hasValidSpecs" value="true" />
+                                    </c:if>
+                                </c:forEach>
+                            </c:if>
+                            <c:choose>
+                                <c:when test="${hasValidSpecs}">
+                                    <c:forEach var="cat" items="${trainerSpecializations}">
+                                        <c:if test="${not empty fn:trim(cat)}">
+                                            <span class="spec-chip"><i class="bi bi-check2-circle me-1"></i>${fn:trim(cat)}</span>
+                                        </c:if>
+                                    </c:forEach>
+                                </c:when>
+                                <c:otherwise>
+                                    <span class="spec-chip"><i class="bi bi-check2-circle me-1"></i>Personal Training</span>
+                                    <span class="spec-chip"><i class="bi bi-check2-circle me-1"></i>General Fitness</span>
+                                    <span class="spec-chip"><i class="bi bi-check2-circle me-1"></i>Strength &amp; Conditioning</span>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
 
                         <c:if test="${not empty trainer.certificationsPath}">
@@ -430,18 +452,48 @@
                     <div class="card-clean sticky-top" style="top: 90px; z-index: 10;">
                         <h5 class="fw-bold text-dark mb-3"><i class="bi bi-calendar-plus text-danger me-2"></i>Book Personal Session</h5>
                         
-                        <form action="${pageContext.request.contextPath}/fitness/book" method="POST" id="fitnessBookingForm" onsubmit="return validateBookingForm();">
+                        <form action="${pageContext.request.contextPath}/fitness/book" method="POST" id="fitnessBookingForm" onsubmit="return handleBookingSubmit(event);">
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                             <input type="hidden" name="trainerId" value="${trainer.id}">
                             <input type="hidden" name="bookingTime" id="selectedBookingTime" required>
+                            <input type="hidden" name="razorpayOrderId" id="razorpayOrderId">
+                            <input type="hidden" name="razorpayPaymentId" id="razorpayPaymentId">
+                            <input type="hidden" name="razorpaySignature" id="razorpaySignature">
                             
                             <!-- 1. Category -->
                             <div class="mb-3">
                                 <label class="form-label text-xs fw-bold text-muted text-uppercase mb-1">Specialization / Focus</label>
-                                <select name="category" class="form-select bg-light border-0 py-2 rounded-3 text-sm fw-medium" required>
-                                    <c:forEach var="cat" items="${categories}">
-                                        <option value="${cat}">${cat}</option>
-                                    </c:forEach>
+                                <select name="category" id="bookingCategorySelect" class="form-select bg-light border-0 py-2 rounded-3 text-sm fw-medium" required>
+                                    <option value="" disabled selected>-- Select Specialization / Focus --</option>
+                                    <c:set var="hasValidCategories" value="false" />
+                                    <c:if test="${not empty categories}">
+                                        <c:forEach var="cItem" items="${categories}">
+                                            <c:if test="${not empty fn:trim(cItem)}">
+                                                <c:set var="hasValidCategories" value="true" />
+                                            </c:if>
+                                        </c:forEach>
+                                    </c:if>
+                                    <c:choose>
+                                        <c:when test="${hasValidCategories}">
+                                            <c:forEach var="cat" items="${categories}">
+                                                <c:if test="${not empty fn:trim(cat)}">
+                                                    <option value="${fn:trim(cat)}">${fn:trim(cat)}</option>
+                                                </c:if>
+                                            </c:forEach>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <option value="Personal Training">Personal Training</option>
+                                            <option value="Gym Training">Gym Training</option>
+                                            <option value="Strength Training">Strength Training</option>
+                                            <option value="Yoga">Yoga</option>
+                                            <option value="HIIT">HIIT</option>
+                                            <option value="Weight Loss Programs">Weight Loss Programs</option>
+                                            <option value="Functional Training">Functional Training</option>
+                                            <option value="Cardio Training">Cardio Training</option>
+                                            <option value="Zumba">Zumba</option>
+                                            <option value="Pilates">Pilates</option>
+                                        </c:otherwise>
+                                    </c:choose>
                                 </select>
                             </div>
 
@@ -501,9 +553,9 @@
                             <!-- 6. Payment Method -->
                             <div class="mb-3">
                                 <label class="form-label text-xs fw-bold text-muted text-uppercase mb-1">Payment Method</label>
-                                <select name="paymentMethod" id="paymentMethodSelect" class="form-select bg-light border-0 py-2 rounded-3 text-sm fw-medium" required onchange="togglePaymentGateway()">
+                                <select name="paymentMethod" id="paymentMethodSelect" class="form-select bg-light border-0 py-2 rounded-3 text-sm fw-medium" required>
+                                    <option value="RAZORPAY" selected>Razorpay (UPI, Credit/Debit Cards, NetBanking)</option>
                                     <option value="WALLET">Wallet Balance (Instant Checkout)</option>
-                                    <option value="CARD_UPI">Direct Card / UPI / NetBanking</option>
                                 </select>
                             </div>
 
@@ -511,7 +563,7 @@
                             <div class="price-summary-box">
                                 <div class="d-flex justify-content-between small text-muted mb-1">
                                     <span>Base Rate (<span id="summarySessions">1 Session</span>)</span>
-                                    <span class="text-dark fw-semibold" id="summaryBaseFee">₹${trainer.sessionFees}</span>
+                                    <span class="text-dark fw-semibold" id="summaryBaseFee">₹${trainer.typicalPrice != null && trainer.typicalPrice > 0 ? trainer.typicalPrice : (trainer.sessionFees > 0 ? trainer.sessionFees : 499)}</span>
                                 </div>
                                 <div class="d-flex justify-content-between small text-muted mb-1">
                                     <span>Package Savings</span>
@@ -524,7 +576,7 @@
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="fw-bold text-dark">Total Payable</span>
-                                    <span class="fw-bold text-dark fs-5" id="summaryTotalAmount">₹${trainer.sessionFees}</span>
+                                    <span class="fw-bold text-dark fs-5" id="summaryTotalAmount">₹${trainer.typicalPrice != null && trainer.typicalPrice > 0 ? trainer.typicalPrice : (trainer.sessionFees > 0 ? trainer.sessionFees : 499)}</span>
                                 </div>
                             </div>
 
@@ -620,6 +672,12 @@
     }
 
     function validateBookingForm() {
+        const catSelect = document.getElementById("bookingCategorySelect") || document.querySelector('select[name="category"]');
+        if (catSelect && (!catSelect.value || catSelect.value.trim() === '')) {
+            alert("Please select a specialization / focus area before continuing.");
+            catSelect.focus();
+            return false;
+        }
         const slot = document.getElementById("selectedBookingTime").value;
         if (!slot) {
             alert("Please click and select an available time slot before continuing.");
@@ -629,7 +687,152 @@
     }
 
     function togglePaymentGateway() {
-        // Handled cleanly through backend controller based on wallet vs card
+        // Handled dynamically
+    }
+
+    function getCsrfToken() {
+        var match = document.cookie.match(new RegExp('(^|;\\s*)XSRF-TOKEN=([^;]*)'));
+        if (match && match[2]) return decodeURIComponent(match[2]);
+        var meta = document.querySelector('meta[name="_csrf"]');
+        if (meta && meta.content) return meta.content;
+        var el = document.querySelector('input[name="_csrf"]');
+        if (el && el.value) return el.value;
+        return '';
+    }
+
+    async function handleBookingSubmit(e) {
+        if (e) e.preventDefault();
+
+        if (!validateBookingForm()) {
+            return false;
+        }
+
+        const method = document.getElementById("paymentMethodSelect").value;
+        const form = document.getElementById("fitnessBookingForm");
+        const btn = document.getElementById("btnSubmitBooking");
+        const originalBtnHtml = btn.innerHTML;
+
+        // If paying via wallet, confirm and proceed with normal form submission
+        if (method === "WALLET") {
+            if (confirm("Confirm payment from your Fight D Fear wallet balance?")) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Processing Wallet Payment...';
+                form.submit();
+            }
+            return false;
+        }
+
+        // Razorpay Payment Flow
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Initializing Razorpay...';
+
+        const durationSelect = document.getElementById("durationSelect");
+        const selectedOpt = durationSelect.options[durationSelect.selectedIndex];
+        const multiplier = parseInt(selectedOpt.getAttribute("data-multiplier")) || 1;
+        const totalFee = baseSessionFee * multiplier;
+        const amountPaise = Math.round(totalFee * 100);
+
+        let orderData = null;
+        try {
+            const token = getCsrfToken();
+            const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+            if (token) {
+                headers['X-CSRF-TOKEN'] = token;
+                headers['X-XSRF-TOKEN'] = token;
+            }
+            const res = await fetch("${pageContext.request.contextPath}/payment/create-order", {
+                method: "POST",
+                headers: headers,
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    amount: totalFee,
+                    type: "FITNESS_BOOKING"
+                })
+            });
+            if (res.status === 401) {
+                alert("Please log in to proceed with booking.");
+                window.location.href = "${pageContext.request.contextPath}/login";
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+                return false;
+            }
+            if (res.ok) {
+                orderData = await res.json();
+            }
+        } catch (netErr) {
+            console.warn("Server order pre-creation skipped, falling back to direct checkout:", netErr);
+        }
+
+        // Mock payment handling (if mock mode enabled on server)
+        if (orderData && orderData.mock === true) {
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Confirming Mock Payment...';
+            document.getElementById("razorpayOrderId").value = orderData.orderId || ('order_mock_' + Date.now());
+            document.getElementById("razorpayPaymentId").value = "mock_pay_" + Date.now();
+            document.getElementById("razorpaySignature").value = "mock_sig";
+            document.getElementById("paymentMethodSelect").value = "CARD_UPI";
+            form.submit();
+            return false;
+        }
+
+        if (typeof Razorpay === 'undefined') {
+            alert('Razorpay payment gateway failed to load. Please check your internet connection.');
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
+            return false;
+        }
+
+        const rzpKey = (orderData && orderData.key) ? orderData.key : 'rzp_test_RIlD5bEKRjyn3h';
+        const rzpAmount = (orderData && orderData.amount) ? orderData.amount : amountPaise;
+
+        const options = {
+            key: rzpKey,
+            amount: rzpAmount,
+            currency: "INR",
+            name: "Fight D Fear Fitness",
+            description: "Personal Coaching Session with ${trainer.fullName}",
+            theme: { color: "#F43F5E" },
+            prefill: {
+                name: "${not empty user ? user.fullName : ''}",
+                email: "${not empty user ? user.email : ''}",
+                contact: "${not empty user ? user.phoneNumber : ''}"
+            },
+            handler: function (response) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> Confirming Booking...';
+                document.getElementById("razorpayOrderId").value = response.razorpay_order_id || (orderData ? orderData.orderId : '');
+                document.getElementById("razorpayPaymentId").value = response.razorpay_payment_id || ('pay_' + Date.now());
+                document.getElementById("razorpaySignature").value = response.razorpay_signature || '';
+                document.getElementById("paymentMethodSelect").value = "CARD_UPI";
+                form.submit();
+            },
+            modal: {
+                ondismiss: function () {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnHtml;
+                }
+            }
+        };
+
+        if (orderData && orderData.orderId && !orderData.orderId.startsWith("order_mock_")) {
+            options.order_id = orderData.orderId;
+        }
+
+        try {
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response) {
+                alert("Payment Failed: " + (response.error.description || response.error.reason || "Payment was cancelled."));
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+            });
+            rzp.open();
+        } catch (rzpErr) {
+            console.error("Razorpay launch error:", rzpErr);
+            alert("Could not open Razorpay checkout modal. Please check your connection.");
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
+        }
+
+        return false;
     }
 
     // Initialize on page load

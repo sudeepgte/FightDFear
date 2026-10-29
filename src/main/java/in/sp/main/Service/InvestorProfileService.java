@@ -37,20 +37,55 @@ public class InvestorProfileService {
                 || i.getVerificationStatus() == in.sp.main.Entities.VerificationStatus.VERIFIED;
     }
 
+    /** Approved / pending-admin investors should land on dashboard, not profile completion. */
+    public static boolean shouldForceProfileCompletion(Investor i) {
+        if (i == null) return true;
+        if (isApproved(i)) return false;
+        PartnerProfileStatus s = i.getPartnerProfileStatus();
+        if (s == PartnerProfileStatus.PENDING_ADMIN_APPROVAL
+                || s == PartnerProfileStatus.SUSPENDED
+                || s == PartnerProfileStatus.REJECTED) {
+            return false;
+        }
+        return s == null
+                || s == PartnerProfileStatus.PROFILE_INCOMPLETE
+                || s == PartnerProfileStatus.REGISTERED
+                || s == PartnerProfileStatus.CHANGES_REQUESTED;
+    }
+
+    /** If verification is VERIFIED, keep partner status in sync so login never bounces to profile. */
+    @Transactional
+    public Investor healApproval(Investor investor) {
+        if (investor == null) return null;
+        if (investor.getVerificationStatus() == in.sp.main.Entities.VerificationStatus.VERIFIED
+                || investor.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED) {
+            investor.setPartnerProfileStatus(PartnerProfileStatus.APPROVED);
+            investor.setVerificationStatus(in.sp.main.Entities.VerificationStatus.VERIFIED);
+            if (investor.getProfileCompletionPct() == null || investor.getProfileCompletionPct() < 100) {
+                investor.setProfileCompletionPct(100);
+            }
+            investor.setRejectionReason(null);
+            return investorRepository.save(investor);
+        }
+        return investor;
+    }
+
     public List<String> missingItems(Investor i) {
         List<String> missing = new ArrayList<>();
         if (i == null) {
+            missing.add("0. Profile photo");
             missing.add("1.1 Full name");
             return missing;
         }
+        if (PartnerLifecycleSupport.blank(i.getProfilePhoto())) missing.add("0. Profile photo");
         if (PartnerLifecycleSupport.blank(i.getFullName())) missing.add("1.1 Full name");
-        if (PartnerLifecycleSupport.blank(i.getDesignation())) missing.add("1.2 Role");
+        if (PartnerLifecycleSupport.blank(i.getDesignation())) missing.add("1.2 Role / Designation");
         if (PartnerLifecycleSupport.blank(i.getCompanyName())) missing.add("1.3 Company name");
         if (PartnerLifecycleSupport.blank(i.getPhone()) || !i.getPhone().trim().matches("\\d{10}")) {
             missing.add("1.5 Official phone");
         }
         if (PartnerLifecycleSupport.blank(i.getCredentialNumber())) missing.add("1.8 PAN / SEBI / AIF number");
-        if (PartnerLifecycleSupport.blank(i.getAddress())) missing.add("2.1 Address");
+        if (PartnerLifecycleSupport.blank(i.getAddress())) missing.add("2.1 Street address");
         String city = firstNonBlank(i.getCity(), i.getPreferredLocations());
         if (PartnerLifecycleSupport.blank(city)) missing.add("2.3 City");
         if (PartnerLifecycleSupport.blank(i.getState())) missing.add("2.4 State");
@@ -58,21 +93,21 @@ public class InvestorProfileService {
             missing.add("2.5 Pincode");
         }
         if (PartnerLifecycleSupport.blank(i.getCategoriesOffered()) && PartnerLifecycleSupport.blank(i.getPreferredCategories())) {
-            missing.add("3.1 Sectors");
+            missing.add("3.1 Target sectors");
         }
         if (PartnerLifecycleSupport.blank(i.getAudience())) missing.add("4.1 Who I fund");
         if (PartnerLifecycleSupport.blank(i.getOpenDays())) missing.add("6.1 Open days");
         if (i.getOpenTime() == null) missing.add("6.2 Open time");
         if (i.getCloseTime() == null) missing.add("6.3 Close time");
-        if (PartnerLifecycleSupport.blank(firstNonBlank(i.getBio(), i.getInvestmentInterests()))) missing.add("7.1 About");
-        if (PartnerLifecycleSupport.blank(i.getTicketMode()) || i.getTypicalCheque() == null) {
-            missing.add("8. Ticket");
+        if (PartnerLifecycleSupport.blank(firstNonBlank(i.getBio(), i.getInvestmentInterests()))) missing.add("7.1 About / Bio");
+        if (PartnerLifecycleSupport.blank(i.getTicketMode()) || i.getTypicalCheque() == null || i.getTypicalCheque() <= 0) {
+            missing.add("8. Ticket size & stage");
         }
         return missing;
     }
 
     public int calculateCompletionPct(Investor investor) {
-        int total = 16;
+        int total = 17;
         int filled = total - missingItems(investor).size();
         if (filled < 0) filled = 0;
         return (int) Math.round(100.0 * filled / total);

@@ -83,6 +83,34 @@
     </div>
 
     <div class="org-page-content">
+        <c:if test="${not empty success}">
+            <div style="background:#F0FDF4; border:1px solid #BBF7D0; color:#166534; padding:12px 18px; border-radius:12px; margin-bottom:20px; font-weight:600; display:flex; align-items:center; gap:8px;">
+                <i class="bi bi-check-circle-fill text-success"></i> ${success}
+            </div>
+        </c:if>
+        <c:if test="${not empty error}">
+            <div style="background:#FEF2F2; border:1px solid #FECACA; color:#991B1B; padding:12px 18px; border-radius:12px; margin-bottom:20px; font-weight:600; display:flex; align-items:center; gap:8px;">
+                <i class="bi bi-exclamation-triangle-fill text-danger"></i> ${error}
+            </div>
+        </c:if>
+
+        <c:if test="${not empty allRegistrations}">
+            <div style="background:#FFFFFF; border:1px solid var(--fdf-border); border-radius:16px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; box-shadow:var(--fdf-shadow-sm);">
+                <div>
+                    <div style="font-weight:700; color:var(--fdf-navy); font-size:1rem;"><i class="bi bi-qr-code-scan me-2 text-danger"></i>Quick Ticket Verification &amp; Check-In</div>
+                    <div style="font-size:0.82rem; color:var(--fdf-text-muted);">Enter ticket code or scan QR code to verify and mark attendee present immediately.</div>
+                </div>
+                <form action="${pageContext.request.contextPath}/women-events/organizer/${allRegistrations[0].event.id}/checkin" method="post" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                    <input type="hidden" name="redirectUrl" value="/women-events/organizer/registrations">
+                    <input type="text" name="ticketCode" placeholder="Enter ticket code (e.g. 8A72B3C4)..." required style="border:1.5px solid var(--fdf-border); border-radius:10px; padding:8px 14px; font-size:0.88rem; font-family:monospace; min-width:240px; outline:none;"/>
+                    <button type="submit" style="background:linear-gradient(135deg, var(--fdf-accent) 0%, #E11D48 100%); color:#fff; border:none; border-radius:10px; padding:9px 18px; font-weight:700; font-size:0.85rem; cursor:pointer;">
+                        <i class="bi bi-check-lg me-1"></i> Verify &amp; Check In
+                    </button>
+                </form>
+            </div>
+        </c:if>
+
         <div class="org-card">
             <div class="org-card-header">
                 <div class="org-card-title">
@@ -106,7 +134,8 @@
                                     <th>Registered On</th>
                                     <th>Ticket Code</th>
                                     <th>Status</th>
-                                    <th>Checked In</th>
+                                    <th>Attendance</th>
+                                    <th>Mark Attendance</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -115,7 +144,7 @@
                                     <c:set var="userEmail" value="${reg.user != null ? reg.user.email : '—'}"/>
                                     <c:set var="eventName" value="${reg.event != null ? reg.event.name : '—'}"/>
                                     <c:set var="eventCity" value="${reg.event != null ? reg.event.city : ''}"/>
-                                    <c:set var="searchKey" value="${fn:toLowerCase(userName)} ${fn:toLowerCase(eventName)}"/>
+                                    <c:set var="searchKey" value="${fn:toLowerCase(userName)} ${fn:toLowerCase(eventName)} ${fn:toLowerCase(reg.ticketCode)}"/>
                                     <tr data-search="${searchKey}">
                                         <td>
                                             <div class="user-cell">
@@ -140,10 +169,40 @@
                                         <td><span class="status-pill st-${reg.status}">${reg.status}</span></td>
                                         <td>
                                             <c:choose>
-                                                <c:when test="${reg.checkedIn}">
-                                                    <span class="checked-yes"><i class="bi bi-check-circle-fill"></i> Yes</span>
+                                                <c:when test="${reg.checkedIn or reg.status == 'ATTENDED'}">
+                                                    <span class="checked-yes"><i class="bi bi-check-circle-fill"></i> Attended</span>
+                                                    <c:if test="${not empty reg.checkedInAt}">
+                                                        <div style="font-size:0.7rem; color:var(--fdf-text-muted);">${reg.checkedInAt}</div>
+                                                    </c:if>
                                                 </c:when>
-                                                <c:otherwise><span class="checked-no">No</span></c:otherwise>
+                                                <c:otherwise>
+                                                    <span class="checked-no"><i class="bi bi-dash-circle"></i> Not Checked In</span>
+                                                </c:otherwise>
+                                            </c:choose>
+                                        </td>
+                                        <td>
+                                            <c:choose>
+                                                <c:when test="${reg.status == 'CANCELLED'}">
+                                                    <span style="font-size:0.75rem; color:#991B1B;">Cancelled</span>
+                                                </c:when>
+                                                <c:when test="${reg.checkedIn or reg.status == 'ATTENDED'}">
+                                                    <form action="${pageContext.request.contextPath}/women-events/organizer/registrations/${reg.id}/attendance" method="post" style="display:inline;">
+                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                        <input type="hidden" name="redirectUrl" value="/women-events/organizer/registrations">
+                                                        <button type="submit" class="btn btn-sm" style="background:#FEE2E2; color:#B91C1C; border:1px solid #FECACA; border-radius:20px; font-weight:700; font-size:0.75rem; padding:5px 12px; cursor:pointer;" title="Click to unmark attendance">
+                                                            <i class="bi bi-x-circle me-1"></i> Unmark
+                                                        </button>
+                                                    </form>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <form action="${pageContext.request.contextPath}/women-events/organizer/registrations/${reg.id}/attendance" method="post" style="display:inline;">
+                                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+                                                        <input type="hidden" name="redirectUrl" value="/women-events/organizer/registrations">
+                                                        <button type="submit" class="btn btn-sm" style="background:#ECFDF5; color:#059669; border:1px solid #A7F3D0; border-radius:20px; font-weight:700; font-size:0.75rem; padding:5px 14px; cursor:pointer;">
+                                                            <i class="bi bi-person-check-fill me-1"></i> Mark Present
+                                                        </button>
+                                                    </form>
+                                                </c:otherwise>
                                             </c:choose>
                                         </td>
                                     </tr>

@@ -200,11 +200,19 @@ public class FitnessService {
         // Compute streak based on distinct attendance dates in the past 30 days
         List<FitnessAttendance> history = attendanceRepository.findByUser_IdOrderBySessionDateDesc(userId);
         int streak = 0;
-        if (!history.isEmpty()) {
-            LocalDate prev = LocalDate.now();
+        if (history != null && !history.isEmpty()) {
+            LocalDate prev = null;
             for (FitnessAttendance att : history) {
-                if ("PRESENT".equalsIgnoreCase(att.getStatus())) {
-                    if (att.getSessionDate().isEqual(prev) || att.getSessionDate().isEqual(prev.minusDays(1))) {
+                if (att != null && "PRESENT".equalsIgnoreCase(att.getStatus()) && att.getSessionDate() != null) {
+                    if (prev == null) {
+                        if (att.getSessionDate().isEqual(LocalDate.now()) || att.getSessionDate().isEqual(LocalDate.now().minusDays(1))) {
+                            streak = 1;
+                            prev = att.getSessionDate();
+                        }
+                    } else if (att.getSessionDate().isEqual(prev)) {
+                        // same day multiple attendances, ignore
+                        continue;
+                    } else if (att.getSessionDate().isEqual(prev.minusDays(1))) {
                         streak++;
                         prev = att.getSessionDate();
                     } else if (att.getSessionDate().isBefore(prev.minusDays(1))) {

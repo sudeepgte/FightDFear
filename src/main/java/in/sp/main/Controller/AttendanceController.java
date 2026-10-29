@@ -354,7 +354,10 @@ public class AttendanceController {
     @Autowired
     private in.sp.main.Service.QrAttendanceService qrAttendanceService;
 
-    // ---------- USER QR SCAN / CODE CHECK-IN (Offline Dojo Classes) ----------
+    @Autowired
+    private in.sp.main.Service.FitnessQrAttendanceService fitnessQrAttendanceService;
+
+    // ---------- USER QR SCAN / CODE CHECK-IN (Dojo Classes & Fitness Sessions) ----------
     @PostMapping({"/api/attendance/qr-checkin", "/attendance/api/qr-checkin"})
     @ResponseBody
     public ResponseEntity<?> studentQrCheckIn(@RequestBody Map<String, String> data, HttpSession session) {
@@ -363,15 +366,38 @@ public class AttendanceController {
 
         String token = data.get("token");
         if (token == null || token.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "QR token is required"));
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "QR token / session code is required"));
         }
 
+        token = token.trim();
+
+        // 1. Direct route for Fitness tokens (starts with FIT-)
+        if (token.startsWith("FIT-")) {
+            try {
+                Map<String, Object> fitnessResult = fitnessQrAttendanceService.checkInClient(user, token, null, null);
+                return ResponseEntity.ok(fitnessResult);
+            } catch (org.springframework.web.server.ResponseStatusException ex) {
+                return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+            } catch (Exception ex) {
+                return ResponseEntity.badRequest().body(Map.of("success", false, "error", ex.getMessage()));
+            }
+        }
+
+        // 2. Martial Arts Dojo Check-In with fallback to Fitness
         try {
-            Map<String, Object> result = qrAttendanceService.checkInStudent(user, token.trim());
+            Map<String, Object> result = qrAttendanceService.checkInStudent(user, token);
             return ResponseEntity.ok(result);
         } catch (org.springframework.web.server.ResponseStatusException ex) {
+            try {
+                Map<String, Object> fitnessResult = fitnessQrAttendanceService.checkInClient(user, token, null, null);
+                return ResponseEntity.ok(fitnessResult);
+            } catch (Exception ignored) {}
             return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
         } catch (Exception ex) {
+            try {
+                Map<String, Object> fitnessResult = fitnessQrAttendanceService.checkInClient(user, token, null, null);
+                return ResponseEntity.ok(fitnessResult);
+            } catch (Exception ignored) {}
             return ResponseEntity.badRequest().body(Map.of("success", false, "error", ex.getMessage()));
         }
     }

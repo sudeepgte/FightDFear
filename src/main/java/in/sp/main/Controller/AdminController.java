@@ -2176,15 +2176,20 @@ public class AdminController {
         model.addAttribute("host", h);
         model.addAttribute("statusLabel", EventHostProfileService.statusLabel(h.getPartnerProfileStatus()));
         model.addAttribute("missingItems", eventHostProfileService.missingItems(h));
-        if (h.getProfileCompletionPct() == null) {
-            h.setProfileCompletionPct(eventHostProfileService.calculateCompletionPct(h));
-        }
+        h.setProfileCompletionPct(eventHostProfileService.calculateCompletionPct(h));
         if (h.getOpenTime() != null) {
             model.addAttribute("openTimeLabel", h.getOpenTime().toString().substring(0, Math.min(5, h.getOpenTime().toString().length())));
         }
         if (h.getCloseTime() != null) {
             model.addAttribute("closeTimeLabel", h.getCloseTime().toString().substring(0, Math.min(5, h.getCloseTime().toString().length())));
         }
+        List<String> galleryList = new ArrayList<>();
+        if (h.getGalleryPhotos() != null && !h.getGalleryPhotos().isBlank()) {
+            for (String s : h.getGalleryPhotos().split("[,|]")) {
+                if (!s.trim().isEmpty()) galleryList.add(s.trim());
+            }
+        }
+        model.addAttribute("galleryPhotosList", galleryList);
         model.addAttribute("hostEvents", womenEventRepository.findByOrganizerOrderByCreatedAtDesc(h));
         return "adminViewEventHostProfile";
     }
@@ -2621,6 +2626,16 @@ public class AdminController {
             else if ("all".equals(filter)) activeProposalList.add(p);
         }
 
+        List<in.sp.main.Entities.Investment> allInvestments = investmentRepository.findAll();
+        double escrowHeld = allInvestments.stream()
+                .filter(i -> "PENDING".equals(i.getStatus()))
+                .mapToDouble(in.sp.main.Entities.Investment::getAmount).sum();
+        double escrowReleased = allInvestments.stream()
+                .filter(i -> "COMPLETED".equals(i.getStatus()))
+                .mapToDouble(i -> i.getReleasedAmount() != null ? i.getReleasedAmount() : 0.0).sum();
+        long investmentPendingCount = allInvestments.stream()
+                .filter(i -> "PENDING".equals(i.getStatus())).count();
+
         model.addAttribute("pendingCount", pendingCount);
         model.addAttribute("reverificationCount", reverificationCount);
         model.addAttribute("changesRequestedCount", changesRequestedCount);
@@ -2635,6 +2650,11 @@ public class AdminController {
         model.addAttribute("activeProposalList", activeProposalList);
         model.addAttribute("changesRequested", changesList);
         model.addAttribute("reverification", reverifyList);
+        model.addAttribute("allInvestors", allInvestors);
+        model.addAttribute("allInvestments", allInvestments);
+        model.addAttribute("escrowHeld", escrowHeld);
+        model.addAttribute("escrowReleased", escrowReleased);
+        model.addAttribute("investmentPendingCount", investmentPendingCount);
         
         return "admin/pendingProposals";
     }
@@ -2693,14 +2713,8 @@ public class AdminController {
             e.setChangesRequestedNote(null);
             e.setProfileCompletionPct(100);
             entrepreneurRepository.save(e);
-
-            List<BusinessProposal> proposals = businessProposalRepository.findByEntrepreneur(e);
-            for (BusinessProposal p : proposals) {
-                p.setStatus(VerificationStatus.VERIFIED);
-                businessProposalRepository.save(p);
-            }
         });
-        ra.addFlashAttribute("message", "Entrepreneur verified & approved successfully.");
+        ra.addFlashAttribute("message", "Entrepreneur verified & approved successfully. Dashboard is now unlocked.");
         return "redirect:/admin/pending-proposals";
     }
 
@@ -2722,11 +2736,14 @@ public class AdminController {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         investorRepository.findById(id).ifPresent(i -> {
             investorProfileService.setLifecycleStatus(i, PartnerProfileStatus.APPROVED);
+            i.setVerificationStatus(VerificationStatus.VERIFIED);
+            i.setProfileCompletionPct(100);
             i.setRejectionReason(null);
             i.setChangesRequestedNote(null);
             investorRepository.save(i);
+            investorProfileService.healApproval(i);
         });
-        ra.addFlashAttribute("message", "Investor verified successfully.");
+        ra.addFlashAttribute("message", "Investor approved & verified successfully. Dashboard is now unlocked.");
         return "redirect:/admin/pending-proposals";
     }
 
@@ -2751,6 +2768,72 @@ public class AdminController {
             return "admin/investorProfileDetails";
         }
         return "redirect:/admin/pending-proposals";
+    }
+
+    /** Admin API: fetch chat history between investor and entrepreneur for a proposal */
+    @GetMapping("/chats/history")
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<List<Map<String, Object>>> getChatHistory(
+            @RequestParam("proposalId") Long proposalId,
+            @RequestParam("investorId") Long investorId,
+            HttpSession session) {
+        if (session.getAttribute("admin") == null) {
+            return org.springframework.http.ResponseEntity.status(403).build();
+        }
+        Optional<BusinessProposal> propOpt = businessProposalRepository.findById(proposalId);
+        Optional<Investor> invOpt = investorRepository.findById(investorId);
+        if (propOpt.isEmpty() || invOpt.isEmpty()) {
+            return org.springframework.http.ResponseEntity.ok(Collections.emptyList());
+        }
+        List<ProposalChatMessage> msgs = proposalChatMessageRepository
+                .findByProposalAndInvestorOrderByTimestampAsc(propOpt.get(), invOpt.get());
+        List<Map<String, Object>> result = msgs.stream().map(m -> {
+            Map<String, Object> dto = new LinkedHashMap<>();
+            dto.put("role", m.getSenderRole());
+            String senderName = "INVESTOR".equals(m.getSenderRole())
+                    ? (m.getInvestor() != null ? m.getInvestor().getFullName() : "Investor")
+                    : (m.getProposal() != null && m.getProposal().getEntrepreneur() != null
+                            ? m.getProposal().getEntrepreneur().getFullName() : "Entrepreneur");
+            dto.put("sender", senderName);
+            dto.put("message", m.getMessage());
+            dto.put("timestamp", m.getFormattedTimestamp());
+            return dto;
+        }).collect(Collectors.toList());
+        return org.springframework.http.ResponseEntity.ok(result);
+    }
+
+    /** Admin: view all proposal chats overview page */
+    @GetMapping("/proposal-chats")
+    public String viewAllProposalChats(HttpSession session, Model model) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+
+        // Group all chat messages by (proposal, investor) pair
+        List<ProposalChatMessage> allMsgs = proposalChatMessageRepository.findAll();
+
+        // Build unique pairs
+        Map<String, Map<String, Object>> pairsMap = new LinkedHashMap<>();
+        for (ProposalChatMessage m : allMsgs) {
+            if (m.getProposal() == null || m.getInvestor() == null) continue;
+            String key = m.getProposal().getId() + "_" + m.getInvestor().getId();
+            if (!pairsMap.containsKey(key)) {
+                Map<String, Object> pair = new LinkedHashMap<>();
+                pair.put("proposal", m.getProposal());
+                pair.put("investor", m.getInvestor());
+                pair.put("entrepreneur", m.getProposal().getEntrepreneur());
+                pair.put("messageCount", 0L);
+                pair.put("lastMessage", "");
+                pair.put("lastTime", "");
+                pairsMap.put(key, pair);
+            }
+            Map<String, Object> pair = pairsMap.get(key);
+            pair.put("messageCount", (Long) pair.get("messageCount") + 1);
+            pair.put("lastMessage", m.getMessage());
+            pair.put("lastTime", m.getFormattedTimestamp());
+        }
+
+        model.addAttribute("chatPairs", new ArrayList<>(pairsMap.values()));
+        model.addAttribute("totalChats", allMsgs.size());
+        return "admin/proposalChats";
     }
 
     @GetMapping("/investment-revenue")

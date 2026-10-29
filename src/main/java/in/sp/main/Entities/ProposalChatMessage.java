@@ -80,4 +80,9 @@ public class ProposalChatMessage {
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
+
+    public String getFormattedTimestamp() {
+        if (timestamp == null) return "";
+        return timestamp.format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"));
+    }
 }

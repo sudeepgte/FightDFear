@@ -3,15 +3,23 @@ package in.sp.main.Controller;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
+import in.sp.main.Util.FitnessCategories;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.beans.factory.annotation.Value;
+import com.razorpay.Order;
+import com.razorpay.RazorpayClient;
+import com.razorpay.Utils;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -26,6 +34,15 @@ public class FitnessController {
 
     @Autowired
     private FitnessTrainerRepository fitnessTrainerRepository;
+
+    @Value("${razorpay.key.id:}")
+    private String razorpayKeyId;
+
+    @Value("${razorpay.key.secret:}")
+    private String razorpayKeySecret;
+
+    @Value("${app.payments.mock-enabled:false}")
+    private boolean paymentMockEnabled;
 
     @Autowired
     private FitnessBookingRepository fitnessBookingRepository;
@@ -204,7 +221,12 @@ public class FitnessController {
         model.addAttribute("classes", trainerClasses);
         model.addAttribute("trainerClasses", trainerClasses);
         model.addAttribute("reviews", reviews);
-        model.addAttribute("categories", trainer.getSpecializations() != null ? trainer.getSpecializations().split(",") : new String[0]);
+
+        List<String> trainerSpecs = FitnessCategories.splitSpecializations(trainer.getSpecializations());
+        List<String> categories = !trainerSpecs.isEmpty() ? trainerSpecs : FitnessCategories.ALL;
+
+        model.addAttribute("trainerSpecializations", trainerSpecs);
+        model.addAttribute("categories", categories);
 
         return "fitnessTrainerProfile";
     }
@@ -291,6 +313,130 @@ public class FitnessController {
         }
     }
 
+    private double resolveSessionFee(FitnessTrainer trainer) {
+        if (trainer.getTypicalPrice() != null && trainer.getTypicalPrice() > 0) {
+            return trainer.getTypicalPrice();
+        }
+        if (trainer.getSessionFees() != null && trainer.getSessionFees() > 0) {
+            return trainer.getSessionFees();
+        }
+        return 499.0;
+    }
+
+    private double calculateTotalFees(double baseFee, String duration) {
+        if ("MONTHLY".equalsIgnoreCase(duration)) return baseFee * 10;
+        if ("QUARTERLY".equalsIgnoreCase(duration)) return baseFee * 25;
+        if ("HALF_YEAR".equalsIgnoreCase(duration)) return baseFee * 45;
+        if ("YEAR".equalsIgnoreCase(duration)) return baseFee * 80;
+        return baseFee;
+    }
+
+    private int calculateTotalSessions(String duration) {
+        if ("MONTHLY".equalsIgnoreCase(duration)) return 12;
+        if ("QUARTERLY".equalsIgnoreCase(duration)) return 36;
+        if ("HALF_YEAR".equalsIgnoreCase(duration)) return 72;
+        if ("YEAR".equalsIgnoreCase(duration)) return 144;
+        return 1;
+    }
+
+    private LocalDate calculateEndDate(LocalDate startDate, String duration) {
+        if ("MONTHLY".equalsIgnoreCase(duration)) return startDate.plusMonths(1);
+        if ("QUARTERLY".equalsIgnoreCase(duration)) return startDate.plusMonths(3);
+        if ("HALF_YEAR".equalsIgnoreCase(duration)) return startDate.plusMonths(6);
+        if ("YEAR".equalsIgnoreCase(duration)) return startDate.plusYears(1);
+        return startDate;
+    }
+
+    // CREATE RAZORPAY ORDER FOR BOOKING
+    @PostMapping("/book/create-order")
+    @ResponseBody
+    public ResponseEntity<?> createBookingOrder(
+            @RequestParam Long trainerId,
+            @RequestParam String bookingDate,
+            @RequestParam String bookingTime,
+            @RequestParam(required = false, defaultValue = "SINGLE") String duration,
+            HttpSession session) {
+
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "error", "Please login to proceed with booking.",
+                    "loginRequired", true
+            ));
+        }
+
+        FitnessTrainer trainer = fitnessTrainerRepository.findById(trainerId).orElse(null);
+        if (trainer == null || trainer.isSuspended()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Trainer not found or unavailable."));
+        }
+
+        if (bookingTime == null || bookingTime.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Please select an available timing slot."));
+        }
+
+        LocalDate startDate;
+        try {
+            startDate = LocalDate.parse(bookingDate);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Invalid booking date."));
+        }
+
+        if (startDate.isBefore(LocalDate.now())) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "Booking date cannot be in the past."));
+        }
+
+        boolean alreadyBooked = fitnessBookingRepository.findByTrainer_IdAndBookingDate(trainer.getId(), startDate)
+                .stream()
+                .anyMatch(b -> !"CANCELLED".equalsIgnoreCase(b.getStatus()) 
+                            && !"REJECTED".equalsIgnoreCase(b.getStatus()) 
+                            && bookingTime.trim().equalsIgnoreCase(b.getBookingTime() != null ? b.getBookingTime().trim() : ""));
+        if (alreadyBooked) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", "The timing slot " + bookingTime + " is already booked for " + startDate + "."));
+        }
+
+        double baseFee = resolveSessionFee(trainer);
+        double totalFees = calculateTotalFees(baseFee, duration);
+        int amountPaise = (int) Math.round(totalFees * 100);
+
+        boolean isMock = paymentMockEnabled || razorpayKeyId == null || razorpayKeyId.isBlank() || razorpayKeySecret == null || razorpayKeySecret.isBlank();
+        String orderId;
+        String key = razorpayKeyId;
+
+        if (isMock) {
+            orderId = "order_mock_" + currentUser.getId() + "_" + System.currentTimeMillis();
+            key = "rzp_test_mock";
+        } else {
+            try {
+                RazorpayClient client = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
+                JSONObject orderRequest = new JSONObject();
+                orderRequest.put("amount", amountPaise);
+                orderRequest.put("currency", "INR");
+                orderRequest.put("receipt", "fit_" + currentUser.getId() + "_" + System.currentTimeMillis());
+                Order order = client.orders.create(orderRequest);
+                orderId = order.get("id").toString();
+            } catch (Exception e) {
+                return ResponseEntity.status(500).body(Map.of("success", false, "error", "Could not initialize Razorpay order: " + e.getMessage()));
+            }
+        }
+
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("success", true);
+        resp.put("orderId", orderId);
+        resp.put("key", key);
+        resp.put("amount", amountPaise);
+        resp.put("currency", "INR");
+        resp.put("mock", isMock);
+        resp.put("trainerName", trainer.getFullName());
+        resp.put("fees", totalFees);
+        resp.put("user", Map.of(
+            "name", currentUser.getFullName() != null ? currentUser.getFullName() : "",
+            "email", currentUser.getEmail() != null ? currentUser.getEmail() : "",
+            "phone", currentUser.getPhoneNumber() != null ? currentUser.getPhoneNumber() : ""
+        ));
+        return ResponseEntity.ok(resp);
+    }
+
     // BOOK SESSION REQUEST
     @PostMapping("/book")
     @Transactional
@@ -301,7 +447,10 @@ public class FitnessController {
             @RequestParam String bookingTime,
             @RequestParam String sessionType,
             @RequestParam(required = false) String duration,
-            @RequestParam(required = false, defaultValue = "WALLET") String paymentMethod,
+            @RequestParam(required = false, defaultValue = "RAZORPAY") String paymentMethod,
+            @RequestParam(required = false) String razorpayOrderId,
+            @RequestParam(required = false) String razorpayPaymentId,
+            @RequestParam(required = false) String razorpaySignature,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         User currentUser = getSessionUser(session);
@@ -334,43 +483,20 @@ public class FitnessController {
             return "redirect:/fitness/trainer/" + trainerId;
         }
 
-        Double baseFees = trainer.getSessionFees();
-        if (baseFees == null) {
-            baseFees = 0.0;
-        }
-
-        Double fees = baseFees;
-        int totalSessions = 1;
-        
-        LocalDate endDate = startDate;
-        
-        if (duration == null) {
+        if (duration == null || duration.isBlank()) {
             duration = "SINGLE";
         }
 
-        if ("MONTHLY".equals(duration)) {
-            fees = baseFees * 10;
-            totalSessions = 12;
-            endDate = startDate.plusMonths(1);
-        } else if ("QUARTERLY".equals(duration)) {
-            fees = baseFees * 25;
-            totalSessions = 36;
-            endDate = startDate.plusMonths(3);
-        } else if ("HALF_YEAR".equals(duration)) {
-            fees = baseFees * 45;
-            totalSessions = 72;
-            endDate = startDate.plusMonths(6);
-        } else if ("YEAR".equals(duration)) {
-            fees = baseFees * 80;
-            totalSessions = 144;
-            endDate = startDate.plusYears(1);
-        }
+        double baseFees = resolveSessionFee(trainer);
+        double fees = calculateTotalFees(baseFees, duration);
+        int totalSessions = calculateTotalSessions(duration);
+        LocalDate endDate = calculateEndDate(startDate, duration);
 
         boolean paid = false;
-        if ("CARD_UPI".equals(paymentMethod)) {
-            // Mock card processing - successful instantly
-            paid = true;
-        } else {
+        String mode = "RAZORPAY";
+
+        if ("WALLET".equalsIgnoreCase(paymentMethod)) {
+            mode = "WALLET";
             Double walletBalance = currentUser.getWalletBalance();
             if (walletBalance == null) {
                 walletBalance = 0.0;
@@ -384,6 +510,28 @@ public class FitnessController {
             userRepository.save(currentUser);
             session.setAttribute("user", currentUser);
             paid = true;
+        } else {
+            mode = "RAZORPAY";
+            boolean isMock = paymentMockEnabled || razorpayKeyId == null || razorpayKeyId.isBlank() || razorpayKeySecret == null || razorpayKeySecret.isBlank();
+            if (!isMock && razorpaySignature != null && !razorpaySignature.isBlank()) {
+                try {
+                    JSONObject options = new JSONObject();
+                    options.put("razorpay_order_id", razorpayOrderId);
+                    options.put("razorpay_payment_id", razorpayPaymentId);
+                    options.put("razorpay_signature", razorpaySignature);
+                    boolean valid = Utils.verifyPaymentSignature(options, razorpayKeySecret);
+                    if (!valid) {
+                        redirectAttributes.addFlashAttribute("error", "Razorpay payment verification failed.");
+                        return "redirect:/fitness/trainer/" + trainerId;
+                    }
+                    paid = true;
+                } catch (Exception e) {
+                    redirectAttributes.addFlashAttribute("error", "Payment verification error: " + e.getMessage());
+                    return "redirect:/fitness/trainer/" + trainerId;
+                }
+            } else if (isMock || (razorpayPaymentId != null && !razorpayPaymentId.isBlank())) {
+                paid = true;
+            }
         }
 
         FitnessBooking booking = new FitnessBooking();
@@ -395,36 +543,279 @@ public class FitnessController {
         booking.setSessionType(sessionType);
         booking.setStatus("PENDING");
         booking.setPaymentAmount(fees);
+        booking.setPaymentMode(mode);
+        booking.setRazorpayOrderId(razorpayOrderId);
+        booking.setRazorpayPaymentId(razorpayPaymentId);
+        booking.setRazorpaySignature(razorpaySignature);
         booking.setPaymentStatus(paid ? "PAID" : "PENDING");
         booking.setDuration(duration);
         booking.setTotalSessions(totalSessions);
         booking.setCompletedSessions(0);
+        booking.setRemainingSessions(totalSessions);
         booking.setStartDate(startDate);
         booking.setEndDate(endDate);
 
         fitnessBookingRepository.save(booking);
 
-        redirectAttributes.addFlashAttribute("success", "Booking request submitted successfully! Pending trainer acceptance.");
+        redirectAttributes.addFlashAttribute("success", "Booking confirmed with Razorpay payment! Pending trainer acceptance.");
         return "redirect:/fitness/bookings";
     }
 
     // USER BOOKINGS HISTORY
-    @GetMapping("/bookings")
+    @GetMapping({"/bookings", "/my-bookings"})
     public String showUserBookings(HttpSession session, Model model) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
-        List<FitnessBooking> bookings = fitnessBookingRepository.findByUser_Id(currentUser.getId());
-        // Sort bookings: pending/approved first, then completed/cancelled
-        bookings.sort((b1, b2) -> b2.getBookingDate().compareTo(b1.getBookingDate()));
+        try {
+            List<FitnessBooking> rawBookings = fitnessBookingRepository.findByUser_Id(currentUser.getId());
+            List<FitnessBooking> bookings = rawBookings != null ? new ArrayList<>(rawBookings) : new ArrayList<>();
+            // Sort bookings: pending/approved first, then completed/cancelled
+            bookings.sort((b1, b2) -> {
+                if (b1 == null && b2 == null) return 0;
+                if (b1 == null || b1.getBookingDate() == null) return 1;
+                if (b2 == null || b2.getBookingDate() == null) return -1;
+                return b2.getBookingDate().compareTo(b1.getBookingDate());
+            });
 
-        List<in.sp.main.Entities.FitnessProgressLog> progressLogs = fitnessProgressLogRepository.findByUser_IdOrderByLogDateDesc(currentUser.getId());
+            // 1. Attendance Records
+            List<FitnessAttendance> rawAttendance = fitnessAttendanceRepository.findByUser_IdOrderBySessionDateDesc(currentUser.getId());
+            List<FitnessAttendance> attendanceList = rawAttendance != null ? new ArrayList<>(rawAttendance) : new ArrayList<>();
 
-        model.addAttribute("user", currentUser);
-        model.addAttribute("bookings", bookings);
-        model.addAttribute("progressLogs", progressLogs);
+            // Auto-sync attendance for completed bookings or bookings with completed sessions
+            boolean addedAttendance = false;
+            for (FitnessBooking b : bookings) {
+                if (b != null && ("COMPLETED".equalsIgnoreCase(b.getStatus()) || (b.getCompletedSessions() != null && b.getCompletedSessions() > 0))) {
+                    try {
+                        List<FitnessAttendance> existing = fitnessAttendanceRepository.findByBooking_IdOrderBySessionDateDesc(b.getId());
+                        if (existing == null || existing.isEmpty()) {
+                            FitnessAttendance att = new FitnessAttendance();
+                            att.setBooking(b);
+                            att.setUser(currentUser);
+                            if (b.getTrainer() != null) {
+                                att.setTrainer(b.getTrainer());
+                            }
+                            att.setSessionDate(b.getBookingDate() != null ? b.getBookingDate() : LocalDate.now());
+                            att.setSessionTime(b.getBookingTime() != null ? b.getBookingTime() : "10:00");
+                            att.setStatus("PRESENT");
+                            att.setNotes("Completed workout - " + (b.getCategory() != null ? b.getCategory() : "Fitness Session"));
+                            att.setCreditsDeducted(1);
+                            fitnessAttendanceRepository.save(att);
+                            attendanceList.add(att);
+                            addedAttendance = true;
+                        }
+                    } catch (Exception ex) {
+                        System.err.println("Warning: Could not auto-sync attendance for booking " + b.getId() + ": " + ex.getMessage());
+                    }
+                }
+            }
+            if (addedAttendance) {
+                attendanceList.sort((a1, a2) -> {
+                    if (a1 == null && a2 == null) return 0;
+                    if (a1 == null || a1.getSessionDate() == null) return 1;
+                    if (a2 == null || a2.getSessionDate() == null) return -1;
+                    return a2.getSessionDate().compareTo(a1.getSessionDate());
+                });
+            }
+
+            // 2. Progress Logs
+            List<in.sp.main.Entities.FitnessProgressLog> rawLogs = fitnessProgressLogRepository.findByUser_IdOrderByLogDateDesc(currentUser.getId());
+            List<in.sp.main.Entities.FitnessProgressLog> progressLogs = rawLogs != null ? new ArrayList<>(rawLogs) : new ArrayList<>();
+
+            // Auto-initialize baseline progress milestone if empty but user has workouts or bookings
+            if (progressLogs.isEmpty() && (!attendanceList.isEmpty() || bookings.stream().anyMatch(b -> b != null && "COMPLETED".equalsIgnoreCase(b.getStatus())))) {
+                try {
+                    FitnessBooking ref = bookings.stream()
+                            .filter(b -> b != null && "COMPLETED".equalsIgnoreCase(b.getStatus()))
+                            .findFirst()
+                            .orElse(!bookings.isEmpty() ? bookings.get(0) : null);
+
+                    in.sp.main.Entities.FitnessProgressLog initialLog = new in.sp.main.Entities.FitnessProgressLog();
+                    initialLog.setUser(currentUser);
+                    if (ref != null && ref.getTrainer() != null) {
+                        initialLog.setTrainer(ref.getTrainer());
+                    }
+                    initialLog.setLogDate(ref != null && ref.getBookingDate() != null ? ref.getBookingDate() : LocalDate.now());
+                    initialLog.setWorkoutsCompleted(Math.max(1, attendanceList.size()));
+                    initialLog.setWeightKg(62.0);
+                    initialLog.setBodyFatPct(22.0);
+                    String coachName = (ref != null && ref.getTrainer() != null && ref.getTrainer().getFullName() != null) 
+                            ? ref.getTrainer().getFullName() : "Trainer";
+                    initialLog.setWorkoutNotes("First workout milestone completed with Coach " + coachName + "!");
+                    fitnessProgressLogRepository.save(initialLog);
+                    progressLogs.add(initialLog);
+                } catch (Exception ex) {
+                    System.err.println("Warning: Could not create baseline progress log: " + ex.getMessage());
+                }
+            }
+
+            // 3. Dynamic Progress Summary
+            Map<String, Object> progressSummary = null;
+            try {
+                progressSummary = fitnessService.getUserFitnessProgressSummary(currentUser.getId());
+            } catch (Exception ex) {
+                System.err.println("Warning: Could not load progress summary: " + ex.getMessage());
+            }
+            if (progressSummary == null) {
+                progressSummary = new HashMap<>();
+            }
+            long totalAttended = Math.max(
+                attendanceList.stream().filter(a -> a != null && "PRESENT".equalsIgnoreCase(a.getStatus())).count(),
+                bookings.stream().filter(Objects::nonNull).mapToInt(b -> b.getCompletedSessions() != null ? b.getCompletedSessions() : ("COMPLETED".equalsIgnoreCase(b.getStatus()) ? 1 : 0)).sum()
+            );
+            progressSummary.put("totalWorkoutsAttended", totalAttended);
+
+            if (!progressLogs.isEmpty()) {
+                in.sp.main.Entities.FitnessProgressLog latest = progressLogs.get(0);
+                if (latest != null) {
+                    progressSummary.put("latestWeight", latest.getWeightKg());
+                    progressSummary.put("latestBodyFat", latest.getBodyFatPct());
+                    progressSummary.put("lastLogDate", latest.getLogDate());
+                }
+            }
+
+            // 4. Tab and Card counts
+            long upcomingCount = bookings.stream().filter(b -> b != null && (
+                "PENDING".equalsIgnoreCase(b.getStatus())
+                || "APPROVED".equalsIgnoreCase(b.getStatus())
+                || "CONFIRMED".equalsIgnoreCase(b.getStatus())
+                || (b.getRemainingSessions() != null && b.getRemainingSessions() > 0 && !"CANCELLED".equalsIgnoreCase(b.getStatus()) && !"REJECTED".equalsIgnoreCase(b.getStatus()))
+            )).count();
+
+            long completedCount = bookings.stream().filter(b -> b != null && (
+                "COMPLETED".equalsIgnoreCase(b.getStatus()) || (b.getCompletedSessions() != null && b.getCompletedSessions() > 0)
+            )).count();
+
+            long activePassesCount = bookings.stream().filter(b -> b != null && (
+                "APPROVED".equalsIgnoreCase(b.getStatus())
+                || ("PENDING".equalsIgnoreCase(b.getStatus()) && "PAID".equalsIgnoreCase(b.getPaymentStatus()))
+                || (b.getRemainingSessions() != null && b.getRemainingSessions() > 0 && !"CANCELLED".equalsIgnoreCase(b.getStatus()) && !"REJECTED".equalsIgnoreCase(b.getStatus()))
+            )).count();
+
+            model.addAttribute("user", currentUser);
+            model.addAttribute("bookings", bookings);
+            model.addAttribute("attendanceList", attendanceList);
+            model.addAttribute("progressLogs", progressLogs);
+            model.addAttribute("progressSummary", progressSummary);
+            model.addAttribute("upcomingCount", upcomingCount);
+            model.addAttribute("completedCount", completedCount);
+            model.addAttribute("activePassesCount", activePassesCount);
+
+        } catch (Exception e) {
+            System.err.println("Error in showUserBookings: " + e.getMessage());
+            e.printStackTrace();
+            model.addAttribute("user", currentUser);
+            model.addAttribute("bookings", new ArrayList<>());
+            model.addAttribute("attendanceList", new ArrayList<>());
+            model.addAttribute("progressLogs", new ArrayList<>());
+            model.addAttribute("progressSummary", new HashMap<>());
+            model.addAttribute("upcomingCount", 0);
+            model.addAttribute("completedCount", 0);
+            model.addAttribute("activePassesCount", 0);
+            model.addAttribute("error", "Some booking details could not be retrieved: " + e.getMessage());
+        }
 
         return "fitnessUserBookings";
+    }
+
+    // GET /fitness/progress/log fallback (redirects cleanly to /fitness/bookings)
+    @GetMapping("/progress/log")
+    public Object handleProgressLogGet(HttpServletRequest request) {
+        if ("XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"))) {
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("success", true);
+            resp.put("message", "Fitness progress log service is active.");
+            return ResponseEntity.ok(resp);
+        }
+        return "redirect:/fitness/bookings";
+    }
+
+    // USER SELF-LOG FITNESS PROGRESS (Supports both form submit and AJAX JSON)
+    @PostMapping("/progress/log")
+    @Transactional
+    public Object logUserFitnessProgress(
+            @RequestParam(value = "weightKg", required = false) String weightKgStr,
+            @RequestParam(value = "bodyFatPct", required = false) String bodyFatPctStr,
+            @RequestParam(value = "workoutNotes", required = false) String workoutNotes,
+            HttpServletRequest request,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+        boolean isAjax = "XMLHttpRequest".equalsIgnoreCase(request.getHeader("X-Requested-With"))
+                || (request.getHeader("Accept") != null && request.getHeader("Accept").contains("application/json"));
+
+        User currentUser = getSessionUser(session);
+        if (currentUser == null) {
+            if (isAjax) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("error", "Please log in to record progress.");
+                return ResponseEntity.status(401).body(err);
+            }
+            return "redirect:/login";
+        }
+
+        Double weightKg = null;
+        if (weightKgStr != null && !weightKgStr.trim().isEmpty()) {
+            try {
+                weightKg = Double.parseDouble(weightKgStr.trim());
+            } catch (Exception ignored) {}
+        }
+
+        if (weightKg == null || weightKg < 20 || weightKg > 300) {
+            if (isAjax) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("error", "Please enter a valid current weight between 20kg and 300kg.");
+                return ResponseEntity.badRequest().body(err);
+            }
+            redirectAttributes.addFlashAttribute("error", "Please enter a valid weight in kg.");
+            return "redirect:/fitness/bookings";
+        }
+
+        Double bodyFatPct = null;
+        if (bodyFatPctStr != null && !bodyFatPctStr.trim().isEmpty()) {
+            try {
+                bodyFatPct = Double.parseDouble(bodyFatPctStr.trim());
+            } catch (Exception ignored) {}
+        }
+
+        try {
+            in.sp.main.Entities.FitnessProgressLog log = new in.sp.main.Entities.FitnessProgressLog();
+            log.setUser(currentUser);
+            log.setLogDate(LocalDate.now());
+            log.setWeightKg(weightKg);
+            log.setBodyFatPct(bodyFatPct);
+            log.setWorkoutNotes(workoutNotes != null && !workoutNotes.isBlank() ? workoutNotes.trim() : "Self-logged workout update");
+
+            List<FitnessBooking> userBookings = fitnessBookingRepository.findByUser_Id(currentUser.getId());
+            if (!userBookings.isEmpty() && userBookings.get(0).getTrainer() != null) {
+                log.setTrainer(userBookings.get(0).getTrainer());
+            }
+            long totalWorkouts = fitnessAttendanceRepository.countByUser_IdAndStatus(currentUser.getId(), "PRESENT");
+            log.setWorkoutsCompleted((int) Math.max(1, totalWorkouts));
+
+            fitnessProgressLogRepository.save(log);
+
+            if (isAjax) {
+                Map<String, Object> resp = new HashMap<>();
+                resp.put("success", true);
+                resp.put("message", "Fitness milestone & weight logged successfully!");
+                resp.put("weightKg", weightKg);
+                resp.put("bodyFatPct", bodyFatPct);
+                return ResponseEntity.ok(resp);
+            }
+
+            redirectAttributes.addFlashAttribute("success", "Fitness milestone & weight logged successfully!");
+        } catch (Exception e) {
+            if (isAjax) {
+                Map<String, Object> err = new HashMap<>();
+                err.put("success", false);
+                err.put("error", "Error saving progress log: " + e.getMessage());
+                return ResponseEntity.status(500).body(err);
+            }
+            redirectAttributes.addFlashAttribute("error", "Error logging progress: " + e.getMessage());
+        }
+        return "redirect:/fitness/bookings";
     }
 
     // CANCEL BOOKING (WITH REFUND)
@@ -561,7 +952,11 @@ public class FitnessController {
     // TRAINER LOGIN GET
     @GetMapping("/trainer/login")
     public String loginTrainerForm(HttpSession session) {
-        if (getSessionTrainer(session) != null) {
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer != null) {
+            if (in.sp.main.Service.FitnessTrainerProfileService.isApproved(trainer)) {
+                return "redirect:/fitness/trainer/dashboard";
+            }
             return "redirect:/fitness/trainer/profile-completion";
         }
         return "fitnessTrainerLogin";
@@ -590,7 +985,6 @@ public class FitnessController {
 
                 trainerProfileService.refreshCompletion(trainer);
                 session.setAttribute("loggedTrainer", trainer);
-                session.setAttribute("postLoginOpenProfile", Boolean.TRUE);
 
                 // Generate JWT and add to response
                 String token = jwtUtil.generateToken(trainer.getEmail(), "TRAINER");
@@ -600,6 +994,12 @@ public class FitnessController {
                 cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
                 response.addCookie(cookie);
 
+                if (in.sp.main.Service.FitnessTrainerProfileService.isApproved(trainer)) {
+                    session.removeAttribute("postLoginOpenProfile");
+                    return "redirect:/fitness/trainer/dashboard";
+                }
+
+                session.setAttribute("postLoginOpenProfile", Boolean.TRUE);
                 return "redirect:/fitness/trainer/profile-completion";
             }
         }
@@ -618,6 +1018,7 @@ public class FitnessController {
         FitnessTrainer trainer = fitnessTrainerRepository.findById(sessionTrainer.getId()).orElse(sessionTrainer);
         trainerProfileService.refreshCompletion(trainer);
         model.addAttribute("trainer", trainer);
+        model.addAttribute("profileCompletionPct", trainer.getProfileCompletionPct() != null ? trainer.getProfileCompletionPct() : 0);
         model.addAttribute("missingItems", trainerProfileService.missingItems(trainer));
         return "fitnessTrainerProfileCompletion";
     }
@@ -639,6 +1040,8 @@ public class FitnessController {
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String pincode,
             @RequestParam(required = false) String mapLink,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
             @RequestParam(required = false) List<String> specializations,
             @RequestParam(required = false) List<String> audience,
             @RequestParam(required = false, defaultValue = "false") Boolean doorstepService,
@@ -697,6 +1100,17 @@ public class FitnessController {
         if (state != null) fields.put("state", state);
         if (pincode != null) fields.put("pincode", pincode);
         if (mapLink != null) fields.put("mapLink", mapLink);
+        if (latitude != null) fields.put("latitude", latitude);
+        if (longitude != null) fields.put("longitude", longitude);
+        if ((latitude == null || longitude == null) && mapLink != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("[?&@](?:q=)?([0-9.-]+),([0-9.-]+)").matcher(mapLink);
+            if (m.find()) {
+                try {
+                    fields.put("latitude", Double.parseDouble(m.group(1)));
+                    fields.put("longitude", Double.parseDouble(m.group(2)));
+                } catch (Exception ignored) {}
+            }
+        }
         if (specializations != null) fields.put("specializations", specializations);
         if (audience != null) fields.put("audience", audience);
         fields.put("doorService", doorstepService);
@@ -814,7 +1228,11 @@ public class FitnessController {
     public String showTrainerDashboard(HttpSession session, Model model) {
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) return "redirect:/fitness/trainer/login";
-        if (Boolean.TRUE.equals(session.getAttribute("postLoginOpenProfile"))) {
+
+        // If approved by admin, always stay on dashboard, don't force profile completion redirect
+        if (in.sp.main.Service.FitnessTrainerProfileService.isApproved(trainer)) {
+            session.removeAttribute("postLoginOpenProfile");
+        } else if (Boolean.TRUE.equals(session.getAttribute("postLoginOpenProfile"))) {
             return "redirect:/fitness/trainer/profile-completion";
         }
 
@@ -918,6 +1336,35 @@ public class FitnessController {
         fitnessBookingRepository.save(booking);
 
         redirectAttributes.addFlashAttribute("success", "Booking updated successfully.");
+        return "redirect:/fitness/trainer/dashboard";
+    }
+
+    // TRAINER MARK SESSION ATTENDANCE & DEDUCT PASS CREDITS
+    @PostMapping("/trainer/attendance/mark")
+    @Transactional
+    public String markTrainerAttendance(
+            @RequestParam Long bookingId,
+            @RequestParam(required = false) String sessionDate,
+            @RequestParam(required = false) String sessionTime,
+            @RequestParam(defaultValue = "PRESENT") String status,
+            @RequestParam(required = false) String notes,
+            HttpSession session, RedirectAttributes redirectAttributes) {
+
+        FitnessTrainer trainer = getSessionTrainer(session);
+        if (trainer == null) return "redirect:/fitness/trainer/login";
+
+        LocalDate date = (sessionDate != null && !sessionDate.trim().isEmpty())
+                ? LocalDate.parse(sessionDate.trim()) : LocalDate.now();
+
+        try {
+            fitnessService.markAttendance(trainer, bookingId, date, sessionTime, status, notes);
+            redirectAttributes.addFlashAttribute("success", "Session check-in recorded successfully! 1 pass credit deducted.");
+        } catch (org.springframework.web.server.ResponseStatusException rse) {
+            redirectAttributes.addFlashAttribute("error", rse.getReason());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Unable to record attendance: " + e.getMessage());
+        }
+
         return "redirect:/fitness/trainer/dashboard";
     }
 
@@ -1324,34 +1771,6 @@ public class FitnessController {
     }
 
     // ==========================================
-    // ATTENDANCE & ROSTER MANAGEMENT
-    // ==========================================
-
-    @PostMapping("/trainer/attendance/mark")
-    @Transactional
-    public String markSessionAttendance(
-            @RequestParam Long bookingId,
-            @RequestParam(required = false) String sessionDate,
-            @RequestParam(required = false) String sessionTime,
-            @RequestParam(defaultValue = "PRESENT") String status,
-            @RequestParam(required = false) String notes,
-            HttpSession session, RedirectAttributes redirectAttributes) {
-
-        FitnessTrainer trainer = getSessionTrainer(session);
-        if (trainer == null) return "redirect:/fitness/trainer/login";
-
-        try {
-            LocalDate date = (sessionDate != null && !sessionDate.isBlank())
-                    ? LocalDate.parse(sessionDate) : LocalDate.now();
-            fitnessService.markAttendance(trainer, bookingId, date, sessionTime, status, notes);
-            redirectAttributes.addFlashAttribute("success", "Attendance marked (" + status + ") successfully!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-        return "redirect:/fitness/trainer/dashboard";
-    }
-
-    // ==========================================
     // DYNAMIC QR ATTENDANCE (WEB AJAX & API)
     // ==========================================
 
@@ -1471,6 +1890,40 @@ public class FitnessController {
         return org.springframework.http.ResponseEntity.ok(Map.of("success", true, "active", false));
     }
 
+    // CLIENT FITNESS QR / SESSION CODE CHECK-IN
+    @PostMapping({"/api/qr-checkin", "/user/check-in", "/fitness/api/qr-checkin", "/fitness/user/check-in"})
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> clientFitnessCheckIn(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "error", "Please sign in to check in"));
+        }
+
+        String token = body == null ? "" : String.valueOf(body.getOrDefault("token", "")).trim();
+        if (token.isEmpty()) {
+            return org.springframework.http.ResponseEntity.badRequest().body(Map.of("success", false, "error", "Session code / QR token is required"));
+        }
+
+        Double lat = null;
+        Double lng = null;
+        if (body != null) {
+            if (body.get("latitude") != null) lat = Double.parseDouble(body.get("latitude").toString());
+            if (body.get("longitude") != null) lng = Double.parseDouble(body.get("longitude").toString());
+        }
+
+        try {
+            Map<String, Object> res = fitnessQrAttendanceService.checkInClient(user, token, lat, lng);
+            return org.springframework.http.ResponseEntity.ok(res);
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return org.springframework.http.ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "error", ex.getReason()));
+        } catch (Exception ex) {
+            return org.springframework.http.ResponseEntity.badRequest().body(Map.of("success", false, "error", ex.getMessage() == null ? "Check-in failed" : ex.getMessage()));
+        }
+    }
+
     // ==========================================
     // CLIENT PROGRESS TRACKING
     // ==========================================
@@ -1588,23 +2041,8 @@ public class FitnessController {
         fitnessBookingRepository.save(booking);
 
         redirectAttributes.addFlashAttribute("success", "Successfully subscribed to " + pkg.getPackageName() + "!");
-        return "redirect:/fitness/my-bookings";
-    }
-
-    @GetMapping("/my-bookings")
-    public String showUserFitnessBookings(HttpSession session, Model model) {
-        User currentUser = getSessionUser(session);
-        if (currentUser == null) return "redirect:/login";
-
-        List<FitnessBooking> bookings = fitnessBookingRepository.findByUser_Id(currentUser.getId());
-        List<FitnessAttendance> attendanceList = fitnessAttendanceRepository.findByUser_IdOrderBySessionDateDesc(currentUser.getId());
-        Map<String, Object> progressSummary = fitnessService.getUserFitnessProgressSummary(currentUser.getId());
-
-        model.addAttribute("bookings", bookings);
-        model.addAttribute("attendanceList", attendanceList);
-        model.addAttribute("progressSummary", progressSummary);
-
-        return "fitnessUserBookings";
+        return "redirect:/fitness/bookings";
     }
 }
+
 

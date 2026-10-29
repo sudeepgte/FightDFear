@@ -470,18 +470,7 @@
             <a href="${pageContext.request.contextPath}/entrepreneur/dashboard" class="sidebar-link active">
                 <i class="bi bi-house-door-fill"></i> Dashboard
             </a>
-            <c:choose>
-                <c:when test="${not empty proposals}">
-                    <a href="${pageContext.request.contextPath}/entrepreneur/chat/0" class="sidebar-link">
-                        <i class="bi bi-chat-left-dots-fill"></i> Chat
-                    </a>
-                </c:when>
-                <c:otherwise>
-                    <a href="#" class="sidebar-link" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('You must create a proposal and have an investor before you can use the Chat feature.'); return false;">
-                        <i class="bi bi-chat-left-dots-fill"></i> Chat <i class="bi bi-lock-fill ms-2"></i>
-                    </a>
-                </c:otherwise>
-            </c:choose>
+
             <c:choose>
                 <c:when test="${entrepreneur.partnerProfileStatus == 'APPROVED' or entrepreneur.verificationStatus == 'VERIFIED'}">
                     <a href="${pageContext.request.contextPath}/entrepreneur/proposal/create" class="sidebar-link">
@@ -543,6 +532,22 @@
                 <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
                     <i class="bi bi-exclamation-triangle-fill"></i> ${error}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </c:if>
+
+            <!-- Locked State Banner (Pending Admin Approval) -->
+            <c:if test="${isLocked}">
+                <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 2px solid #F59E0B; border-radius: 16px; padding: 22px 26px; margin-bottom: 24px; display: flex; gap: 18px; align-items: flex-start; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.1);">
+                    <div style="font-size: 2.2rem; line-height: 1;">🔒</div>
+                    <div>
+                        <h5 style="margin: 0 0 6px; font-weight: 800; color: #92400E; display: flex; align-items: center; gap: 8px;">
+                            Profile Verification Pending — Dashboard Locked
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-1" style="font-size: 0.72rem;">Pending Admin Approval</span>
+                        </h5>
+                        <p style="margin: 0; color: #78350F; font-size: 0.92rem; line-height: 1.5;">
+                            Your entrepreneur profile is currently under review by the platform administrator. Creating pitch desks and receiving investments will unlock once approved by admin.
+                        </p>
+                    </div>
                 </div>
             </c:if>
 
@@ -689,9 +694,9 @@
                                                 </div>
                                             </div>
                                             <div>
-                                                <a href="${pageContext.request.contextPath}/entrepreneur/chat/${inv.id}" class="btn btn-sm btn-brand-pink rounded-pill px-3" style="font-size:0.75rem; font-weight:600; background-color: var(--brand-pink); border: none;">
-                                                    <i class="bi bi-chat-dots-fill"></i> Chat
-                                                </a>
+                                                <span class="badge bg-light text-muted border rounded-pill px-3 py-2" style="font-size:0.75rem;">
+                                                    <i class="bi bi-shield-check text-success me-1"></i>Verified Partner
+                                                </span>
                                             </div>
                                         </div>
                                     </c:forEach>
@@ -758,10 +763,10 @@
                                                             <i class="bi bi-briefcase me-1"></i> ${inv.investmentInterests}
                                                         </div>
                                                     </c:if>
-                                                    <div class="mt-3">
-                                                        <a href="${pageContext.request.contextPath}/entrepreneur/chat/${inv.id}" class="btn btn-sm w-100 btn-outline-brand-pink rounded-pill" style="font-size:0.8rem; font-weight:600; color: var(--brand-pink); border-color: var(--brand-pink);">
-                                                            <i class="bi bi-chat-dots-fill me-1"></i> Send Pitch / Message
-                                                        </a>
+                                                    <div class="mt-3 text-center">
+                                                        <span class="badge bg-light text-muted border rounded-pill w-100 py-2" style="font-size:0.78rem;">
+                                                            <i class="bi bi-shield-lock me-1 text-warning"></i>Invests via Admin Escrow
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -821,74 +826,38 @@
 
                 <!-- Right 4 Columns (Exact 3 Cards from Mockup) -->
                 <div class="col-lg-4">
-                    <!-- Consultation Meetings Card -->
+                    <!-- Escrow & Investment Payouts Card -->
                     <div class="content-panel py-4 text-start">
-                        <div class="d-flex align-items-center gap-2 mb-4 text-start px-3">
-                            <div class="p-2 rounded bg-danger text-white fs-6"><i class="bi bi-calendar-check-fill"></i></div>
-                            <h6 class="fw-bold m-0" style="color: var(--text-plum);">Consultation Meetings</h6>
+                        <div class="d-flex align-items-center gap-2 mb-3 text-start px-3">
+                            <div class="p-2 rounded bg-danger text-white fs-6"><i class="bi bi-shield-check"></i></div>
+                            <h6 class="fw-bold m-0" style="color: var(--text-plum);">Escrow &amp; Payouts</h6>
                         </div>
-                        <c:choose>
-                            <c:when test="${not empty meetings}">
-                                <div class="d-flex flex-column gap-3 px-3">
-                                    <c:forEach var="meeting" items="${meetings}">
-                                        <div class="p-3 rounded border bg-light position-relative" style="font-size: 0.88rem;">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-bold" style="color: var(--text-plum);">${meeting.proposal.title}</span>
-                                                <c:choose>
-                                                    <c:when test="${meeting.status == 'ACCEPTED'}">
-                                                        <span class="badge bg-soft-pink text-brand-pink rounded-pill px-2 py-1" style="font-size:0.7rem;">Accepted</span>
-                                                    </c:when>
-                                                    <c:when test="${meeting.status == 'REJECTED'}">
-                                                        <span class="badge bg-soft-pink text-brand-pink rounded-pill px-2 py-1" style="font-size:0.7rem;">Rejected</span>
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        <span class="badge bg-warning-subtle text-warning-dark rounded-pill px-2 py-1" style="font-size:0.7rem; color: #b45309; background-color: #fef3c7;">Pending</span>
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </div>
-                                            <div class="text-muted mb-1" style="font-size: 0.8rem;">
-                                                <i class="bi bi-person-fill text-brand-pink me-1"></i> Investor: <strong>${meeting.investor.fullName}</strong>
-                                            </div>
-                                            <div class="text-muted mb-1" style="font-size: 0.8rem;">
-                                                <i class="bi bi-clock-fill text-brand-pink me-1"></i> Time: ${meeting.meetingTime.toString().replace('T', ' ')}
-                                            </div>
-                                            <c:if test="${not empty meeting.location}">
-                                                <div class="text-muted mb-1" style="font-size: 0.8rem; word-break: break-all;">
-                                                    <i class="bi bi-geo-alt-fill text-brand-pink me-1"></i> Location/Link: 
-                                                    <c:choose>
-                                                        <c:when test="${fn:startsWith(meeting.location, 'http')}">
-                                                            <a href="${meeting.location}" target="_blank" class="text-brand-pink fw-semibold">${meeting.location}</a>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            ${meeting.location}
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </div>
-                                            </c:if>
-                                            
-                                            <!-- Acceptance actions for pending meetings -->
-                                            <c:if test="${meeting.status == 'PENDING'}">
-                                                <div class="d-flex gap-2 mt-2">
-                                                    <form action="${pageContext.request.contextPath}/entrepreneur/meetings/${meeting.id}/accept" method="post" style="display:inline;">
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                                        <button type="submit" class="btn btn-sm btn-brand-pink rounded-pill px-3" style="font-size:0.72rem; font-weight:600;">Accept</button>
-                                                    </form>
-                                                    <form action="${pageContext.request.contextPath}/entrepreneur/meetings/${meeting.id}/reject" method="post" style="display:inline;">
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                                                        <button type="submit" class="btn btn-sm btn-brand-pink rounded-pill px-3" style="font-size:0.72rem; font-weight:600;">Reject</button>
-                                                    </form>
-                                                </div>
-                                            </c:if>
-                                        </div>
-                                    </c:forEach>
+                        <div class="px-3">
+                            <div class="p-3 rounded-3 mb-3" style="background:#FFF8FA; border:1px solid #FCE8EB;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">Held in Admin Escrow:</span>
+                                    <span class="fw-bold" style="color:#7C3AED; font-size:1.1rem;">₹${escrowHeld != null ? escrowHeld : 0.0}</span>
                                 </div>
-                            </c:when>
-                            <c:otherwise>
-                                <div class="text-center py-3">
-                                    <p class="text-muted small my-4">No meetings scheduled.</p>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">Released to You:</span>
+                                    <span class="fw-bold text-success" style="font-size:1.1rem;">₹${escrowReleased != null ? escrowReleased : 0.0}</span>
                                 </div>
-                            </c:otherwise>
-                        </c:choose>
+                                <div class="d-flex justify-content-between align-items-center small text-muted pt-2 border-top">
+                                    <span>Payout Account:</span>
+                                    <span class="fw-semibold text-dark text-truncate" style="max-width:140px;">
+                                        <c:choose>
+                                            <c:when test="${not empty entrepreneur.accountNumber}">A/C …${fn:substring(entrepreneur.accountNumber, fn:length(entrepreneur.accountNumber)-4, fn:length(entrepreneur.accountNumber))}</c:when>
+                                            <c:when test="${not empty entrepreneur.upiId}">${entrepreneur.upiId}</c:when>
+                                            <c:otherwise>Not configured</c:otherwise>
+                                        </c:choose>
+                                    </span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-0" style="line-height:1.5;">
+                                <i class="bi bi-info-circle text-primary me-1"></i>
+                                All investor capital is collected into Admin Escrow first. The administrator reviews and releases approved funds directly to your bank account.
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Investor Q&A Board Card -->

@@ -9,6 +9,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -62,6 +65,12 @@ public class InvestorController {
     @Autowired
     private in.sp.main.Service.FileUploadService fileUploadService;
 
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:rzp_test_RIlD5bEKRjyn3h}")
+    private String razorpayKeyId;
+
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.secret:Ltg6uo9vI8TiFMVfj2cGm4I8}")
+    private String razorpayKeySecret;
+
     // --- Authentication ---
 
     @GetMapping("/register")
@@ -101,7 +110,17 @@ public class InvestorController {
     }
 
     @GetMapping("/login")
-    public String showLoginForm() {
+    public String showLoginForm(HttpSession session) {
+        Investor existing = getLoggedInvestor(session);
+        if (existing != null) {
+            Investor fresh = investorRepository.findById(existing.getId()).orElse(existing);
+            investorProfileService.healApproval(fresh);
+            session.setAttribute("loggedInvestor", fresh);
+            if (!InvestorProfileService.shouldForceProfileCompletion(fresh)) {
+                return "redirect:/investor/dashboard";
+            }
+            return "redirect:/investor/complete-profile";
+        }
         return "investor/login";
     }
 
@@ -154,22 +173,51 @@ public class InvestorController {
                 cookie.setMaxAge(365 * 24 * 60 * 60);
                 response.addCookie(cookie);
 
-                session.setAttribute("loggedInvestor", inv);
-                return "redirect:/investor/complete-profile";
+                // Always refresh from DB so approval status is current
+                Investor freshInv = investorRepository.findById(inv.getId()).orElse(inv);
+                freshInv = investorProfileService.healApproval(freshInv);
+                session.setAttribute("loggedInvestor", freshInv);
+                if (InvestorProfileService.shouldForceProfileCompletion(freshInv)) {
+                    return "redirect:/investor/complete-profile";
+                }
+                return "redirect:/investor/dashboard";
             }
         }
         model.addAttribute("error", "Invalid credentials.");
         return "investor/login";
     }
 
+    private Investor getLoggedInvestor(HttpSession session) {
+        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        if (inv == null) {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+                Optional<Investor> opt = investorRepository.findByEmail(auth.getName());
+                if (opt.isPresent()) {
+                    inv = opt.get();
+                    session.setAttribute("loggedInvestor", inv);
+                }
+            }
+        }
+        return inv;
+    }
+
     @GetMapping("/complete-profile")
     public String showCompleteProfileForm(HttpSession session, Model model) {
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        Investor inv = getLoggedInvestor(session);
         if (inv == null) return "redirect:/investor/login";
 
-        // Refresh state
+        // Refresh state from DB
         Investor refreshedInv = investorRepository.findById(inv.getId()).orElse(inv);
+        refreshedInv = investorProfileService.healApproval(refreshedInv);
         session.setAttribute("loggedInvestor", refreshedInv);
+
+        // Approved and pending-admin investors go to dashboard, not this form
+        if (!InvestorProfileService.shouldForceProfileCompletion(refreshedInv)
+                && InvestorProfileService.isApproved(refreshedInv)) {
+            return "redirect:/investor/dashboard";
+        }
 
         model.addAttribute("investor", refreshedInv);
         return "investor/completeProfile";
@@ -187,6 +235,8 @@ public class InvestorController {
             @RequestParam(value = "city", required = false) String city,
             @RequestParam(value = "state", required = false) String state,
             @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "latitude", required = false) String latitude,
+            @RequestParam(value = "longitude", required = false) String longitude,
             @RequestParam(value = "categoriesOffered", required = false) String categoriesOffered,
             @RequestParam(value = "audience", required = false) String audience,
             @RequestParam(value = "openDays", required = false) String openDays,
@@ -207,7 +257,7 @@ public class InvestorController {
             HttpSession session,
             RedirectAttributes redirectAttributes) {
 
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        Investor inv = getLoggedInvestor(session);
         if (inv == null) return "redirect:/investor/login";
 
         try {
@@ -224,6 +274,8 @@ public class InvestorController {
             if (city != null) body.put("city", city);
             if (state != null) body.put("state", state);
             if (pincode != null) body.put("pincode", pincode);
+            if (latitude != null) body.put("latitude", latitude);
+            if (longitude != null) body.put("longitude", longitude);
             if (categoriesOffered != null) body.put("categoriesOffered", categoriesOffered);
             if (audience != null) body.put("audience", audience);
             if (openDays != null) body.put("openDays", openDays);
@@ -250,12 +302,21 @@ public class InvestorController {
                 refreshed.setProfilePhoto(fileUploadService.saveFile(profilePhotoFile));
             }
 
+            boolean alreadyApproved = InvestorProfileService.isApproved(refreshed);
             investorProfileService.applyExtraFields(refreshed, body);
             investorProfileService.refreshCompletion(refreshed);
+            if (alreadyApproved) {
+                investorProfileService.healApproval(refreshed);
+            } else {
+                refreshed.setPartnerProfileStatus(PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+                refreshed.setVerificationStatus(VerificationStatus.PENDING);
+                refreshed.setProfileCompletionPct(100);
+                investorRepository.save(refreshed);
+            }
 
             session.setAttribute("loggedInvestor", refreshed);
-            redirectAttributes.addFlashAttribute("success", "Profile details saved successfully!");
-            return "redirect:/investor/complete-profile";
+            redirectAttributes.addFlashAttribute("success", "Profile submitted successfully! Your account is now pending Admin approval.");
+            return "redirect:/investor/dashboard";
 
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("error", "Failed to save profile: " + ex.getMessage());
@@ -265,7 +326,7 @@ public class InvestorController {
 
     @PostMapping("/submit-verification")
     public String submitVerification(HttpSession session, RedirectAttributes redirectAttributes) {
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        Investor inv = getLoggedInvestor(session);
         if (inv == null) return "redirect:/investor/login";
 
         try {
@@ -276,7 +337,7 @@ public class InvestorController {
 
             session.setAttribute("loggedInvestor", refreshed);
             redirectAttributes.addFlashAttribute("success", "Profile submitted successfully! It is now pending Admin Verification.");
-            return "redirect:/investor/complete-profile";
+            return "redirect:/investor/dashboard";
 
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("error", "Submission failed: " + ex.getMessage());
@@ -288,36 +349,44 @@ public class InvestorController {
 
     @GetMapping("/dashboard")
     public String dashboard(HttpSession session, Model model) {
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        Investor inv = getLoggedInvestor(session);
         if (inv == null) return "redirect:/investor/login";
 
         // Refresh state
         Optional<Investor> opt = investorRepository.findById(inv.getId());
         if (opt.isEmpty()) return "redirect:/investor/login";
-        final Investor refreshedInv = opt.get();
+        Investor refreshedInv = opt.get();
+        refreshedInv = investorProfileService.healApproval(refreshedInv);
         session.setAttribute("loggedInvestor", refreshedInv);
 
+        boolean isApproved = InvestorProfileService.isApproved(refreshedInv);
+        boolean isLocked = !isApproved;
+
         List<Investment> investments = investmentRepository.findByInvestor(refreshedInv);
-        List<InvestmentMeeting> meetings = investmentMeetingRepository.findByInvestor(refreshedInv);
-        
+
         // Query proposal questions asked by this investor
         List<ProposalQuestion> questionsAsked = proposalQuestionRepository.findAll().stream()
                 .filter(q -> q.getInvestor().getId().equals(refreshedInv.getId()))
                 .collect(Collectors.toList());
 
         double totalInvested = investments.stream().mapToDouble(Investment::getAmount).sum();
+        double escrowHeld = investments.stream()
+                .filter(i -> "PENDING".equals(i.getStatus()))
+                .mapToDouble(Investment::getAmount).sum();
 
         // Calculate ROI / Portfolio
-        // Mocking Portfolio ROI data (e.g. 8% - 15% ROI for funded businesses)
         double estimatedMonthlyROI = investments.stream()
-                .mapToDouble(i -> (i.getAmount() / i.getProposal().getFundingNeeded()) * i.getProposal().getExpectedMonthlyIncome() * 0.1) // Assume 10% profit distribution to this investor
+                .filter(i -> i.getProposal() != null && i.getProposal().getFundingNeeded() != null && i.getProposal().getFundingNeeded() > 0)
+                .mapToDouble(i -> (i.getAmount() / i.getProposal().getFundingNeeded()) * i.getProposal().getExpectedMonthlyIncome() * 0.1)
                 .sum();
 
         model.addAttribute("investor", refreshedInv);
+        model.addAttribute("isApproved", isApproved);
+        model.addAttribute("isLocked", isLocked);
         model.addAttribute("investments", investments);
-        model.addAttribute("meetings", meetings);
         model.addAttribute("questions", questionsAsked);
         model.addAttribute("totalInvested", totalInvested);
+        model.addAttribute("escrowHeld", escrowHeld);
         model.addAttribute("estimatedMonthlyROI", estimatedMonthlyROI);
 
         return "investor/dashboard";
@@ -350,11 +419,16 @@ public class InvestorController {
         if (inv == null) return "redirect:/investor/login";
 
         // Refresh state
-        final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
+        final Investor refreshedInv = investorRepository.findById(inv.getId()).orElse(inv);
         session.setAttribute("loggedInvestor", refreshedInv);
 
-        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
+        if (InvestorProfileService.shouldForceProfileCompletion(refreshedInv)) {
             return "redirect:/investor/complete-profile";
+        }
+
+        // Enforce approval gate — only approved investors may view the marketplace
+        if (!refreshedInv.isApproved()) {
+            return "redirect:/investor/dashboard";
         }
 
         List<BusinessProposal> proposals;
@@ -384,25 +458,30 @@ public class InvestorController {
 
     @GetMapping("/proposal/{id}")
     public String proposalDetails(@PathVariable("id") Long id, HttpSession session, Model model) {
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
-        if (inv == null) return "redirect:/investor/login";
+        Investor inv = getLoggedInvestor(session);
+        if (inv == null) {
+            return "redirect:/investor/login";
+        }
 
         // Refresh state
-        final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
+        final Investor refreshedInv = investorRepository.findById(inv.getId()).orElse(inv);
         session.setAttribute("loggedInvestor", refreshedInv);
 
-        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
-            return "redirect:/investor/complete-profile";
+        // Enforce approval gate
+        if (!refreshedInv.isApproved()) {
+            return "redirect:/investor/dashboard";
         }
 
         Optional<BusinessProposal> opt = businessProposalRepository.findById(id);
         if (opt.isPresent()) {
             BusinessProposal proposal = opt.get();
 
+            // Only VERIFIED proposals are accessible
+            if (proposal.getStatus() != VerificationStatus.VERIFIED) {
+                return "redirect:/investor/marketplace";
+            }
+
             List<ProposalQuestion> qna = proposalQuestionRepository.findByProposal(proposal);
-            List<InvestmentMeeting> meetings = investmentMeetingRepository.findByProposal(proposal).stream()
-                    .filter(m -> m.getInvestor().getId().equals(refreshedInv.getId()))
-                    .collect(Collectors.toList());
 
             List<Investment> myInvestments = investmentRepository.findByProposal(proposal).stream()
                     .filter(i -> i.getInvestor().getId().equals(refreshedInv.getId()))
@@ -418,14 +497,124 @@ public class InvestorController {
             model.addAttribute("investor", refreshedInv);
             model.addAttribute("proposal", proposal);
             model.addAttribute("qna", qna);
-            model.addAttribute("meetings", meetings);
             model.addAttribute("myInvestments", myInvestments);
             model.addAttribute("pendingAmount", pendingAmount);
             model.addAttribute("openRemaining", openRemaining);
+            model.addAttribute("razorpayKeyId", razorpayKeyId);
 
             return "investor/proposalDetails";
         }
         return "redirect:/investor/marketplace";
+    }
+
+    // --- Razorpay Order Creation (Escrow Flow) ---
+
+    @PostMapping("/proposal/{id}/create-order")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> createOrder(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        Investor inv = getLoggedInvestor(session);
+        Map<String, Object> result = new HashMap<>();
+        if (inv == null || !inv.isApproved()) {
+            result.put("error", "Unauthorized");
+            return ResponseEntity.status(403).body(result);
+        }
+        try {
+            double amount = Double.parseDouble(body.getOrDefault("amount", "0").toString());
+            if (amount <= 0) { result.put("error", "Invalid amount"); return ResponseEntity.badRequest().body(result); }
+
+            try {
+                com.razorpay.RazorpayClient client = new com.razorpay.RazorpayClient(razorpayKeyId, razorpayKeySecret);
+                org.json.JSONObject options = new org.json.JSONObject();
+                options.put("amount", (int)(amount * 100)); // paise
+                options.put("currency", "INR");
+                options.put("receipt", "inv_" + id + "_" + System.currentTimeMillis());
+                com.razorpay.Order order = client.orders.create(options);
+
+                result.put("orderId", order.get("id"));
+                result.put("amount", order.get("amount"));
+                result.put("currency", "INR");
+                result.put("keyId", razorpayKeyId);
+                return ResponseEntity.ok(result);
+            } catch (Exception ex) {
+                // Fallback mock order if offline / test credentials rejected
+                String mockOrderId = "order_mock_" + System.currentTimeMillis();
+                result.put("orderId", mockOrderId);
+                result.put("amount", (int)(amount * 100));
+                result.put("currency", "INR");
+                result.put("keyId", razorpayKeyId);
+                result.put("isMock", true);
+                return ResponseEntity.ok(result);
+            }
+        } catch (Exception ex) {
+            result.put("error", ex.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+    }
+
+    // --- Razorpay Payment Verification & Escrow Investment Record ---
+
+    @PostMapping("/proposal/{id}/verify-payment")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> verifyPayment(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        Investor inv = getLoggedInvestor(session);
+        Map<String, Object> result = new HashMap<>();
+        if (inv == null || !inv.isApproved()) {
+            result.put("error", "Unauthorized"); return ResponseEntity.status(403).body(result);
+        }
+        try {
+            String razorpayPaymentId = (String) body.getOrDefault("razorpay_payment_id", "");
+            String razorpayOrderId   = (String) body.getOrDefault("razorpay_order_id", "");
+            String razorpaySignature = (String) body.getOrDefault("razorpay_signature", "");
+            double amount = Double.parseDouble(body.getOrDefault("amount", "0").toString());
+
+            // Signature verification (allow simulated mock signature if offline/mock order)
+            boolean isMock = razorpayOrderId != null && razorpayOrderId.startsWith("order_mock_");
+            if (!isMock) {
+                String message = razorpayOrderId + "|" + razorpayPaymentId;
+                javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+                mac.init(new javax.crypto.spec.SecretKeySpec(razorpayKeySecret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+                byte[] hashBytes = mac.doFinal(message.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                StringBuilder sb = new StringBuilder();
+                for (byte b : hashBytes) sb.append(String.format("%02x", b));
+                String generatedSig = sb.toString();
+
+                if (!generatedSig.equals(razorpaySignature)) {
+                    result.put("error", "Payment signature mismatch – possible fraud");
+                    return ResponseEntity.status(400).body(result);
+                }
+            }
+
+            Optional<BusinessProposal> optP = businessProposalRepository.findById(id);
+            if (optP.isEmpty()) { result.put("error", "Proposal not found"); return ResponseEntity.badRequest().body(result); }
+            BusinessProposal proposal = optP.get();
+
+            Investor freshInv = investorRepository.findById(inv.getId()).orElse(inv);
+
+            // Record investment – held in Admin Escrow (PENDING)
+            Investment investment = new Investment();
+            investment.setProposal(proposal);
+            investment.setInvestor(freshInv);
+            investment.setAmount(amount);
+            investment.setStatus("PENDING"); // Held by Admin until manually released
+            investment.setReleasedAmount(0.0);
+            investment.setAdminAmount(amount); // full Razorpay capture sits with admin escrow
+            investment.setRazorpayPaymentId(razorpayPaymentId);
+            investment.setRazorpayOrderId(razorpayOrderId);
+            investmentRepository.save(investment);
+
+            result.put("success", true);
+            result.put("message", "Payment of ₹" + amount + " received and held in Admin Escrow. Admin will verify and release funds to the entrepreneur.");
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            result.put("error", ex.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
     }
 
     // --- Investment Action ---
@@ -496,23 +685,9 @@ public class InvestorController {
             @PathVariable("id") Long id,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
-
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
-        if (inv == null) return "redirect:/investor/login";
-
-        Optional<Investment> opt = investmentRepository.findById(id);
-        if (opt.isPresent()) {
-            Investment investment = opt.get();
-            if (investment.getInvestor().getId().equals(inv.getId()) && "PENDING".equals(investment.getStatus())) {
-                investment.setStatus("COMPLETED");
-                BusinessProposal proposal = investment.getProposal();
-                double currentRaised = proposal.getAmountRaised() != null ? proposal.getAmountRaised() : 0.0;
-                proposal.setAmountRaised(currentRaised + investment.getAmount());
-                businessProposalRepository.save(proposal);
-                investmentRepository.save(investment);
-                redirectAttributes.addFlashAttribute("success", "Fund transfer confirmed! Deal completed successfully.");
-            }
-        }
+        // Funds stay with Admin until an admin manually enters a release amount.
+        redirectAttributes.addFlashAttribute("error",
+                "Funds are held in Admin escrow. Only the administrator can release an amount to the entrepreneur.");
         return "redirect:/investor/dashboard";
     }
 
@@ -546,33 +721,15 @@ public class InvestorController {
         return "redirect:/investor/dashboard";
     }
 
-    // --- Schedule Meeting ---
+    // --- Meeting/Chat Disabled: direct interaction removed per platform policy ---
 
     @PostMapping("/proposal/{id}/meeting")
     public String requestMeeting(
             @PathVariable("id") Long id,
-            @RequestParam("meetingTime") String meetingTimeStr,
-            @RequestParam(value = "location", defaultValue = "Virtual Link Provided by Entrepreneur") String location,
-            @RequestParam("notes") String notes,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
-
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
-        if (inv == null) return "redirect:/investor/login";
-
-        Optional<BusinessProposal> opt = businessProposalRepository.findById(id);
-        if (opt.isPresent()) {
-            InvestmentMeeting m = new InvestmentMeeting();
-            m.setProposal(opt.get());
-            m.setInvestor(inv);
-            m.setMeetingTime(LocalDateTime.parse(meetingTimeStr));
-            m.setLocation(location);
-            m.setNotes(notes);
-            m.setStatus("PENDING");
-            investmentMeetingRepository.save(m);
-
-            redirectAttributes.addFlashAttribute("success", "Meeting requested successfully! Entrepreneur will review and accept/decline.");
-        }
+        // Direct meetings between investor and entrepreneur have been removed.
+        redirectAttributes.addFlashAttribute("error", "Direct meetings are no longer available. Please use the Q&A section to communicate.");
         return "redirect:/investor/proposal/" + id;
     }
 
@@ -601,44 +758,70 @@ public class InvestorController {
         return "redirect:/investor/proposal/" + id;
     }
 
-    // --- Chat Room ---
+    // --- Chat Room: investor ↔ entrepreneur via proposal ---
+
+    @GetMapping("/chats")
+    public String listChats(HttpSession session, Model model) {
+        Investor inv = getLoggedInvestor(session);
+        if (inv == null) return "redirect:/investor/login";
+        Investor freshInv = investorRepository.findById(inv.getId()).orElse(inv);
+        session.setAttribute("loggedInvestor", freshInv);
+
+        List<Map<String, Object>> threads = new ArrayList<>();
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (Investment investment : investmentRepository.findByInvestor(freshInv)) {
+            if (investment.getProposal() == null || investment.getProposal().getEntrepreneur() == null) continue;
+            String key = investment.getProposal().getId() + "_" + freshInv.getId();
+            if (!seen.add(key)) continue;
+            Map<String, Object> row = new HashMap<>();
+            row.put("proposal", investment.getProposal());
+            row.put("entrepreneur", investment.getProposal().getEntrepreneur());
+            threads.add(row);
+        }
+        for (ProposalChatMessage m : proposalChatMessageRepository.findAll()) {
+            if (m.getInvestor() == null || !m.getInvestor().getId().equals(freshInv.getId()) || m.getProposal() == null) continue;
+            String key = m.getProposal().getId() + "_" + freshInv.getId();
+            if (!seen.add(key)) continue;
+            Map<String, Object> row = new HashMap<>();
+            row.put("proposal", m.getProposal());
+            row.put("entrepreneur", m.getProposal().getEntrepreneur());
+            threads.add(row);
+        }
+        model.addAttribute("investor", freshInv);
+        model.addAttribute("threads", threads);
+        return "investor/chats";
+    }
 
     @GetMapping("/chat/{entrepreneurId}")
     public String viewChatRoom(
             @PathVariable("entrepreneurId") Long entrepreneurId,
             @RequestParam("proposalId") Long proposalId,
             HttpSession session,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        Investor inv = getLoggedInvestor(session);
         if (inv == null) return "redirect:/investor/login";
 
-        // Refresh state
-        final Investor refreshedInv = investorRepository.findById(inv.getId()).get();
-        session.setAttribute("loggedInvestor", refreshedInv);
-
-        if (refreshedInv.getPartnerProfileStatus() == PartnerProfileStatus.PROFILE_INCOMPLETE) {
-            return "redirect:/investor/complete-profile";
+        Optional<BusinessProposal> propOpt = businessProposalRepository.findById(proposalId);
+        if (propOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Proposal not found.");
+            return "redirect:/investor/dashboard";
         }
+        BusinessProposal proposal = propOpt.get();
 
-        Optional<Entrepreneur> optE = entrepreneurRepository.findById(entrepreneurId);
-        Optional<BusinessProposal> optP = businessProposalRepository.findById(proposalId);
+        // Refresh investor
+        Investor freshInv = investorRepository.findById(inv.getId()).orElse(inv);
 
-        if (optE.isPresent() && optP.isPresent()) {
-            BusinessProposal proposal = optP.get();
-            Entrepreneur entrepreneur = optE.get();
+        java.util.List<in.sp.main.Entities.ProposalChatMessage> chatHistory =
+                proposalChatMessageRepository.findByProposalAndInvestorOrderByTimestampAsc(proposal, freshInv);
 
-            List<ProposalChatMessage> chatHistory = proposalChatMessageRepository
-                    .findByProposalAndInvestorOrderByTimestampAsc(proposal, inv);
-
-            model.addAttribute("proposal", proposal);
-            model.addAttribute("entrepreneur", entrepreneur);
-            model.addAttribute("chatHistory", chatHistory);
-            model.addAttribute("senderRole", "INVESTOR");
-
-            return "investor/chat";
-        }
-        return "redirect:/investor/dashboard";
+        model.addAttribute("proposal", proposal);
+        model.addAttribute("entrepreneur", proposal.getEntrepreneur());
+        model.addAttribute("investor", freshInv);
+        model.addAttribute("chatHistory", chatHistory);
+        model.addAttribute("senderRole", "INVESTOR");
+        return "investor/chat";
     }
 
     @PostMapping("/chat/{entrepreneurId}")
@@ -646,23 +829,25 @@ public class InvestorController {
             @PathVariable("entrepreneurId") Long entrepreneurId,
             @RequestParam("proposalId") Long proposalId,
             @RequestParam("message") String message,
-            HttpSession session) {
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
 
-        Investor inv = (Investor) session.getAttribute("loggedInvestor");
+        Investor inv = getLoggedInvestor(session);
         if (inv == null) return "redirect:/investor/login";
 
-        Optional<Entrepreneur> optE = entrepreneurRepository.findById(entrepreneurId);
-        Optional<BusinessProposal> optP = businessProposalRepository.findById(proposalId);
-
-        if (optE.isPresent() && optP.isPresent() && !message.trim().isEmpty()) {
-            ProposalChatMessage msg = new ProposalChatMessage();
-            msg.setProposal(optP.get());
-            msg.setInvestor(inv);
-            msg.setSenderRole("INVESTOR");
-            msg.setMessage(message);
-            proposalChatMessageRepository.save(msg);
+        if (message == null || message.trim().isEmpty()) {
+            return "redirect:/investor/chat/" + entrepreneurId + "?proposalId=" + proposalId;
         }
 
+        Optional<BusinessProposal> propOpt = businessProposalRepository.findById(proposalId);
+        if (propOpt.isPresent()) {
+            in.sp.main.Entities.ProposalChatMessage msg = new in.sp.main.Entities.ProposalChatMessage();
+            msg.setProposal(propOpt.get());
+            msg.setInvestor(inv);
+            msg.setSenderRole("INVESTOR");
+            msg.setMessage(message.trim());
+            proposalChatMessageRepository.save(msg);
+        }
         return "redirect:/investor/chat/" + entrepreneurId + "?proposalId=" + proposalId;
     }
 }

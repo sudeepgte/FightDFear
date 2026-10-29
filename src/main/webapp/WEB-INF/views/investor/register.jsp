@@ -312,6 +312,39 @@
         .text-rose { color: #f43f5e !important; }
         .badge-rose { background-color: #ffe4e6 !important; color: #f43f5e !important; border: 1px solid #F8C8D4; }
 
+        /* Real-time Field Validation States */
+        .form-control.is-invalid {
+            border-color: #dc2626 !important;
+            background-color: #fffaf0 !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .form-control.is-valid {
+            border-color: #16a34a !important;
+            background-color: #f0fdf4 !important;
+        }
+
+        .terms-box.is-invalid {
+            border-color: #dc2626 !important;
+            background: #fef2f2 !important;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+        }
+
+        .error-msg {
+            display: none;
+            font-size: 0.8rem;
+            color: #dc2626;
+            font-weight: 600;
+            margin-top: 5px;
+            align-items: center;
+            gap: 5px;
+            line-height: 1.35;
+        }
+
+        .error-msg.visible {
+            display: flex;
+        }
+
         /* Preview Modal Card CSS */
         .preview-modal-overlay {
             display: none;
@@ -491,13 +524,14 @@
             </div>
         </c:if>
 
-        <form action="${pageContext.request.contextPath}/investor/register" method="post" id="investorRegForm">
+        <form action="${pageContext.request.contextPath}/investor/register" method="post" id="investorRegForm" novalidate>
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             
             <!-- Contact Details -->
             <div class="mb-3">
                 <label class="form-label" for="fullName">Full Name *</label>
-                <input type="text" id="fullName" name="fullName" class="form-control" placeholder="Enter your full name" required>
+                <input type="text" id="fullName" name="fullName" class="form-control" placeholder="Enter your full name" required autocomplete="name">
+                <div class="error-msg" id="err-fullName"><i class="bi bi-exclamation-circle-fill"></i> <span>Please enter your full name (minimum 2 characters, alphabets only).</span></div>
             </div>
 
             <div class="mb-3">
@@ -505,7 +539,7 @@
                 <div class="row g-2">
                     <div class="col-8">
                         <div class="input-group-custom">
-                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter email address" required>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter email address" required autocomplete="email">
                             <i class="field-icon bi bi-envelope"></i>
                         </div>
                     </div>
@@ -513,6 +547,7 @@
                         <button type="button" id="sendOtpBtn" class="btn w-100 btn-otp">Send OTP</button>
                     </div>
                 </div>
+                <div class="error-msg" id="err-email"><i class="bi bi-exclamation-circle-fill"></i> <span>Please enter a valid email address (e.g. name@domain.com).</span></div>
             </div>
 
             <!-- OTP Verification Row (Hidden by default, triggered on email send) -->
@@ -520,13 +555,14 @@
                 <label class="form-label" for="emailOtp">Enter Email OTP *</label>
                 <div class="row g-2">
                     <div class="col-8">
-                        <input type="text" id="emailOtp" name="emailOtp" class="form-control" placeholder="6-digit code">
+                        <input type="text" id="emailOtp" name="emailOtp" class="form-control" placeholder="6-digit verification code" maxlength="8">
                     </div>
                     <div class="col-4">
                         <button type="button" id="verifyOtpBtn" class="btn w-100 btn-verify-submit">Verify</button>
                     </div>
                 </div>
                 <small class="form-text text-muted" id="otpStatusHint" style="font-size: 0.8rem; margin-top: 4px; display: block;"></small>
+                <div class="error-msg" id="err-emailOtp"><i class="bi bi-exclamation-circle-fill"></i> <span>Please enter the verification code sent to your email.</span></div>
             </div>
 
             <!-- Verified Badge indicator -->
@@ -539,13 +575,14 @@
 
             <div class="mb-3">
                 <label class="form-label" for="phone">Phone Number *</label>
-                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter 10-digit number" pattern="[0-9]{10}" required>
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder="Enter 10-digit mobile number" maxlength="10" required autocomplete="tel">
+                <div class="error-msg" id="err-phone"><i class="bi bi-exclamation-circle-fill"></i> <span>Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.</span></div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label" for="password">Password *</label>
                 <div class="input-group-custom">
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter password (min 6 characters)" required>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter password (min 6 characters)" required autocomplete="new-password">
                     <i class="field-icon bi bi-eye-slash toggle-password" id="togglePassword"></i>
                 </div>
                 <!-- PW Strength Meter -->
@@ -553,19 +590,20 @@
                     <div class="strength-bar" id="pwStrengthBar"></div>
                 </div>
                 <div class="strength-label" id="pwStrengthLabel">Password strength</div>
+                <div class="error-msg" id="err-password"><i class="bi bi-exclamation-circle-fill"></i> <span>Password must contain at least 6 characters, including 1 number and 1 special symbol (!@#$%).</span></div>
             </div>
 
             <div class="mb-3">
                 <label class="form-label" for="confirmPassword">Confirm Password *</label>
                 <div class="input-group-custom">
-                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm your password" required>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" placeholder="Confirm your password" required autocomplete="new-password">
                     <i class="field-icon bi bi-eye-slash toggle-password" id="toggleConfirmPassword"></i>
                 </div>
-                <small class="form-text text-danger" id="passwordMatchError" style="display: none;">Passwords do not match</small>
+                <div class="error-msg" id="err-confirmPassword"><i class="bi bi-exclamation-circle-fill"></i> <span>Passwords do not match.</span></div>
             </div>
 
             <!-- Terms & Conditions Box with Modal Link -->
-            <div class="terms-box" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 10px;">
+            <div class="terms-box" id="termsBox" style="background:#FDF2F8; border:1px solid #FBCFE8; border-radius:12px; padding:12px 14px; margin:16px 0 10px;">
                 <div style="display:flex; align-items:flex-start; gap:10px;">
                     <input type="checkbox" name="acceptedTerms" id="acceptedTerms" value="true" required style="width:18px; height:18px; accent-color:var(--primary-rose); cursor:pointer; margin-top:2px;">
                     <label for="acceptedTerms" style="font-size:0.88rem; color:var(--text-primary); font-weight:500; cursor:pointer; line-height:1.45; margin:0;">
@@ -579,6 +617,7 @@
                 <div id="termsCheckBadge" style="display:none; font-size:0.8rem; color:#16a34a; font-weight:700; margin-top:6px; padding-left:28px;">
                     <i class="bi bi-check-circle-fill"></i> Terms accepted &amp; verified
                 </div>
+                <div class="error-msg" id="err-acceptedTerms" style="padding-left:28px;"><i class="bi bi-exclamation-circle-fill"></i> <span>You must accept the Terms &amp; Conditions and Privacy Policy to register.</span></div>
             </div>
 
             <button type="submit" id="submitBtn" class="btn btn-register">
@@ -596,10 +635,9 @@
         const CONTEXT_PATH = "${pageContext.request.contextPath}";
 
         let isEmailVerified = false;
-        let isPasswordMatching = false;
-        let isPasswordStrongVal = false;
 
-        const form = document.querySelector('form');
+        const regForm = document.getElementById('investorRegForm');
+        const fullNameInput = document.getElementById('fullName');
         const emailInput = document.getElementById('email');
         const sendOtpBtn = document.getElementById('sendOtpBtn');
         const otpRow = document.getElementById('otpRow');
@@ -611,10 +649,222 @@
         const phoneInput = document.getElementById('phone');
         const passwordInput = document.getElementById('password');
         const confirmPasswordInput = document.getElementById('confirmPassword');
-        const passwordMatchError = document.getElementById('passwordMatchError');
         const acceptedTermsCheckbox = document.getElementById('acceptedTerms');
+        const termsBox = document.getElementById('termsBox');
         const submitBtn = document.getElementById('submitBtn');
 
+        // Helper to set field error state
+        function setFieldError(inputEl, errorEl, isError, message) {
+            if (!errorEl) return;
+            const span = errorEl.querySelector('span');
+            if (isError) {
+                if (message && span) span.textContent = message;
+                errorEl.classList.add('visible');
+                if (inputEl) {
+                    inputEl.classList.add('is-invalid');
+                    inputEl.classList.remove('is-valid');
+                }
+            } else {
+                errorEl.classList.remove('visible');
+                if (inputEl) {
+                    inputEl.classList.remove('is-invalid');
+                    if (inputEl.value && inputEl.value.trim().length > 0) {
+                        inputEl.classList.add('is-valid');
+                    } else {
+                        inputEl.classList.remove('is-valid');
+                    }
+                }
+            }
+        }
+
+        // 1. Full Name Validation: >= 2 chars, letters, spaces, hyphens, dots
+        function validateFullName(showError) {
+            const val = fullNameInput.value.trim();
+            const errEl = document.getElementById('err-fullName');
+            if (!val) {
+                if (showError) setFieldError(fullNameInput, errEl, true, "Full Name is required.");
+                return false;
+            }
+            if (val.length < 2) {
+                if (showError) setFieldError(fullNameInput, errEl, true, "Full Name must be at least 2 characters.");
+                return false;
+            }
+            const nameRegex = /^[a-zA-Z\s.'-]+$/;
+            if (!nameRegex.test(val)) {
+                if (showError) setFieldError(fullNameInput, errEl, true, "Full Name should contain letters and spaces only.");
+                return false;
+            }
+            setFieldError(fullNameInput, errEl, false);
+            return true;
+        }
+
+        // 2. Email Validation
+        function validateEmail(showError) {
+            const val = emailInput.value.trim();
+            const errEl = document.getElementById('err-email');
+            if (!val) {
+                if (showError) setFieldError(emailInput, errEl, true, "Email address is required.");
+                return false;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+            if (!emailRegex.test(val)) {
+                if (showError) setFieldError(emailInput, errEl, true, "Please enter a valid email address (e.g. name@domain.com).");
+                return false;
+            }
+            setFieldError(emailInput, errEl, false);
+            return true;
+        }
+
+        // 3. Phone Validation: Indian 10 digits starting with 6-9
+        function validatePhone(showError) {
+            const val = phoneInput.value.trim();
+            const errEl = document.getElementById('err-phone');
+            if (!val) {
+                if (showError) setFieldError(phoneInput, errEl, true, "Phone number is required.");
+                return false;
+            }
+            const phoneRegex = /^[6-9]\d{9}$/;
+            if (!phoneRegex.test(val)) {
+                if (showError) setFieldError(phoneInput, errEl, true, "Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.");
+                return false;
+            }
+            setFieldError(phoneInput, errEl, false);
+            return true;
+        }
+
+        // 4. Password Strength & Format: min 6 chars, at least 1 digit and 1 special symbol (!@#$%^&*)
+        function validatePassword(showError) {
+            const pwd = passwordInput.value;
+            const errEl = document.getElementById('err-password');
+            const meter = document.getElementById('pwStrengthMeter');
+            const bar = document.getElementById('pwStrengthBar');
+            const label = document.getElementById('pwStrengthLabel');
+
+            if (!pwd) {
+                if (meter) meter.style.display = 'none';
+                if (label) label.style.display = 'none';
+                if (showError) setFieldError(passwordInput, errEl, true, "Password is required.");
+                return false;
+            }
+
+            if (meter) meter.style.display = 'block';
+            if (label) label.style.display = 'block';
+
+            let score = 0;
+            if (pwd.length >= 6) score++;
+            if (pwd.length >= 10) score++;
+            if (/[A-Z]/.test(pwd)) score++;
+            if (/[0-9]/.test(pwd)) score++;
+            if (/[!@#$%^&*]/.test(pwd)) score++;
+
+            const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
+            const isCompliant = passwordRegex.test(pwd);
+
+            let pct = (score / 5) * 100;
+            if (bar) bar.style.width = pct + '%';
+
+            if (!isCompliant) {
+                if (bar) bar.style.backgroundColor = '#dc2626';
+                if (label) {
+                    label.innerText = 'Format: Min 6 characters with 1 number and 1 special symbol (!@#$%)';
+                    label.style.color = '#dc2626';
+                }
+                if (showError) setFieldError(passwordInput, errEl, true, "Password must contain at least 6 characters, including 1 number and 1 special symbol (!@#$%).");
+                return false;
+            } else if (score < 4) {
+                if (bar) bar.style.backgroundColor = '#f59e0b';
+                if (label) {
+                    label.innerText = 'Moderate strength';
+                    label.style.color = '#d97706';
+                }
+                setFieldError(passwordInput, errEl, false);
+                return true;
+            } else {
+                if (bar) bar.style.backgroundColor = '#16a34a';
+                if (label) {
+                    label.innerText = 'Strong password';
+                    label.style.color = '#16a34a';
+                }
+                setFieldError(passwordInput, errEl, false);
+                return true;
+            }
+        }
+
+        // 5. Confirm Password Match
+        function validateConfirmPassword(showError) {
+            const pwd = passwordInput.value;
+            const confirm = confirmPasswordInput.value;
+            const errEl = document.getElementById('err-confirmPassword');
+
+            if (!confirm) {
+                if (showError) setFieldError(confirmPasswordInput, errEl, true, "Please confirm your password.");
+                return false;
+            }
+
+            if (pwd !== confirm) {
+                if (showError) setFieldError(confirmPasswordInput, errEl, true, "Passwords do not match.");
+                return false;
+            }
+
+            setFieldError(confirmPasswordInput, errEl, false);
+            return true;
+        }
+
+        // 6. Terms Checkbox Validation
+        function validateTerms(showError) {
+            const isChecked = acceptedTermsCheckbox.checked;
+            const errEl = document.getElementById('err-acceptedTerms');
+            if (!isChecked) {
+                if (showError) {
+                    if (termsBox) termsBox.classList.add('is-invalid');
+                    setFieldError(null, errEl, true, "You must accept the Terms & Conditions and Privacy Policy to register.");
+                }
+                return false;
+            }
+            if (termsBox) termsBox.classList.remove('is-invalid');
+            setFieldError(null, errEl, false);
+            return true;
+        }
+
+        // Attach Real-Time Listeners
+        fullNameInput.addEventListener('input', () => validateFullName(false));
+        fullNameInput.addEventListener('blur', () => validateFullName(true));
+
+        emailInput.addEventListener('input', () => {
+            validateEmail(false);
+            if (isEmailVerified) {
+                isEmailVerified = false;
+                if (otpVerifiedBadge) otpVerifiedBadge.style.display = 'none';
+                if (sendOtpBtn) {
+                    sendOtpBtn.style.display = 'block';
+                    sendOtpBtn.disabled = false;
+                    sendOtpBtn.innerText = 'Send OTP';
+                }
+            }
+        });
+        emailInput.addEventListener('blur', () => validateEmail(true));
+
+        phoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').slice(0, 10);
+            validatePhone(false);
+        });
+        phoneInput.addEventListener('blur', () => validatePhone(true));
+
+        passwordInput.addEventListener('input', () => {
+            validatePassword(false);
+            if (confirmPasswordInput.value) validateConfirmPassword(false);
+        });
+        passwordInput.addEventListener('blur', () => validatePassword(true));
+
+        confirmPasswordInput.addEventListener('input', () => validateConfirmPassword(false));
+        confirmPasswordInput.addEventListener('blur', () => validateConfirmPassword(true));
+
+        acceptedTermsCheckbox.addEventListener('change', () => {
+            validateTerms(false);
+            syncTermsBadge();
+        });
+
+        // Toggle Password Visibility
         const setupTogglePassword = (triggerId, fieldId) => {
             const trigger = document.getElementById(triggerId);
             const field = document.getElementById(fieldId);
@@ -631,20 +881,17 @@
         setupTogglePassword('togglePassword', 'password');
         setupTogglePassword('toggleConfirmPassword', 'confirmPassword');
 
-        const checkFormState = () => {
-            // Managed inside form submit validation instead of disabling button
-        };
-
+        // OTP Handlers
         sendOtpBtn.addEventListener('click', async () => {
-            const email = emailInput.value.trim();
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                alert('Please enter a valid email address first.');
+            if (!validateEmail(true)) {
                 emailInput.focus();
                 return;
             }
 
+            const email = emailInput.value.trim();
             sendOtpBtn.disabled = true;
             sendOtpBtn.innerText = 'Sending...';
+            otpStatusHint.innerText = '';
 
             try {
                 const response = await fetch(`${CONTEXT_PATH}/api/investor/otp/send-email`, {
@@ -655,19 +902,22 @@
 
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    otpStatusHint.innerText = 'OTP sent! Please check your inbox.';
-                    otpStatusHint.style.color = '#be123c';
+                    otpStatusHint.innerText = 'OTP sent! Please check your email inbox.';
+                    otpStatusHint.style.color = '#16a34a';
                     otpRow.style.display = 'block';
                     emailOtpInput.required = true;
                     emailInput.readOnly = true;
+                    emailOtpInput.focus();
+                    setFieldError(emailInput, document.getElementById('err-email'), false);
                 } else {
-                    alert('Failed to send OTP: ' + (data.error || 'Unknown error'));
+                    const errMsg = data.error || (data.message || 'Failed to send OTP. Please check email address.');
+                    setFieldError(emailInput, document.getElementById('err-email'), true, errMsg);
                     sendOtpBtn.disabled = false;
                     sendOtpBtn.innerText = 'Send OTP';
                 }
             } catch (err) {
                 console.error(err);
-                alert('Network error. Failed to send OTP.');
+                setFieldError(emailInput, document.getElementById('err-email'), true, 'Network error. Failed to reach verification server.');
                 sendOtpBtn.disabled = false;
                 sendOtpBtn.innerText = 'Send OTP';
             }
@@ -676,8 +926,10 @@
         verifyOtpBtn.addEventListener('click', async () => {
             const email = emailInput.value.trim();
             const otp = emailOtpInput.value.trim();
-            if (!otp) {
-                alert('Please enter the OTP code.');
+            const errOtpEl = document.getElementById('err-emailOtp');
+
+            if (!otp || otp.length < 4) {
+                setFieldError(emailOtpInput, errOtpEl, true, 'Please enter the verification code sent to your email.');
                 emailOtpInput.focus();
                 return;
             }
@@ -699,109 +951,21 @@
                     otpVerifiedBadge.style.display = 'flex';
                     emailOtpInput.readOnly = true;
                     sendOtpBtn.style.display = 'none';
-                    checkFormState();
+                    setFieldError(emailInput, document.getElementById('err-email'), false);
+                    setFieldError(emailOtpInput, errOtpEl, false);
                 } else {
-                    alert('Invalid OTP. Please enter the correct OTP code.');
+                    const msg = data.error || 'Invalid or expired OTP code. Please enter the correct code.';
+                    setFieldError(emailOtpInput, errOtpEl, true, msg);
                     verifyOtpBtn.disabled = false;
                     verifyOtpBtn.innerText = 'Verify';
                 }
             } catch (err) {
                 console.error(err);
-                alert('Verification request failed. Please try again.');
+                setFieldError(emailOtpInput, errOtpEl, true, 'Verification service unavailable. Please try again.');
                 verifyOtpBtn.disabled = false;
                 verifyOtpBtn.innerText = 'Verify';
             }
         });
-
-        const validatePasswordStrength = (pwd) => {
-            const meter = document.getElementById('pwStrengthMeter');
-            const bar = document.getElementById('pwStrengthBar');
-            const label = document.getElementById('pwStrengthLabel');
-
-            if (!pwd) {
-                meter.style.display = 'none';
-                label.style.display = 'none';
-                isPasswordStrongVal = false;
-                return;
-            }
-
-            meter.style.display = 'block';
-            label.style.display = 'block';
-
-            let score = 0;
-            if (pwd.length >= 6) score++;
-            if (pwd.length >= 10) score++;
-            if (/[A-Z]/.test(pwd)) score++;
-            if (/[0-9]/.test(pwd)) score++;
-            if (/[!@#$%^&*]/.test(pwd)) score++;
-
-            const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
-            const isCompliant = passwordRegex.test(pwd);
-
-            let pct = (score / 5) * 100;
-            bar.style.width = pct + '%';
-
-            if (!isCompliant) {
-                bar.style.backgroundColor = '#be123c';
-                label.innerText = 'Format: Min 6 characters with 1 number and 1 special symbol (!@#$%)';
-                label.style.color = '#be123c';
-                isPasswordStrongVal = false;
-            } else if (score < 4) {
-                bar.style.backgroundColor = '#be123c';
-                label.innerText = 'Medium strength';
-                label.style.color = '#be123c';
-                isPasswordStrongVal = true;
-            } else {
-                bar.style.backgroundColor = '#be123c';
-                label.innerText = 'Strong password';
-                label.style.color = '#be123c';
-                isPasswordStrongVal = true;
-            }
-        };
-
-        passwordInput.addEventListener('input', () => {
-            validatePasswordStrength(passwordInput.value);
-            checkPasswordsMatch();
-            checkFormState();
-        });
-
-        const checkPasswordsMatch = () => {
-            const pwd = passwordInput.value;
-            const confirm = confirmPasswordInput.value;
-
-            if (!confirm) {
-                passwordMatchError.style.display = 'none';
-                isPasswordMatching = false;
-                return;
-            }
-
-            if (pwd === confirm) {
-                passwordMatchError.style.display = 'none';
-                isPasswordMatching = true;
-                confirmPasswordInput.style.borderColor = '#cbd5e1';
-            } else {
-                passwordMatchError.style.display = 'block';
-                isPasswordMatching = false;
-                confirmPasswordInput.style.borderColor = '#be123c';
-            }
-        };
-
-        confirmPasswordInput.addEventListener('input', () => {
-            checkPasswordsMatch();
-            checkFormState();
-        });
-
-        phoneInput.addEventListener('input', () => {
-            if (phoneInput.value.length === 10) {
-                phoneInput.style.borderColor = '#cbd5e1';
-            } else {
-                phoneInput.style.borderColor = '#be123c';
-            }
-            checkFormState();
-        });
-
-        document.getElementById('fullName').addEventListener('input', checkFormState);
-        acceptedTermsCheckbox.addEventListener('change', checkFormState);
 
         const showAlert = (msg) => {
             const el = document.getElementById('jsAlert');
@@ -810,8 +974,6 @@
                 txt.innerText = msg;
                 el.style.display = 'flex';
                 window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
-            } else {
-                alert(msg);
             }
         };
 
@@ -820,64 +982,56 @@
             if (el) el.style.display = 'none';
         };
 
-        const regForm = document.getElementById('investorRegForm');
+        let isConfirmed = false;
+
         regForm.addEventListener('submit', function(e) {
             hideAlert();
 
-            const name = document.getElementById('fullName').value.trim();
-            const email = emailInput.value.trim();
-            const phone = phoneInput.value.trim();
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
-            const termsChecked = acceptedTermsCheckbox.checked;
+            // Run full field-by-field validation
+            const isNameValid = validateFullName(true);
+            const isEmailValid = validateEmail(true);
+            const isPhoneValid = validatePhone(true);
+            const isPasswordValid = validatePassword(true);
+            const isConfirmValid = validateConfirmPassword(true);
+            const isTermsValid = validateTerms(true);
 
-            if (!name) {
-                showAlert('Full Name is required.');
-                e.preventDefault();
-                return;
+            // Check email OTP verification
+            let emailVerificationPassed = isEmailVerified;
+            if (isEmailValid && !isEmailVerified) {
+                setFieldError(emailInput, document.getElementById('err-email'), true, 'Please verify your email address via OTP before registering.');
+                if (otpRow.style.display !== 'block') {
+                    // Prompt user to click Send OTP
+                    emailInput.focus();
+                } else {
+                    emailOtpInput.focus();
+                }
+                emailVerificationPassed = false;
             }
-            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showAlert('Please enter a valid email address.');
+
+            const allValid = isNameValid && isEmailValid && emailVerificationPassed && isPhoneValid && isPasswordValid && isConfirmValid && isTermsValid;
+
+            if (!allValid) {
                 e.preventDefault();
-                return;
-            }
-            if (!isEmailVerified) {
-                showAlert('Please verify your email address via OTP first.');
-                e.preventDefault();
-                return;
-            }
-            if (!phone || phone.length !== 10) {
-                showAlert('Please enter a valid 10-digit phone number.');
-                e.preventDefault();
-                return;
-            }
-            
-            const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
-            if (!password || !passwordRegex.test(password)) {
-                showAlert('Password must contain at least 6 characters, including 1 number and 1 special symbol (!@#$%).');
-                e.preventDefault();
-                return;
-            }
-            if (password !== confirmPassword) {
-                showAlert('Passwords do not match.');
-                e.preventDefault();
-                return;
-            }
-            if (!termsChecked) {
-                showAlert('You must accept the Terms of Use and Privacy Policy.');
-                e.preventDefault();
+                // Find first invalid input and scroll to it smoothly
+                const firstInvalid = regForm.querySelector('.is-invalid') || (isTermsValid ? null : acceptedTermsCheckbox);
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if (firstInvalid.focus) firstInvalid.focus();
+                }
+                showAlert('Please correct the highlighted fields before proceeding.');
                 return;
             }
 
             if (isConfirmed) {
-                return;
+                return; // Let form submit normally
             }
 
             e.preventDefault();
 
-            document.getElementById('previewFullName').innerText = name;
-            document.getElementById('previewPhone').innerText = phone;
-            document.getElementById('previewEmail').innerText = email;
+            // Populate confirmation preview modal
+            document.getElementById('previewFullName').innerText = fullNameInput.value.trim();
+            document.getElementById('previewPhone').innerText = phoneInput.value.trim();
+            document.getElementById('previewEmail').innerText = emailInput.value.trim();
 
             const overlay = document.getElementById('previewModalOverlay');
             if (overlay) {

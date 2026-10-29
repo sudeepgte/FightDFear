@@ -398,6 +398,8 @@
 <c:set var="statusKey" value="${host.partnerProfileStatus != null ? host.partnerProfileStatus : 'PENDING'}"/>
 <c:set var="displayStatus" value="${not empty statusLabel ? statusLabel : statusKey}"/>
 <c:set var="pct" value="${host.profileCompletionPct != null ? host.profileCompletionPct : 0}"/>
+<c:set var="photoPath" value="${host.profilePhotoPath}"/>
+<c:set var="photoOk" value="${not empty photoPath and photoPath != 'mobile-pending' and not fn:startsWith(photoPath, 'mobile:')}"/>
 <c:set var="logoPath" value="${host.logoPath}"/>
 <c:set var="logoOk" value="${not empty logoPath and logoPath != 'mobile-pending' and not fn:startsWith(logoPath, 'mobile:')}"/>
 <c:set var="docPath" value="${host.documentPath}"/>
@@ -460,6 +462,9 @@
         <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-4">
           <div class="avatar-box">
             <c:choose>
+              <c:when test="${photoOk}">
+                <img src="${fn:startsWith(photoPath, 'http') ? photoPath : pageContext.request.contextPath.concat(photoPath)}" alt="${host.fullName}">
+              </c:when>
               <c:when test="${logoOk}">
                 <img src="${fn:startsWith(logoPath, 'http') ? logoPath : pageContext.request.contextPath.concat(logoPath)}" alt="${host.fullName}">
               </c:when>
@@ -731,38 +736,105 @@
       <div class="review-card">
         <div class="section-header">
           <i class="bi bi-file-earmark-check-fill"></i>
-          <h3>6. Documents</h3>
+          <h3>6. Visuals &amp; Verification Documents</h3>
         </div>
+
+        <!-- 1. Organizer Profile Photo -->
+        <div class="doc-row">
+          <div class="doc-icon"><i class="bi bi-person-bounding-box"></i></div>
+          <div class="flex-grow-1">
+            <div class="info-field-label">Organizer Profile Photo</div>
+            <c:choose>
+              <c:when test="${photoOk}">
+                <div class="d-flex align-items-center gap-3 mt-1">
+                  <img src="${fn:startsWith(photoPath, 'http') ? photoPath : pageContext.request.contextPath.concat(photoPath)}" alt="Profile photo" style="width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                  <a href="${fn:startsWith(photoPath, 'http') ? photoPath : pageContext.request.contextPath.concat(photoPath)}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View Full Photo</a>
+                </div>
+              </c:when>
+              <c:otherwise><span class="empty-text">Not uploaded</span></c:otherwise>
+            </c:choose>
+          </div>
+        </div>
+
+        <!-- 2. Brand / Organization Logo -->
         <div class="doc-row">
           <div class="doc-icon"><i class="bi bi-image"></i></div>
-          <div>
-            <div class="info-field-label">Logo / profile image</div>
+          <div class="flex-grow-1">
+            <div class="info-field-label">Brand / Organization Logo</div>
             <c:choose>
-              <c:when test="${logoOk}"><a href="${pageContext.request.contextPath}${logoPath}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View logo</a></c:when>
+              <c:when test="${logoOk}">
+                <div class="d-flex align-items-center gap-3 mt-1">
+                  <img src="${fn:startsWith(logoPath, 'http') ? logoPath : pageContext.request.contextPath.concat(logoPath)}" alt="Logo" style="width: 52px; height: 52px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border); background: #f8fafc; padding: 2px;">
+                  <a href="${fn:startsWith(logoPath, 'http') ? logoPath : pageContext.request.contextPath.concat(logoPath)}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View Full Logo</a>
+                </div>
+              </c:when>
               <c:otherwise><span class="empty-text">Not uploaded</span></c:otherwise>
             </c:choose>
           </div>
         </div>
+
+        <!-- 3. Important ID Proof / Verification Document -->
         <div class="doc-row">
-          <div class="doc-icon"><i class="bi bi-file-earmark-text"></i></div>
-          <div>
-            <div class="info-field-label">Verification document</div>
+          <div class="doc-icon"><i class="bi bi-shield-check"></i></div>
+          <div class="flex-grow-1">
+            <div class="info-field-label">ID Proof / Organization Registration Document</div>
             <c:choose>
-              <c:when test="${docOk}"><a href="${pageContext.request.contextPath}${docPath}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View document</a></c:when>
+              <c:when test="${docOk}">
+                <c:choose>
+                  <c:when test="${fn:endsWith(fn:toLowerCase(docPath), '.pdf')}">
+                    <div class="mt-1">
+                      <a href="${fn:startsWith(docPath, 'http') ? docPath : pageContext.request.contextPath.concat(docPath)}" target="_blank" class="doc-link">
+                        <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> View Verification Document (PDF)
+                      </a>
+                    </div>
+                  </c:when>
+                  <c:otherwise>
+                    <div class="d-flex align-items-center gap-3 mt-1">
+                      <img src="${fn:startsWith(docPath, 'http') ? docPath : pageContext.request.contextPath.concat(docPath)}" alt="ID Proof" style="width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border);">
+                      <a href="${fn:startsWith(docPath, 'http') ? docPath : pageContext.request.contextPath.concat(docPath)}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View ID Proof</a>
+                    </div>
+                  </c:otherwise>
+                </c:choose>
+              </c:when>
               <c:otherwise><span class="empty-text">Not uploaded</span></c:otherwise>
             </c:choose>
           </div>
         </div>
-        <div class="doc-row mb-0">
-          <div class="doc-icon"><i class="bi bi-folder2-open"></i></div>
-          <div>
-            <div class="info-field-label">Portfolio</div>
-            <c:choose>
-              <c:when test="${portOk}"><a href="${pageContext.request.contextPath}${portPath}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View portfolio</a></c:when>
-              <c:otherwise><span class="empty-text">Not uploaded</span></c:otherwise>
-            </c:choose>
+
+        <!-- 4. Portfolio (if any) -->
+        <c:if test="${portOk}">
+          <div class="doc-row mb-0">
+            <div class="doc-icon"><i class="bi bi-folder2-open"></i></div>
+            <div>
+              <div class="info-field-label">Portfolio / Past Work</div>
+              <a href="${fn:startsWith(portPath, 'http') ? portPath : pageContext.request.contextPath.concat(portPath)}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View Portfolio</a>
+            </div>
           </div>
+        </c:if>
+      </div>
+
+      <!-- Event Photo Gallery Review Card -->
+      <div class="review-card">
+        <div class="section-header">
+          <i class="bi bi-images"></i>
+          <h3>Event Photo Gallery</h3>
         </div>
+        <c:choose>
+          <c:when test="${not empty galleryPhotosList}">
+            <div class="d-flex flex-wrap gap-3 mt-2">
+              <c:forEach var="pic" items="${galleryPhotosList}">
+                <div style="position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,0.06); width: 140px; height: 105px; background: #f8fafc;">
+                  <a href="${fn:startsWith(pic, 'http') ? pic : pageContext.request.contextPath.concat(pic)}" target="_blank">
+                    <img src="${fn:startsWith(pic, 'http') ? pic : pageContext.request.contextPath.concat(pic)}" alt="Gallery Photo" style="width: 100%; height: 100%; object-fit: cover;">
+                  </a>
+                </div>
+              </c:forEach>
+            </div>
+          </c:when>
+          <c:otherwise>
+            <span class="empty-text">No event photos in gallery.</span>
+          </c:otherwise>
+        </c:choose>
       </div>
 
       <div class="review-card">

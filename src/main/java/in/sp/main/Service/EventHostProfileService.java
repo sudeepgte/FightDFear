@@ -67,11 +67,20 @@ public class EventHostProfileService {
         if (PartnerLifecycleSupport.blank(host.getSessionMode()) || host.getTypicalPrice() == null) {
             missing.add("8. Typical ticket");
         }
+        if (PartnerLifecycleSupport.blank(host.getProfilePhotoPath())) {
+            missing.add("10.1 Profile photo");
+        }
+        if (PartnerLifecycleSupport.blank(host.getLogoPath())) {
+            missing.add("10.2 Brand logo");
+        }
+        if (PartnerLifecycleSupport.blank(host.getDocumentPath())) {
+            missing.add("10.3 ID / Registration proof");
+        }
         return missing;
     }
 
     public int calculateCompletionPct(EventHost host) {
-        int total = 16;
+        int total = 19;
         int filled = total - missingItems(host).size();
         if (filled < 0) filled = 0;
         return (int) Math.round(100.0 * filled / total);
@@ -128,6 +137,7 @@ public class EventHostProfileService {
         m.put("eventCategories", host.getEventCategories());
         m.put("yearsExperience", host.getYearsExperience());
         m.put("expectedParticipants", host.getExpectedParticipants());
+        m.put("profilePhotoPath", host.getProfilePhotoPath());
         m.put("logoPath", host.getLogoPath());
         m.put("documentPath", host.getDocumentPath());
         m.put("portfolioPath", host.getPortfolioPath());
@@ -151,6 +161,9 @@ public class EventHostProfileService {
 
     public static void putExtra(Map<String, Object> m, EventHost h) {
         if (m == null || h == null) return;
+        m.put("profilePhotoPath", h.getProfilePhotoPath());
+        m.put("logoPath", h.getLogoPath());
+        m.put("documentPath", h.getDocumentPath());
         m.put("designation", h.getOrganizerType());
         m.put("whatsappNumber", h.getWhatsappNumber());
         m.put("address", h.getOfficeAddress());
@@ -178,7 +191,7 @@ public class EventHostProfileService {
         m.put("bankDetails", h.getBankDetails());
         m.put("payoutBalance", h.getPayoutBalance());
         m.put("galleryPhotos", splitCsv(h.getGalleryPhotos()));
-        m.put("profileImageUrl", h.getLogoPath());
+        m.put("profileImageUrl", h.getProfilePhotoPath() != null ? h.getProfilePhotoPath() : h.getLogoPath());
         m.put("rating", h.getRating());
         m.put("reviewCount", h.getReviewCount());
         m.put("bio", h.getHostBio());
@@ -293,6 +306,11 @@ public class EventHostProfileService {
         if (body.get("gender") != null && !str(body.get("gender")).isBlank()) {
             try { h.setGender(Gender.valueOf(str(body.get("gender")).toUpperCase())); } catch (Exception ignored) {}
         }
+        if (body.get("profilePhotoPath") != null) h.setProfilePhotoPath(blankToNull(str(body.get("profilePhotoPath"))));
+        if (body.get("logoPath") != null) h.setLogoPath(blankToNull(str(body.get("logoPath"))));
+        if (body.get("documentPath") != null) h.setDocumentPath(blankToNull(str(body.get("documentPath"))));
+        if (body.get("portfolioPath") != null) h.setPortfolioPath(blankToNull(str(body.get("portfolioPath"))));
+        if (body.get("galleryPhotos") != null) h.setGalleryPhotos(csv(body.get("galleryPhotos")));
         return h;
     }
 

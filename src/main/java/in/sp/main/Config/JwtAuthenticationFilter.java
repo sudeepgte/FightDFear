@@ -275,9 +275,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 entrepreneurRepository.findByEmail(email).ifPresent(e -> session.setAttribute("loggedEntrepreneur", e));
             }
         } else if ("INVESTOR".equals(role)) {
-            if (session.getAttribute("loggedInvestor") == null) {
-                investorRepository.findByEmail(email).ifPresent(i -> session.setAttribute("loggedInvestor", i));
-            }
+            investorRepository.findByEmail(email).ifPresent(i -> session.setAttribute("loggedInvestor", i));
         } else if ("TRAINER".equals(role)) {
             if (session.getAttribute("loggedTrainer") == null) {
                 fitnessTrainerRepository.findByEmail(email).ifPresent(t -> session.setAttribute("loggedTrainer", t));

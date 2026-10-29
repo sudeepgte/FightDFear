@@ -297,7 +297,7 @@
                 <c:forEach var="msg" items="${chatHistory}">
                     <div class="message ${msg.senderRole == 'ENTREPRENEUR' ? 'sent' : 'received'}">
                         <div>${msg.message}</div>
-                        <div class="msg-time">${msg.timestamp}</div>
+                        <div class="msg-time">${msg.formattedTimestamp}</div>
                     </div>
                 </c:forEach>
                 <c:if test="${empty chatHistory}">

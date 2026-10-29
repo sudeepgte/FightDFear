@@ -10,8 +10,10 @@ import in.sp.main.Service.EventCoinPolicy;
 import in.sp.main.Service.WomenEventBookingService;
 import in.sp.main.Service.WomenEventLifecycleService;
 import in.sp.main.Service.WomenEventSupport;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -58,6 +60,9 @@ public class WomenEventController {
 
     @Autowired
     private EventHostProfileService eventHostProfileService;
+
+    @Autowired
+    private in.sp.main.Service.EventHostRegistrationService eventHostRegistrationService;
 
     @Autowired
     private EventsCareService eventsCareService;
@@ -781,55 +786,85 @@ public class WomenEventController {
     }
 
     /** Edit Profile – POST */
-    @PostMapping("/organizer/edit-profile")
-    public String saveProfile(@RequestParam String fullName,
-                              @RequestParam String phone,
-                              @RequestParam String organizerName,
-                              @RequestParam String organizerType,
-                              @RequestParam(required = false) String hostBio,
-                              @RequestParam(required = false) String city,
-                              @RequestParam(required = false) String state,
-                              @RequestParam(required = false) String website,
-                              @RequestParam(required = false) String instagram,
-                              @RequestParam(required = false) String facebook,
-                              @RequestParam(required = false) String linkedin,
-                              @RequestParam(required = false) String upiId,
-                              @RequestParam(required = false) String bankDetails,
-                              @RequestParam(required = false) String bankAccountHolder,
-                              @RequestParam(required = false) String bankName,
-                              @RequestParam(required = false) String bankAccountNumber,
-                              @RequestParam(required = false) String bankIfsc,
-                              @RequestParam(required = false) String bankBranch,
+    @PostMapping({"/organizer/edit-profile", "/organizer/profile-completion"})
+    public String saveProfile(@RequestParam Map<String, Object> allParams,
+                              @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+                              @RequestParam(value = "logoFile", required = false) MultipartFile logoFile,
+                              @RequestParam(value = "documentFile", required = false) MultipartFile documentFile,
+                              @RequestParam(value = "galleryFiles", required = false) List<MultipartFile> galleryFiles,
+                              @RequestParam(value = "removeGalleryPhoto", required = false) String removeGalleryPhoto,
+                              @RequestParam(value = "submitVerification", required = false) Boolean submitVerification,
+                              @RequestParam(value = "action", required = false) String action,
                               HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
-        host.setFullName(fullName);
-        host.setPhone(phone);
-        host.setOrganizerName(organizerName);
-        host.setOrganizerType(organizerType);
-        host.setHostBio(hostBio);
-        host.setCity(city);
-        host.setState(state);
-        host.setWebsite(website);
-        host.setInstagram(instagram);
-        host.setFacebook(facebook);
-        host.setLinkedin(linkedin);
-        if (upiId != null) host.setUpiId(upiId.trim());
-        if ((bankAccountHolder != null && !bankAccountHolder.isBlank()) || (bankAccountNumber != null && !bankAccountNumber.isBlank())) {
-            StringBuilder sb = new StringBuilder();
-            if (bankAccountHolder != null && !bankAccountHolder.isBlank()) sb.append("Account Holder: ").append(bankAccountHolder.trim());
-            if (bankName != null && !bankName.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Bank: ").append(bankName.trim());
-            if (bankAccountNumber != null && !bankAccountNumber.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("A/C: ").append(bankAccountNumber.trim());
-            if (bankIfsc != null && !bankIfsc.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("IFSC: ").append(bankIfsc.trim().toUpperCase(java.util.Locale.ROOT));
-            if (bankBranch != null && !bankBranch.isBlank()) sb.append(sb.length() > 0 ? " | " : "").append("Branch: ").append(bankBranch.trim());
-            host.setBankDetails(sb.toString());
-        } else if (bankDetails != null) {
-            host.setBankDetails(bankDetails.trim());
+        host = eventHostRepository.findById(host.getId()).orElse(host);
+        eventHostProfileService.applyExtraFields(host, allParams);
+
+        try {
+            if (profilePhoto != null && !profilePhoto.isEmpty()) {
+                String photoPath = fileUploadService.saveFile(profilePhoto);
+                host.setProfilePhotoPath(photoPath);
+            }
+            if (logoFile != null && !logoFile.isEmpty()) {
+                String logoPath = fileUploadService.saveFile(logoFile);
+                host.setLogoPath(logoPath);
+            }
+            if (documentFile != null && !documentFile.isEmpty()) {
+                String docPath = fileUploadService.saveFile(documentFile);
+                host.setDocumentPath(docPath);
+            }
+            if (galleryFiles != null && !galleryFiles.isEmpty()) {
+                List<String> newGallery = new ArrayList<>();
+                if (host.getGalleryPhotos() != null && !host.getGalleryPhotos().isBlank()) {
+                    for (String p : host.getGalleryPhotos().split("[,|]")) {
+                        if (p != null && !p.trim().isEmpty()) newGallery.add(p.trim());
+                    }
+                }
+                for (MultipartFile gf : galleryFiles) {
+                    if (gf != null && !gf.isEmpty()) {
+                        String gPath = fileUploadService.saveFile(gf);
+                        if (gPath != null && !gPath.isBlank()) {
+                            newGallery.add(gPath);
+                        }
+                    }
+                }
+                if (!newGallery.isEmpty()) {
+                    host.setGalleryPhotos(String.join(",", newGallery));
+                }
+            }
+            if (removeGalleryPhoto != null && !removeGalleryPhoto.isBlank() && host.getGalleryPhotos() != null) {
+                List<String> remaining = new ArrayList<>();
+                for (String p : host.getGalleryPhotos().split("[,|]")) {
+                    if (p != null && !p.trim().isEmpty() && !p.trim().equals(removeGalleryPhoto.trim())) {
+                        remaining.add(p.trim());
+                    }
+                }
+                host.setGalleryPhotos(remaining.isEmpty() ? null : String.join(",", remaining));
+            }
+        } catch (Exception ex) {
+            ra.addFlashAttribute("error", "Error uploading files: " + ex.getMessage());
         }
-        eventHostRepository.save(host);
+
+        eventHostProfileService.refreshCompletion(host);
+        host = eventHostRepository.save(host);
         session.setAttribute("loggedHost", host);
-        ra.addFlashAttribute("success", "Profile updated successfully!");
-        return "redirect:/women-events/organizer/edit-profile";
+
+        boolean doSubmit = Boolean.TRUE.equals(submitVerification) || "submitVerification".equalsIgnoreCase(action);
+        if (doSubmit) {
+            try {
+                host = eventHostRegistrationService.submitForVerification(host);
+                session.setAttribute("loggedHost", host);
+                ra.addFlashAttribute("success", "Profile submitted for admin verification! Our team will review your application.");
+                return "redirect:/women-events/organizer/dashboard?verified=submitted";
+            } catch (org.springframework.web.server.ResponseStatusException ex) {
+                ra.addFlashAttribute("error", ex.getReason());
+                return "redirect:/women-events/organizer/profile-completion";
+            }
+        }
+
+        ra.addFlashAttribute("success", "Profile saved successfully! (" + (host.getProfileCompletionPct() != null ? host.getProfileCompletionPct() : 0) + "% complete)");
+        return "redirect:/women-events/organizer/profile-completion";
     }
 
     /** Settings – GET */
@@ -914,6 +949,9 @@ public class WomenEventController {
                                @RequestParam(required = false) String registrationCloses,
                                @RequestParam String venue,
                                @RequestParam String city,
+                               @RequestParam(required = false) String venueState,
+                               @RequestParam(required = false) String venuePincode,
+                               @RequestParam(required = false) String venueArea,
                                @RequestParam(defaultValue = "0") Double entryFee,
                                @RequestParam(required = false) Integer maxParticipants,
                                @RequestParam String contactInfo,
@@ -950,6 +988,9 @@ public class WomenEventController {
         }
         event.setVenue(venue);
         event.setCity(city);
+        if (venueState != null && !venueState.isBlank()) event.setVenueState(venueState.trim());
+        if (venuePincode != null && !venuePincode.isBlank()) event.setVenuePincode(venuePincode.trim());
+        if (venueArea != null && !venueArea.isBlank()) event.setVenueArea(venueArea.trim());
         event.setEntryFee(entryFee);
         event.setMaxParticipants(maxParticipants);
         event.setContactInfo(contactInfo);
@@ -1045,7 +1086,11 @@ public class WomenEventController {
     }
 
     @PostMapping("/organizer/{id}/checkin")
-    public String checkIn(@PathVariable Long id, @RequestParam String ticketCode, HttpSession session, RedirectAttributes ra) {
+    public String checkIn(@PathVariable Long id,
+                          @RequestParam String ticketCode,
+                          @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+                          HttpSession session,
+                          RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
         if (!EventHostProfileService.isApproved(host)) {
@@ -1058,12 +1103,62 @@ public class WomenEventController {
         }
 
         try {
-            womenEventBookingService.checkIn(event, ticketCode.trim());
-            ra.addFlashAttribute("success", "Ticket verified and attendee checked in.");
+            WomenEventRegistration checked = womenEventBookingService.checkIn(event, ticketCode.trim());
+            String attendeeName = checked.getUser() != null ? checked.getUser().getFullName() : "Attendee";
+            ra.addFlashAttribute("success", "Ticket " + checked.getTicketCode() + " verified! " + attendeeName + " marked as ATTENDED.");
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             ra.addFlashAttribute("error", ex.getReason());
         }
+        if (redirectUrl != null && !redirectUrl.isBlank()) {
+            return "redirect:" + redirectUrl;
+        }
         return "redirect:/women-events/organizer/" + id + "/attendees";
+    }
+
+    @PostMapping("/organizer/registrations/{regId}/attendance")
+    public String toggleAttendance(@PathVariable Long regId,
+                                   @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+                                   HttpServletRequest request,
+                                   HttpSession session,
+                                   RedirectAttributes ra) {
+        EventHost host = checkAndGetHost(session);
+        if (host == null) return "redirect:/women-events/host/login";
+        try {
+            WomenEventRegistration reg = womenEventBookingService.toggleAttendanceByOrganizer(regId, host);
+            String name = reg.getUser() != null ? reg.getUser().getFullName() : "Attendee";
+            if (reg.isCheckedIn()) {
+                ra.addFlashAttribute("success", "Marked as ATTENDED for " + name + " (Ticket: " + reg.getTicketCode() + ")");
+            } else {
+                ra.addFlashAttribute("success", "Attendance unmarked for " + name + " (Ticket: " + reg.getTicketCode() + ")");
+            }
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            ra.addFlashAttribute("error", ex.getReason());
+        }
+        if (redirectUrl != null && !redirectUrl.isBlank()) {
+            return "redirect:" + redirectUrl;
+        }
+        String referer = request.getHeader("Referer");
+        return "redirect:" + (referer != null ? referer : "/women-events/organizer/registrations");
+    }
+
+    @PostMapping("/organizer/registrations/{regId}/toggle-attendance")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> toggleAttendanceAjax(@PathVariable Long regId, HttpSession session) {
+        EventHost host = checkAndGetHost(session);
+        if (host == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
+        }
+        try {
+            WomenEventRegistration reg = womenEventBookingService.toggleAttendanceByOrganizer(regId, host);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "checkedIn", reg.isCheckedIn(),
+                    "status", reg.getStatus(),
+                    "checkedInAt", reg.getCheckedInAt() != null ? reg.getCheckedInAt().toString() : ""
+            ));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of("success", false, "message", ex.getReason()));
+        }
     }
 
     // =========================================================
