@@ -121,6 +121,36 @@ public class MobileJourneyController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/location")
+    public ResponseEntity<Map<String, Object>> updateLocation(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) {
+            return unauthorized();
+        }
+        if (body == null || body.get("latitude") == null || body.get("longitude") == null) {
+            return badRequest("latitude and longitude are required");
+        }
+        Double lat = asDouble(body.get("latitude"));
+        Double lng = asDouble(body.get("longitude"));
+        if (lat == null || lng == null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            return badRequest("Invalid coordinates");
+        }
+
+        JourneySession js = journeyService.updateLocation(user, lat, lng);
+        if (js == null) {
+            return badRequest("No active journey timer found.");
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("success", true);
+        response.put("message", "Journey location updated");
+        response.put("active", true);
+        response.putAll(sessionDto(js));
+        return ResponseEntity.ok(response);
+    }
+
     private Map<String, Object> sessionDto(JourneySession js) {
         Map<String, Object> dto = new LinkedHashMap<>();
         dto.put("id", js.getId());
@@ -136,6 +166,11 @@ public class MobileJourneyController {
         dto.put("createdAt", js.getCreatedAt() == null ? null : js.getCreatedAt().toInstant().toString());
         dto.put("startLat", js.getStartLat());
         dto.put("startLng", js.getStartLng());
+        dto.put("currentLat", js.getCurrentLat());
+        dto.put("currentLng", js.getCurrentLng());
+        dto.put("lastLocationUpdatedAt", js.getLastLocationUpdatedAt() == null
+                ? null
+                : js.getLastLocationUpdatedAt().toInstant().toString());
         dto.put("alertedAt", js.getAlertedAt() == null ? null : js.getAlertedAt().toInstant().toString());
         return dto;
     }

@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import '../../config/glow_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/glow_provider_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
 
@@ -40,6 +42,13 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
   final _hygiene = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _serviceName = TextEditingController();
   final _servicePrice = TextEditingController(text: '499');
 
@@ -87,7 +96,9 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
   void dispose() {
     for (final c in [
       _name, _contact, _phone, _whatsapp, _year, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _hygiene, _upi, _bank, _serviceName, _servicePrice,
+      _pincode, _mapLocation, _bio, _hygiene, _upi, _bank, _accountHolder,
+      _accountNumber, _confirmAccountNumber, _ifsc, _bankName, _branchName,
+      _serviceName, _servicePrice,
     ]) {
       c.dispose();
     }
@@ -170,6 +181,17 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
     _hygiene.text = p['hygieneNotes']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     final firstName = p['firstServiceName']?.toString() ?? '';
     _hasFirstService = firstName.isNotEmpty;
     if (firstName.isNotEmpty) _serviceName.text = firstName;
@@ -215,7 +237,15 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
         'bio': _bio.text.trim(),
         'hygieneNotes': _hygiene.text.trim(),
         'upiId': _upi.text.trim(),
-        'bankDetails': _bank.text.trim(),
+        ...BankDetailsSection.buildPayload(
+          accountHolder: _accountHolder.text,
+          accountNumber: _accountNumber.text,
+          ifsc: _ifsc.text,
+          bankName: _bankName.text,
+          branch: _branchName.text,
+          accountType: _accountType,
+          upiId: _upi.text,
+        ),
         if (!_hasFirstService && _serviceName.text.trim().isNotEmpty) ...{
           'firstServiceName': _serviceName.text.trim(),
           'firstServiceCategory': _serviceCategory,
@@ -612,14 +642,18 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
                     ),
                   ],
                 ]),
-                _section('9', 'Payout', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  const Text(
-                    'UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
-                ]),
+                BankDetailsSection(
+                  accountHolderController: _accountHolder,
+                  accountNumberController: _accountNumber,
+                  confirmAccountNumberController: _confirmAccountNumber,
+                  ifscController: _ifsc,
+                  bankNameController: _bankName,
+                  branchNameController: _branchName,
+                  upiController: _upi,
+                  accountType: _accountType,
+                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                  sectionNumber: '9',
+                ),
                 _section('10', 'Documents (optional)', [
                   const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
                   const SizedBox(height: 10),
@@ -688,6 +722,8 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: ProfileFieldHelper.instructionForField(label: label, hint: hint, required: required),
+          helperMaxLines: 2,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -713,6 +749,8 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: ProfileFieldHelper.instructionForField(label: label, required: required),
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

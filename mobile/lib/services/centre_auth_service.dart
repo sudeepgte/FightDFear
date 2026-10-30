@@ -173,6 +173,109 @@ class CentreAuthService {
         centreAuth: true,
       );
 
+  // QR Attendance Sessions
+  Future<Map<String, dynamic>> createQrSession({
+    required int batchId,
+    String? date,
+    int duration = 15,
+  }) =>
+      _api.post(
+        '/api/martial-arts/centre/qr-session',
+        body: {
+          'batchId': batchId,
+          if (date != null) 'date': date,
+          'duration': duration,
+        },
+        auth: false,
+        centreAuth: true,
+      );
+
+  Future<Map<String, dynamic>> getQrSession({
+    required int batchId,
+    String? date,
+  }) {
+    final d = (date != null && date.isNotEmpty) ? '&date=$date' : '';
+    return _api.get(
+      '/api/martial-arts/centre/qr-session?batchId=$batchId$d',
+      auth: false,
+      centreAuth: true,
+    );
+  }
+
+  Future<Map<String, dynamic>> closeQrSession(int id) => _api.post(
+        '/api/martial-arts/centre/qr-session/$id/close',
+        auth: false,
+        centreAuth: true,
+      );
+
+  // Belt Grading & Assessments
+  Future<Map<String, dynamic>> getGradingCriteria({String? style, String? belt}) {
+    final params = <String>[];
+    if (style != null && style.isNotEmpty) params.add('style=${Uri.encodeComponent(style)}');
+    if (belt != null && belt.isNotEmpty) params.add('belt=${Uri.encodeComponent(belt)}');
+    final q = params.isEmpty ? '' : '?${params.join('&')}';
+    return _api.get('/api/martial-arts/centre/grading/criteria$q', auth: false, centreAuth: true);
+  }
+
+  Future<Map<String, dynamic>> getGradings({String? status, int? batchId}) {
+    final params = <String>[];
+    if (status != null && status.isNotEmpty) params.add('status=${Uri.encodeComponent(status)}');
+    if (batchId != null) params.add('batchId=$batchId');
+    final q = params.isEmpty ? '' : '?${params.join('&')}';
+    return _api.get('/api/martial-arts/centre/gradings$q', auth: false, centreAuth: true);
+  }
+
+  Future<Map<String, dynamic>> scheduleGrading(Map<String, dynamic> body) => _api.post(
+        '/api/martial-arts/centre/gradings/schedule',
+        body: body,
+        auth: false,
+        centreAuth: true,
+      );
+
+  Future<Map<String, dynamic>> scoreGrading(int id, Map<String, dynamic> body) => _api.post(
+        '/api/martial-arts/centre/gradings/$id/score',
+        body: body,
+        auth: false,
+        centreAuth: true,
+      );
+
+  Future<Map<String, dynamic>> promoteGrading(int id) => _api.post(
+        '/api/martial-arts/centre/gradings/$id/promote',
+        auth: false,
+        centreAuth: true,
+      );
+
+  // Instructors
+  Future<Map<String, dynamic>> getInstructors() =>
+      _api.get('/api/martial-arts/centre/instructors', auth: false, centreAuth: true);
+
+  Future<Map<String, dynamic>> createInstructor(Map<String, String> body) => _api.post(
+        '/api/martial-arts/centre/instructors',
+        body: body,
+        auth: false,
+        centreAuth: true,
+      );
+
+  Future<Map<String, dynamic>> deleteInstructor(int id) =>
+      _api.delete('/api/martial-arts/centre/instructors/$id', centreAuth: true);
+
+  // Trainee Renewal
+  Future<Map<String, dynamic>> updateRenewal(
+    int enrollmentId, {
+    required String renewalStatus,
+    String? nextRenewalDate,
+  }) =>
+      _api.post(
+        '/api/martial-arts/centre/enrollments/$enrollmentId/renewal',
+        body: {
+          'renewalStatus': renewalStatus,
+          if (nextRenewalDate != null && nextRenewalDate.isNotEmpty)
+            'nextRenewalDate': nextRenewalDate,
+        },
+        auth: false,
+        centreAuth: true,
+      );
+
   Future<Map<String, dynamic>> registerLite({
     required String name,
     required String location,

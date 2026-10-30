@@ -39,23 +39,25 @@ class FitnessTrainerAuthService {
       auth: false,
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
-    // TRAINER JWT is stored via the shared auth token (JwtAuthenticationFilter role TRAINER).
+    // TRAINER JWT is stored via isolated fitness_trainer_auth_token.
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveFitnessTrainerToken(res['token'].toString());
     }
     return res;
   }
 
-  Future<Map<String, dynamic>> profile() => _api.get('/api/fitness/trainer/profile');
+  Future<Map<String, dynamic>> profile() =>
+      _api.get('/api/fitness/trainer/profile', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) => _api.put(
         '/api/fitness/trainer/profile',
+        fitnessTrainerAuth: true,
         body: body,
         timeout: const Duration(seconds: 30),
       );
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/fitness/trainer/submit-verification');
+      _api.post('/api/fitness/trainer/submit-verification', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> uploadDocuments({
     http.MultipartFile? profilePhoto,
@@ -68,25 +70,29 @@ class FitnessTrainerAuthService {
     return _api.postMultipart(
       '/api/fitness/trainer/profile/upload',
       files: files,
-      auth: true,
+      fitnessTrainerAuth: true,
     );
   }
 
   Future<Map<String, dynamic>> updateOnlineStatus(bool online) => _api.put(
         '/api/fitness/trainer/online-status',
+        fitnessTrainerAuth: true,
         body: {'online': online},
       );
 
-  Future<Map<String, dynamic>> dashboard() => _api.get('/api/fitness/trainer/me');
+  Future<Map<String, dynamic>> dashboard() =>
+      _api.get('/api/fitness/trainer/me', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> updateBookingStatus(int id, String status) =>
-      _api.post('/api/fitness/trainer/bookings/$id/status', body: {'status': status});
+      _api.post('/api/fitness/trainer/bookings/$id/status',
+          fitnessTrainerAuth: true, body: {'status': status});
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/fitness/trainer/payout/request');
+      _api.post('/api/fitness/trainer/payout/request', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> updateBookingNotes(int id, String coachNotes) =>
-      _api.post('/api/fitness/trainer/bookings/$id/notes', body: {'coachNotes': coachNotes});
+      _api.post('/api/fitness/trainer/bookings/$id/notes',
+          fitnessTrainerAuth: true, body: {'coachNotes': coachNotes});
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -106,18 +112,18 @@ class FitnessTrainerAuthService {
     return _api.postMultipart(
       '/api/fitness/trainer/photos',
       files: files,
-      auth: true,
+      fitnessTrainerAuth: true,
     );
   }
 
   Future<Map<String, dynamic>> getPackages() =>
-      _api.get('/api/fitness/trainer/packages');
+      _api.get('/api/fitness/trainer/packages', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> savePackage(Map<String, dynamic> body) =>
-      _api.post('/api/fitness/trainer/packages', body: body);
+      _api.post('/api/fitness/trainer/packages', fitnessTrainerAuth: true, body: body);
 
   Future<Map<String, dynamic>> deletePackage(int id) =>
-      _api.delete('/api/fitness/trainer/packages/$id');
+      _api.delete('/api/fitness/trainer/packages/$id', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> markAttendance({
     required int bookingId,
@@ -126,7 +132,7 @@ class FitnessTrainerAuthService {
     String status = 'PRESENT',
     String? notes,
   }) =>
-      _api.post('/api/fitness/trainer/attendance', body: {
+      _api.post('/api/fitness/trainer/attendance', fitnessTrainerAuth: true, body: {
         'bookingId': bookingId,
         if (sessionDate != null) 'sessionDate': sessionDate,
         if (sessionTime != null) 'sessionTime': sessionTime,
@@ -142,7 +148,7 @@ class FitnessTrainerAuthService {
     String? metricsJson,
     String? workoutNotes,
   }) =>
-      _api.post('/api/fitness/trainer/progress', body: {
+      _api.post('/api/fitness/trainer/progress', fitnessTrainerAuth: true, body: {
         'userId': userId,
         if (weightKg != null) 'weightKg': weightKg,
         if (bodyFatPct != null) 'bodyFatPct': bodyFatPct,
@@ -157,7 +163,7 @@ class FitnessTrainerAuthService {
     double? latitude,
     double? longitude,
   }) =>
-      _api.post('/api/fitness/trainer/qr-session', body: {
+      _api.post('/api/fitness/trainer/qr-session', fitnessTrainerAuth: true, body: {
         'duration': duration,
         if (classId != null) 'classId': classId,
         if (latitude != null) 'latitude': latitude,
@@ -165,14 +171,14 @@ class FitnessTrainerAuthService {
       });
 
   Future<Map<String, dynamic>> closeQrSession(int sessionId) =>
-      _api.post('/api/fitness/trainer/qr-session/$sessionId/close');
+      _api.post('/api/fitness/trainer/qr-session/$sessionId/close', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> getQrAttendees(int sessionId) =>
-      _api.get('/api/fitness/trainer/qr-session/$sessionId/attendees');
+      _api.get('/api/fitness/trainer/qr-session/$sessionId/attendees', fitnessTrainerAuth: true);
 
   Future<Map<String, dynamic>> getActiveQrSession() =>
-      _api.get('/api/fitness/trainer/qr-session/active');
+      _api.get('/api/fitness/trainer/qr-session/active', fitnessTrainerAuth: true);
 
-  Future<void> logout() => _api.clearToken();
+  Future<void> logout() => _api.clearFitnessTrainerToken();
 }
 

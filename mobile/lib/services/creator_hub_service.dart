@@ -35,9 +35,11 @@ class CreatorHubService {
 
   Future<Map<String, dynamic>> bookmarks() => _api.get('/api/creator-hub/bookmarks');
 
-  Future<Map<String, dynamic>> dashboard() => _api.get('/api/creator-hub/dashboard');
+  Future<Map<String, dynamic>> dashboard() =>
+      _api.get('/api/creator-hub/dashboard', creatorAuth: true);
 
-  Future<Map<String, dynamic>> notifications() => _api.get('/api/creator-hub/notifications');
+  Future<Map<String, dynamic>> notifications() =>
+      _api.get('/api/creator-hub/notifications', creatorAuth: true);
 
   Future<Map<String, dynamic>> like(int postId) =>
       _api.post('/api/creator-hub/posts/$postId/like', body: {});
@@ -83,28 +85,33 @@ class CreatorHubService {
       _api.post('/api/creator-hub/creators/$creatorId/block', body: {});
 
   Future<Map<String, dynamic>> cashout(int points) =>
-      _api.post('/api/creator-hub/dashboard/cashout', body: {'points': points});
+      _api.post('/api/creator-hub/dashboard/cashout', creatorAuth: true, body: {'points': points});
 
   Future<Map<String, dynamic>> claimAdRevenue() =>
-      _api.post('/api/creator-hub/dashboard/claim-ad-revenue', body: {});
+      _api.post('/api/creator-hub/dashboard/claim-ad-revenue', creatorAuth: true, body: {});
 
   Future<Map<String, dynamic>> togglePrivacy() =>
-      _api.post('/api/creator-hub/dashboard/toggle-privacy', body: {});
+      _api.post('/api/creator-hub/dashboard/toggle-privacy', creatorAuth: true, body: {});
 
   Future<Map<String, dynamic>> setSubscriptionPrice(double price) =>
-      _api.post('/api/creator-hub/dashboard/subscription-price', body: {'price': price});
+      _api.post('/api/creator-hub/dashboard/subscription-price',
+          creatorAuth: true, body: {'price': price});
 
   Future<Map<String, dynamic>> publishDraft(int videoId) =>
-      _api.post('/api/creator-hub/dashboard/publish-draft', body: {'videoId': videoId});
+      _api.post('/api/creator-hub/dashboard/publish-draft',
+          creatorAuth: true, body: {'videoId': videoId});
 
   Future<Map<String, dynamic>> deleteUpload(int videoId) =>
-      _api.post('/api/creator-hub/dashboard/delete-upload', body: {'videoId': videoId});
+      _api.post('/api/creator-hub/dashboard/delete-upload',
+          creatorAuth: true, body: {'videoId': videoId});
 
   Future<Map<String, dynamic>> unblock(int blockedUserId) =>
-      _api.post('/api/creator-hub/dashboard/unblock', body: {'blockedUserId': blockedUserId});
+      _api.post('/api/creator-hub/dashboard/unblock',
+          creatorAuth: true, body: {'blockedUserId': blockedUserId});
 
   Future<Map<String, dynamic>> applyCollab({required int campaignId, required String pitch}) =>
-      _api.post('/api/creator-hub/collab/apply', body: {'campaignId': campaignId, 'pitch': pitch});
+      _api.post('/api/creator-hub/collab/apply',
+          creatorAuth: true, body: {'campaignId': campaignId, 'pitch': pitch});
 
   Future<Map<String, dynamic>> upload({
     required String title,
@@ -129,7 +136,7 @@ class CreatorHubService {
     }
     return _api.postMultipart(
       '/api/creator-hub/upload',
-      auth: true,
+      creatorAuth: true,
       fields: {
         'title': title,
         'description': description,

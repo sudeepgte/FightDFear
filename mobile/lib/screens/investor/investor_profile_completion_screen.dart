@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import '../../config/funding_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/investor_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
 
@@ -39,6 +41,13 @@ class _InvestorProfileCompletionScreenState
   final _bio = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _rate = TextEditingController(text: '500');
   final _credential = TextEditingController();
   final _companyName = TextEditingController();
@@ -83,7 +92,9 @@ class _InvestorProfileCompletionScreenState
   void dispose() {
     for (final c in [
       _name, _phone, _whatsapp, _years, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _upi, _bank, _rate, _credential, _companyName,
+      _pincode, _mapLocation, _bio, _upi, _bank, _accountHolder,
+      _accountNumber, _confirmAccountNumber, _ifsc, _bankName,
+      _branchName, _rate, _credential, _companyName,
     ]) {
       c.dispose();
     }
@@ -164,6 +175,17 @@ class _InvestorProfileCompletionScreenState
     _bio.text = p['bio']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     if (p['typicalPrice'] != null) {
       _rate.text = '${p['typicalPrice']}';
     }
@@ -207,7 +229,15 @@ class _InvestorProfileCompletionScreenState
       'durationMinutes': _duration,
       'bufferMinutes': _buffer,
       'upiId': _upi.text.trim(),
-      'bankDetails': _bank.text.trim(),
+      ...BankDetailsSection.buildPayload(
+        accountHolder: _accountHolder.text,
+        accountNumber: _accountNumber.text,
+        ifsc: _ifsc.text,
+        bankName: _bankName.text,
+        branch: _branchName.text,
+        accountType: _accountType,
+        upiId: _upi.text,
+      ),
     };
   }
 
@@ -558,14 +588,18 @@ class _InvestorProfileCompletionScreenState
                   ),
                   _field(_rate, '8.4', 'Typical cheque (₹)', required: true, keyboardType: TextInputType.number),
                 ]),
-                _section('9', 'Finance / UPI', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  const Text(
-                    'UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
-                ]),
+                BankDetailsSection(
+                  accountHolderController: _accountHolder,
+                  accountNumberController: _accountNumber,
+                  confirmAccountNumberController: _confirmAccountNumber,
+                  ifscController: _ifsc,
+                  bankNameController: _bankName,
+                  branchNameController: _branchName,
+                  upiController: _upi,
+                  accountType: _accountType,
+                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                  sectionNumber: '9',
+                ),
                 _section('10', 'Documents (optional)', [
                   const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
                   const SizedBox(height: 10),
@@ -634,6 +668,8 @@ class _InvestorProfileCompletionScreenState
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: ProfileFieldHelper.instructionForField(label: label, hint: hint, required: required),
+          helperMaxLines: 2,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -659,6 +695,8 @@ class _InvestorProfileCompletionScreenState
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: ProfileFieldHelper.instructionForField(label: label, required: required),
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

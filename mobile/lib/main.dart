@@ -1,16 +1,37 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/landing/landing_screen.dart';
+import 'services/api_client.dart';
 import 'services/auth_state.dart';
+import 'services/background_location_service.dart';
+import 'services/navigation_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    ApiClient.setPreferences(prefs);
+  } catch (e) {
+    debugPrint('Warning: SharedPreferences pre-initialization failed: $e');
+  }
+
+  try {
+    await BackgroundLocationService.instance.init();
+  } catch (e) {
+    debugPrint('Warning: BackgroundLocationService init failed: $e');
+  }
+
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('FlutterError: ${details.exceptionAsString()}');
     debugPrint(details.stack?.toString() ?? '');
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Uncaught async error: $error\n$stack');
+    return true;
   };
   ErrorWidget.builder = (details) {
     return Material(
@@ -44,6 +65,7 @@ class FightDFearApp extends StatelessWidget {
       },
       child: MaterialApp(
         title: 'Fight D Fear',
+        navigatorKey: NavigationService.navigatorKey,
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.light,
         theme: ThemeData(

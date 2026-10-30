@@ -23,6 +23,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _email;
   String? _status;
 
+  String? _nameError;
+  String? _phoneError;
+  String? _addressError;
+
   @override
   void initState() {
     super.initState();
@@ -62,24 +66,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _save() async {
+    setState(() {
+      _nameError = null;
+      _phoneError = null;
+      _addressError = null;
+    });
+
+    final name = _nameCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim();
+    final address = _addressCtrl.text.trim();
+
+    if (name.isEmpty) {
+      _nameError = 'Full name is required';
+    } else if (name.length < 2) {
+      _nameError = 'Name must be at least 2 characters';
+    }
+
+    if (phone.isEmpty) {
+      _phoneError = 'Phone number is required';
+    } else if (!RegExp(r'^\d{10}$').hasMatch(phone)) {
+      _phoneError = 'Phone must be exactly 10 digits';
+    }
+
+    if (address.isEmpty) {
+      _addressError = 'Home address is required';
+    }
+
+    if (_nameError != null || _phoneError != null || _addressError != null) {
+      setState(() {});
+      return;
+    }
+
     setState(() => _saving = true);
     try {
       final res = await _api.updateProfile(
-        fullName: _nameCtrl.text.trim(),
-        phoneNumber: _phoneCtrl.text.trim(),
-        homeAddress: _addressCtrl.text.trim(),
+        fullName: name,
+        phoneNumber: phone,
+        homeAddress: address,
       );
       if (!mounted) return;
       if (res['success'] == true) {
         final auth = context.read<AuthState>();
-        // Refresh displayed name in auth state via bootstrap-like update
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated')),
+          const SnackBar(content: Text('Profile updated successfully')),
         );
         _nameCtrl.text = res['name']?.toString() ?? _nameCtrl.text;
-        if (auth.name != _nameCtrl.text) {
-          // AuthState has no updateName — user sees new name on next login/dashboard refresh
-        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(res['error']?.toString() ?? 'Update failed')),
@@ -116,29 +147,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                       const SizedBox(height: 20),
                       TextField(
+                        key: const ValueKey('member_profile_name_input'),
                         controller: _nameCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Full name',
-                          border: OutlineInputBorder(),
+                        onChanged: (_) {
+                          if (_nameError != null) setState(() => _nameError = null);
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Full name *',
+                          helperText: 'Enter your full name as it appears on your official documents.',
+                          helperMaxLines: 2,
+                          errorText: _nameError,
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
+                        key: const ValueKey('member_profile_phone_input'),
                         controller: _phoneCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Phone',
-                          border: OutlineInputBorder(),
-                        ),
                         keyboardType: TextInputType.phone,
+                        onChanged: (_) {
+                          if (_phoneError != null) setState(() => _phoneError = null);
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Phone *',
+                          helperText: 'Enter your 10-digit mobile number.',
+                          helperMaxLines: 2,
+                          errorText: _phoneError,
+                          border: const OutlineInputBorder(),
+                        ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
+                        key: const ValueKey('member_profile_address_input'),
                         controller: _addressCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Home address',
-                          border: OutlineInputBorder(),
-                        ),
                         maxLines: 2,
+                        onChanged: (_) {
+                          if (_addressError != null) setState(() => _addressError = null);
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Home address *',
+                          helperText: 'Enter your residential address or location details.',
+                          helperMaxLines: 2,
+                          errorText: _addressError,
+                          border: const OutlineInputBorder(),
+                        ),
                       ),
                       const SizedBox(height: 24),
                       FilledButton(

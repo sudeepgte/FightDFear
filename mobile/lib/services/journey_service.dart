@@ -30,4 +30,18 @@ class JourneyService {
 
   Future<Map<String, dynamic>> cancel() =>
       _api.post('/api/journey/cancel', body: <String, dynamic>{});
+
+  Future<Map<String, dynamic>> updateLocation({
+    required double latitude,
+    required double longitude,
+  }) {
+    return _api.post(
+      '/api/journey/location',
+      body: {
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      timeout: const Duration(seconds: 10),
+    );
+  }
 }

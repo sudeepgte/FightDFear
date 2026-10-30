@@ -4,12 +4,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/martial_arts_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/centre_auth_service.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../../widgets/ux_feedback.dart';
-import 'martial_arts_centre_profile_completion_screen.dart';
+import 'martial_arts_centre_dashboard_screen.dart';
 import 'martial_arts_centre_login_screen.dart';
+import 'martial_arts_centre_pending_approval_screen.dart';
+import 'martial_arts_centre_profile_completion_screen.dart';
 
 class MartialArtsCentreDashboardScreen extends StatefulWidget {
   const MartialArtsCentreDashboardScreen({
@@ -40,7 +43,7 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
   void initState() {
     super.initState();
     _auth = CentreAuthService(context.read<AuthState>().api);
-    _tabs = TabController(length: 7, vsync: this);
+    _tabs = TabController(length: 10, vsync: this);
     _tabs.addListener(() {
       if (!_tabs.indexIsChanging) setState(() {});
     });
@@ -107,11 +110,41 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
 
   String get _managerName => _centre?['managerName']?.toString() ?? 'Centre Manager';
 
+  bool get _isApproved {
+    final status = (_centre?['centreProfileStatus'] ?? '').toString().toUpperCase();
+    return _centre?['approved'] == true || status == 'APPROVED';
+  }
+
   String _greeting() {
     final h = DateTime.now().hour;
     if (h < 12) return 'Good morning';
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
+  }
+
+  Widget _drawerTile(int index, IconData icon, String title) {
+    final isSelected = _tabs.index == index;
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF64748B),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+          fontSize: 14,
+          color: isSelected ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF1E293B),
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: const Color(0xFFFFF1F2),
+      onTap: () {
+        Navigator.pop(context);
+        _tabs.animateTo(index);
+        setState(() {});
+      },
+    );
   }
 
   @override
@@ -124,9 +157,77 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
       return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
     }();
     final baseUrl = context.read<AuthState>().api.baseUrl;
+    final isApproved = _isApproved;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
+      drawer: Drawer(
+        backgroundColor: Colors.white,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                color: MartialArtsCentreDashboardScreen.navy,
+              ),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: MartialArtsCentreDashboardScreen.primary,
+                child: Icon(Icons.sports_martial_arts, color: Colors.white, size: 36),
+              ),
+              accountName: Text(
+                _centre?['name']?.toString() ?? 'Self-Defence Centre',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+              accountEmail: Text(
+                isApproved ? 'Verified & Approved' : 'Pending Verification Review',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isApproved ? const Color(0xFF4ADE80) : const Color(0xFFFBBF24),
+                ),
+              ),
+            ),
+            _drawerTile(0, Icons.dashboard_outlined, 'Overview'),
+            _drawerTile(1, Icons.fitness_center_outlined, 'Programs & Batches'),
+            _drawerTile(2, Icons.groups_outlined, 'Students / Trainees'),
+            _drawerTile(3, Icons.fact_check_outlined, 'Attendance Tracking'),
+            _drawerTile(4, Icons.military_tech_outlined, 'Belt Grading & Skills'),
+            _drawerTile(5, Icons.badge_outlined, 'Instructor Staff'),
+            _drawerTile(6, Icons.videocam_outlined, 'Live Classes'),
+            _drawerTile(7, Icons.history_outlined, 'Past Sessions'),
+            _drawerTile(8, Icons.account_balance_wallet_outlined, 'Finance & Payouts'),
+            _drawerTile(9, Icons.settings_outlined, 'Centre Settings'),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.edit_note_outlined, color: Color(0xFF475569)),
+              title: const Text('Edit Full Profile', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              onTap: () {
+                Navigator.pop(context);
+                _openProfileCompletion();
+              },
+            ),
+            if (!isApproved)
+              ListTile(
+                leading: const Icon(Icons.verified_outlined, color: Color(0xFFD97706)),
+                title: const Text('Check Verification Status', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => MartialArtsCentrePendingApprovalScreen(initialProfile: _centre)),
+                  );
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
+              title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFFEF4444))),
+              onTap: () {
+                Navigator.pop(context);
+                _logout();
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -162,15 +263,24 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: MartialArtsCentreDashboardScreen.primary,
+        backgroundColor: isApproved ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF64748B),
         elevation: 6,
-        onPressed: () {
-          _tabs.animateTo(1);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create a batch from the Batches tab')),
-          );
-        },
-        child: const Icon(Icons.add, size: 28),
+        onPressed: isApproved
+            ? () {
+                _tabs.animateTo(1);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Create a batch from the Batches tab')),
+                );
+              }
+            : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Features locked until admin approves your centre profile verification.'),
+                    backgroundColor: Color(0xFFD97706),
+                  ),
+                );
+              },
+        child: Icon(isApproved ? Icons.add : Icons.lock_outline, size: 28),
       ),
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
@@ -186,9 +296,9 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
               _navItem(1, Icons.groups_outlined, Icons.groups, 'Students', 2),
               _navItem(2, Icons.fitness_center_outlined, Icons.fitness_center, 'Batches', 1),
               const SizedBox(width: 56),
-              _navItem(4, Icons.videocam_outlined, Icons.videocam, 'Live', 4),
-              _navItem(3, Icons.payments_outlined, Icons.payments, 'Finance', 5),
-              _navItem(5, Icons.person_outline, Icons.person, 'Profile', 6),
+              _navItem(4, Icons.military_tech_outlined, Icons.military_tech, 'Grading', 4),
+              _navItem(3, Icons.payments_outlined, Icons.payments, 'Finance', 8),
+              _navItem(5, Icons.person_outline, Icons.person, 'Profile', 9),
             ],
           ),
         ),
@@ -211,6 +321,87 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                       child: _CentreProfileCard(centre: _centre, meta: _meta, baseUrl: baseUrl),
                     ),
+                    if (!isApproved) ...[
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD97706),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 18),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Text(
+                                          'Profile Submitted — Wait for Admin Verification',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF78350F),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEE2E2),
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                                        ),
+                                        child: const Text(
+                                          'LOCKED',
+                                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF991B1B)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  const Text(
+                                    'Review usually takes 12–24 hours. Batch creation is restricted until verification.',
+                                    style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => MartialArtsCentrePendingApprovalScreen(initialProfile: _centre),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'View Verification Status →',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     Material(
                       color: Colors.white,
                       child: TabBar(
@@ -227,9 +418,12 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                           Tab(text: 'Batches'),
                           Tab(text: 'Students'),
                           Tab(text: 'Attendance'),
+                          Tab(text: 'Grading'),
+                          Tab(text: 'Instructors'),
                           Tab(text: 'Live'),
+                          Tab(text: 'Past Sessions'),
                           Tab(text: 'Finance'),
-                          Tab(text: 'More'),
+                          Tab(text: 'Settings'),
                         ],
                       ),
                     ),
@@ -245,14 +439,19 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                             onGoBatches: () => _tabs.animateTo(1),
                             onGoStudents: () => _tabs.animateTo(2),
                             onGoAttendance: () => _tabs.animateTo(3),
-                            onGoLive: () => _tabs.animateTo(4),
-                            onGoSettings: () => _tabs.animateTo(6),
+                            onGoGrading: () => _tabs.animateTo(4),
+                            onGoInstructors: () => _tabs.animateTo(5),
+                            onGoLive: () => _tabs.animateTo(6),
+                            onGoSettings: () => _tabs.animateTo(9),
                             onCompleteProfile: _openProfileCompletion,
                           ),
-                          _BatchesTab(auth: _auth, batches: _list('batches'), onChanged: _load),
+                          _BatchesTab(auth: _auth, batches: _list('batches'), isApproved: isApproved, onChanged: _load),
                           _StudentsTab(auth: _auth, students: _list('enrollments'), onChanged: _load),
                           _AttendanceTab(auth: _auth, batches: _list('batches')),
+                          _GradingTab(auth: _auth, enrollments: _list('enrollments'), batches: _list('batches')),
+                          _InstructorsTab(auth: _auth),
                           _LiveClassesTab(auth: _auth, classes: _list('onlineClasses'), batches: _list('batches'), onChanged: _load),
+                          _PastSessionsTab(classes: _list('onlineClasses')),
                           _FinanceTab(auth: _auth, meta: _meta, centre: _centre, onChanged: _load),
                           _SettingsTab(auth: _auth, centre: _centre, onSaved: _load),
                         ],
@@ -265,25 +464,18 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
 
   Widget _navItem(int visualIndex, IconData icon, IconData activeIcon, String label, int tabIndex, {String? badge}) {
     final isSelected = switch (visualIndex) {
-      0 => _tabs.index == 0 || _tabs.index == 3,
+      0 => _tabs.index == 0,
       1 => _tabs.index == 2,
       2 => _tabs.index == 1,
       4 => _tabs.index == 4,
-      3 => _tabs.index == 5,
-      5 => _tabs.index == 6,
+      3 => _tabs.index == 8,
+      5 => _tabs.index == 9,
       _ => false,
     };
     return Expanded(
       child: InkWell(
         onTap: () {
-          if (visualIndex == 3) {
-            _tabs.animateTo(2);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Open a student to start messaging')),
-            );
-          } else {
-            _tabs.animateTo(tabIndex);
-          }
+          _tabs.animateTo(tabIndex);
           setState(() {});
         },
         child: Column(
@@ -523,6 +715,8 @@ class _OverviewTab extends StatelessWidget {
     required this.onGoBatches,
     required this.onGoStudents,
     required this.onGoAttendance,
+    this.onGoGrading,
+    this.onGoInstructors,
     required this.onGoLive,
     required this.onGoSettings,
     required this.onCompleteProfile,
@@ -534,6 +728,8 @@ class _OverviewTab extends StatelessWidget {
   final VoidCallback onGoBatches;
   final VoidCallback onGoStudents;
   final VoidCallback onGoAttendance;
+  final VoidCallback? onGoGrading;
+  final VoidCallback? onGoInstructors;
   final VoidCallback onGoLive;
   final VoidCallback onGoSettings;
   final VoidCallback onCompleteProfile;
@@ -1253,9 +1449,15 @@ class _DonutPainter extends CustomPainter {
 }
 
 class _BatchesTab extends StatefulWidget {
-  const _BatchesTab({required this.auth, required this.batches, required this.onChanged});
+  const _BatchesTab({
+    required this.auth,
+    required this.batches,
+    this.isApproved = true,
+    required this.onChanged,
+  });
   final CentreAuthService auth;
   final List<Map<String, dynamic>> batches;
+  final bool isApproved;
   final VoidCallback onChanged;
 
   @override
@@ -1639,10 +1841,23 @@ class _BatchesTabState extends State<_BatchesTab> {
           child: SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: () => _showBatchForm(),
-              icon: const Icon(Icons.add),
-              label: const Text('Create batch'),
-              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: widget.isApproved
+                  ? () => _showBatchForm()
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Batch creation is locked until Admin approves your centre profile verification.'),
+                          backgroundColor: Color(0xFFD97706),
+                        ),
+                      );
+                    },
+              icon: Icon(widget.isApproved ? Icons.add : Icons.lock_outline, size: 18),
+              label: Text(widget.isApproved ? 'Create batch' : 'Add Batch (Approval Required)'),
+              style: FilledButton.styleFrom(
+                backgroundColor: widget.isApproved
+                    ? MartialArtsCentreDashboardScreen.primary
+                    : const Color(0xFF64748B),
+              ),
             ),
           ),
         ),
@@ -1701,6 +1916,78 @@ class _StudentsTab extends StatefulWidget {
 
 class _StudentsTabState extends State<_StudentsTab> {
   final _search = TextEditingController();
+  String _statusFilter = 'ALL';
+
+  Future<void> _showRenewalDialog(int eid, Map<String, dynamic> s) async {
+    String renewalStatus = (s['renewalStatus'] ?? 'ACTIVE').toString();
+    DateTime nextDate = DateTime.now().add(const Duration(days: 30));
+    final dateStr = s['nextRenewalDate']?.toString();
+    if (dateStr != null && dateStr.isNotEmpty) {
+      final parsed = DateTime.tryParse(dateStr);
+      if (parsed != null) nextDate = parsed;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Update Trainee Renewal', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(s['traineeName']?.toString() ?? 'Trainee', style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: renewalStatus,
+                decoration: const InputDecoration(labelText: 'Renewal Status', border: OutlineInputBorder()),
+                items: ['ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'RENEWED']
+                    .map((st) => DropdownMenuItem(value: st, child: Text(st)))
+                    .toList(),
+                onChanged: (v) => setDlg(() => renewalStatus = v ?? renewalStatus),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Next Renewal Due Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                subtitle: Text('${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}'),
+                trailing: const Icon(Icons.calendar_today, size: 20),
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: ctx,
+                    initialDate: nextDate,
+                    firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null) setDlg(() => nextDate = d);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final res = await widget.auth.updateRenewal(
+                  eid,
+                  renewalStatus: renewalStatus,
+                  nextRenewalDate: '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}',
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? 'Renewal updated')),
+                  );
+                  widget.onChanged();
+                }
+              },
+              child: const Text('Save Renewal'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _openStudentFile(int id, Map<String, dynamic> s) async {
     final res = await widget.auth.studentFile(id);
@@ -1772,15 +2059,18 @@ class _StudentsTabState extends State<_StudentsTab> {
   Widget build(BuildContext context) {
     final q = _search.text.trim().toLowerCase();
     final students = widget.students.where((s) {
+      final status = (s['enrollmentStatus'] ?? s['status'] ?? 'PENDING').toString().toUpperCase();
+      if (_statusFilter != 'ALL') {
+        if (_statusFilter == 'ACTIVE' && status != 'APPROVED' && status != 'ACTIVE' && status != 'IN_PROGRESS') return false;
+        if (_statusFilter == 'PENDING' && status != 'PENDING') return false;
+        if (_statusFilter == 'REJECTED' && status != 'REJECTED') return false;
+      }
       if (q.isEmpty) return true;
       final name = (s['traineeName']?.toString() ?? '').toLowerCase();
       final batch = (s['batchName']?.toString() ?? '').toLowerCase();
       return name.contains(q) || batch.contains(q);
     }).toList();
 
-    if (widget.students.isEmpty) {
-      return const Center(child: Text('No students yet'));
-    }
     return Column(
       children: [
         Padding(
@@ -1797,9 +2087,29 @@ class _StudentsTabState extends State<_StudentsTab> {
             ),
           ),
         ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: ['ALL', 'PENDING', 'ACTIVE', 'REJECTED'].map((f) {
+              final isSel = _statusFilter == f;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(f),
+                  selected: isSel,
+                  onSelected: (val) {
+                    if (val) setState(() => _statusFilter = f);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
         Expanded(
           child: students.isEmpty
-              ? const Center(child: Text('No matches'))
+              ? const Center(child: Text('No students matching criteria'))
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: students.length,
@@ -1807,21 +2117,67 @@ class _StudentsTabState extends State<_StudentsTab> {
                   itemBuilder: (_, i) {
                     final s = students[i];
                     final eid = s['id'] is int ? s['id'] as int : int.tryParse('${s['id']}');
-                    final status = s['enrollmentStatus']?.toString() ?? 'PENDING';
+                    final status = (s['enrollmentStatus'] ?? s['status'] ?? 'PENDING').toString().toUpperCase();
+                    final renewal = s['renewalStatus']?.toString() ?? 'ACTIVE';
                     return Card(
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(s['traineeName']?.toString() ?? 'Student', style: const TextStyle(fontWeight: FontWeight.w700)),
-                            Text('${s['batchName'] ?? ''} · $status · ${s['paymentStatus'] ?? ''}'),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s['traineeName']?.toString() ?? 'Student',
+                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: status == 'APPROVED' || status == 'ACTIVE'
+                                        ? const Color(0xFFDCFCE7)
+                                        : status == 'PENDING'
+                                            ? const Color(0xFFFEF3C7)
+                                            : const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    status,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: status == 'APPROVED' || status == 'ACTIVE'
+                                          ? const Color(0xFF166534)
+                                          : status == 'PENDING'
+                                              ? const Color(0xFF92400E)
+                                              : const Color(0xFF991B1B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Batch: ${s['batchName'] ?? 'General'} · Renewal: $renewal · ${s['paymentStatus'] ?? 'PAID'}', style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
                             if (s['attendancePercentage'] != null)
-                              Text('Attendance ${s['attendancePercentage']}%', style: const TextStyle(fontSize: 12)),
+                              Text('Attendance: ${s['attendancePercentage']}%', style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
                             const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: eid == null ? null : () => _openStudentFile(eid, s),
-                              child: const Text('Open student file'),
+                            Row(
+                              children: [
+                                TextButton.icon(
+                                  onPressed: eid == null ? null : () => _openStudentFile(eid, s),
+                                  icon: const Icon(Icons.folder_open_outlined, size: 16),
+                                  label: const Text('Student File'),
+                                ),
+                                const SizedBox(width: 8),
+                                if (eid != null)
+                                  OutlinedButton.icon(
+                                    onPressed: () => _showRenewalDialog(eid, s),
+                                    icon: const Icon(Icons.autorenew_rounded, size: 16),
+                                    label: const Text('Renewal'),
+                                  ),
+                              ],
                             ),
                             Wrap(
                               spacing: 8,
@@ -1869,6 +2225,86 @@ class _AttendanceTabState extends State<_AttendanceTab> {
   Map<String, dynamic>? _selected;
   List<Map<String, dynamic>> _trainees = [];
   bool _busy = false;
+
+  Future<void> _startQrSession() async {
+    if (_selected == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a batch first to start QR session')),
+      );
+      return;
+    }
+    final batchId = _selected!['id'] is int ? _selected!['id'] as int : int.tryParse('${_selected!['id']}');
+    if (batchId == null) return;
+
+    final res = await widget.auth.createQrSession(batchId: batchId, date: _date, duration: 15);
+    if (!mounted) return;
+    if (res['success'] == true) {
+      final qrCode = res['qrSessionCode']?.toString() ?? res['qrCode']?.toString() ?? 'QR-ATTENDANCE-ACTIVE';
+      final expiresAt = res['expiresAt']?.toString() ?? '15 minutes';
+      final sessionId = res['qrSessionId'] is int ? res['qrSessionId'] as int : int.tryParse('${res['qrSessionId']}');
+
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.qr_code_scanner_rounded, color: MartialArtsCentreDashboardScreen.primary),
+              SizedBox(width: 8),
+              Text('Live QR Attendance', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('Batch: ${_selected!['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
+                  borderRadius: BorderRadius.circular(16),
+                  color: const Color(0xFFF8FAFC),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.qr_code_2_rounded, size: 120, color: MartialArtsCentreDashboardScreen.navy),
+                    const SizedBox(height: 8),
+                    Text(
+                      qrCode,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5, color: MartialArtsCentreDashboardScreen.primary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('Session Active · Expires at: $expiresAt', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              const SizedBox(height: 4),
+              const Text('Students scan this QR code on their mobile app to mark instant verified attendance.', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+            ],
+          ),
+          actions: [
+            if (sessionId != null)
+              TextButton(
+                onPressed: () async {
+                  await widget.auth.closeQrSession(sessionId);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Close Session', style: TextStyle(color: Color(0xFFEF4444))),
+              ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['error']?.toString() ?? 'Could not start QR session')),
+      );
+    }
+  }
 
   Future<void> _loadSessions() async {
     setState(() => _busy = true);
@@ -1948,6 +2384,21 @@ class _AttendanceTabState extends State<_AttendanceTab> {
             ],
           ),
         ),
+        if (_selected != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: _startQrSession,
+                    icon: const Icon(Icons.qr_code_2_rounded),
+                    label: const Text('Start QR Attendance Session'),
+                  ),
+                ),
+              ],
+            ),
+          ),
         if (_busy) const LinearProgressIndicator(),
         Expanded(
           flex: 2,
@@ -1983,6 +2434,7 @@ class _AttendanceTabState extends State<_AttendanceTab> {
                       DropdownMenuItem(value: 'PRESENT', child: Text('Present')),
                       DropdownMenuItem(value: 'ABSENT', child: Text('Absent')),
                       DropdownMenuItem(value: 'LATE', child: Text('Late')),
+                      DropdownMenuItem(value: 'EXCUSED', child: Text('Excused')),
                     ],
                     onChanged: (v) => setState(() => _trainees[i]['status'] = v),
                   ),
@@ -2343,6 +2795,642 @@ class _SettingsTabState extends State<_SettingsTab> {
           child: _busy ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save settings'),
         ),
       ],
+    );
+  }
+}
+
+// ==========================================
+// 5. BELT GRADING & SKILLS TAB
+// ==========================================
+class _GradingTab extends StatefulWidget {
+  const _GradingTab({required this.auth, required this.enrollments, required this.batches});
+  final CentreAuthService auth;
+  final List<Map<String, dynamic>> enrollments;
+  final List<Map<String, dynamic>> batches;
+
+  @override
+  State<_GradingTab> createState() => _GradingTabState();
+}
+
+class _GradingTabState extends State<_GradingTab> {
+  bool _loading = false;
+  List<Map<String, dynamic>> _gradings = [];
+  List<Map<String, dynamic>> _criteria = [];
+  String _selectedStyle = MartialArtsCatalog.styles.first;
+  String _selectedBelt = 'Yellow';
+
+  static const _belts = ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Purple', 'Brown', 'Black'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _loading = true);
+    try {
+      final gRes = await widget.auth.getGradings();
+      if (gRes['success'] == true && gRes['gradings'] is List) {
+        _gradings = (gRes['gradings'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+      final cRes = await widget.auth.getGradingCriteria(style: _selectedStyle, belt: _selectedBelt);
+      if (cRes['success'] == true && cRes['criteria'] is List) {
+        _criteria = (cRes['criteria'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _showScheduleDialog() async {
+    if (widget.enrollments.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No enrolled trainees available for grading')),
+      );
+      return;
+    }
+    int selectedTraineeId = widget.enrollments.first['userId'] is int
+        ? widget.enrollments.first['userId'] as int
+        : int.tryParse('${widget.enrollments.first['userId']}') ?? 0;
+    String targetBelt = 'Yellow';
+    String examiner = 'Sensei Examiner';
+    DateTime assessmentDate = DateTime.now().add(const Duration(days: 7));
+    final remarksCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Schedule Belt Grading', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<int>(
+                  value: selectedTraineeId,
+                  decoration: const InputDecoration(labelText: 'Trainee', border: OutlineInputBorder()),
+                  items: widget.enrollments.map((e) {
+                    final uid = e['userId'] is int ? e['userId'] as int : int.tryParse('${e['userId']}') ?? 0;
+                    return DropdownMenuItem<int>(
+                      value: uid,
+                      child: Text(e['traineeName']?.toString() ?? 'Trainee $uid', overflow: TextOverflow.ellipsis),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setDlg(() => selectedTraineeId = v ?? selectedTraineeId),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: targetBelt,
+                  decoration: const InputDecoration(labelText: 'Target Belt', border: OutlineInputBorder()),
+                  items: _belts.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                  onChanged: (v) => setDlg(() => targetBelt = v ?? targetBelt),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Examiner Name', border: OutlineInputBorder()),
+                  controller: TextEditingController(text: examiner),
+                  onChanged: (v) => examiner = v,
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Assessment Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  subtitle: Text('${assessmentDate.year}-${assessmentDate.month.toString().padLeft(2, '0')}-${assessmentDate.day.toString().padLeft(2, '0')}'),
+                  trailing: const Icon(Icons.calendar_today, size: 20),
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: ctx,
+                      initialDate: assessmentDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 180)),
+                    );
+                    if (d != null) setDlg(() => assessmentDate = d);
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: remarksCtrl,
+                  decoration: const InputDecoration(labelText: 'Notes / Criteria', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final res = await widget.auth.scheduleGrading({
+                  'traineeId': selectedTraineeId,
+                  'style': _selectedStyle,
+                  'targetBelt': targetBelt,
+                  'scheduledDate': '${assessmentDate.year}-${assessmentDate.month.toString().padLeft(2, '0')}-${assessmentDate.day.toString().padLeft(2, '0')}',
+                  'examiner': examiner,
+                  'remarks': remarksCtrl.text.trim(),
+                });
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? 'Assessment scheduled')),
+                  );
+                  _loadData();
+                }
+              },
+              child: const Text('Schedule'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showScoreDialog(Map<String, dynamic> grading) async {
+    final gid = grading['id'] is int ? grading['id'] as int : int.tryParse('${grading['id']}');
+    if (gid == null) return;
+    double score = 80;
+    bool passed = true;
+    bool autoPromote = true;
+    final remarksCtrl = TextEditingController(text: 'Demonstrated solid technique and balance.');
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: Text('Score: ${grading['traineeName'] ?? 'Trainee'}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Target Belt: ${grading['targetBelt'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                Text('Performance Score: ${score.toInt()}/100', style: const TextStyle(fontWeight: FontWeight.w700)),
+                Slider(
+                  value: score,
+                  min: 0,
+                  max: 100,
+                  divisions: 20,
+                  activeColor: MartialArtsCentreDashboardScreen.primary,
+                  onChanged: (v) => setDlg(() {
+                    score = v;
+                    passed = score >= 60;
+                  }),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: passed,
+                  title: const Text('Passed Assessment', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onChanged: (v) => setDlg(() => passed = v ?? false),
+                ),
+                if (passed)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: autoPromote,
+                    title: const Text('Auto-Promote & Issue Certificate', style: TextStyle(fontSize: 13)),
+                    onChanged: (v) => setDlg(() => autoPromote = v ?? false),
+                  ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: remarksCtrl,
+                  decoration: const InputDecoration(labelText: 'Examiner Remarks', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final res = await widget.auth.scoreGrading(gid, {
+                  'score': score.toInt(),
+                  'passed': passed,
+                  'autoPromote': autoPromote,
+                  'remarks': remarksCtrl.text.trim(),
+                });
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? 'Assessment scored')),
+                  );
+                  _loadData();
+                }
+              },
+              child: const Text('Submit Score'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _promote(int gid) async {
+    final res = await widget.auth.promoteGrading(gid);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message']?.toString() ?? 'Belt promotion approved')),
+      );
+      _loadData();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final scheduledCount = _gradings.where((g) => g['status'] == 'SCHEDULED').length;
+    final passedCount = _gradings.where((g) => g['passed'] == true || g['status'] == 'PASSED').length;
+    final promotedCount = _gradings.where((g) => g['status'] == 'PROMOTED').length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _metricTile('Scheduled', '$scheduledCount', const Color(0xFFD97706)),
+              const SizedBox(width: 8),
+              _metricTile('Passed', '$passedCount', const Color(0xFF16A34A)),
+              const SizedBox(width: 8),
+              _metricTile('Promoted', '$promotedCount', const Color(0xFF4F46E5)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: MartialArtsCentreDashboardScreen.primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: _showScheduleDialog,
+            icon: const Icon(Icons.add_task_rounded),
+            label: const Text('Schedule Belt Grading Assessment', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 20),
+          const Text('Grading & Skill Assessments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: MartialArtsCentreDashboardScreen.navy)),
+          const SizedBox(height: 10),
+          if (_gradings.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              child: const Center(child: Text('No grading assessments scheduled yet.', style: TextStyle(color: Color(0xFF64748B)))),
+            )
+          else
+            ..._gradings.map((g) {
+              final gid = g['id'] is int ? g['id'] as int : int.tryParse('${g['id']}');
+              final status = (g['status'] ?? 'SCHEDULED').toString().toUpperCase();
+              return Card(
+                elevation: 1,
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              g['traineeName']?.toString() ?? 'Trainee',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: status == 'PROMOTED'
+                                  ? const Color(0xFFDCFCE7)
+                                  : status == 'PASSED'
+                                      ? const Color(0xFFEFF6FF)
+                                      : const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: status == 'PROMOTED'
+                                    ? const Color(0xFF166534)
+                                    : status == 'PASSED'
+                                        ? const Color(0xFF1D4ED8)
+                                        : const Color(0xFF92400E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text('Target Belt: ${g['targetBelt'] ?? 'Yellow'} · Style: ${g['style'] ?? 'Self-Defence'}', style: const TextStyle(fontSize: 13, color: Color(0xFF475569))),
+                      Text('Date: ${g['scheduledDate'] ?? ''} · Examiner: ${g['examiner'] ?? 'Sensei'}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      if (g['remarks'] != null && g['remarks'].toString().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text('Remarks: ${g['remarks']}', style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF334155))),
+                        ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (status == 'SCHEDULED')
+                            FilledButton.tonalIcon(
+                              onPressed: () => _showScoreDialog(g),
+                              icon: const Icon(Icons.rate_review_outlined, size: 16),
+                              label: const Text('Score / Evaluate'),
+                            ),
+                          if (status == 'PASSED' && gid != null)
+                            FilledButton.icon(
+                              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                              onPressed: () => _promote(gid),
+                              icon: const Icon(Icons.military_tech_rounded, size: 16),
+                              label: const Text('Approve Belt Promotion'),
+                            ),
+                          if (status == 'PROMOTED')
+                            const Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 16),
+                                SizedBox(width: 4),
+                                Text('Certificate Issued', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _metricTile(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          children: [
+            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 6. INSTRUCTOR STAFF TAB
+// ==========================================
+class _InstructorsTab extends StatefulWidget {
+  const _InstructorsTab({required this.auth});
+  final CentreAuthService auth;
+
+  @override
+  State<_InstructorsTab> createState() => _InstructorsTabState();
+}
+
+class _InstructorsTabState extends State<_InstructorsTab> {
+  bool _loading = false;
+  List<Map<String, dynamic>> _instructors = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstructors();
+  }
+
+  Future<void> _loadInstructors() async {
+    setState(() => _loading = true);
+    try {
+      final res = await widget.auth.getInstructors();
+      if (res['success'] == true && res['instructors'] is List) {
+        _instructors = (res['instructors'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _showAddInstructorDialog() async {
+    final nameCtrl = TextEditingController();
+    final desigCtrl = TextEditingController(text: 'Instructor');
+    final phoneCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final specCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Instructor Staff', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name *', border: OutlineInputBorder())),
+              const SizedBox(height: 10),
+              TextField(controller: desigCtrl, decoration: const InputDecoration(labelText: 'Designation (e.g. Head Coach)', border: OutlineInputBorder())),
+              const SizedBox(height: 10),
+              TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+              const SizedBox(height: 10),
+              TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
+              const SizedBox(height: 10),
+              TextField(controller: specCtrl, decoration: const InputDecoration(labelText: 'Specialization (e.g. Karate, Krav Maga)', border: OutlineInputBorder())),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+            onPressed: () async {
+              if (nameCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx);
+              final res = await widget.auth.createInstructor({
+                'name': nameCtrl.text.trim(),
+                'designation': desigCtrl.text.trim(),
+                'phone': phoneCtrl.text.trim(),
+                'email': emailCtrl.text.trim(),
+                'specialization': specCtrl.text.trim(),
+              });
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(res['message']?.toString() ?? 'Instructor added')),
+                );
+                _loadInstructors();
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteInstructor(int id) async {
+    final res = await widget.auth.deleteInstructor(id);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message']?.toString() ?? 'Instructor removed')),
+      );
+      _loadInstructors();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: MartialArtsCentreDashboardScreen.primary,
+        onPressed: _showAddInstructorDialog,
+        icon: const Icon(Icons.person_add),
+        label: const Text('Add Instructor'),
+      ),
+      body: _instructors.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.badge_outlined, size: 48, color: Color(0xFF94A3B8)),
+                  const SizedBox(height: 12),
+                  const Text('No instructors added yet', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: _showAddInstructorDialog,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add First Instructor'),
+                  ),
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: _instructors.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final inst = _instructors[i];
+                final iid = inst['id'] is int ? inst['id'] as int : int.tryParse('${inst['id']}');
+                return Card(
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFFEE2E2),
+                      child: Text(
+                        (inst['name']?.toString() ?? 'I').substring(0, 1).toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w800, color: MartialArtsCentreDashboardScreen.primary),
+                      ),
+                    ),
+                    title: Text(inst['name']?.toString() ?? 'Instructor', style: const TextStyle(fontWeight: FontWeight.w700)),
+                    subtitle: Text('${inst['designation'] ?? 'Coach'} · ${inst['phone'] ?? inst['email'] ?? ''}'),
+                    trailing: iid == null
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+                            onPressed: () => _deleteInstructor(iid),
+                          ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+// ==========================================
+// 8. PAST SESSIONS TAB
+// ==========================================
+class _PastSessionsTab extends StatelessWidget {
+  const _PastSessionsTab({required this.classes});
+  final List<Map<String, dynamic>> classes;
+
+  @override
+  Widget build(BuildContext context) {
+    final past = classes.where((c) {
+      final status = (c['status'] ?? '').toString().toUpperCase();
+      return status == 'ENDED' || status == 'COMPLETED' || c['isPast'] == true;
+    }).toList();
+
+    if (past.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.history_toggle_off_rounded, size: 48, color: Color(0xFF94A3B8)),
+            SizedBox(height: 12),
+            Text('No completed online sessions yet.', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: past.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) {
+        final c = past[i];
+        final recording = c['recordingUrl']?.toString();
+        return Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(c['title']?.toString() ?? 'Session', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(4)),
+                      child: const Text('COMPLETED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF475569))),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text('Instructor: ${c['instructor'] ?? 'Sensei'} · Batch: ${c['batchName'] ?? 'General'}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                Text('Scheduled: ${c['scheduledDate'] ?? ''} ${c['scheduledTime'] ?? ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                if (recording != null && recording.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  FilledButton.tonalIcon(
+                    onPressed: () async {
+                      final uri = Uri.tryParse(recording);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    icon: const Icon(Icons.play_circle_outline, size: 18),
+                    label: const Text('Watch Session Replay'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import '../../config/women_event_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/event_host_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
 
@@ -40,6 +42,13 @@ class _EventHostProfileCompletionScreenState
   final _bio = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _rate = TextEditingController(text: '500');
   final _credential = TextEditingController();
 
@@ -93,7 +102,8 @@ class _EventHostProfileCompletionScreenState
     }
     for (final c in [
       _name, _orgName, _phone, _whatsapp, _years, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _upi, _bank, _rate, _credential,
+      _pincode, _mapLocation, _bio, _upi, _bank, _accountHolder, _accountNumber,
+      _confirmAccountNumber, _ifsc, _bankName, _branchName, _rate, _credential,
     ]) {
       c.dispose();
     }
@@ -174,6 +184,17 @@ class _EventHostProfileCompletionScreenState
     _bio.text = p['bio']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     if (p['typicalPrice'] != null) {
       _rate.text = '${p['typicalPrice']}';
     }
@@ -219,7 +240,15 @@ class _EventHostProfileCompletionScreenState
       'durationMinutes': _duration,
       'bufferMinutes': _buffer,
       'upiId': _upi.text.trim(),
-      'bankDetails': _bank.text.trim(),
+      ...BankDetailsSection.buildPayload(
+        accountHolder: _accountHolder.text,
+        accountNumber: _accountNumber.text,
+        ifsc: _ifsc.text,
+        bankName: _bankName.text,
+        branch: _branchName.text,
+        accountType: _accountType,
+        upiId: _upi.text,
+      ),
     };
   }
 
@@ -717,10 +746,13 @@ class _EventHostProfileCompletionScreenState
     TextInputType? keyboardType,
     int maxLines = 1,
     String? hint,
+    String? helper,
+    String? errorText,
     bool required = false,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
   }) {
+    final resolvedHelper = helper ?? ProfileFieldHelper.helperForLabel(label);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextField(
@@ -732,6 +764,9 @@ class _EventHostProfileCompletionScreenState
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: resolvedHelper,
+          helperMaxLines: 2,
+          errorText: errorText,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -748,15 +783,19 @@ class _EventHostProfileCompletionScreenState
     required List<String> options,
     required ValueChanged<String?> onChanged,
     bool required = false,
+    String? helper,
   }) {
     final items = [...options];
     if (value != null && value.isNotEmpty && !items.contains(value)) items.add(value);
+    final resolvedHelper = helper ?? 'Select $label from the list.';
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: resolvedHelper,
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

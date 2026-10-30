@@ -193,7 +193,7 @@ class _DeliveryDashboardScreenState extends State<DeliveryDashboardScreen> {
 
   Future<void> _logout() async {
     _stopGps();
-    await context.read<AuthState>().api.clearToken();
+    await context.read<AuthState>().api.clearDeliveryPartnerToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),

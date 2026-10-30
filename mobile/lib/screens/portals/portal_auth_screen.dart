@@ -210,6 +210,12 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
       } else if (f.type == RegInputType.email) {
         final err = RegValidators.emailError(v);
         if (err != null) errors[f.key] = err;
+      } else if (f.key.toLowerCase().contains('name') && f.key != 'username') {
+        final err = RegValidators.nameError(v, label: f.label);
+        if (err != null) errors[f.key] = err;
+      } else if (f.key.toLowerCase().contains('pincode') || f.key.toLowerCase().contains('zip')) {
+        final err = RegValidators.pincodeError(v);
+        if (err != null) errors[f.key] = err;
       } else if (f.type == RegInputType.number) {
         if (!RegValidators.isPositiveNumber(v)) {
           errors[f.key] = '${f.label} must be a valid number';
@@ -322,12 +328,15 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
   InputDecoration _fieldDecoration({
     required String label,
     String? errorText,
+    String? helperText,
     IconData? prefixIcon,
     Widget? suffixIcon,
   }) {
     return InputDecoration(
       labelText: label,
       errorText: errorText,
+      helperText: helperText,
+      helperMaxLines: 2,
       filled: true,
       fillColor: Colors.white,
       prefixIcon: prefixIcon == null ? null : Icon(prefixIcon, color: const Color(0xFFBE123C)),
@@ -484,9 +493,12 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
   }
 
   Widget _buildField(RegFieldDef f) {
+    final fieldKey = ValueKey('reg_field_${f.key}');
+    final helper = f.helper ?? RegValidators.helperForField(f.key, f.type);
     switch (f.type) {
       case RegInputType.section:
         return Padding(
+          key: fieldKey,
           padding: const EdgeInsets.only(top: 16, bottom: 6),
           child: Text(
             f.label,
@@ -495,17 +507,21 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         );
       case RegInputType.dropdown:
         return Column(
+          key: fieldKey,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             DropdownButtonFormField<String>(
+              key: ValueKey('dropdown_${f.key}'),
               value: _dropdowns[f.key],
               decoration: InputDecoration(
                 labelText: '${f.label}${f.required ? ' *' : ''}',
+                helperText: helper,
+                helperMaxLines: 2,
                 errorText: _fieldErrors[f.key],
               ),
               items: f.options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
               onChanged: (v) {
-                setState(() => _dropdowns[f.key] = v);
+                _dropdowns[f.key] = v;
                 _refreshValidation();
               },
             ),
@@ -513,6 +529,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         );
       case RegInputType.chips:
         return Column(
+          key: fieldKey,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ChipMultiSelect(
@@ -520,15 +537,20 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
               options: f.options,
               selected: _chips[f.key] ?? {},
               onChanged: (s) {
-                setState(() => _chips[f.key] = s);
+                _chips[f.key] = s;
                 _refreshValidation();
               },
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 4, bottom: 4),
+              child: Text(helper, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.2)),
             ),
             _errorText(f.key),
           ],
         );
       case RegInputType.file:
         return Column(
+          key: fieldKey,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             FileUploadTile(
@@ -537,6 +559,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
               filePath: _filePaths[f.key],
               optional: !f.required,
               hint: f.hint ?? 'JPG, PNG or PDF up to 5 MB',
+              helper: helper,
               onPick: () async {
                 setState(() => _uploading = true);
                 try {
@@ -564,10 +587,8 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
                 }
               },
               onClear: () {
-                setState(() {
-                  _files[f.key] = null;
-                  _filePaths[f.key] = null;
-                });
+                _files[f.key] = null;
+                _filePaths[f.key] = null;
                 _refreshValidation();
               },
             ),
@@ -581,12 +602,14 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         );
       case RegInputType.multiFile:
         return Column(
+          key: fieldKey,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             MultiFileUploadTile(
               label: f.label,
               required: f.required,
               hint: f.hint ?? 'JPG, PNG or PDF up to 5 MB · tap Add for each certificate',
+              helper: helper,
               files: _multiFiles[f.key] ?? const [],
               onAdd: () async {
                 setState(() => _uploading = true);
@@ -614,7 +637,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
                 }
               },
               onRemove: (i) {
-                setState(() => (_multiFiles[f.key] ?? []).removeAt(i));
+                (_multiFiles[f.key] ?? []).removeAt(i);
                 _refreshValidation();
               },
             ),
@@ -628,9 +651,11 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         );
       case RegInputType.multiline:
         return Column(
+          key: fieldKey,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              key: ValueKey('input_${f.key}'),
               controller: _text[f.key],
               maxLines: f.maxLines > 1 ? f.maxLines : 3,
               maxLength: f.maxLength,
@@ -638,6 +663,8 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
               decoration: InputDecoration(
                 labelText: '${f.label}${f.required ? ' *' : ''}',
                 hintText: f.hint,
+                helperText: helper,
+                helperMaxLines: 2,
                 alignLabelWithHint: true,
                 errorText: _fieldErrors[f.key],
               ),
@@ -646,9 +673,11 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         );
       case RegInputType.phone:
         return Column(
+          key: fieldKey,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
+              key: ValueKey('input_${f.key}'),
               controller: _text[f.key],
               keyboardType: TextInputType.phone,
               inputFormatters: [
@@ -664,6 +693,8 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
               decoration: InputDecoration(
                 labelText: '${f.label}${f.required ? ' *' : ''}',
                 hintText: f.hint ?? '10-digit mobile',
+                helperText: helper,
+                helperMaxLines: 2,
                 errorText: _fieldErrors[f.key],
               ),
             ),
@@ -671,32 +702,41 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         );
       case RegInputType.number:
         return TextField(
+          key: fieldKey,
           controller: _text[f.key],
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           onChanged: (_) => _refreshValidation(),
           decoration: InputDecoration(
             labelText: '${f.label}${f.required ? ' *' : ''}',
+            helperText: helper,
+            helperMaxLines: 2,
             errorText: _fieldErrors[f.key],
           ),
         );
       case RegInputType.email:
         return TextField(
+          key: fieldKey,
           controller: _text[f.key],
           keyboardType: TextInputType.emailAddress,
           onChanged: (_) => _refreshValidation(),
           decoration: InputDecoration(
             labelText: '${f.label}${f.required ? ' *' : ''}',
+            helperText: helper,
+            helperMaxLines: 2,
             errorText: _fieldErrors[f.key],
           ),
         );
       case RegInputType.password:
         return Column(
+          key: fieldKey,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ObscurePasswordField(
+              key: ValueKey('input_${f.key}'),
               controller: _text[f.key]!,
               label: '${f.label}${f.required ? ' *' : ''}',
+              helperText: helper,
               onChanged: (_) => _refreshValidation(),
             ),
             _errorText(f.key),
@@ -704,11 +744,14 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         );
       case RegInputType.text:
         return TextField(
+          key: fieldKey,
           controller: _text[f.key],
           onChanged: (_) => _refreshValidation(),
           decoration: InputDecoration(
             labelText: '${f.label}${f.required ? ' *' : ''}',
             hintText: f.hint,
+            helperText: helper,
+            helperMaxLines: 2,
             errorText: _fieldErrors[f.key],
           ),
         );
@@ -760,6 +803,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
 
   Widget _buildLoginCard(bool canSubmit) {
     return Column(
+      key: const ValueKey('portal_auth_login_view'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 12),
@@ -834,31 +878,29 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
                   child: Text(_error!, style: TextStyle(color: Colors.red.shade800, fontSize: 13)),
                 ),
               TextField(
+                key: const ValueKey('portal_login_email_input'),
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
                 textInputAction: TextInputAction.next,
-                onChanged: (_) {
-                  if (_touched) _refreshValidation();
-                  setState(() {});
-                },
+                onChanged: (_) => _refreshValidation(),
                 decoration: _fieldDecoration(
                   label: 'Email',
+                  helperText: 'Enter an active email address.',
                   errorText: _fieldErrors['email'],
                   prefixIcon: Icons.email_outlined,
                 ),
               ),
               const SizedBox(height: 14),
               ObscurePasswordField(
+                key: const ValueKey('portal_login_password_input'),
                 controller: _password,
                 label: 'Password',
                 filled: true,
                 prefixIcon: Icons.lock_outline,
+                helperText: 'Enter your account password.',
                 errorText: _fieldErrors['password'],
-                onChanged: (_) {
-                  if (_touched) _refreshValidation();
-                  setState(() {});
-                },
+                onChanged: (_) => _refreshValidation(),
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -919,6 +961,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
 
   Widget _buildRegisterForm(bool canSubmit) {
     return Column(
+      key: const ValueKey('portal_auth_register_view'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
@@ -944,6 +987,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         ...widget.registerFields.map(_buildField),
         const SizedBox(height: 8),
         TextField(
+          key: const ValueKey('portal_register_email_input'),
           controller: _email,
           keyboardType: TextInputType.emailAddress,
           onChanged: (_) {
@@ -952,6 +996,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
           },
           decoration: _fieldDecoration(
             label: 'Email *',
+            helperText: 'Enter an active email address.',
             errorText: _fieldErrors['email'],
             prefixIcon: Icons.email_outlined,
           ),
@@ -1029,25 +1074,30 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         ],
         const SizedBox(height: 8),
         ObscurePasswordField(
+          key: const ValueKey('portal_register_password_input'),
           controller: _password,
           label: 'Password *',
           showStrength: true,
           filled: true,
           prefixIcon: Icons.lock_outline,
+          helperText: 'Must be at least 6 characters with a number and special character (!@#\$%^&*).',
           errorText: _fieldErrors['password'],
           onChanged: (_) => _refreshValidation(),
         ),
         const SizedBox(height: 8),
         ObscurePasswordField(
+          key: const ValueKey('portal_register_confirm_password_input'),
           controller: _confirmPassword,
           label: 'Confirm password *',
           filled: true,
           prefixIcon: Icons.lock_outline,
+          helperText: 'Re-enter your password to confirm.',
           errorText: _fieldErrors['confirmPassword'],
           onChanged: (_) => _refreshValidation(),
         ),
         if (widget.requirePhoneOtp) ...[
           OtpVerifyRow(
+            key: const ValueKey('portal-phone-otp'),
             label: 'Phone',
             verified: _phoneOtpOk,
             onVerified: () {
@@ -1059,6 +1109,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
         ],
         if (widget.requireTerms) ...[
           CheckboxListTile(
+            key: const ValueKey('portal_terms_checkbox'),
             contentPadding: EdgeInsets.zero,
             value: _terms,
             onChanged: (v) {

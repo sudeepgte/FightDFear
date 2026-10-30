@@ -97,16 +97,6 @@
             <version>6.0.2</version>
         </dependency>
 
-        <!-- Schema migrations -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-mysql</artifactId>
-        </dependency>
-
         <!-- H2 for unit/integration tests -->
         <dependency>
             <groupId>com.h2database</groupId>

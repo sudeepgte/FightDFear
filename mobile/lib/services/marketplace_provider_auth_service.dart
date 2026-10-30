@@ -75,48 +75,58 @@ class MarketplaceProviderAuthService {
       },
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveMarketplaceProviderToken(res['token'].toString());
     }
     return res;
   }
 
   Future<Map<String, dynamic>> profile() =>
-      _api.get('/api/marketplace/provider/profile');
+      _api.get('/api/marketplace/provider/profile', marketplaceProviderAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) =>
       _api.put(
         '/api/marketplace/provider/profile',
+        marketplaceProviderAuth: true,
         body: body,
         timeout: const Duration(seconds: 30),
       );
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/marketplace/provider/submit-verification');
+      _api.post('/api/marketplace/provider/submit-verification',
+          marketplaceProviderAuth: true);
 
   Future<Map<String, dynamic>> dashboard() =>
-      _api.get('/api/marketplace/provider/me');
+      _api.get('/api/marketplace/provider/me', marketplaceProviderAuth: true);
 
   Future<Map<String, dynamic>> updateBookingStatus(int bookingId, String status) =>
-      _api.post('/api/marketplace/provider/bookings/$bookingId/status', body: {
-        'status': status,
-      });
+      _api.post('/api/marketplace/provider/bookings/$bookingId/status',
+          marketplaceProviderAuth: true,
+          body: {
+            'status': status,
+          });
 
   Future<Map<String, dynamic>> addClass(Map<String, dynamic> payload) =>
-      _api.post('/api/marketplace/provider/classes', body: payload);
+      _api.post('/api/marketplace/provider/classes',
+          marketplaceProviderAuth: true, body: payload);
 
   Future<Map<String, dynamic>> bookingMessages(int bookingId) =>
-      _api.get('/api/marketplace/provider/bookings/$bookingId/messages');
+      _api.get('/api/marketplace/provider/bookings/$bookingId/messages',
+          marketplaceProviderAuth: true);
 
   Future<Map<String, dynamic>> sendBookingMessage(int bookingId, String content) =>
-      _api.post('/api/marketplace/provider/bookings/$bookingId/messages', body: {
-        'content': content,
-      });
+      _api.post('/api/marketplace/provider/bookings/$bookingId/messages',
+          marketplaceProviderAuth: true,
+          body: {
+            'content': content,
+          });
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/marketplace/provider/payout/request');
+      _api.post('/api/marketplace/provider/payout/request',
+          marketplaceProviderAuth: true);
 
   Future<Map<String, dynamic>> updateBookingNotes(int id, String coachNotes) =>
-      _api.post('/api/marketplace/provider/bookings/$id/notes', body: {'coachNotes': coachNotes});
+      _api.post('/api/marketplace/provider/bookings/$id/notes',
+          marketplaceProviderAuth: true, body: {'coachNotes': coachNotes});
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -132,7 +142,9 @@ class MarketplaceProviderAuthService {
     return _api.postMultipart(
       '/api/marketplace/provider/photos',
       files: files,
-      auth: true,
+      marketplaceProviderAuth: true,
     );
   }
+
+  Future<void> logout() => _api.clearMarketplaceProviderToken();
 }

@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import '../../config/job_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/women_jobs_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
 
@@ -39,6 +41,13 @@ class _WomenJobsProfileCompletionScreenState
   final _bio = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _rate = TextEditingController(text: '250');
 
   String? _designation;
@@ -89,7 +98,9 @@ class _WomenJobsProfileCompletionScreenState
   void dispose() {
     for (final c in [
       _name, _phone, _whatsapp, _years, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _upi, _bank, _rate,
+      _pincode, _mapLocation, _bio, _upi, _bank, _accountHolder,
+      _accountNumber, _confirmAccountNumber, _ifsc, _bankName,
+      _branchName, _rate,
     ]) {
       c.dispose();
     }
@@ -181,6 +192,17 @@ class _WomenJobsProfileCompletionScreenState
     _bio.text = p['bio']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     if (p['hourlyRate'] != null) _rate.text = '${p['hourlyRate']}';
     _duration = p['durationMinutes'] is num ? (p['durationMinutes'] as num).toInt() : 60;
     _buffer = p['bufferMinutes'] is num ? (p['bufferMinutes'] as num).toInt() : 10;
@@ -227,7 +249,15 @@ class _WomenJobsProfileCompletionScreenState
       'serviceMode': _serviceMode,
       'workType': _workType,
       'upiId': _upi.text.trim(),
-      'bankDetails': _bank.text.trim(),
+      ...BankDetailsSection.buildPayload(
+        accountHolder: _accountHolder.text,
+        accountNumber: _accountNumber.text,
+        ifsc: _ifsc.text,
+        bankName: _bankName.text,
+        branch: _branchName.text,
+        accountType: _accountType,
+        upiId: _upi.text,
+      ),
     };
   }
 
@@ -615,14 +645,18 @@ class _WomenJobsProfileCompletionScreenState
                     onChanged: (v) => setState(() => _workType = v),
                   ),
                 ]),
-                _section('9', 'Payout', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  const Text(
-                    'UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
-                ]),
+                BankDetailsSection(
+                  accountHolderController: _accountHolder,
+                  accountNumberController: _accountNumber,
+                  confirmAccountNumberController: _confirmAccountNumber,
+                  ifscController: _ifsc,
+                  bankNameController: _bankName,
+                  branchNameController: _branchName,
+                  upiController: _upi,
+                  accountType: _accountType,
+                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                  sectionNumber: '9',
+                ),
                 _section('10', 'Documents (optional)', [
                   const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
                   const SizedBox(height: 10),
@@ -691,6 +725,8 @@ class _WomenJobsProfileCompletionScreenState
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: ProfileFieldHelper.instructionForField(label: label, hint: hint, required: required),
+          helperMaxLines: 2,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -716,6 +752,8 @@ class _WomenJobsProfileCompletionScreenState
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: ProfileFieldHelper.instructionForField(label: label, required: required),
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

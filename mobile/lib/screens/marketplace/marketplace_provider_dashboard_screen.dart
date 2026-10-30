@@ -71,7 +71,7 @@ class _MarketplaceProviderDashboardScreenState
   }
 
   Future<void> _logout() async {
-    await context.read<AuthState>().api.clearToken();
+    await context.read<AuthState>().api.clearMarketplaceProviderToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),

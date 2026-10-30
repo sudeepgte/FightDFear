@@ -34,6 +34,13 @@ public class JourneySession {
     private Double startLat;
     private Double startLng;
 
+    // Purpose: live continuous location coordinates tracked during journey.
+    private Double currentLat;
+    private Double currentLng;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date lastLocationUpdatedAt;
+
     // Purpose: track where the journey started (e.g. "College", "Office").
     private String startFromText;
 
@@ -129,6 +136,30 @@ public class JourneySession {
 
     public void setStartFromText(String startFromText) {
         this.startFromText = startFromText;
+    }
+
+    public Double getCurrentLat() {
+        return currentLat;
+    }
+
+    public void setCurrentLat(Double currentLat) {
+        this.currentLat = currentLat;
+    }
+
+    public Double getCurrentLng() {
+        return currentLng;
+    }
+
+    public void setCurrentLng(Double currentLng) {
+        this.currentLng = currentLng;
+    }
+
+    public Date getLastLocationUpdatedAt() {
+        return lastLocationUpdatedAt;
+    }
+
+    public void setLastLocationUpdatedAt(Date lastLocationUpdatedAt) {
+        this.lastLocationUpdatedAt = lastLocationUpdatedAt;
     }
 }
 

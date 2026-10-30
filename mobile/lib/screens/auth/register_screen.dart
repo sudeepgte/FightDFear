@@ -254,6 +254,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 label: 'Profile photo',
                 fileName: _photoName,
                 optional: true,
+                helper: 'Upload a clear profile photo in an accepted image format (JPG/PNG).',
                 onPick: () async {
                   final name = await pickImageName();
                   if (name != null) setState(() => _photoName = name);
@@ -261,18 +262,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const ValueKey('register_name_input'),
                 controller: _name,
                 textCapitalization: TextCapitalization.words,
                 onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
                   labelText: 'Full name *',
+                  helperText: 'Enter your full name as it appears on your official documents.',
+                  helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                validator: (v) => RegValidators.nameError(v ?? ''),
               ),
               const SizedBox(height: 12),
               TextFormField(
+                key: const ValueKey('register_email_input'),
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
                 onChanged: (_) => setState(() {
@@ -280,15 +284,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 }),
                 decoration: const InputDecoration(
                   labelText: 'Email *',
+                  helperText: 'Enter an active email address for account alerts.',
+                  helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Email is required';
-                  if (!RegValidators.isEmail(v)) return 'Enter a valid email';
-                  return null;
-                },
+                validator: (v) => RegValidators.emailError(v ?? ''),
               ),
               OtpVerifyRow(
+                key: const ValueKey('register_email_otp'),
                 label: 'Email',
                 verified: _emailOtpOk,
                 onVerified: () => setState(() => _emailOtpOk = true),
@@ -345,6 +348,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const ValueKey('register_phone_input'),
                 controller: _phone,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
@@ -356,22 +360,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 }),
                 decoration: const InputDecoration(
                   labelText: 'Phone (10 digits) *',
+                  helperText: 'Enter your 10-digit mobile number.',
+                  helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
-                validator: (v) {
-                  if (v == null || !RegValidators.isPhone10(v)) {
-                    return 'Enter a 10-digit phone number';
-                  }
-                  return null;
-                },
+                validator: (v) => RegValidators.phoneError(v ?? ''),
               ),
               OtpVerifyRow(
+                key: const ValueKey('register_phone_otp'),
                 label: 'Phone',
                 verified: _phoneOtpOk,
                 onVerified: () => setState(() => _phoneOtpOk = true),
               ),
               const SizedBox(height: 8),
               TextFormField(
+                key: const ValueKey('register_emergency_input'),
                 controller: _emergency,
                 keyboardType: TextInputType.phone,
                 inputFormatters: [
@@ -381,6 +384,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
                   labelText: 'Emergency contact number *',
+                  helperText: 'Enter a trusted emergency contact number (different from your phone).',
+                  helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
@@ -395,6 +400,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                key: const ValueKey('register_dob_input'),
                 controller: _dob,
                 readOnly: true,
                 onTap: _pickDob,
@@ -402,20 +408,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 decoration: InputDecoration(
                   labelText: 'Date of birth *',
                   hintText: 'YYYY-MM-DD',
+                  helperText: 'Select your date of birth (must be at least 18 years old).',
+                  helperMaxLines: 2,
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today_outlined),
                     onPressed: _pickDob,
                   ),
                 ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Date of birth is required' : null,
+                validator: (v) => RegValidators.dobError(v ?? ''),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
+                key: const ValueKey('register_gender_dropdown'),
                 value: _gender,
                 decoration: const InputDecoration(
                   labelText: 'Gender (optional)',
+                  helperText: 'Select your gender identity (optional).',
+                  helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
                 items: const [
@@ -427,9 +437,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
+                key: const ValueKey('register_language_dropdown'),
                 value: _language,
                 decoration: const InputDecoration(
                   labelText: 'Preferred language *',
+                  helperText: 'Select your preferred language for notifications and safety messages.',
+                  helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
                 items: _languages
@@ -439,12 +452,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                key: const ValueKey('register_address_input'),
                 controller: _address,
                 maxLines: 2,
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   labelText: 'Current location / address *',
                   hintText: 'Address or Google Maps link',
+                  helperText: 'Enter your residential address or choose your location using GPS.',
+                  helperMaxLines: 2,
                   border: const OutlineInputBorder(),
                   suffixIcon: IconButton(
                     tooltip: 'Use GPS',
@@ -472,9 +488,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 8),
               ObscurePasswordField(
+                key: const ValueKey('register_password_input'),
                 controller: _password,
                 label: 'Password *',
                 showStrength: true,
+                helperText: 'Must be at least 6 characters with a number and special character (!@#\$%^&*).',
                 onChanged: (_) => setState(() {}),
               ),
               if (_password.text.isNotEmpty &&
@@ -488,8 +506,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
               ObscurePasswordField(
+                key: const ValueKey('register_confirm_password_input'),
                 controller: _confirm,
                 label: 'Confirm password *',
+                helperText: 'Re-enter your password to confirm matching.',
                 onChanged: (_) => setState(() {}),
               ),
               if (_confirm.text.isNotEmpty && _confirm.text != _password.text)

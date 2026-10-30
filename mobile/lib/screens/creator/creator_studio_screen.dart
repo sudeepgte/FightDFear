@@ -69,7 +69,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
   }
 
   Future<void> _logout() async {
-    await context.read<AuthState>().logout();
+    await context.read<AuthState>().api.clearCreatorToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),

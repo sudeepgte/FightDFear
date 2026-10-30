@@ -1,13 +1,20 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 import 'api_client.dart';
+import 'navigation_service.dart';
 
 class AuthState extends ChangeNotifier {
   AuthState() {
     _client = ApiClient(
       ApiConfig.resolve(isAndroid: defaultTargetPlatform == TargetPlatform.android),
     );
+    ApiClient.onSessionExpired = _onGlobalSessionExpired;
   }
 
   late final ApiClient _client;
@@ -23,12 +30,22 @@ class AuthState extends ChangeNotifier {
 
   String _networkErrorMessage(Object e) {
     final msg = e.toString();
-    if (msg.contains('TimeoutException')) {
+    if (e is TimeoutException || msg.contains('TimeoutException')) {
       return 'Server timed out ($apiBaseUrl). '
           'Turn OFF mobile data, connect phone to same Wi-Fi as laptop, '
           'then open $apiBaseUrl/api/auth/health in phone browser.';
     }
-    return 'Cannot reach server ($apiBaseUrl). Details: $e';
+    if (e is SocketException ||
+        e is http.ClientException ||
+        msg.contains('SocketException') ||
+        msg.contains('Connection refused') ||
+        msg.contains('Failed host lookup')) {
+      return 'Cannot reach server ($apiBaseUrl). Make sure backend is running on port 8084.';
+    }
+    if (e is PlatformException || msg.contains('PlatformException') || msg.contains('channel-error')) {
+      return 'Device local storage issue: $e';
+    }
+    return 'Authentication error: $e';
   }
 
   Future<bool> pingServer([String? customUrl]) async {
@@ -72,6 +89,9 @@ class AuthState extends ChangeNotifier {
         // Offline or backend unavailable — do not fake a logged-in session.
         loggedIn = false;
       }
+    } catch (e) {
+      debugPrint('Bootstrap error: $e');
+      loggedIn = false;
     } finally {
       loading = false;
       notifyListeners();
@@ -90,7 +110,11 @@ class AuthState extends ChangeNotifier {
         timeout: const Duration(seconds: 20),
       );
       if (res['success'] == true && res['token'] != null) {
-        await _client.saveToken(res['token'].toString());
+        try {
+          await _client.saveToken(res['token'].toString());
+        } catch (storageErr) {
+          debugPrint('Warning: Token could not be written to persistent storage: $storageErr');
+        }
         loggedIn = true;
         name = res['name']?.toString();
         email = res['email']?.toString();
@@ -179,6 +203,18 @@ class AuthState extends ChangeNotifier {
         : int.tryParse('${res['userId']}');
     error = null;
     notifyListeners();
+  }
+
+  Future<void> _onGlobalSessionExpired(AuthRole role) async {
+    if (role == AuthRole.member) {
+      loggedIn = false;
+      name = null;
+      email = null;
+      userId = null;
+      error = 'Your session has expired. Please log in again.';
+      notifyListeners();
+    }
+    await NavigationService.handleSessionExpired(role);
   }
 
   Future<void> logout() async {

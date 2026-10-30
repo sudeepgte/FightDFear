@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/glow_provider_auth_service.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../portals/portal_auth_screen.dart';
 import 'glow_salon_dashboard_screen.dart';
@@ -22,7 +23,7 @@ class GlowProviderLoginScreen extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> res,
   ) async {
-    final needsCompletion = res['needsProfileCompletion'] == true;
+    final needsCompletion = ApprovalNavigation.shouldRedirectToProfileCompletion(res);
     if (needsCompletion) {
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute(

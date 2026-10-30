@@ -40,46 +40,50 @@ class EventHostAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveEventHostToken(res['token'].toString());
     }
     return res;
   }
 
-  Future<Map<String, dynamic>> profile() => _api.get('/api/women-events/host/profile');
+  Future<Map<String, dynamic>> profile() =>
+      _api.get('/api/women-events/host/profile', eventHostAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) => _api.put(
         '/api/women-events/host/profile',
+        eventHostAuth: true,
         body: body,
         timeout: const Duration(seconds: 30),
       );
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/women-events/host/submit-verification');
+      _api.post('/api/women-events/host/submit-verification', eventHostAuth: true);
 
-  Future<Map<String, dynamic>> dashboard() => _api.get('/api/women-events/host/me');
+  Future<Map<String, dynamic>> dashboard() =>
+      _api.get('/api/women-events/host/me', eventHostAuth: true);
 
   Future<Map<String, dynamic>> createEvent(Map<String, dynamic> body) =>
-      _api.post('/api/women-events/host/events', body: body);
+      _api.post('/api/women-events/host/events', eventHostAuth: true, body: body);
 
   Future<Map<String, dynamic>> updateEvent(int id, Map<String, dynamic> body) =>
-      _api.put('/api/women-events/host/events/$id', body: body);
+      _api.put('/api/women-events/host/events/$id', eventHostAuth: true, body: body);
 
   Future<Map<String, dynamic>> cancelEvent(int id) =>
-      _api.post('/api/women-events/host/events/$id/cancel');
+      _api.post('/api/women-events/host/events/$id/cancel', eventHostAuth: true);
 
   Future<Map<String, dynamic>> registrations(int eventId) =>
-      _api.get('/api/women-events/host/events/$eventId/registrations');
+      _api.get('/api/women-events/host/events/$eventId/registrations', eventHostAuth: true);
 
   Future<Map<String, dynamic>> checkIn(int eventId, String ticketCode) => _api.post(
         '/api/women-events/host/events/$eventId/checkin',
+        eventHostAuth: true,
         body: {'ticketCode': ticketCode.trim()},
       );
 
   Future<Map<String, dynamic>> organizerTypes() =>
-      _api.get('/api/women-events/host/organizer-types');
+      _api.get('/api/women-events/host/organizer-types', eventHostAuth: true);
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/women-events/host/payout/request');
+      _api.post('/api/women-events/host/payout/request', eventHostAuth: true);
 
   Future<Map<String, dynamic>> updateRegistrationNotes(
     int eventId,
@@ -88,6 +92,7 @@ class EventHostAuthService {
   ) =>
       _api.post(
         '/api/women-events/host/events/$eventId/registrations/$registrationId/notes',
+        eventHostAuth: true,
         body: {'coachNotes': coachNotes},
       );
 
@@ -105,9 +110,9 @@ class EventHostAuthService {
     return _api.postMultipart(
       '/api/women-events/host/photos',
       files: files,
-      auth: true,
+      eventHostAuth: true,
     );
   }
 
-  Future<void> logout() => _api.clearToken();
+  Future<void> logout() => _api.clearEventHostToken();
 }

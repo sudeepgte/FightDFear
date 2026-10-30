@@ -11,10 +11,15 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/martial_arts_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/centre_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
+import '../../widgets/dynamic_location_hierarchy_picker.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
+import 'martial_arts_centre_dashboard_screen.dart';
+import 'martial_arts_centre_pending_approval_screen.dart';
 
 class MartialArtsCentreProfileCompletionScreen extends StatefulWidget {
   const MartialArtsCentreProfileCompletionScreen({super.key, this.onFinished});
@@ -46,6 +51,13 @@ class _MartialArtsCentreProfileCompletionScreenState
   final _startingFee = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _batchName = TextEditingController();
   final _batchInstructor = TextEditingController();
   final _batchFee = TextEditingController(text: '0');
@@ -106,7 +118,8 @@ class _MartialArtsCentreProfileCompletionScreenState
     for (final c in [
       _name, _contact, _phone, _whatsapp, _yearStarted, _area, _city, _stateOther,
       _pincode, _mapLocation, _about, _howWeTeach, _startingFee, _upi, _bank,
-      _batchName, _batchInstructor, _batchFee, _batchAdmission, _batchCapacity,
+      _accountHolder, _accountNumber, _confirmAccountNumber, _ifsc, _bankName,
+      _branchName, _batchName, _batchInstructor, _batchFee, _batchAdmission, _batchCapacity,
     ]) {
       c.dispose();
     }
@@ -205,6 +218,17 @@ class _MartialArtsCentreProfileCompletionScreenState
     _startingFee.text = p['startingFee']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     if (_batchName.text.isEmpty && _name.text.isNotEmpty) {
       _batchName.text = '${_name.text.trim()} — Beginner';
     }
@@ -253,7 +277,15 @@ class _MartialArtsCentreProfileCompletionScreenState
         'startingFee': double.tryParse(_startingFee.text.trim()),
         'trialAvailable': _trialAvailable,
         'upiId': _upi.text.trim(),
-        'bankDetails': _bank.text.trim(),
+        ...BankDetailsSection.buildPayload(
+          accountHolder: _accountHolder.text,
+          accountNumber: _accountNumber.text,
+          ifsc: _ifsc.text,
+          bankName: _bankName.text,
+          branch: _branchName.text,
+          accountType: _accountType,
+          upiId: _upi.text,
+        ),
       };
 
   String? _validate({bool forSubmit = false}) {
@@ -277,6 +309,60 @@ class _MartialArtsCentreProfileCompletionScreenState
     return null;
   }
 
+  void _handleNavigationAfterSave(Map<String, dynamic> res) {
+    final status = (res['centreProfileStatus'] ?? _profile['centreProfileStatus'] ?? '').toString().toUpperCase();
+    final isApproved = res['approved'] == true || status == 'APPROVED';
+
+    if (isApproved) {
+      if (widget.onFinished != null) {
+        widget.onFinished!(context);
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MartialArtsCentreDashboardScreen()),
+        );
+      }
+      return;
+    }
+
+    if (status == 'PENDING_ADMIN_APPROVAL') {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => MartialArtsCentrePendingApprovalScreen(initialProfile: res),
+        ),
+      );
+      return;
+    }
+
+    if (status == 'CHANGES_REQUESTED' || status == 'REJECTED') {
+      final note = res['changesRequestedNote'] ?? res['rejectionReason'] ?? 'Admin requested changes to your profile.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$note'),
+          backgroundColor: const Color(0xFFEA580C),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
+    final missing = res['missingItems'];
+    if (missing is List && missing.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Profile saved! Missing for verification: ${missing.take(2).join(', ')}'),
+          backgroundColor: const Color(0xFF1E1B4B),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile saved successfully! Tap "Submit for Verification" when ready.'),
+          backgroundColor: Color(0xFF16A34A),
+        ),
+      );
+    }
+  }
+
   Future<void> _saveProfile() async {
     final err = _validate();
     if (err != null) {
@@ -288,6 +374,7 @@ class _MartialArtsCentreProfileCompletionScreenState
       _error = null;
     });
     try {
+      Map<String, dynamic>? updated;
       await ActionFeedback.run(
         context,
         loadingLabel: 'Saving…',
@@ -297,9 +384,14 @@ class _MartialArtsCentreProfileCompletionScreenState
           if (res['success'] != true) {
             throw Exception(res['error']?.toString() ?? 'Failed to save profile');
           }
-          _applyProfile(Map<String, dynamic>.from(res));
+          updated = Map<String, dynamic>.from(res);
+          _applyProfile(updated!);
         },
       );
+      if (!mounted) return;
+      if (updated != null) {
+        _handleNavigationAfterSave(updated!);
+      }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -363,21 +455,32 @@ class _MartialArtsCentreProfileCompletionScreenState
       _error = null;
     });
     try {
+      Map<String, dynamic> updatedProfile = _profile;
       await ActionFeedback.run(
         context,
         loadingLabel: 'Submitting…',
         doneLabel: 'Submitted',
         action: () async {
           final saveRes = await _svc.updateProfile(_profileBody());
-          if (saveRes['success'] == true) _applyProfile(Map<String, dynamic>.from(saveRes));
-          if (_profile['canSubmitForVerification'] != true) {
-            throw Exception('Complete all mandatory fields before submitting');
+          if (saveRes['success'] == true) {
+            _applyProfile(Map<String, dynamic>.from(saveRes));
+            updatedProfile = Map<String, dynamic>.from(saveRes);
           }
-          final res = await _svc.submitVerification();
-          if (res['success'] != true) {
-            throw Exception(res['error']?.toString() ?? 'Submit failed');
+          final currentStatus = (updatedProfile['centreProfileStatus'] ?? '').toString().toUpperCase();
+          if (currentStatus != 'PENDING_ADMIN_APPROVAL' && currentStatus != 'APPROVED') {
+            final res = await _svc.submitVerification();
+            if (res['success'] != true) {
+              final msg = res['error']?.toString() ?? res['message']?.toString() ?? '';
+              if (!msg.toLowerCase().contains('already')) {
+                throw Exception(msg.isNotEmpty ? msg : 'Submit failed');
+              }
+            }
+            final refreshRes = await _svc.profile();
+            if (refreshRes['success'] == true) {
+              _applyProfile(Map<String, dynamic>.from(refreshRes));
+              updatedProfile = Map<String, dynamic>.from(refreshRes);
+            }
           }
-          await _load();
         },
       );
       if (!mounted) return;
@@ -386,7 +489,11 @@ class _MartialArtsCentreProfileCompletionScreenState
       if (widget.onFinished != null) {
         widget.onFinished!(context);
       } else {
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => MartialArtsCentrePendingApprovalScreen(initialProfile: updatedProfile),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
@@ -485,6 +592,8 @@ class _MartialArtsCentreProfileCompletionScreenState
         : <String>[];
     final canSubmit = _profile['canSubmitForVerification'] == true;
     final guidance = _profile['nextStepGuidance']?.toString() ?? '';
+    final changesNote = _profile['changesRequestedNote']?.toString();
+    final rejectionReason = _profile['rejectionReason']?.toString();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -506,6 +615,68 @@ class _MartialArtsCentreProfileCompletionScreenState
                 if (_error != null) ...[
                   Text(_error!, style: const TextStyle(color: Colors.red)),
                   const SizedBox(height: 8),
+                ],
+                if (changesNote != null && changesNote.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFDBA74)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: Color(0xFFEA580C)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Changes Requested by Admin',
+                                style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF9A3412)),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(changesNote, style: const TextStyle(fontSize: 13, color: Color(0xFF7C2D12))),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (rejectionReason != null && rejectionReason.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFCA5A5)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.error_outline, color: Color(0xFFDC2626)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Profile Needs Correction',
+                                style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF991B1B)),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(rejectionReason, style: const TextStyle(fontSize: 13, color: Color(0xFF7F1D1D))),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
                 ProfileCompletionCard(
                   percent: pct,
@@ -595,11 +766,25 @@ class _MartialArtsCentreProfileCompletionScreenState
                   ),
                 ]),
                 _section('2', 'Location', [
-                  _field(_area, '2.1', 'Hall / landmark', required: true),
-                  _field(_city, '2.3', 'City', required: true),
+                  DynamicLocationHierarchyPicker(
+                    api: context.read<AuthState>().api,
+                    initialCountry: 'India',
+                    initialState: _state,
+                    initialCity: _city.text.isNotEmpty ? _city.text : null,
+                    isRequired: true,
+                    onLocationChanged: ({required country, required state, required district, required city}) {
+                      setState(() {
+                        _state = state;
+                        if (city.isNotEmpty) _city.text = city;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _field(_area, '2.1', 'Hall / Street / Landmark', required: true),
+                  _field(_city, '2.3', 'City / Locality', required: true),
                   _dropdown(
                     number: '2.4',
-                    label: 'State',
+                    label: 'State / Union Territory',
                     value: _state,
                     options: MartialArtsCatalog.indianStates,
                     required: true,
@@ -789,14 +974,20 @@ class _MartialArtsCentreProfileCompletionScreenState
                     ),
                   ],
                 ]),
-                _section('9', 'Payout', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
+                BankDetailsSection(
+                  accountHolderController: _accountHolder,
+                  accountNumberController: _accountNumber,
+                  confirmAccountNumberController: _confirmAccountNumber,
+                  ifscController: _ifsc,
+                  bankNameController: _bankName,
+                  branchNameController: _branchName,
+                  upiController: _upi,
+                  accountType: _accountType,
+                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                  sectionNumber: '9',
+                ),
+                _section('9B', 'Pricing overview', [
                   _field(_startingFee, '9.3', 'Starting monthly fee (₹)', keyboardType: TextInputType.number),
-                  const Text(
-                    'Earnings stay in your wallet until you request a withdraw from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
                 ]),
                 _section('10', 'Documents (optional)', [
                   const Text(
@@ -881,6 +1072,8 @@ class _MartialArtsCentreProfileCompletionScreenState
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: ProfileFieldHelper.instructionForField(label: label, hint: hint, required: required),
+          helperMaxLines: 2,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -906,6 +1099,8 @@ class _MartialArtsCentreProfileCompletionScreenState
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: ProfileFieldHelper.instructionForField(label: label, required: required),
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

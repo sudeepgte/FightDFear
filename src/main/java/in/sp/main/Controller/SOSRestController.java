@@ -135,6 +135,54 @@ public class SOSRestController {
                 : ResponseEntity.badRequest().body(response);
     }
 
+    @PostMapping("/location/{sosId}")
+    public ResponseEntity<Map<String, Object>> updateLocation(
+            @PathVariable Long sosId,
+            @RequestBody Map<String, Object> payload,
+            HttpSession session) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        User loggedInUser = (User) session.getAttribute("user");
+        if (loggedInUser == null) {
+            response.put("success", false);
+            response.put("error", "Login required");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+
+        if (payload == null || payload.get("latitude") == null || payload.get("longitude") == null) {
+            response.put("success", false);
+            response.put("error", "latitude and longitude are required");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        try {
+            double lat = Double.parseDouble(payload.get("latitude").toString().trim());
+            double lng = Double.parseDouble(payload.get("longitude").toString().trim());
+            if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                response.put("success", false);
+                response.put("error", "Invalid coordinates");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            Map<String, Object> result = sosService.updateSOSLocation(sosId, loggedInUser.getId(), lat, lng);
+            if (Boolean.FALSE.equals(result.get("success"))) {
+                String err = (String) result.get("error");
+                if (err != null && err.startsWith("Unauthorized")) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(result);
+                }
+                return ResponseEntity.badRequest().body(result);
+            }
+            return ResponseEntity.ok(result);
+        } catch (NumberFormatException e) {
+            response.put("success", false);
+            response.put("error", "Invalid latitude/longitude numbers");
+            return ResponseEntity.badRequest().body(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     @GetMapping("/history")
     public ResponseEntity<Map<String, Object>> history(HttpSession session) {
         Map<String, Object> response = new LinkedHashMap<>();

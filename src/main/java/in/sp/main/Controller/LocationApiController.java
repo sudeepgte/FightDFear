@@ -33,7 +33,26 @@ public class LocationApiController {
         res.put("success", true);
         res.put("state", state);
         res.put("cities", cities);
+        res.put("districts", cities);
         res.put("count", cities.size());
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping({"/api/locations/districts", "/marketplace/api/locations/districts"})
+    public ResponseEntity<Map<String, Object>> getDistricts(@RequestParam(value = "state", required = false) String state) {
+        List<String> districts = locationDirectoryService.getDistricts(state);
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("state", state);
+        res.put("districts", districts);
+        res.put("cities", districts);
+        res.put("count", districts.size());
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping({"/api/locations/lookup", "/marketplace/api/locations/lookup"})
+    public ResponseEntity<Map<String, Object>> lookupLocation(@RequestParam(value = "query", required = false) String query) {
+        Map<String, Object> res = locationDirectoryService.lookupHierarchy(query);
         return ResponseEntity.ok(res);
     }
 

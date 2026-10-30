@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../config/job_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/women_jobs_auth_service.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../portals/portal_auth_screen.dart';
 import 'women_jobs_profile_completion_screen.dart';
@@ -20,7 +21,7 @@ class WomenJobsPortalLoginScreen extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> res,
   ) async {
-    final needsCompletion = res['needsProfileCompletion'] == true;
+    final needsCompletion = ApprovalNavigation.shouldRedirectToProfileCompletion(res);
     if (needsCompletion) {
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute(

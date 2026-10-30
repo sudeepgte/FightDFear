@@ -40,23 +40,26 @@ class InvestorAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveInvestorToken(res['token'].toString());
     }
     return res;
   }
 
-  Future<Map<String, dynamic>> profile() => _api.get('/api/investor/profile');
+  Future<Map<String, dynamic>> profile() =>
+      _api.get('/api/investor/profile', investorAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) => _api.put(
         '/api/investor/profile',
+        investorAuth: true,
         body: body,
         timeout: const Duration(seconds: 30),
       );
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/investor/submit-verification');
+      _api.post('/api/investor/submit-verification', investorAuth: true);
 
-  Future<Map<String, dynamic>> dashboard() => _api.get('/api/investor/me');
+  Future<Map<String, dynamic>> dashboard() =>
+      _api.get('/api/investor/me', investorAuth: true);
 
   Future<Map<String, dynamic>> marketplace({
     String? category,
@@ -72,21 +75,23 @@ class InvestorAuthService {
     final qs = q.entries
         .map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}')
         .join('&');
-    return _api.get('/api/investor/marketplace${qs.isEmpty ? '' : '?$qs'}');
+    return _api.get('/api/investor/marketplace${qs.isEmpty ? '' : '?$qs'}', investorAuth: true);
   }
 
   Future<Map<String, dynamic>> proposalCategories() =>
-      _api.get('/api/investor/proposal-categories');
+      _api.get('/api/investor/proposal-categories', investorAuth: true);
 
   Future<Map<String, dynamic>> invest(Map<String, dynamic> body) =>
-      _api.post('/api/investor/invest', body: body);
+      _api.post('/api/investor/invest', investorAuth: true, body: body);
 
   Future<Map<String, dynamic>> withdrawInterest(int investmentId) =>
-      _api.post('/api/investor/investments/$investmentId/withdraw');
+      _api.post('/api/investor/investments/$investmentId/withdraw', investorAuth: true);
 
-  Future<Map<String, dynamic>> subscribe() => _api.post('/api/investor/subscribe');
+  Future<Map<String, dynamic>> subscribe() =>
+      _api.post('/api/investor/subscribe', investorAuth: true);
 
-  Future<Map<String, dynamic>> meetings() => _api.get('/api/investor/meetings');
+  Future<Map<String, dynamic>> meetings() =>
+      _api.get('/api/investor/meetings', investorAuth: true);
 
   Future<Map<String, dynamic>> requestMeeting({
     required int proposalId,
@@ -94,34 +99,36 @@ class InvestorAuthService {
     String location = '',
     String notes = '',
   }) =>
-      _api.post('/api/investor/proposals/$proposalId/meetings', body: {
+      _api.post('/api/investor/proposals/$proposalId/meetings', investorAuth: true, body: {
         'meetingTime': meetingTime,
         'location': location,
         'notes': notes,
       });
 
-  Future<Map<String, dynamic>> chatThreads() => _api.get('/api/investor/chat/threads');
+  Future<Map<String, dynamic>> chatThreads() =>
+      _api.get('/api/investor/chat/threads', investorAuth: true);
 
   Future<Map<String, dynamic>> chatMessages({required int proposalId}) =>
-      _api.get('/api/investor/chat?proposalId=$proposalId');
+      _api.get('/api/investor/chat?proposalId=$proposalId', investorAuth: true);
 
   Future<Map<String, dynamic>> sendChat({
     required int proposalId,
     required String message,
   }) =>
-      _api.post('/api/investor/chat', body: {
+      _api.post('/api/investor/chat', investorAuth: true, body: {
         'proposalId': proposalId,
         'message': message,
       });
 
   Future<Map<String, dynamic>> notifications() =>
-      _api.get('/api/investor/notifications');
+      _api.get('/api/investor/notifications', investorAuth: true);
 
   Future<Map<String, dynamic>> rateInvestment(int id, {required int rating, String review = ''}) =>
-      _api.post('/api/investor/investments/$id/rate', body: {'rating': rating, 'review': review});
+      _api.post('/api/investor/investments/$id/rate',
+          investorAuth: true, body: {'rating': rating, 'review': review});
 
   Future<Map<String, dynamic>> cancelMeeting(int id) =>
-      _api.post('/api/investor/meetings/$id/cancel');
+      _api.post('/api/investor/meetings/$id/cancel', investorAuth: true);
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -137,9 +144,9 @@ class InvestorAuthService {
     return _api.postMultipart(
       '/api/investor/photos',
       files: files,
-      auth: true,
+      investorAuth: true,
     );
   }
 
-  Future<void> logout() => _api.clearToken();
+  Future<void> logout() => _api.clearInvestorToken();
 }

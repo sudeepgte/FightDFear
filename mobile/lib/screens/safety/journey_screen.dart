@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/auth_state.dart';
+import '../../services/background_location_service.dart';
 import '../../services/journey_service.dart';
 import 'contacts_screen.dart';
 
@@ -69,6 +71,9 @@ class _JourneyScreenState extends State<JourneyScreen> {
       if (res['success'] == true && res['active'] == true) {
         _applySession(res);
         _startTimers();
+        unawaited(BackgroundLocationService.instance.startJourneyTracking(
+          context.read<AuthState>().api,
+        ));
       } else {
         _session = null;
       }
@@ -125,6 +130,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
         setState(() => _applySession(res));
       } else {
         _stopTimers();
+        unawaited(BackgroundLocationService.instance.stopJourneyTracking());
         setState(() {
           _session = null;
           _banner = res['message']?.toString() ?? 'Journey ended';
@@ -173,12 +179,26 @@ class _JourneyScreenState extends State<JourneyScreen> {
       _banner = 'Contacting server…';
     });
 
-    // Never block start on GPS — start timer first; location is optional.
+    double? startLat;
+    double? startLng;
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 4),
+        ),
+      );
+      startLat = pos.latitude;
+      startLng = pos.longitude;
+    } catch (_) {}
+
     try {
       final res = await _journey.start(
         destination: dest,
         startFrom: from,
         expectedArrivalEpochMs: _pickedEta!.millisecondsSinceEpoch,
+        latitude: startLat,
+        longitude: startLng,
       );
       if (!mounted) return;
       if (res['success'] == true) {
@@ -188,6 +208,9 @@ class _JourneyScreenState extends State<JourneyScreen> {
           _banner = res['message']?.toString() ?? 'Journey timer started';
         });
         _startTimers();
+        unawaited(BackgroundLocationService.instance.startJourneyTracking(
+          context.read<AuthState>().api,
+        ));
       } else {
         setState(() {
           _busy = false;
@@ -211,6 +234,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
       final res = await _journey.markSafe();
       if (!mounted) return;
       _stopTimers();
+      unawaited(BackgroundLocationService.instance.stopJourneyTracking());
       setState(() {
         _busy = false;
         _session = null;
@@ -244,6 +268,7 @@ class _JourneyScreenState extends State<JourneyScreen> {
       final res = await _journey.cancel();
       if (!mounted) return;
       _stopTimers();
+      unawaited(BackgroundLocationService.instance.stopJourneyTracking());
       setState(() {
         _busy = false;
         _session = null;

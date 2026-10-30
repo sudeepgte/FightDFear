@@ -5,10 +5,9 @@ import 'api_client.dart';
 
 /// Women Jobs worker portal — quick register, login, then profile completion.
 class WomenJobsAuthService {
-  WomenJobsAuthService(this._api, [this._auth]);
+  WomenJobsAuthService(this._api, [AuthState? _]);
 
   final ApiClient _api;
-  final AuthState? _auth;
 
   Future<Map<String, dynamic>> sendEmailOtp(String email) => _api.post(
         '/api/marketplace/jobs/otp/send-email',
@@ -34,7 +33,7 @@ class WomenJobsAuthService {
       );
 
   Future<Map<String, dynamic>> dashboard() =>
-      _api.get('/api/marketplace/jobs/dashboard');
+      _api.get('/api/marketplace/jobs/dashboard', womenJobsAuth: true);
 
   Future<Map<String, dynamic>> login({
     required String email,
@@ -46,30 +45,31 @@ class WomenJobsAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
-      _auth?.applyUserSession(res);
+      await _api.saveWomenJobsToken(res['token'].toString());
     }
     return res;
   }
 
   Future<Map<String, dynamic>> profile() =>
-      _api.get('/api/marketplace/jobs/profile');
+      _api.get('/api/marketplace/jobs/profile', womenJobsAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) =>
       _api.put(
         '/api/marketplace/jobs/profile',
+        womenJobsAuth: true,
         body: body,
         timeout: const Duration(seconds: 30),
       );
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/marketplace/jobs/submit-verification');
+      _api.post('/api/marketplace/jobs/submit-verification', womenJobsAuth: true);
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/marketplace/jobs/payout/request');
+      _api.post('/api/marketplace/jobs/payout/request', womenJobsAuth: true);
 
   Future<Map<String, dynamic>> updateBookingNotes(int id, String coachNotes) =>
-      _api.post('/api/job-bookings/$id/notes', body: {'coachNotes': coachNotes});
+      _api.post('/api/job-bookings/$id/notes',
+          womenJobsAuth: true, body: {'coachNotes': coachNotes});
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -85,7 +85,9 @@ class WomenJobsAuthService {
     return _api.postMultipart(
       '/api/marketplace/jobs/photos',
       files: files,
-      auth: true,
+      womenJobsAuth: true,
     );
   }
+
+  Future<void> logout() => _api.clearWomenJobsToken();
 }

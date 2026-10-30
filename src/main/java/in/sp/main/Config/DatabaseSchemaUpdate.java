@@ -13,50 +13,14 @@ public class DatabaseSchemaUpdate implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        try {
-            System.out.println("Checking and updating database schema for enrollment status column...");
-            jdbcTemplate.execute("ALTER TABLE enrollment MODIFY COLUMN status VARCHAR(50)");
-            System.out.println("Database schema updated successfully: enrollment.status altered to VARCHAR(50)");
-        } catch (Exception e) {
-            System.err.println("Note: Could not alter column status (it may already be correct): " + e.getMessage());
-        }
+        // Redundant DDL and destructive data overwrites removed:
+        // - enrollment.status handled by Hibernate @Enumerated mapping.
+        // - financial_videos, financial_live_sessions, financial_workshops custom_category columns handled by JPA & V47.
+        // - women_events.category handled by JPA & V49.
+        // - Destructive UPDATE on financial_videos (duration/level) removed to preserve real video data.
+        // - Unnecessary UPDATE on financial_live_sessions removed.
 
-        try {
-            jdbcTemplate.execute("ALTER TABLE financial_videos ADD COLUMN custom_category VARCHAR(255) DEFAULT NULL");
-            System.out.println("Added custom_category column to financial_videos table.");
-        } catch (Exception e) {
-            // Column may already exist
-        }
-
-        try {
-            jdbcTemplate.execute("ALTER TABLE financial_live_sessions ADD COLUMN custom_category VARCHAR(255) DEFAULT NULL");
-            System.out.println("Added custom_category column to financial_live_sessions table.");
-        } catch (Exception e) {
-            // Column may already exist
-        }
-
-        try {
-            jdbcTemplate.execute("ALTER TABLE financial_workshops ADD COLUMN custom_category VARCHAR(255) DEFAULT NULL");
-            System.out.println("Added custom_category column to financial_workshops table.");
-        } catch (Exception e) {
-            // Column may already exist
-        }
-
-        try {
-            jdbcTemplate.execute("UPDATE financial_videos SET duration = NULL, level = NULL");
-            System.out.println("Cleared legacy duration/level values in financial_videos table.");
-        } catch (Exception e) {
-            // Table/columns may vary
-        }
-
-        try {
-            jdbcTemplate.execute("UPDATE financial_live_sessions SET meeting_url = '' WHERE meeting_url LIKE '%/admin%' OR meeting_url = 'admin'");
-            System.out.println("Cleaned legacy admin meeting_url values in financial_live_sessions table.");
-        } catch (Exception e) {
-            // Table/columns may vary
-        }
-
-        // Women Marketplace: keep entity-mapped columns in sync with legacy columns
+        // Retained: Non-destructive legacy service_providers column synchronization
         try {
             jdbcTemplate.execute(
                 "UPDATE service_providers SET provider_category = category " +
@@ -70,13 +34,6 @@ public class DatabaseSchemaUpdate implements CommandLineRunner {
             System.out.println("Synced legacy service_providers category/verification columns.");
         } catch (Exception e) {
             System.err.println("Note: Could not sync service_providers legacy columns: " + e.getMessage());
-        }
-
-        try {
-            jdbcTemplate.execute("ALTER TABLE women_events MODIFY COLUMN category VARCHAR(64) NOT NULL");
-            System.out.println("women_events.category widened to VARCHAR(64) for expanded event categories.");
-        } catch (Exception e) {
-            System.err.println("Note: Could not alter women_events.category: " + e.getMessage());
         }
     }
 }

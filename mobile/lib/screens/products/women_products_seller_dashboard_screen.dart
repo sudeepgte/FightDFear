@@ -71,7 +71,7 @@ class _WomenProductsSellerDashboardScreenState extends State<WomenProductsSeller
   }
 
   Future<void> _logout() async {
-    await context.read<AuthState>().api.clearToken();
+    await context.read<AuthState>().api.clearWomenProductsSellerToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),

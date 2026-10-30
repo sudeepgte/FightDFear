@@ -40,37 +40,41 @@ class EntrepreneurAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveEntrepreneurToken(res['token'].toString());
     }
     return res;
   }
 
-  Future<Map<String, dynamic>> profile() => _api.get('/api/entrepreneur/profile');
+  Future<Map<String, dynamic>> profile() =>
+      _api.get('/api/entrepreneur/profile', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) => _api.put(
         '/api/entrepreneur/profile',
+        entrepreneurAuth: true,
         body: body,
         timeout: const Duration(seconds: 30),
       );
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/entrepreneur/submit-verification');
+      _api.post('/api/entrepreneur/submit-verification', entrepreneurAuth: true);
 
-  Future<Map<String, dynamic>> dashboard() => _api.get('/api/entrepreneur/me');
+  Future<Map<String, dynamic>> dashboard() =>
+      _api.get('/api/entrepreneur/me', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> proposalCategories() =>
-      _api.get('/api/entrepreneur/proposal-categories');
+      _api.get('/api/entrepreneur/proposal-categories', entrepreneurAuth: true);
 
-  Future<Map<String, dynamic>> interests() => _api.get('/api/entrepreneur/interests');
+  Future<Map<String, dynamic>> interests() =>
+      _api.get('/api/entrepreneur/interests', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> createProposal(Map<String, dynamic> body) =>
-      _api.post('/api/entrepreneur/proposals', body: body);
+      _api.post('/api/entrepreneur/proposals', entrepreneurAuth: true, body: body);
 
   Future<Map<String, dynamic>> updateProposal(int id, Map<String, dynamic> body) =>
-      _api.put('/api/entrepreneur/proposals/$id', body: body);
+      _api.put('/api/entrepreneur/proposals/$id', entrepreneurAuth: true, body: body);
 
   Future<Map<String, dynamic>> cancelProposal(int id) =>
-      _api.post('/api/entrepreneur/proposals/$id/cancel');
+      _api.post('/api/entrepreneur/proposals/$id/cancel', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> uploadPitch({
     http.MultipartFile? document,
@@ -87,7 +91,7 @@ class EntrepreneurAuthService {
         if (proposalId != null) 'proposalId': '$proposalId',
       },
       files: files,
-      auth: true,
+      entrepreneurAuth: true,
     );
   }
 
@@ -103,57 +107,63 @@ class EntrepreneurAuthService {
     return _api.postMultipart(
       '/api/entrepreneur/proposals/$proposalId/upload',
       files: files,
-      auth: true,
+      entrepreneurAuth: true,
     );
   }
 
-  Future<Map<String, dynamic>> meetings() => _api.get('/api/entrepreneur/meetings');
+  Future<Map<String, dynamic>> meetings() =>
+      _api.get('/api/entrepreneur/meetings', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> acceptMeeting(int id) =>
-      _api.post('/api/entrepreneur/meetings/$id/accept');
+      _api.post('/api/entrepreneur/meetings/$id/accept', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> rejectMeeting(int id) =>
-      _api.post('/api/entrepreneur/meetings/$id/reject');
+      _api.post('/api/entrepreneur/meetings/$id/reject', entrepreneurAuth: true);
 
-  Future<Map<String, dynamic>> chatThreads() => _api.get('/api/entrepreneur/chat/threads');
+  Future<Map<String, dynamic>> chatThreads() =>
+      _api.get('/api/entrepreneur/chat/threads', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> chatMessages({
     required int proposalId,
     required int investorId,
   }) =>
-      _api.get('/api/entrepreneur/chat?proposalId=$proposalId&investorId=$investorId');
+      _api.get(
+        '/api/entrepreneur/chat?proposalId=$proposalId&investorId=$investorId',
+        entrepreneurAuth: true,
+      );
 
   Future<Map<String, dynamic>> sendChat({
     required int proposalId,
     required int investorId,
     required String message,
   }) =>
-      _api.post('/api/entrepreneur/chat', body: {
+      _api.post('/api/entrepreneur/chat', entrepreneurAuth: true, body: {
         'proposalId': proposalId,
         'investorId': investorId,
         'message': message,
       });
 
   Future<Map<String, dynamic>> fundingDetail() =>
-      _api.get('/api/entrepreneur/funding-detail');
+      _api.get('/api/entrepreneur/funding-detail', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> payCommission(int investmentId) =>
-      _api.post('/api/entrepreneur/investments/$investmentId/commission/pay');
+      _api.post('/api/entrepreneur/investments/$investmentId/commission/pay', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> updateBank(Map<String, dynamic> body) =>
-      _api.put('/api/entrepreneur/bank', body: body);
+      _api.put('/api/entrepreneur/bank', entrepreneurAuth: true, body: body);
 
   Future<Map<String, dynamic>> notifications() =>
-      _api.get('/api/entrepreneur/notifications');
+      _api.get('/api/entrepreneur/notifications', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/entrepreneur/payout/request');
+      _api.post('/api/entrepreneur/payout/request', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> updateInterestNotes(int id, String coachNotes) =>
-      _api.post('/api/entrepreneur/investments/$id/notes', body: {'coachNotes': coachNotes});
+      _api.post('/api/entrepreneur/investments/$id/notes',
+          entrepreneurAuth: true, body: {'coachNotes': coachNotes});
 
   Future<Map<String, dynamic>> cancelMeeting(int id) =>
-      _api.post('/api/entrepreneur/meetings/$id/cancel');
+      _api.post('/api/entrepreneur/meetings/$id/cancel', entrepreneurAuth: true);
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -169,9 +179,9 @@ class EntrepreneurAuthService {
     return _api.postMultipart(
       '/api/entrepreneur/photos',
       files: files,
-      auth: true,
+      entrepreneurAuth: true,
     );
   }
 
-  Future<void> logout() => _api.clearToken();
+  Future<void> logout() => _api.clearEntrepreneurToken();
 }

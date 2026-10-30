@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../config/doctor_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
 import '../../widgets/profile_location_picker.dart';
@@ -89,6 +90,13 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   double? _clinicLng;
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   String? _uploadingType;
   double _uploadProgress = 0;
 
@@ -121,6 +129,12 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     _videoFee.dispose();
     _upi.dispose();
     _bank.dispose();
+    _accountHolder.dispose();
+    _accountNumber.dispose();
+    _confirmAccountNumber.dispose();
+    _ifsc.dispose();
+    _bankName.dispose();
+    _branchName.dispose();
     super.dispose();
   }
 
@@ -201,6 +215,17 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
       ..addAll(DoctorCatalog.splitCsv(p['blockedDates']));
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
 
     _selectedModes
       ..clear()
@@ -322,7 +347,15 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         'breakEnd': _breakEnd == null ? '' : _formatTime(_breakEnd!),
         'blockedDates': _blockedDates.join(','),
         'upiId': _upi.text.trim(),
-        'bankDetails': _bank.text.trim(),
+        ...BankDetailsSection.buildPayload(
+          accountHolder: _accountHolder.text,
+          accountNumber: _accountNumber.text,
+          ifsc: _ifsc.text,
+          bankName: _bankName.text,
+          branch: _branchName.text,
+          accountType: _accountType,
+          upiId: _upi.text,
+        ),
         'availabilitySlots': _slots
             .map((s) => {
                   'day': s.day,
@@ -647,6 +680,22 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     );
   }
 
+  static String _helperForLabel(String label) {
+    final l = label.toLowerCase();
+    if (l.contains('name')) return 'Enter your full name as it appears on your official documents.';
+    if (l.contains('reg') || l.contains('license')) return 'Enter your official registration/license number.';
+    if (l.contains('experience')) return 'Enter your total years of professional clinical experience (0-50).';
+    if (l.contains('hospital') || l.contains('clinic name')) return 'Enter primary hospital, clinic or centre name.';
+    if (l.contains('address')) return 'Enter street address, building or suite.';
+    if (l.contains('city')) return 'Enter or select your city or locality.';
+    if (l.contains('state')) return 'Select your State or Union Territory.';
+    if (l.contains('pincode') || l.contains('zip')) return 'Enter your 6-digit postal PIN code.';
+    if (l.contains('fee') || l.contains('price') || l.contains('rate')) return 'Enter consultation/service fee in INR (₹).';
+    if (l.contains('bio') || l.contains('about')) return 'Short professional bio for patients.';
+    if (l.contains('map')) return 'Paste a Google Maps link or use the pin button below.';
+    return 'Enter $label.';
+  }
+
   Widget _field(
     TextEditingController controller,
     String number,
@@ -654,10 +703,13 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     TextInputType? keyboardType,
     int maxLines = 1,
     String? hint,
+    String? helper,
+    String? errorText,
     bool required = false,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
   }) {
+    final resolvedHelper = helper ?? _helperForLabel(label);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextField(
@@ -669,6 +721,9 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: resolvedHelper,
+          helperMaxLines: 2,
+          errorText: errorText,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -685,17 +740,23 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     required List<String> options,
     required ValueChanged<String?> onChanged,
     bool required = false,
+    String? helper,
+    String? errorText,
   }) {
     final items = [...options];
     if (value != null && value.isNotEmpty && !items.contains(value)) {
       items.insert(items.length - (items.contains('Other') ? 1 : 0), value);
     }
+    final resolvedHelper = helper ?? 'Select $label from the list.';
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: resolvedHelper,
+          helperMaxLines: 2,
+          errorText: errorText,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,
@@ -1333,14 +1394,35 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                 _section('8', 'About you', [
                   _field(_bio, '8.1', 'Bio', maxLines: 4, hint: 'Short professional bio for patients'),
                 ]),
-                _section('9', 'Payout', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  Text(
-                    'Earnings stay in your wallet until you request a withdraw from the dashboard.',
-                    style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        BankDetailsSection(
+                          sectionNumber: '9',
+                          title: 'Payout & Bank Details',
+                          accountHolderController: _accountHolder,
+                          accountNumberController: _accountNumber,
+                          confirmAccountNumberController: _confirmAccountNumber,
+                          ifscController: _ifsc,
+                          bankNameController: _bankName,
+                          branchNameController: _branchName,
+                          upiController: _upi,
+                          accountType: _accountType,
+                          onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Earnings stay in your wallet until you request a withdraw from the dashboard.',
+                          style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
-                ]),
+                ),
                 _section('10', 'Documents (optional)', [
                   const Text(
                     'Uploads are optional for now. You can add them later from this screen.',

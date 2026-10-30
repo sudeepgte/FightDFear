@@ -78,7 +78,7 @@ class _WomenJobsWorkerDashboardScreenState
   }
 
   Future<void> _logout() async {
-    await context.read<AuthState>().logout();
+    await context.read<AuthState>().api.clearWomenJobsToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),
