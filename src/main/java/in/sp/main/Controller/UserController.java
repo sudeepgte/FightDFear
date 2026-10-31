@@ -279,7 +279,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/{id:[0-9]+}", method = RequestMethod.GET)
-    public String getUser(@PathVariable Long id, Model model, HttpSession session) {
+    public String getUser(@PathVariable("id") Long id, Model model, HttpSession session) {
         User sessionUser = (User) session.getAttribute("user");
         Admin sessionAdmin = (Admin) session.getAttribute("admin");
         if (sessionUser == null && sessionAdmin == null) {
@@ -563,7 +563,7 @@ public class UserController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String deleteUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         User sessionUser = (User) session.getAttribute("user");
         Admin sessionAdmin = (Admin) session.getAttribute("admin");
         if (sessionUser == null && sessionAdmin == null) {
@@ -1026,7 +1026,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.GET)
-    public String showUpdateForm(@PathVariable Long id, Model model, HttpSession session) {
+    public String showUpdateForm(@PathVariable("id") Long id, Model model, HttpSession session) {
         User sessionUser = (User) session.getAttribute("user");
         if (sessionUser == null || !sessionUser.getId().equals(id)) {
             session.setAttribute("redirectAfterLogin", "/users/update/" + id);
@@ -1052,7 +1052,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
-    public String updateUser(@PathVariable Long id,
+    public String updateUser(@PathVariable("id") Long id,
                              @RequestParam("name") String name,
                              @RequestParam("email") String email,
                              @RequestParam("phone") String phone,

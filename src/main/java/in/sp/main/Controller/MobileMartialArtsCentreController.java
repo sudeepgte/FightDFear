@@ -149,14 +149,14 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> registerCentre(
-            @RequestParam String name,
-            @RequestParam String location,
-            @RequestParam String phoneNumber,
-            @RequestParam String email,
-            @RequestParam String password,
-            @RequestParam(required = false) String about,
-            @RequestParam(required = false) String howWeTeach,
-            @RequestParam(required = false) String whatWeOffer,
+            @RequestParam("name") String name,
+            @RequestParam("location") String location,
+            @RequestParam("phoneNumber") String phoneNumber,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam(value = "about", required = false) String about,
+            @RequestParam(value = "howWeTeach", required = false) String howWeTeach,
+            @RequestParam(value = "whatWeOffer", required = false) String whatWeOffer,
             @RequestParam(value = "availableDays", required = false) String availableDaysCsv,
             @RequestParam("martialArtsJson") String martialArtsJson,
             @RequestPart(value = "certificate", required = false) MultipartFile certificate,
@@ -618,7 +618,7 @@ public class MobileMartialArtsCentreController {
 
     @DeleteMapping("/batches/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteBatch(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteBatch(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -731,9 +731,9 @@ public class MobileMartialArtsCentreController {
     @GetMapping("/attendance/trainees")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> attendanceTrainees(
-            @RequestParam String type,
-            @RequestParam Long id,
-            @RequestParam String date,
+            @RequestParam("type") String type,
+            @RequestParam("id") Long id,
+            @RequestParam("date") String date,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -963,7 +963,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/online-classes/{id}/start")
     @Transactional
-    public ResponseEntity<Map<String, Object>> startOnlineClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> startOnlineClass(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -993,7 +993,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/online-classes/{id}/end")
     @Transactional
-    public ResponseEntity<Map<String, Object>> endOnlineClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> endOnlineClass(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -1013,7 +1013,7 @@ public class MobileMartialArtsCentreController {
 
     @DeleteMapping("/online-classes/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteOnlineClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteOnlineClass(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -1032,13 +1032,13 @@ public class MobileMartialArtsCentreController {
     @PostMapping(value = "/settings", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<Map<String, Object>> updateSettings(
-            @RequestParam String name,
-            @RequestParam String email,
-            @RequestParam(required = false) String phoneNumber,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String about,
-            @RequestParam(required = false) String howWeTeach,
-            @RequestParam(required = false) String whatWeOffer,
+            @RequestParam("name") String name,
+            @RequestParam("email") String email,
+            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "about", required = false) String about,
+            @RequestParam(value = "howWeTeach", required = false) String howWeTeach,
+            @RequestParam(value = "whatWeOffer", required = false) String whatWeOffer,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             @RequestParam(value = "certificate", required = false) MultipartFile certificate,
             @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
@@ -1510,8 +1510,8 @@ public class MobileMartialArtsCentreController {
 
     @GetMapping("/qr-session")
     public ResponseEntity<Map<String, Object>> getMobileQrSession(
-            @RequestParam Long batchId,
-            @RequestParam(required = false) String date,
+            @RequestParam("batchId") Long batchId,
+            @RequestParam(value = "date", required = false) String date,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1537,7 +1537,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/qr-session/{id}/close")
     public ResponseEntity<Map<String, Object>> closeMobileQrSession(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1555,7 +1555,7 @@ public class MobileMartialArtsCentreController {
     // ==========================================
 
     @GetMapping("/grading/criteria")
-    public ResponseEntity<Map<String, Object>> getMobileGradingCriteria(@RequestParam(required = false) String discipline) {
+    public ResponseEntity<Map<String, Object>> getMobileGradingCriteria(@RequestParam(value = "discipline", required = false) String discipline) {
         List<String> criteria = beltGradingService.getDisciplineCriteria(discipline);
         List<String> belts = beltGradingService.getBeltHierarchy(discipline);
         return ResponseEntity.ok(Map.of("success", true, "criteria", criteria, "belts", belts));
@@ -1601,7 +1601,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/gradings/{id}/score")
     public ResponseEntity<Map<String, Object>> conductMobileAssessment(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
@@ -1629,7 +1629,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/gradings/{id}/promote")
     public ResponseEntity<Map<String, Object>> approveMobilePromotion(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1685,7 +1685,7 @@ public class MobileMartialArtsCentreController {
 
     @DeleteMapping("/instructors/{id}")
     public ResponseEntity<Map<String, Object>> removeMobileInstructor(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1701,7 +1701,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/enrollments/{id}/renewal")
     public ResponseEntity<Map<String, Object>> updateMobileRenewal(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);

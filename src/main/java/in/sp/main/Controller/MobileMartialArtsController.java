@@ -104,7 +104,7 @@ public class MobileMartialArtsController {
 
     @GetMapping("/centres/{id}")
     @Transactional(readOnly = true)
-    public ResponseEntity<Map<String, Object>> centreDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> centreDetail(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 
@@ -268,7 +268,7 @@ public class MobileMartialArtsController {
 
     @GetMapping("/centres/{id}/reviews")
     @Transactional(readOnly = true)
-    public ResponseEntity<Map<String, Object>> listReviews(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> listReviews(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         Map<String, Object> body = new LinkedHashMap<>(martialArtsCareService.reviewSummary(id));
         body.put("success", true);
@@ -279,7 +279,7 @@ public class MobileMartialArtsController {
     @PostMapping("/centres/{id}/reviews")
     @Transactional
     public ResponseEntity<Map<String, Object>> addReview(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -305,7 +305,7 @@ public class MobileMartialArtsController {
     @PostMapping("/enrollments/{id}/cancel")
     @Transactional
     public ResponseEntity<Map<String, Object>> cancelEnrollment(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody(required = false) Map<String, String> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -327,7 +327,7 @@ public class MobileMartialArtsController {
     @PostMapping("/enrollments/{id}/transfer")
     @Transactional
     public ResponseEntity<Map<String, Object>> transferEnrollment(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -350,7 +350,7 @@ public class MobileMartialArtsController {
 
     @GetMapping("/online-classes/{id}/join")
     @Transactional
-    public ResponseEntity<Map<String, Object>> joinOnlineClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> joinOnlineClass(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         in.sp.main.Entities.OnlineClass oc = onlineClassRepository.findById(id).orElse(null);

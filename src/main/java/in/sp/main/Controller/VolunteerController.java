@@ -79,7 +79,7 @@ public class VolunteerController {
     // ── /volunteer/admin/volunteer/{id}/verify  (POST) ───────────────────────
     // Purpose: admin verifies a volunteer by setting their status to VERIFIED.
     @PostMapping("/admin/volunteer/{id}/verify")
-    public String verifyVolunteer(@PathVariable Long id,
+    public String verifyVolunteer(@PathVariable("id") Long id,
                                   HttpSession session,
                                   RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -100,7 +100,7 @@ public class VolunteerController {
     // Purpose: admin rejects/blocks a volunteer. Mapped under /admin to match
     // the existing form actions in approvedVolunteers.jsp and pendingVolunteers.jsp.
     @PostMapping("/admin/rejectvolunteer/{id}")
-    public String rejectVolunteer(@PathVariable Long id,
+    public String rejectVolunteer(@PathVariable("id") Long id,
                                   HttpSession session,
                                   RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {

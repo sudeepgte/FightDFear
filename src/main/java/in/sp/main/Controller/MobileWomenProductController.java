@@ -67,10 +67,10 @@ public class MobileWomenProductController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> listProducts(
             @RequestParam(value = "category", required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Boolean inStock,
-            @RequestParam(required = false) String sort,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "inStock", required = false) Boolean inStock,
+            @RequestParam(value = "sort", required = false) String sort,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -119,7 +119,7 @@ public class MobileWomenProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> productDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> productDetail(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 
@@ -212,7 +212,7 @@ public class MobileWomenProductController {
     @PostMapping("/cart/{id}/update")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateCart(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -239,7 +239,7 @@ public class MobileWomenProductController {
 
     @PostMapping("/cart/{id}/remove")
     @Transactional
-    public ResponseEntity<Map<String, Object>> removeCart(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> removeCart(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenCartItem item = cartRepo.findById(id).orElse(null);
@@ -373,7 +373,7 @@ public class MobileWomenProductController {
     }
 
     @GetMapping("/orders/{id}/track")
-    public ResponseEntity<Map<String, Object>> trackOrder(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> trackOrder(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
@@ -387,7 +387,7 @@ public class MobileWomenProductController {
 
     @PostMapping("/orders/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelOrder(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelOrder(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
@@ -406,7 +406,7 @@ public class MobileWomenProductController {
     @PostMapping("/orders/{id}/rate")
     @Transactional
     public ResponseEntity<Map<String, Object>> rateOrder(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);

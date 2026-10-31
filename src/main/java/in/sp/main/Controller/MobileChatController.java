@@ -75,7 +75,7 @@ public class MobileChatController {
     }
 
     @GetMapping("/user-info")
-    public ResponseEntity<Map<String, Object>> userInfo(@RequestParam Long userId) {
+    public ResponseEntity<Map<String, Object>> userInfo(@RequestParam("userId") Long userId) {
         User u = userRepository.findById(userId).orElse(null);
         if (u == null) {
             return ResponseEntity.notFound().build();
@@ -89,8 +89,8 @@ public class MobileChatController {
 
     @GetMapping("/messages")
     public ResponseEntity<Map<String, Object>> messages(
-            @RequestParam Long peerId,
-            @RequestParam(required = false) String since,
+            @RequestParam("peerId") Long peerId,
+            @RequestParam(value = "since", required = false) String since,
             HttpSession session) {
         User current = requireUser(session);
         if (current == null) {

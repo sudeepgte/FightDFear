@@ -241,7 +241,7 @@ public class MobileFinancialEducatorAuthController {
 
     @DeleteMapping("/videos/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteVideo(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteVideo(@PathVariable("id") Long id, HttpSession session) {
         FinancialEducator e = requireEducator(session);
         if (e == null) return unauthorized();
         FinancialVideo v = videoRepo.findById(id).orElse(null);
@@ -271,7 +271,7 @@ public class MobileFinancialEducatorAuthController {
 
     @DeleteMapping("/live-sessions/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteLive(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteLive(@PathVariable("id") Long id, HttpSession session) {
         FinancialEducator e = requireEducator(session);
         if (e == null) return unauthorized();
         FinancialLiveSession s = liveRepo.findById(id).orElse(null);
@@ -302,7 +302,7 @@ public class MobileFinancialEducatorAuthController {
 
     @DeleteMapping("/workshops/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteWorkshop(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteWorkshop(@PathVariable("id") Long id, HttpSession session) {
         FinancialEducator e = requireEducator(session);
         if (e == null) return unauthorized();
         FinancialWorkshop w = workshopRepo.findById(id).orElse(null);
@@ -316,7 +316,7 @@ public class MobileFinancialEducatorAuthController {
 
     @PostMapping("/enrollments/{id}/status")
     public ResponseEntity<Map<String, Object>> enrollmentStatus(
-            @PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+            @PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         FinancialEducator e = requireApproved(session);
         if (e == null) return unauthorized();
         FinancialEnrollment en = enrollmentRepo.findById(id).orElse(null);
@@ -393,7 +393,7 @@ public class MobileFinancialEducatorAuthController {
     @PostMapping("/enrollments/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         FinancialEducator e = requireEducator(session);

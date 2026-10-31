@@ -13,6 +13,7 @@ import '../safety/danger_map_screen.dart';
 import '../doctors/doctor_portal_login_screen.dart';
 import '../entrepreneur/entrepreneur_portal_login_screen.dart';
 import '../events/event_host_portal_login_screen.dart';
+// ignore: unused_import
 import '../financial/financial_educator_portal_login_screen.dart';
 import '../financial/financial_literacy_screen.dart';
 import '../fitness/fitness_trainer_portal_login_screen.dart';
@@ -262,10 +263,9 @@ class _LandingScreenState extends State<LandingScreen> {
         );
         return;
       case 'women_jobs':
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const WomenJobsPortalLoginScreen(startRegister: true),
-          ),
+        // FUTURE UPDATE: Women Jobs registration is reserved for a future update.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Women Jobs registration is reserved for a future update.')),
         );
         return;
       case 'entrepreneur':
@@ -299,8 +299,9 @@ class _LandingScreenState extends State<LandingScreen> {
         );
         return;
       case 'financial':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const FinancialEducatorPortalLoginScreen(startRegister: true)),
+        // FUTURE UPDATE: Financial Educator registration is reserved for a future update.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Financial Educator registration is reserved for a future update.')),
         );
         return;
       default:
@@ -365,8 +366,9 @@ class _LandingScreenState extends State<LandingScreen> {
         );
         return;
       case 'women_jobs':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const WomenJobsPortalLoginScreen()),
+        // FUTURE UPDATE: Women Jobs login is reserved for a future update.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Women Jobs portal is reserved for a future update.')),
         );
         return;
       case 'marketplace_seller':
@@ -405,8 +407,9 @@ class _LandingScreenState extends State<LandingScreen> {
         );
         return;
       case 'financial':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const FinancialEducatorPortalLoginScreen()),
+        // FUTURE UPDATE: Financial Educator login is reserved for a future update.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Financial Educator portal is reserved for a future update.')),
         );
         return;
       case 'admin':
@@ -496,6 +499,8 @@ class _LandingScreenState extends State<LandingScreen> {
         );
       });
 
+  // FUTURE UPDATE: Reserved for when Jobs is re-enabled.
+  // ignore: unused_element
   void _openJobs() => _requireLoginThen(() {
         _openJobsAfterLogin();
       });
@@ -517,6 +522,8 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
+  // FUTURE UPDATE: Reserved for when Financial Education is re-enabled.
+  // ignore: unused_element
   void _openFinancial() => _requireLoginThen(() {
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FinancialLiteracyScreen()));
       });
@@ -562,9 +569,9 @@ class _LandingScreenState extends State<LandingScreen> {
       builder: (ctx) {
         final items = <(IconData, String, VoidCallback)>[
           (Icons.monitor_heart_outlined, 'Doctors', _openDoctors),
-          (Icons.work_outline, 'Jobs', _openJobs),
+          // FUTURE UPDATE: Jobs shortcut is reserved for a future update.
           (Icons.event_outlined, 'Events', _openWomenEvents),
-          (Icons.menu_book_outlined, 'Education', _openFinancial),
+          // FUTURE UPDATE: Financial Education shortcut is reserved for a future update.
           (Icons.storefront_outlined, 'Marketplace', _openWomenMarketplace),
           (Icons.fitness_center_outlined, 'Fitness', _openFitness),
           (Icons.spa_outlined, 'Glow Space', _openGlowSpace),
@@ -651,7 +658,8 @@ class _LandingScreenState extends State<LandingScreen> {
     } else if (query.contains('event')) {
       _openWomenEvents();
     } else if (query.contains('job')) {
-      _openJobs();
+      // FUTURE UPDATE: Job search query routing is reserved for a future update.
+      _showAllModules();
     } else if (query.contains('market') || query.contains('shop')) {
       _openWomenMarketplace();
     } else if (query.contains('legal') || query.contains('lawyer')) {
@@ -758,9 +766,9 @@ class _LandingScreenState extends State<LandingScreen> {
                 key: _modulesKey,
                 child: _PopularCategories(
                   onDoctors: _openDoctors,
-                  onJobs: _openJobs,
+                  onSelfDefence: _openMartialArts,
                   onEvents: _openWomenEvents,
-                  onFinancial: _openFinancial,
+                  onLegal: _openLegal,
                   onMarketplace: _openWomenMarketplace,
                   onFitness: _openFitness,
                   onViewAll: _showAllModules,
@@ -924,7 +932,7 @@ class _Header extends StatelessWidget {
             onSubmitted: onSearch,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
-              hintText: 'Search doctors, events, jobs…',
+              hintText: 'Search doctors, events, lawyers…',
               hintStyle: const TextStyle(fontSize: 13, color: LandingScreen.textGray),
               prefixIcon: const Icon(Icons.search, color: LandingScreen.textGray),
               filled: true,
@@ -1722,18 +1730,19 @@ class _CommunitySection extends StatelessWidget {
 class _PopularCategories extends StatelessWidget {
   const _PopularCategories({
     required this.onDoctors,
-    required this.onJobs,
+    required this.onSelfDefence,
     required this.onEvents,
-    required this.onFinancial,
+    required this.onLegal,
     required this.onMarketplace,
     required this.onFitness,
     required this.onViewAll,
   });
 
+  // FUTURE UPDATE: onJobs and onFinancial are reserved for future updates.
   final VoidCallback onDoctors;
-  final VoidCallback onJobs;
+  final VoidCallback onSelfDefence;
   final VoidCallback onEvents;
-  final VoidCallback onFinancial;
+  final VoidCallback onLegal;
   final VoidCallback onMarketplace;
   final VoidCallback onFitness;
   final VoidCallback onViewAll;
@@ -1742,9 +1751,9 @@ class _PopularCategories extends StatelessWidget {
   Widget build(BuildContext context) {
     final cats = [
       (Icons.monitor_heart_outlined, 'Doctors', onDoctors),
-      (Icons.work_outline, 'Jobs', onJobs),
+      (Icons.sports_martial_arts_outlined, 'Self Defence', onSelfDefence),
       (Icons.event_outlined, 'Events', onEvents),
-      (Icons.menu_book_outlined, 'Education', onFinancial),
+      (Icons.gavel_outlined, 'Legal Help', onLegal),
       (Icons.storefront_outlined, 'Marketplace', onMarketplace),
       (Icons.fitness_center_outlined, 'Fitness', onFitness),
     ];
@@ -2027,7 +2036,8 @@ class _LoginDropdown {
     _LoginOption(value: 'martial_arts', label: 'Self-Defense Center Login', icon: Icons.sports_martial_arts_outlined, available: true),
     _LoginOption(value: 'glow', label: 'Glow Space Login', icon: Icons.spa_outlined, available: true),
     _LoginOption(value: 'women_lawyer', label: 'Women Lawyer Login', icon: Icons.gavel_outlined, available: true),
-    _LoginOption(value: 'women_jobs', label: 'Women Jobs Login', icon: Icons.work_outline, available: true),
+    // FUTURE UPDATE: Women Jobs login is reserved for a future update.
+    // _LoginOption(value: 'women_jobs', label: 'Women Jobs Login', icon: Icons.work_outline, available: true),
     _LoginOption(value: 'marketplace_seller', label: 'Product Seller Login', icon: Icons.storefront_outlined, available: true),
     _LoginOption(value: 'entrepreneur', label: 'Entrepreneur Login', icon: Icons.lightbulb_outline, available: true),
     _LoginOption(value: 'investor', label: 'Investor Login', icon: Icons.trending_up, available: true),
@@ -2035,7 +2045,8 @@ class _LoginDropdown {
     _LoginOption(value: 'fitness_trainer', label: 'Fitness Trainer Login', icon: Icons.fitness_center_outlined, available: true),
     _LoginOption(value: 'delivery', label: 'Delivery Guy Login', icon: Icons.delivery_dining_outlined, available: true),
     _LoginOption(value: 'creator', label: 'Creator Hub Login', icon: Icons.video_camera_front_outlined, available: true),
-    _LoginOption(value: 'financial', label: 'Financial Educator Login', icon: Icons.menu_book_outlined, available: true),
+    // FUTURE UPDATE: Financial Educator login is reserved for a future update.
+    // _LoginOption(value: 'financial', label: 'Financial Educator Login', icon: Icons.menu_book_outlined, available: true),
     _LoginOption(value: 'admin', label: 'Admin Login', icon: Icons.admin_panel_settings_outlined, available: true),
   ];
 
@@ -2095,13 +2106,15 @@ class _JoinUsDropdown {
     _JoinUsOption(value: 'women_lawyer', label: 'Women Lawyer', subtitle: 'Dedicated lawyer registration — consultations & advocacy', icon: Icons.gavel_outlined, available: true),
     _JoinUsOption(value: 'marketplace_seller', label: 'Product Seller', subtitle: 'List products, photos, stock & orders', icon: Icons.storefront_outlined, available: true),
     _JoinUsOption(value: 'delivery', label: 'Delivery Guy', subtitle: 'Pick up and deliver Women Products orders', icon: Icons.delivery_dining_outlined, available: true),
-    _JoinUsOption(value: 'women_jobs', label: 'Women Jobs', icon: Icons.work_outline, available: true),
+    // FUTURE UPDATE: Women Jobs registration is reserved for a future update.
+    // _JoinUsOption(value: 'women_jobs', label: 'Women Jobs', icon: Icons.work_outline, available: true),
     _JoinUsOption(value: 'entrepreneur', label: 'Entrepreneur', icon: Icons.lightbulb_outline, available: true),
     _JoinUsOption(value: 'investor', label: 'Investor', icon: Icons.trending_up, available: true),
     _JoinUsOption(value: 'event_host', label: 'Event Host', icon: Icons.event_available_outlined, available: true),
     _JoinUsOption(value: 'fitness_trainer', label: 'Fitness Trainer', subtitle: 'Gym, Zumba, Yoga & wellness coaching', icon: Icons.fitness_center_outlined, available: true),
     _JoinUsOption(value: 'creator', label: 'Creator Hub', subtitle: 'Publish videos, reels & stories after admin approval', icon: Icons.video_camera_front_outlined, available: true),
-    _JoinUsOption(value: 'financial', label: 'Financial Educator', subtitle: 'Publish videos, live sessions & workshops after admin approval', icon: Icons.menu_book_outlined, available: true),
+    // FUTURE UPDATE: Financial Educator registration is reserved for a future update.
+    // _JoinUsOption(value: 'financial', label: 'Financial Educator', subtitle: 'Publish videos, live sessions & workshops after admin approval', icon: Icons.menu_book_outlined, available: true),
   ];
 
   static Future<void> showSheet(BuildContext context, ValueChanged<String> onSelected) async {

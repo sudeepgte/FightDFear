@@ -46,17 +46,25 @@ public class WomenProductSellerProfileService {
         if (PartnerLifecycleSupport.blank(seller.getPincode()) || !seller.getPincode().trim().matches("\\d{6}")) {
             missing.add("2.5 Pincode");
         }
-        if (PartnerLifecycleSupport.blank(seller.getCategoriesOffered())) missing.add("3.1 Categories you sell");
+        if (PartnerLifecycleSupport.blank(seller.getCategoriesOffered()) && PartnerLifecycleSupport.blank(seller.getCategory()) && PartnerLifecycleSupport.blank(seller.getPrimaryCategory())) {
+            missing.add("3.1 Categories you sell");
+        }
         if (PartnerLifecycleSupport.blank(seller.getBrandType())) missing.add("4.1 Brand type");
-        if (PartnerLifecycleSupport.blank(seller.getOpenDays())) missing.add("6.1 Open days");
-        if (seller.getOpenTime() == null) missing.add("6.2 Open time");
-        if (seller.getCloseTime() == null) missing.add("6.3 Close time");
+        if (PartnerLifecycleSupport.blank(seller.getOpenDays()) && PartnerLifecycleSupport.blank(seller.getAvailableDays())) {
+            missing.add("6.1 Open days");
+        }
+        if (seller.getOpenTime() == null && PartnerLifecycleSupport.blank(seller.getWorkingHoursFrom())) {
+            missing.add("6.2 Open time");
+        }
+        if (seller.getCloseTime() == null && PartnerLifecycleSupport.blank(seller.getWorkingHoursTo())) {
+            missing.add("6.3 Close time");
+        }
         if (PartnerLifecycleSupport.blank(seller.getBio()) && PartnerLifecycleSupport.blank(seller.getDescription())) {
             missing.add("7.1 About");
         }
-        if (PartnerLifecycleSupport.blank(seller.getPrimaryCategory())
-                || seller.getTypicalPrice() == null
-                || seller.getDispatchHours() == null) {
+        if ((PartnerLifecycleSupport.blank(seller.getPrimaryCategory()) && PartnerLifecycleSupport.blank(seller.getCategory()))
+                || (seller.getTypicalPrice() == null && PartnerLifecycleSupport.blank(seller.getCategory()))
+                || (seller.getDispatchHours() == null && PartnerLifecycleSupport.blank(seller.getAvailableDays()))) {
             missing.add("8. First listing defaults");
         }
         if (PartnerLifecycleSupport.blank(seller.getBusinessName())) missing.add("1. Shop name");
@@ -136,20 +144,29 @@ public class WomenProductSellerProfileService {
         m.put("pincode", s.getPincode());
         m.put("latitude", s.getLatitude());
         m.put("longitude", s.getLongitude());
+        m.put("category", s.getCategory() != null ? s.getCategory() : s.getPrimaryCategory());
+        m.put("serviceArea", s.getServiceArea());
+        m.put("qualification", s.getQualification());
+        m.put("experience", s.getExperience());
+        m.put("availableDays", s.getAvailableDays() != null ? s.getAvailableDays() : s.getOpenDays());
+        m.put("workingHoursFrom", s.getWorkingHoursFrom() != null ? s.getWorkingHoursFrom() : (s.getOpenTime() == null ? null : s.getOpenTime().format(TIME_FMT)));
+        m.put("workingHoursTo", s.getWorkingHoursTo() != null ? s.getWorkingHoursTo() : (s.getCloseTime() == null ? null : s.getCloseTime().format(TIME_FMT)));
+        m.put("languagesSpoken", s.getLanguagesSpoken());
         m.put("categoriesOffered", splitCsv(s.getCategoriesOffered()));
         m.put("brandType", s.getBrandType());
         m.put("audience", splitCsv(s.getAudience()));
         m.put("facilities", splitCsv(s.getFacilities()));
-        m.put("openDays", splitCsv(s.getOpenDays()));
-        m.put("openTime", s.getOpenTime() == null ? null : s.getOpenTime().format(TIME_FMT));
-        m.put("closeTime", s.getCloseTime() == null ? null : s.getCloseTime().format(TIME_FMT));
+        m.put("openDays", splitCsv(s.getOpenDays() != null ? s.getOpenDays() : s.getAvailableDays()));
+        m.put("openTime", s.getOpenTime() == null ? (s.getWorkingHoursFrom() != null ? s.getWorkingHoursFrom() : null) : s.getOpenTime().format(TIME_FMT));
+        m.put("closeTime", s.getCloseTime() == null ? (s.getWorkingHoursTo() != null ? s.getWorkingHoursTo() : null) : s.getCloseTime().format(TIME_FMT));
         m.put("breakStart", s.getBreakStart() == null ? null : s.getBreakStart().format(TIME_FMT));
         m.put("breakEnd", s.getBreakEnd() == null ? null : s.getBreakEnd().format(TIME_FMT));
         m.put("blockedDates", s.getBlockedDates());
         m.put("bio", s.getBio() != null ? s.getBio() : s.getDescription());
+        m.put("description", s.getDescription() != null ? s.getDescription() : s.getBio());
         m.put("dispatchHours", s.getDispatchHours());
         m.put("typicalPrice", s.getTypicalPrice());
-        m.put("primaryCategory", s.getPrimaryCategory());
+        m.put("primaryCategory", s.getPrimaryCategory() != null ? s.getPrimaryCategory() : s.getCategory());
         m.put("gstin", s.getGstin());
         m.put("upiId", s.getUpiId());
         m.put("bankDetails", s.getBankDetails());
@@ -174,12 +191,51 @@ public class WomenProductSellerProfileService {
             try { s.setLongitude(Double.parseDouble(str(body.get("longitude")))); } catch (Exception ignored) {}
         }
         if (body.get("categoriesOffered") != null) s.setCategoriesOffered(csv(body.get("categoriesOffered")));
+        if (body.get("category") != null) {
+            String cat = blankToNull(str(body.get("category")));
+            s.setCategory(cat);
+            if (s.getPrimaryCategory() == null) s.setPrimaryCategory(cat);
+        }
+        if (body.get("primaryCategory") != null) {
+            String pCat = blankToNull(str(body.get("primaryCategory")));
+            s.setPrimaryCategory(pCat);
+            if (s.getCategory() == null) s.setCategory(pCat);
+        }
+        if (body.get("serviceArea") != null) s.setServiceArea(blankToNull(str(body.get("serviceArea"))));
+        if (body.get("qualification") != null) s.setQualification(blankToNull(str(body.get("qualification"))));
+        if (body.get("experience") != null) s.setExperience(blankToNull(str(body.get("experience"))));
+        if (body.get("availableDays") != null) {
+            String days = blankToNull(str(body.get("availableDays")));
+            s.setAvailableDays(days);
+            if (s.getOpenDays() == null) s.setOpenDays(days);
+        }
+        if (body.get("workingHoursFrom") != null) {
+            String from = blankToNull(str(body.get("workingHoursFrom")));
+            s.setWorkingHoursFrom(from);
+            if (s.getOpenTime() == null && from != null) s.setOpenTime(parseTime(from));
+        }
+        if (body.get("workingHoursTo") != null) {
+            String to = blankToNull(str(body.get("workingHoursTo")));
+            s.setWorkingHoursTo(to);
+            if (s.getCloseTime() == null && to != null) s.setCloseTime(parseTime(to));
+        }
+        if (body.get("languagesSpoken") != null) s.setLanguagesSpoken(blankToNull(str(body.get("languagesSpoken"))));
         if (body.get("brandType") != null) s.setBrandType(blankToNull(str(body.get("brandType"))));
         if (body.get("audience") != null) s.setAudience(csv(body.get("audience")));
         if (body.get("facilities") != null) s.setFacilities(csv(body.get("facilities")));
-        if (body.get("openDays") != null) s.setOpenDays(csv(body.get("openDays")));
-        if (body.get("openTime") != null) s.setOpenTime(parseTime(body.get("openTime")));
-        if (body.get("closeTime") != null) s.setCloseTime(parseTime(body.get("closeTime")));
+        if (body.get("openDays") != null) {
+            String od = csv(body.get("openDays"));
+            s.setOpenDays(od);
+            if (s.getAvailableDays() == null) s.setAvailableDays(od);
+        }
+        if (body.get("openTime") != null) {
+            s.setOpenTime(parseTime(body.get("openTime")));
+            if (s.getWorkingHoursFrom() == null && s.getOpenTime() != null) s.setWorkingHoursFrom(s.getOpenTime().format(TIME_FMT));
+        }
+        if (body.get("closeTime") != null) {
+            s.setCloseTime(parseTime(body.get("closeTime")));
+            if (s.getWorkingHoursTo() == null && s.getCloseTime() != null) s.setWorkingHoursTo(s.getCloseTime().format(TIME_FMT));
+        }
         if (body.get("breakStart") != null) s.setBreakStart(parseTime(body.get("breakStart")));
         if (body.get("breakEnd") != null) s.setBreakEnd(parseTime(body.get("breakEnd")));
         if (body.get("blockedDates") != null) s.setBlockedDates(csv(body.get("blockedDates")));
@@ -187,13 +243,16 @@ public class WomenProductSellerProfileService {
             s.setBio(blankToNull(str(body.get("bio"))));
             if (PartnerLifecycleSupport.blank(s.getDescription())) s.setDescription(s.getBio());
         }
+        if (body.get("description") != null) {
+            s.setDescription(blankToNull(str(body.get("description"))));
+            if (PartnerLifecycleSupport.blank(s.getBio())) s.setBio(s.getDescription());
+        }
         if (body.get("dispatchHours") != null && !str(body.get("dispatchHours")).isBlank()) {
             try { s.setDispatchHours(Integer.parseInt(str(body.get("dispatchHours")))); } catch (Exception ignored) {}
         }
         if (body.get("typicalPrice") != null && !str(body.get("typicalPrice")).isBlank()) {
             try { s.setTypicalPrice(Double.parseDouble(str(body.get("typicalPrice")))); } catch (Exception ignored) {}
         }
-        if (body.get("primaryCategory") != null) s.setPrimaryCategory(blankToNull(str(body.get("primaryCategory"))));
         if (body.get("gstin") != null) s.setGstin(blankToNull(str(body.get("gstin"))));
         if (body.get("upiId") != null) s.setUpiId(blankToNull(str(body.get("upiId"))));
         if (body.get("bankDetails") != null) s.setBankDetails(blankToNull(str(body.get("bankDetails"))));

@@ -24,7 +24,7 @@ public class SafetyCheckController {
     private AISafetyService aiSafetyService;
 
     @RequestMapping(value = "/check", method = RequestMethod.GET)
-    public String checkSafety(@RequestParam double latitude, @RequestParam double longitude, Model model) {
+    public String checkSafety(@RequestParam("latitude") double latitude, @RequestParam("longitude") double longitude, Model model) {
         // Fetch crime data for the nearest location
         Optional<CrimeData> crimeData = crimeDataRepository.findNearestLocation(latitude, longitude);
 

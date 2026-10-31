@@ -91,12 +91,12 @@ public class LawyerController {
 
     @PostMapping("/register")
     public String lawyerRegister(
-            @RequestParam String fullName,
-            @RequestParam String phone,
-            @RequestParam String email,
-            @RequestParam String password,
-            @RequestParam String confirmPassword,
-            @RequestParam(required = false) String otp,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("phone") String phone,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam("confirmPassword") String confirmPassword,
+            @RequestParam(value = "otp", required = false) String otp,
             RedirectAttributes redirectAttributes) {
         
         if (!password.equals(confirmPassword)) {
@@ -181,8 +181,8 @@ public class LawyerController {
     }
 
     @PostMapping("/login")
-    public String lawyerLogin(@RequestParam String email,
-                              @RequestParam String password,
+    public String lawyerLogin(@RequestParam("email") String email,
+                              @RequestParam("password") String password,
                               HttpSession session,
                               jakarta.servlet.http.HttpServletResponse response,
                               Model model) {
@@ -238,24 +238,24 @@ public class LawyerController {
     }
 
     @PostMapping("/profile/update")
-    public String updateLawyerProfile(@RequestParam String fullName,
-                                      @RequestParam String phone,
-                                      @RequestParam(required = false) String country,
-                                      @RequestParam(required = false) String designation,
-                                      @RequestParam(required = false) String barCouncilId,
-                                      @RequestParam(required = false) String address,
-                                      @RequestParam(required = false) String city,
-                                      @RequestParam(required = false) String state,
-                                      @RequestParam(required = false) String pincode,
-                                      @RequestParam(required = false) String practiceAreas,
-                                      @RequestParam(required = false) String audience,
-                                      @RequestParam(required = false) String openDays,
-                                      @RequestParam(required = false) String openTime,
-                                      @RequestParam(required = false) String closeTime,
-                                      @RequestParam(required = false) String bio,
-                                      @RequestParam(required = false) Double consultationFee,
-                                      @RequestParam(required = false) String serviceMode,
-                                      @RequestParam(required = false) Integer durationMinutes,
+    public String updateLawyerProfile(@RequestParam("fullName") String fullName,
+                                      @RequestParam("phone") String phone,
+                                      @RequestParam(value = "country", required = false) String country,
+                                      @RequestParam(value = "designation", required = false) String designation,
+                                      @RequestParam(value = "barCouncilId", required = false) String barCouncilId,
+                                      @RequestParam(value = "address", required = false) String address,
+                                      @RequestParam(value = "city", required = false) String city,
+                                      @RequestParam(value = "state", required = false) String state,
+                                      @RequestParam(value = "pincode", required = false) String pincode,
+                                      @RequestParam(value = "practiceAreas", required = false) String practiceAreas,
+                                      @RequestParam(value = "audience", required = false) String audience,
+                                      @RequestParam(value = "openDays", required = false) String openDays,
+                                      @RequestParam(value = "openTime", required = false) String openTime,
+                                      @RequestParam(value = "closeTime", required = false) String closeTime,
+                                      @RequestParam(value = "bio", required = false) String bio,
+                                      @RequestParam(value = "consultationFee", required = false) Double consultationFee,
+                                      @RequestParam(value = "serviceMode", required = false) String serviceMode,
+                                      @RequestParam(value = "durationMinutes", required = false) Integer durationMinutes,
                                       @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
                                       HttpSession session, RedirectAttributes ra) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
@@ -318,8 +318,8 @@ public class LawyerController {
 
     @PostMapping("/bookings/{id}/status")
     @ResponseBody
-    public Map<String, Object> updateBookingStatus(@PathVariable Long id,
-                                                   @RequestParam String status,
+    public Map<String, Object> updateBookingStatus(@PathVariable("id") Long id,
+                                                   @RequestParam("status") String status,
                                                    HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
@@ -361,36 +361,36 @@ public class LawyerController {
     }
 
     @PostMapping("/profile-completion/save")
-    public String saveProfileCompletion(@RequestParam String fullName,
-                                      @RequestParam String phone,
-                                      @RequestParam(required = false) String country,
-                                      @RequestParam(required = false) String designation,
-                                      @RequestParam(required = false) String whatsappNumber,
-                                      @RequestParam(required = false) String barCouncilId,
-                                      @RequestParam(required = false) String city,
-                                      @RequestParam(required = false) String state,
-                                      @RequestParam(required = false) String practiceAreas,
-                                      @RequestParam(required = false) String openDays,
-                                      @RequestParam(required = false) String openTime,
-                                      @RequestParam(required = false) String closeTime,
-                                      @RequestParam(required = false) String bio,
-                                      @RequestParam(required = false) String serviceMode,
-                                      @RequestParam(required = false) Integer durationMinutes,
-                                      @RequestParam(required = false) Integer experienceYears,
-                                      @RequestParam(required = false) String languages,
-                                      @RequestParam(required = false) String audience,
-                                      @RequestParam(required = false) String address,
-                                      @RequestParam(required = false) String pincode,
-                                      @RequestParam(required = false) String facilities,
-                                      @RequestParam(required = false) String consultationMode,
-                                      @RequestParam(required = false) Double consultationFee,
-                                      @RequestParam(required = false) String upiId,
-                                      @RequestParam(required = false) String bankAccountHolder,
-                                       @RequestParam(required = false) String bankName,
-                                       @RequestParam(required = false) String bankAccountNumber,
-                                       @RequestParam(required = false) String bankIfsc,
-                                       @RequestParam(required = false) String bankBranch,
-                                       @RequestParam(required = false) String bankDetails,
+    public String saveProfileCompletion(@RequestParam("fullName") String fullName,
+                                      @RequestParam("phone") String phone,
+                                      @RequestParam(value = "country", required = false) String country,
+                                      @RequestParam(value = "designation", required = false) String designation,
+                                      @RequestParam(value = "whatsappNumber", required = false) String whatsappNumber,
+                                      @RequestParam(value = "barCouncilId", required = false) String barCouncilId,
+                                      @RequestParam(value = "city", required = false) String city,
+                                      @RequestParam(value = "state", required = false) String state,
+                                      @RequestParam(value = "practiceAreas", required = false) String practiceAreas,
+                                      @RequestParam(value = "openDays", required = false) String openDays,
+                                      @RequestParam(value = "openTime", required = false) String openTime,
+                                      @RequestParam(value = "closeTime", required = false) String closeTime,
+                                      @RequestParam(value = "bio", required = false) String bio,
+                                      @RequestParam(value = "serviceMode", required = false) String serviceMode,
+                                      @RequestParam(value = "durationMinutes", required = false) Integer durationMinutes,
+                                      @RequestParam(value = "experienceYears", required = false) Integer experienceYears,
+                                      @RequestParam(value = "languages", required = false) String languages,
+                                      @RequestParam(value = "audience", required = false) String audience,
+                                      @RequestParam(value = "address", required = false) String address,
+                                      @RequestParam(value = "pincode", required = false) String pincode,
+                                      @RequestParam(value = "facilities", required = false) String facilities,
+                                      @RequestParam(value = "consultationMode", required = false) String consultationMode,
+                                      @RequestParam(value = "consultationFee", required = false) Double consultationFee,
+                                      @RequestParam(value = "upiId", required = false) String upiId,
+                                      @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+                                       @RequestParam(value = "bankName", required = false) String bankName,
+                                       @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+                                       @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+                                       @RequestParam(value = "bankBranch", required = false) String bankBranch,
+                                       @RequestParam(value = "bankDetails", required = false) String bankDetails,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile profilePhoto,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile chamberPhoto,
                                       HttpSession session, RedirectAttributes ra) {

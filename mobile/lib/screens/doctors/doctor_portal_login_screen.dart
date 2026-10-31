@@ -7,6 +7,7 @@ import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../portals/portal_auth_screen.dart';
 import 'doctor_dashboard_screen.dart';
+import 'doctor_pending_approval_screen.dart';
 import 'doctor_profile_completion_screen.dart';
 
 class DoctorPortalLoginScreen extends StatelessWidget {
@@ -20,8 +21,32 @@ class DoctorPortalLoginScreen extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> res,
   ) async {
+    final status = (res['doctorProfileStatus'] ?? '').toString().toUpperCase();
+    final verificationStatus = (res['verificationStatus'] ?? '').toString().toUpperCase();
+    final isApproved = status == 'APPROVED' || verificationStatus == 'VERIFIED' || res['approved'] == true;
+
+    if (isApproved) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
+      );
+      return;
+    }
+
+    if (status == 'PENDING_ADMIN_APPROVAL') {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => DoctorPendingApprovalScreen(initialProfile: res),
+        ),
+      );
+      return;
+    }
+
     final needsCompletion = ApprovalNavigation.shouldRedirectToProfileCompletion(res);
-    if (needsCompletion) {
+    if (needsCompletion ||
+        status == 'REGISTERED' ||
+        status == 'PROFILE_INCOMPLETE' ||
+        status == 'READY_FOR_VERIFICATION' ||
+        status == 'CHANGES_REQUESTED') {
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => DoctorProfileCompletionScreen(
@@ -35,6 +60,7 @@ class DoctorPortalLoginScreen extends StatelessWidget {
       );
       return;
     }
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
     );

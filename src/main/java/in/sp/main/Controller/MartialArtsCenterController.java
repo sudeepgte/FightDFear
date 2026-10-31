@@ -223,7 +223,7 @@ public class MartialArtsCenterController {
 
     // ---------- CERTIFICATE VIEW ----------
     @RequestMapping(value = "/certificate/{id}", method = RequestMethod.GET)
-    public String getCertificatePath(@PathVariable Long id, Model model) {
+    public String getCertificatePath(@PathVariable("id") Long id, Model model) {
         String filePath = centreService.getCertificatePath(id);
         model.addAttribute("certificatePath", filePath);
         return "viewCertificate";
@@ -379,7 +379,7 @@ public class MartialArtsCenterController {
 
     // ---------- CENTER DETAILS ----------
     @RequestMapping(value = "/details/{id}", method = RequestMethod.GET)
-    public String getCenterDetails(@PathVariable Long id, Model model, HttpSession session,
+    public String getCenterDetails(@PathVariable("id") Long id, Model model, HttpSession session,
                                      RedirectAttributes redirectAttributes) {
         try {
             MartialArtsCenter center = centreService.getApprovedCenterById(id);
@@ -418,7 +418,7 @@ public class MartialArtsCenterController {
 
     // ---------- DETAILS FOR DASHBOARD ----------
     @RequestMapping(value = "/detailsforCentre/{id}", method = RequestMethod.GET)
-    public String getCenterDetailsforCentreDashboard(@PathVariable Long id, Model model) {
+    public String getCenterDetailsforCentreDashboard(@PathVariable("id") Long id, Model model) {
         MartialArtsCenter center = centreService.getCenterById(id);
         if (center == null) return "errorPage";
         
@@ -443,8 +443,8 @@ public class MartialArtsCenterController {
 
     // ---------- LOGIN SUBMIT ----------
     @RequestMapping(value = "/loginCentre", method = RequestMethod.POST)
-    public String loginCentre(@RequestParam String email,
-                              @RequestParam String password,
+    public String loginCentre(@RequestParam("email") String email,
+                              @RequestParam("password") String password,
                               Model model, HttpSession session,
                               jakarta.servlet.http.HttpServletResponse response,
                               RedirectAttributes redirectAttributes) {
@@ -515,43 +515,43 @@ public class MartialArtsCenterController {
     // ---------- UPDATE PROFILE HANDLER ----------
     @PostMapping("/updateProfile")
     public String updateProfile(
-            @RequestParam Long id,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String centreType,
-            @RequestParam(required = false) String contactPerson,
-            @RequestParam(required = false) String designation,
-            @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String whatsappNumber,
-            @RequestParam(required = false) Integer yearStarted,
-            @RequestParam(required = false) String affiliation,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) String pincode,
-            @RequestParam(required = false) String mapLink,
-            @RequestParam(required = false) Double centreLat,
-            @RequestParam(required = false) Double centreLng,
-            @RequestParam(required = false) List<String> styles,
-            @RequestParam(required = false) List<String> audience,
-            @RequestParam(required = false) Boolean womenOnly,
-            @RequestParam(required = false) Boolean femaleInstructor,
-            @RequestParam(required = false) List<String> ageGroups,
-            @RequestParam(required = false) List<String> facilities,
-            @RequestParam(required = false) List<String> availableDays,
-            @RequestParam(required = false) String openTime,
-            @RequestParam(required = false) String closeTime,
-            @RequestParam(required = false) String about,
-            @RequestParam(required = false) String howWeTeach,
-            @RequestParam(required = false) List<String> offers,
-            @RequestParam(required = false) String upiId,
-            @RequestParam(required = false) String bankAccountHolder,
-            @RequestParam(required = false) String bankName,
-            @RequestParam(required = false) String bankAccountNumber,
-            @RequestParam(required = false) String bankIfsc,
-            @RequestParam(required = false) String bankBranch,
-            @RequestParam(required = false) String bankDetails,
-            @RequestParam(required = false) MultipartFile profilePhotoFile,
-            @RequestParam(required = false) MultipartFile certificateFile,
+            @RequestParam("id") Long id,
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "centreType", required = false) String centreType,
+            @RequestParam(value = "contactPerson", required = false) String contactPerson,
+            @RequestParam(value = "designation", required = false) String designation,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "whatsappNumber", required = false) String whatsappNumber,
+            @RequestParam(value = "yearStarted", required = false) Integer yearStarted,
+            @RequestParam(value = "affiliation", required = false) String affiliation,
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "mapLink", required = false) String mapLink,
+            @RequestParam(value = "centreLat", required = false) Double centreLat,
+            @RequestParam(value = "centreLng", required = false) Double centreLng,
+            @RequestParam(value = "styles", required = false) List<String> styles,
+            @RequestParam(value = "audience", required = false) List<String> audience,
+            @RequestParam(value = "womenOnly", required = false) Boolean womenOnly,
+            @RequestParam(value = "femaleInstructor", required = false) Boolean femaleInstructor,
+            @RequestParam(value = "ageGroups", required = false) List<String> ageGroups,
+            @RequestParam(value = "facilities", required = false) List<String> facilities,
+            @RequestParam(value = "availableDays", required = false) List<String> availableDays,
+            @RequestParam(value = "openTime", required = false) String openTime,
+            @RequestParam(value = "closeTime", required = false) String closeTime,
+            @RequestParam(value = "about", required = false) String about,
+            @RequestParam(value = "howWeTeach", required = false) String howWeTeach,
+            @RequestParam(value = "offers", required = false) List<String> offers,
+            @RequestParam(value = "upiId", required = false) String upiId,
+            @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+            @RequestParam(value = "bankName", required = false) String bankName,
+            @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+            @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+            @RequestParam(value = "bankBranch", required = false) String bankBranch,
+            @RequestParam(value = "bankDetails", required = false) String bankDetails,
+            @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
+            @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile,
             @RequestParam(required = false) MultipartFile[] galleryFiles,
             @RequestParam(value = "submitVerificationAfterSave", required = false) Boolean submitVerificationAfterSave,
             HttpSession session, RedirectAttributes redirectAttributes) {
@@ -706,13 +706,13 @@ public class MartialArtsCenterController {
     @PostMapping("/settings")
     @ResponseBody
     public Map<String, Object> updateCentreSettings(
-            @RequestParam String name,
-            @RequestParam String email,
-            @RequestParam(required = false) String phoneNumber,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String about,
-            @RequestParam(required = false) String howWeTeach,
-            @RequestParam(required = false) String whatWeOffer,
+            @RequestParam("name") String name,
+            @RequestParam("email") String email,
+            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "about", required = false) String about,
+            @RequestParam(value = "howWeTeach", required = false) String howWeTeach,
+            @RequestParam(value = "whatWeOffer", required = false) String whatWeOffer,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
             HttpSession session) {
@@ -1101,7 +1101,7 @@ public class MartialArtsCenterController {
 
     // ---------- UPDATE FORM ----------
     @RequestMapping(value = "/updateCentre/{id}", method = RequestMethod.GET)
-    public String showUpdateCentreForm(@PathVariable Long id, Model model) {
+    public String showUpdateCentreForm(@PathVariable("id") Long id, Model model) {
         MartialArtsCenter center = centreService.getCenterById(id);
         if (center == null) return "errorPage";
 
@@ -1120,7 +1120,7 @@ public class MartialArtsCenterController {
 
     // ---------- ABOUT PAGE ----------
     @RequestMapping(value = "/about/{id}", method = RequestMethod.GET)
-    public String showCenterProfile(@PathVariable Long id, Model model, HttpSession session) {
+    public String showCenterProfile(@PathVariable("id") Long id, Model model, HttpSession session) {
         MartialArtsCenter center = centreService.getCenterById(id);
         if (center == null) return "errorPage";
         List<MartialArtsType> types = centreService.getMartialArtsTypes(id);
@@ -1155,7 +1155,7 @@ public class MartialArtsCenterController {
 
     // ---------- DELETE ----------
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.POST)
-    public String deleteCenter(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+    public String deleteCenter(@PathVariable("id") Long id, RedirectAttributes redirectAttributes) {
         boolean isDeleted = centreService.deleteCenter(id);
         if (isDeleted) {
             redirectAttributes.addFlashAttribute("message", "Center deleted successfully!");
@@ -1233,7 +1233,7 @@ public class MartialArtsCenterController {
 
     @GetMapping("/batches/details/{id}")
     @ResponseBody
-    public Map<String, Object> getBatchDetails(@PathVariable Long id, HttpSession session) {
+    public Map<String, Object> getBatchDetails(@PathVariable("id") Long id, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (sessionCenter == null) {
@@ -1260,8 +1260,8 @@ public class MartialArtsCenterController {
 
     @PostMapping("/batches/status/{id}")
     @ResponseBody
-    public Map<String, Object> updateBatchStatus(@PathVariable Long id,
-                                                 @RequestParam String status,
+    public Map<String, Object> updateBatchStatus(@PathVariable("id") Long id,
+                                                 @RequestParam("status") String status,
                                                  HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
@@ -1291,13 +1291,13 @@ public class MartialArtsCenterController {
 
     @GetMapping("/batches/center/{id}")
     @ResponseBody
-    public List<MartialArtsBatch> getBatchesByCenter(@PathVariable Long id) {
+    public List<MartialArtsBatch> getBatchesByCenter(@PathVariable("id") Long id) {
         return batchRepository.findByCenterId(id);
     }
 
     @PostMapping("/batches/delete/{id}")
     @ResponseBody
-    public Map<String, Object> deleteBatch(@PathVariable Long id, HttpSession session) {
+    public Map<String, Object> deleteBatch(@PathVariable("id") Long id, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         try {
             MartialArtsCenter sessionCenter = (MartialArtsCenter) session.getAttribute("loggedCentre");
@@ -1373,7 +1373,7 @@ public class MartialArtsCenterController {
 
     @GetMapping("/api/qr-session")
     @ResponseBody
-    public ResponseEntity<?> getActiveQrSession(@RequestParam Long batchId, @RequestParam(required = false) String date, HttpSession session) {
+    public ResponseEntity<?> getActiveQrSession(@RequestParam("batchId") Long batchId, @RequestParam(value = "date", required = false) String date, HttpSession session) {
         MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
 
@@ -1398,7 +1398,7 @@ public class MartialArtsCenterController {
 
     @PostMapping("/api/qr-session/{id}/close")
     @ResponseBody
-    public ResponseEntity<?> closeQrSession(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> closeQrSession(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
 
@@ -1416,7 +1416,7 @@ public class MartialArtsCenterController {
 
     @GetMapping("/api/grading/criteria")
     @ResponseBody
-    public ResponseEntity<?> getGradingCriteria(@RequestParam(required = false) String discipline) {
+    public ResponseEntity<?> getGradingCriteria(@RequestParam(value = "discipline", required = false) String discipline) {
         List<String> criteria = beltGradingService.getDisciplineCriteria(discipline);
         List<String> belts = beltGradingService.getBeltHierarchy(discipline);
         return ResponseEntity.ok(Map.of("success", true, "criteria", criteria, "belts", belts));
@@ -1459,7 +1459,7 @@ public class MartialArtsCenterController {
     @PostMapping("/api/gradings/{id}/score")
     @ResponseBody
     public ResponseEntity<?> conductAssessment(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
@@ -1487,7 +1487,7 @@ public class MartialArtsCenterController {
 
     @PostMapping("/api/gradings/{id}/promote")
     @ResponseBody
-    public ResponseEntity<?> approveAndPromote(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> approveAndPromote(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
 
@@ -1544,7 +1544,7 @@ public class MartialArtsCenterController {
 
     @DeleteMapping("/api/instructors/{id}")
     @ResponseBody
-    public ResponseEntity<?> removeInstructor(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> removeInstructor(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (centre == null) return ResponseEntity.status(401).body(Map.of("success", false, "error", "Centre login required"));
 
@@ -1564,7 +1564,7 @@ public class MartialArtsCenterController {
     @PostMapping("/api/enrollments/{id}/renewal")
     @ResponseBody
     public ResponseEntity<?> updateRenewal(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         MartialArtsCenter centre = (MartialArtsCenter) session.getAttribute("loggedCentre");

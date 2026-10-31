@@ -97,9 +97,9 @@ public class WomenEventController {
      */
     @GetMapping
     @Transactional(readOnly = true)
-    public String browse(@RequestParam(required = false) String city,
-                         @RequestParam(required = false) WomenEventCategory category,
-                         @RequestParam(required = false) String query,
+    public String browse(@RequestParam(value = "city", required = false) String city,
+                         @RequestParam(value = "category", required = false) WomenEventCategory category,
+                         @RequestParam(value = "query", required = false) String query,
                          Model model, HttpSession session) {
 
         List<WomenEvent> events;
@@ -174,7 +174,7 @@ public class WomenEventController {
      * View single event detail page.
      */
     @GetMapping("/{id}")
-    public String detail(@PathVariable Long id, Model model, HttpSession session) {
+    public String detail(@PathVariable("id") Long id, Model model, HttpSession session) {
         Optional<WomenEvent> opt = womenEventRepository.findById(id);
         if (opt.isEmpty() || !WomenEventSupport.isPubliclyListed(opt.get())) {
             return "redirect:/women-events";
@@ -260,10 +260,10 @@ public class WomenEventController {
      * Register the logged-in user for an event.
      */
     @PostMapping("/{id}/register")
-    public String register(@PathVariable Long id,
-                           @RequestParam(required = false) Long ticketTypeId,
-                           @RequestParam(defaultValue = "1") int quantity,
-                           @RequestParam(defaultValue = "0") int coins,
+    public String register(@PathVariable("id") Long id,
+                           @RequestParam(value = "ticketTypeId", required = false) Long ticketTypeId,
+                           @RequestParam(value = "quantity", defaultValue = "1") int quantity,
+                           @RequestParam(value = "coins", defaultValue = "0") int coins,
                            HttpSession session, RedirectAttributes ra) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
@@ -288,7 +288,7 @@ public class WomenEventController {
      * Register the logged-in user as a volunteer.
      */
     @PostMapping("/{id}/volunteer")
-    public String registerAsVolunteer(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String registerAsVolunteer(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
 
@@ -337,7 +337,7 @@ public class WomenEventController {
      * Cancel registration.
      */
     @PostMapping("/{id}/cancel-registration")
-    public String cancelRegistration(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String cancelRegistration(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
 
@@ -359,9 +359,9 @@ public class WomenEventController {
      * Submit a post-event review.
      */
     @PostMapping("/{id}/review")
-    public String submitReview(@PathVariable Long id,
-                                @RequestParam Integer rating,
-                                @RequestParam String reviewText,
+    public String submitReview(@PathVariable("id") Long id,
+                                @RequestParam("rating") Integer rating,
+                                @RequestParam("reviewText") String reviewText,
                                 HttpSession session, RedirectAttributes ra) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
@@ -389,9 +389,9 @@ public class WomenEventController {
      * Upload a post-event gallery photo.
      */
     @PostMapping("/{id}/upload-photo")
-    public String uploadPhoto(@PathVariable Long id,
-                               @RequestParam MultipartFile photo,
-                               @RequestParam(required = false) String caption,
+    public String uploadPhoto(@PathVariable("id") Long id,
+                               @RequestParam("photo") MultipartFile photo,
+                               @RequestParam(value = "caption", required = false) String caption,
                                HttpSession session, RedirectAttributes ra) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
@@ -470,14 +470,14 @@ public class WomenEventController {
     }
 
     @PostMapping("/host/register")
-    public String submitHostRegister(@RequestParam String fullName,
-                                     @RequestParam String email,
-                                     @RequestParam String phone,
-                                     @RequestParam String password,
-                                     @RequestParam String organizerName,
-                                     @RequestParam String organizerType,
-                                     @RequestParam String hostContact,
-                                     @RequestParam String hostBio,
+    public String submitHostRegister(@RequestParam("fullName") String fullName,
+                                     @RequestParam("email") String email,
+                                     @RequestParam("phone") String phone,
+                                     @RequestParam("password") String password,
+                                     @RequestParam("organizerName") String organizerName,
+                                     @RequestParam("organizerType") String organizerType,
+                                     @RequestParam("hostContact") String hostContact,
+                                     @RequestParam("hostBio") String hostBio,
                                      HttpSession session,
                                      Model model) {
         if (eventHostRepository.findByEmail(email.trim().toLowerCase()).isPresent()) {
@@ -521,8 +521,8 @@ public class WomenEventController {
     }
 
     @PostMapping("/host/login")
-    public String loginHost(@RequestParam String email,
-                            @RequestParam String password,
+    public String loginHost(@RequestParam("email") String email,
+                            @RequestParam("password") String password,
                             HttpSession session,
                             jakarta.servlet.http.HttpServletResponse response,
                             Model model) {
@@ -894,9 +894,9 @@ public class WomenEventController {
 
     /** Settings – Change Password POST */
     @PostMapping("/organizer/settings/change-password")
-    public String changePassword(@RequestParam String currentPassword,
-                                 @RequestParam String newPassword,
-                                 @RequestParam String confirmPassword,
+    public String changePassword(@RequestParam("currentPassword") String currentPassword,
+                                 @RequestParam("newPassword") String newPassword,
+                                 @RequestParam("confirmPassword") String confirmPassword,
                                  HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
@@ -939,38 +939,38 @@ public class WomenEventController {
      * Save a new event.
      */
     @PostMapping("/organizer/create")
-    public String createEvent(@RequestParam String name,
-                               @RequestParam WomenEventCategory category,
-                               @RequestParam String description,
-                               @RequestParam String eventDate,
-                               @RequestParam(required = false) String eventTime,
-                               @RequestParam(required = false) String endDate,
-                               @RequestParam(required = false) String endTime,
-                               @RequestParam(required = false) String registrationCloses,
-                               @RequestParam String venue,
-                               @RequestParam String city,
-                               @RequestParam(required = false) String venueState,
-                               @RequestParam(required = false) String venuePincode,
-                               @RequestParam(required = false) String venueArea,
-                               @RequestParam(defaultValue = "0") Double entryFee,
-                               @RequestParam(required = false) Integer maxParticipants,
-                               @RequestParam String contactInfo,
-                               @RequestParam(required = false) String mapsLocation,
-                               @RequestParam String organizerName,
-                               @RequestParam String organizerType,
-                               @RequestParam(defaultValue = "false") boolean virtual,
-                               @RequestParam(required = false) String eventFormat,
-                               @RequestParam(required = false) String streamLink,
-                               @RequestParam(required = false) String meetingPlatform,
-                               @RequestParam(required = false) String shortDescription,
-                               @RequestParam(required = false) String cancellationPolicy,
-                               @RequestParam(required = false) String refundPolicy,
-                               @RequestParam(required = false) String ageRestriction,
-                               @RequestParam(required = false) String participantRequirements,
-                               @RequestParam(required = false) String whatToBring,
-                               @RequestParam(defaultValue = "0") Double boothFee,
-                               @RequestParam(required = false) MultipartFile bannerImage,
-                               @RequestParam(defaultValue = "false") boolean saveDraft,
+    public String createEvent(@RequestParam("name") String name,
+                               @RequestParam("category") WomenEventCategory category,
+                               @RequestParam("description") String description,
+                               @RequestParam("eventDate") String eventDate,
+                               @RequestParam(value = "eventTime", required = false) String eventTime,
+                               @RequestParam(value = "endDate", required = false) String endDate,
+                               @RequestParam(value = "endTime", required = false) String endTime,
+                               @RequestParam(value = "registrationCloses", required = false) String registrationCloses,
+                               @RequestParam("venue") String venue,
+                               @RequestParam("city") String city,
+                               @RequestParam(value = "venueState", required = false) String venueState,
+                               @RequestParam(value = "venuePincode", required = false) String venuePincode,
+                               @RequestParam(value = "venueArea", required = false) String venueArea,
+                               @RequestParam(value = "entryFee", defaultValue = "0") Double entryFee,
+                               @RequestParam(value = "maxParticipants", required = false) Integer maxParticipants,
+                               @RequestParam("contactInfo") String contactInfo,
+                               @RequestParam(value = "mapsLocation", required = false) String mapsLocation,
+                               @RequestParam("organizerName") String organizerName,
+                               @RequestParam("organizerType") String organizerType,
+                               @RequestParam(value = "virtual", defaultValue = "false") boolean virtual,
+                               @RequestParam(value = "eventFormat", required = false) String eventFormat,
+                               @RequestParam(value = "streamLink", required = false) String streamLink,
+                               @RequestParam(value = "meetingPlatform", required = false) String meetingPlatform,
+                               @RequestParam(value = "shortDescription", required = false) String shortDescription,
+                               @RequestParam(value = "cancellationPolicy", required = false) String cancellationPolicy,
+                               @RequestParam(value = "refundPolicy", required = false) String refundPolicy,
+                               @RequestParam(value = "ageRestriction", required = false) String ageRestriction,
+                               @RequestParam(value = "participantRequirements", required = false) String participantRequirements,
+                               @RequestParam(value = "whatToBring", required = false) String whatToBring,
+                               @RequestParam(value = "boothFee", defaultValue = "0") Double boothFee,
+                               @RequestParam(value = "bannerImage", required = false) MultipartFile bannerImage,
+                               @RequestParam(value = "saveDraft", defaultValue = "false") boolean saveDraft,
                                HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
@@ -1063,7 +1063,7 @@ public class WomenEventController {
     }
 
     @GetMapping("/organizer/{id}/attendees")
-    public String viewAttendees(@PathVariable Long id, HttpSession session, Model model) {
+    public String viewAttendees(@PathVariable("id") Long id, HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
         if (!EventHostProfileService.isApproved(host)) {
@@ -1086,8 +1086,8 @@ public class WomenEventController {
     }
 
     @PostMapping("/organizer/{id}/checkin")
-    public String checkIn(@PathVariable Long id,
-                          @RequestParam String ticketCode,
+    public String checkIn(@PathVariable("id") Long id,
+                          @RequestParam("ticketCode") String ticketCode,
                           @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
                           HttpSession session,
                           RedirectAttributes ra) {
@@ -1177,7 +1177,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/host/{id}/approve")
-    public String approveHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveHost(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         eventHostRepository.findById(id).ifPresent(h -> {
             eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.APPROVED);
@@ -1188,7 +1188,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/host/{id}/reject")
-    public String rejectHost(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String rejectHost(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         eventHostRepository.findById(id).ifPresent(h -> {
             eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.REJECTED);
@@ -1199,7 +1199,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/{id}/approve")
-    public String approveEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveEvent(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
             womenEventLifecycleService.transition(e, EventLifecycleStatus.APPROVED,
@@ -1212,7 +1212,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/{id}/reject")
-    public String rejectEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String rejectEvent(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
             womenEventLifecycleService.transition(e, EventLifecycleStatus.REJECTED,
@@ -1223,7 +1223,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/{id}/feature")
-    public String toggleFeature(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String toggleFeature(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
             e.setFeatured(!e.isFeatured());
@@ -1234,7 +1234,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/{id}/delete")
-    public String deleteEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String deleteEvent(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.deleteById(id);
         ra.addFlashAttribute("success", "Event deleted.");
@@ -1242,8 +1242,8 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/{id}/request-changes")
-    public String requestEventChanges(@PathVariable Long id,
-                                      @RequestParam String reason,
+    public String requestEventChanges(@PathVariable("id") Long id,
+                                      @RequestParam("reason") String reason,
                                       HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         if (reason == null || reason.isBlank()) {
@@ -1258,7 +1258,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/{id}/unpublish")
-    public String unpublishEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String unpublishEvent(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
             e.setStatus("UNPUBLISHED");
@@ -1270,7 +1270,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/admin/{id}/cancel")
-    public String adminCancelEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String adminCancelEvent(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e ->
                 womenEventLifecycleService.transition(e, EventLifecycleStatus.CANCELLED,
@@ -1280,7 +1280,7 @@ public class WomenEventController {
     }
 
     @GetMapping("/tickets/{id}")
-    public String digitalTicket(@PathVariable Long id, HttpSession session, Model model) {
+    public String digitalTicket(@PathVariable("id") Long id, HttpSession session, Model model) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
         WomenEventRegistration reg = womenEventRegistrationRepository.findById(id).orElse(null);
@@ -1299,7 +1299,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/{id}/save")
-    public String toggleSave(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String toggleSave(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         User loggedUser = (User) session.getAttribute("user");
         if (loggedUser == null) return "redirect:/login";
         WomenEvent event = womenEventRepository.findById(id).orElse(null);
@@ -1320,7 +1320,7 @@ public class WomenEventController {
     }
 
     @PostMapping("/organizer/{id}/submit")
-    public String hostSubmitEvent(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String hostSubmitEvent(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
         if (!EventHostProfileService.isApproved(host)) {

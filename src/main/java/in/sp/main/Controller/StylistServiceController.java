@@ -83,7 +83,7 @@ public class StylistServiceController {
 
     // ===== Edit Form =====
     @GetMapping("/edit/{id}")
-    public String editService(@PathVariable Long id, Model model, HttpSession session) {
+    public String editService(@PathVariable("id") Long id, Model model, HttpSession session) {
         Stylist stylist = (Stylist) session.getAttribute("loggedStylist");
         if (stylist == null) return "redirect:/stylists/login";
 
@@ -99,7 +99,7 @@ public class StylistServiceController {
 
     // ===== Delete Service =====
     @PostMapping("/delete/{id}")
-    public String deleteService(@PathVariable Long id, HttpSession session) {
+    public String deleteService(@PathVariable("id") Long id, HttpSession session) {
         Stylist stylist = (Stylist) session.getAttribute("loggedStylist");
         if (stylist == null) return "redirect:/stylists/login";
 

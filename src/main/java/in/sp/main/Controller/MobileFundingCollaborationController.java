@@ -36,7 +36,7 @@ public class MobileFundingCollaborationController {
     @PostMapping(value = "/api/entrepreneur/proposals/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<Map<String, Object>> uploadPitch(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam(value = "document", required = false) MultipartFile document,
             @RequestParam(value = "videoPitch", required = false) MultipartFile videoPitch,
             HttpSession session) {
@@ -131,7 +131,7 @@ public class MobileFundingCollaborationController {
 
     @PostMapping("/api/entrepreneur/meetings/{id}/accept")
     @Transactional
-    public ResponseEntity<Map<String, Object>> acceptMeeting(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> acceptMeeting(@PathVariable("id") Long id, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized("Entrepreneur login required");
         InvestmentMeeting m = meetingRepository.findById(id).orElse(null);
@@ -146,7 +146,7 @@ public class MobileFundingCollaborationController {
 
     @PostMapping("/api/entrepreneur/meetings/{id}/reject")
     @Transactional
-    public ResponseEntity<Map<String, Object>> rejectMeeting(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> rejectMeeting(@PathVariable("id") Long id, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized("Entrepreneur login required");
         InvestmentMeeting m = meetingRepository.findById(id).orElse(null);
@@ -161,7 +161,7 @@ public class MobileFundingCollaborationController {
 
     @PostMapping("/api/entrepreneur/meetings/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> entrepreneurCancelMeeting(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> entrepreneurCancelMeeting(@PathVariable("id") Long id, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized("Entrepreneur login required");
         InvestmentMeeting m = meetingRepository.findById(id).orElse(null);
@@ -179,7 +179,7 @@ public class MobileFundingCollaborationController {
 
     @PostMapping("/api/investor/meetings/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> investorCancelMeeting(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> investorCancelMeeting(@PathVariable("id") Long id, HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized("Investor login required");
         InvestmentMeeting m = meetingRepository.findById(id).orElse(null);
@@ -206,7 +206,7 @@ public class MobileFundingCollaborationController {
     @PostMapping("/api/investor/proposals/{id}/meetings")
     @Transactional
     public ResponseEntity<Map<String, Object>> requestMeeting(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         Investor inv = requireInvestor(session);
@@ -264,8 +264,8 @@ public class MobileFundingCollaborationController {
 
     @GetMapping("/api/entrepreneur/chat")
     public ResponseEntity<Map<String, Object>> entrepreneurChat(
-            @RequestParam Long proposalId,
-            @RequestParam Long investorId,
+            @RequestParam("proposalId") Long proposalId,
+            @RequestParam("investorId") Long investorId,
             HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized("Entrepreneur login required");
@@ -318,7 +318,7 @@ public class MobileFundingCollaborationController {
 
     @GetMapping("/api/investor/chat")
     public ResponseEntity<Map<String, Object>> investorChat(
-            @RequestParam Long proposalId,
+            @RequestParam("proposalId") Long proposalId,
             HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized("Investor login required");
@@ -413,7 +413,7 @@ public class MobileFundingCollaborationController {
 
     @PostMapping("/api/entrepreneur/investments/{id}/commission/pay")
     @Transactional
-    public ResponseEntity<Map<String, Object>> payCommission(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> payCommission(@PathVariable("id") Long id, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized("Entrepreneur login required");
         Investment inv = investmentRepository.findById(id).orElse(null);

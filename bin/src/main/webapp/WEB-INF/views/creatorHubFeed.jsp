@@ -1,0 +1,547 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator Hub - Feed</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent:      #F43F5E;
+            --accent-soft: rgba(244,63,94,.08);
+            --accent-mid:  rgba(244,63,94,.15);
+            --sub:         #64748B;
+            --bg:          #F8FAFC;
+            --card:        #FFFFFF;
+            --border:      #E2E8F0;
+            --dark:        #0F172A;
+            --success:     #16A34A;
+            --success-bg:  #F0FDF4;
+            --radius-lg:   20px;
+            --radius-md:   14px;
+            --radius-sm:   8px;
+            --shadow:      0 2px 12px rgba(0,0,0,.06);
+        }
+        * { box-sizing: border-box; font-family: 'Outfit', sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); overflow-y: scroll; overflow-x: hidden; width: 100%; }
+        a { text-decoration: none; color: inherit; }
+
+        @media (max-width: 768px) { .page-wrapper { padding: 10px 0 !important; gap: 10px !important; } } .page-wrapper {
+            max-width: 1536px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;
+        }
+
+        /* ── LEFT SIDEBAR ── */
+        .left-sidebar { 
+            display: flex; flex-direction: column; gap: 6px; 
+            position: sticky; top: 84px; 
+            height: calc(100vh - 100px);
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        /* Custom scrollbar for sidebar */
+        .left-sidebar::-webkit-scrollbar { width: 4px; }
+        .left-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        .ls-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 18px; border-radius: var(--radius-md);
+            font-size: 15px; font-weight: 600; color: var(--sub);
+            transition: all .2s; cursor: pointer;
+        }
+        .ls-item i { font-size: 20px; width: 24px; text-align: center; }
+        .ls-item:hover { background: var(--card); color: var(--dark); box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+        .ls-item.active { background: var(--accent-soft); color: var(--accent); }
+        .ls-badge { background: var(--accent); color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 12px; margin-left: auto; }
+
+        /* ── CENTER FEED ── */
+        .feed-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* ── STORIES ROW ── */
+        .stories-box {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .stories-box::-webkit-scrollbar { display: none; }
+        .story-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            width: 72px;
+            flex-shrink: 0;
+        }
+        .story-ring {
+            width: 64px; height: 64px;
+            border-radius: 50%;
+            padding: 3px;
+            background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .story-ring img {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--card);
+            object-fit: cover;
+        }
+        .story-name { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+        /* ── FEED POST CARD ── */
+        .feed-post {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .fp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+        }
+        .fp-user { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; }
+        .fp-user img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+        .fp-media {
+            width: 100%;
+            max-height: 700px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .fp-media img, .fp-media video {
+            width: 100%;
+            max-height: 700px;
+            object-fit: contain;
+        }
+        .fp-actions {
+            padding: 12px 16px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 24px;
+        }
+        .fp-actions-left { display: flex; gap: 16px; }
+        .fp-actions i { cursor: pointer; transition: .2s; }
+        .fp-actions i:hover { color: var(--sub); }
+        .fp-likes { padding: 0 16px; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+        .fp-caption { padding: 0 16px 16px; font-size: 14px; }
+        
+        .empty-feed { text-align: center; padding: 40px 20px; color: var(--sub); }
+        .empty-feed i { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
+    @media (max-width: 768px) { 
+        body { padding-bottom: 60px; }
+        .feed-container { padding-bottom: 40px; }
+        .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } 
+        .fp-actions { font-size: 20px; padding: 10px 12px 6px; }
+        .fp-actions-left { gap: 12px; }
+        .fp-likes { padding: 0 12px; font-size: 13px; }
+        .fp-caption { padding: 0 12px 12px; font-size: 13px; }
+    } </style>
+</head>
+<body>
+    <jsp:include page="/WEB-INF/views/fragments/header.jsp" />
+    <div id="wrapper">
+        <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
+        <div id="page-content-wrapper" style="padding: 0; min-height: 100vh; background: var(--bg); flex: 1; min-width: 0; width: auto;" data-skip-global-back="true">
+<!-- Header -->
+    <style>
+@media (max-width: 1200px) {
+    .ch-sub-header {
+        justify-content: flex-start !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        gap: 15px !important;
+        padding: 0 16px !important;
+        scrollbar-width: none;
+    }
+    .ch-sub-header::-webkit-scrollbar { display: none; }
+    .ch-sub-header > div { flex-shrink: 0 !important; }
+    .desktop-only { display: none !important; }
+}
+@media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
+        <header class="ch-sub-header" style="position:sticky; top:80px; width:100%; height:60px; background:#fff; border-bottom:1px solid var(--border); z-index:100; display:flex; align-items:center; justify-content:space-between; padding:0 20px;">
+        <div style="font-weight:700; font-size:20px; color:var(--accent); display:flex; align-items:center; gap:12px;"><span><i class="fa-solid fa-clapperboard"></i> Creator Hub</span></div>
+                <div style="display:flex; align-items:center; gap:8px;">
+            <a href="${pageContext.request.contextPath}/creator-hub/profile" title="Profile" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-user"></i> <span class="desktop-only">Profile</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/feed" title="CreatorHub" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-clapperboard"></i> <span class="desktop-only">CreatorHub</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/chat" title="Chat" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> <span class="desktop-only">Chat</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/notifications" title="Notifications" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-regular fa-bell"></i> <span class="desktop-only">Notifications</span></a>
+            <a href="${pageContext.request.contextPath}/creator-hub/dashboard" title="Settings" style="padding:0 14px; border-radius:20px; font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px; color:var(--text); text-decoration:none;"><i class="fa-solid fa-gear"></i> <span class="desktop-only">Settings</span></a>
+
+        </div>
+    </header>
+
+    <div class="page-wrapper">
+        <!-- LEFT SIDEBAR -->
+        <div class="left-sidebar desktop-sidebar" style="display:none;">
+            <a href="${pageContext.request.contextPath}/creator-hub/profile" class="ls-item">
+                <i class="fa-regular fa-user"></i> Profile
+            </a>
+            <a href="${pageContext.request.contextPath}/creator-hub/feed" class="ls-item active">
+                <i class="fa-solid fa-clapperboard"></i> CreatorHub
+            </a>
+            <a href="${pageContext.request.contextPath}/creator-hub/chat" class="ls-item">
+                <i class="fa-regular fa-comment-dots"></i> Chat
+            </a>
+            <a href="${pageContext.request.contextPath}/creator-hub/notifications" class="ls-item">
+                <i class="fa-regular fa-bell"></i> Notifications
+                <c:if test="${unreadNotifCount > 0}"><span class="ls-badge">${unreadNotifCount}</span></c:if>
+            </a>
+            <a href="${pageContext.request.contextPath}/creator-hub/dashboard" class="ls-item">
+                <i class="fa-solid fa-gear"></i> Settings
+            </a>
+            <div style="margin:20px 0;"></div>
+
+        </div>
+
+        <!-- CENTER FEED -->
+        <div class="feed-container">
+            <!-- STORIES -->
+            <c:if test="${not empty storiesByUser}">
+                <div class="stories-box">
+                    <c:forEach var="entry" items="${storiesByUser}">
+                        <div class="story-item" onclick="viewStory('${entry.value[0].id}', '${entry.key.creatorHandle}', '${not empty entry.key.profilePhoto ? entry.key.profilePhoto : ''}', '${entry.value[0].mediaPath}')">
+                            <div class="story-ring">
+                                <img src="${not empty entry.key.profilePhoto ? entry.key.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}">
+                            </div>
+                            <div class="story-name">${entry.key.creatorHandle}</div>
+                        </div>
+                    </c:forEach>
+                </div>
+            </c:if>
+
+            <!-- FEED POSTS -->
+            <c:if test="${empty feedContent}">
+                <div class="empty-feed">
+                    <i class="fa-solid fa-camera"></i>
+                    <h3>No Posts Yet</h3>
+                    <p>Follow creators to see their photos and videos.</p>
+                </div>
+            </c:if>
+            <c:forEach var="item" items="${feedContent}">
+                <div class="feed-post">
+                    <!-- Header -->
+                    <div class="fp-header">
+                        <div class="fp-user" onclick="window.location.href='${pageContext.request.contextPath}/creator-hub/creator/${item.user.id}'" style="cursor:pointer;" title="View ${item.user.fullName}'s Profile">
+                            <img src="${not empty item.user.profilePhoto ? item.user.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/assets/img/default-avatar.png';">
+                            <span>${not empty item.user.creatorHandle ? item.user.creatorHandle : item.user.fullName}</span>
+                        </div>
+                        <c:if test="${item.user.id == currentUser.id}">
+                            <i class="fa-solid fa-trash" style="color:var(--accent); cursor:pointer;" onclick="deleteFeedPost(${item.id})" title="Delete Post"></i>
+                        </c:if>
+                    </div>
+                    
+                    <!-- Media -->
+                    <div class="fp-media">
+                        <c:set var="mUrl" value="${fn:startsWith(item.videoPath,'http') ? item.videoPath : pageContext.request.contextPath.concat(item.videoPath)}"/>
+                        <c:choose>
+                            <c:when test="${fn:endsWith(fn:toLowerCase(item.videoPath), '.mp4')}">
+                                <video src="${mUrl}" controls playsinline></video>
+                            </c:when>
+                            <c:otherwise>
+                                <img src="${not empty item.thumbnailPath ? item.thumbnailPath : mUrl}" alt="Post Image">
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="fp-actions">
+                        <div class="fp-actions-left">
+                            <i id="like-icon-${item.id}" 
+                               class="${item.likedByCurrentUser ? 'fa-solid' : 'fa-regular'} fa-heart" 
+                               style="${item.likedByCurrentUser ? 'color:var(--accent);' : ''} cursor:pointer;"
+                               onclick="toggleLike(${item.id}, this)"></i>
+                            <i class="fa-regular fa-comment" style="cursor:pointer;" onclick="openComments(${item.id})"></i>
+                            <i class="fa-regular fa-paper-plane" style="cursor:pointer;" onclick="sharePost(${item.id})"></i>
+                        </div>
+                        <c:set var="bkKey" value="bookmarked_${item.id}"/>
+                        <c:set var="isBk" value="${requestScope[bkKey] != null ? requestScope[bkKey] : false}"/>
+                        <i id="save-icon-${item.id}"
+                           class="${isBk ? 'fa-solid' : 'fa-regular'} fa-bookmark"
+                           style="${isBk ? 'color:var(--dark);' : ''} cursor:pointer;"
+                           onclick="toggleSave(${item.id}, this)"></i>
+                    </div>
+                    
+                    <!-- Likes & Caption -->
+                    <div class="fp-likes" id="like-count-${item.id}">${item.likeCount} likes</div>
+                    <c:if test="${not empty item.title or not empty item.description}">
+                        <div class="fp-caption">
+                            <strong>${not empty item.user.creatorHandle ? item.user.creatorHandle : item.user.fullName}</strong> 
+                            ${item.title} ${not empty item.description ? item.description : ''}
+                        </div>
+                    </c:if>
+                </div>
+            </c:forEach>
+        </div>
+    </div>
+    
+    <!-- STORY VIEWER MODAL MOVED TO END OF FILE -->
+
+    <script>
+        function viewStory(storyId, handle, avatar, mediaUrl) {
+            document.getElementById('storyViewerName').innerText = handle;
+            document.getElementById('storyViewerAvatar').src = avatar || '${pageContext.request.contextPath}/assets/img/default-avatar.png';
+            document.getElementById('storyViewerImg').src = mediaUrl;
+            document.getElementById('storyViewer').style.display = 'flex';
+            
+            // Record the view in the backend
+            if (storyId) {
+                fetch('${pageContext.request.contextPath}/creator-hub/story/' + storyId + '/view', { method: 'POST' }).catch(console.error);
+            }
+        }
+
+        function deleteFeedPost(id) {
+            if(!confirm("Delete this post/reel?")) return;
+            fetch('${pageContext.request.contextPath}/creator-hub/post/' + id, { method: 'DELETE' })
+            .then(r => r.json()).then(res => { if(res.success) window.location.reload(); });
+        }
+        
+        function toggleLike(id, iconEl) {
+            let fd = new FormData();
+            fd.append('videoId', id);
+            fetch('${pageContext.request.contextPath}/video/like', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(res => {
+                if(res.liked !== undefined) {
+                    iconEl.className = (res.liked ? 'fa-solid' : 'fa-regular') + ' fa-heart';
+                    iconEl.style.color = res.liked ? 'var(--accent)' : '';
+                    const countEl = document.getElementById('like-count-' + id);
+                    if(countEl) countEl.innerText = res.likeCount + ' likes';
+                }
+            });
+        }
+
+        function toggleSave(id, iconEl) {
+            let fd = new FormData();
+            fd.append('videoId', id);
+            fetch('${pageContext.request.contextPath}/creator-hub/video/bookmark', { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(res => {
+                if(res.bookmarked !== undefined) {
+                    iconEl.className = (res.bookmarked ? 'fa-solid' : 'fa-regular') + ' fa-bookmark';
+                    iconEl.style.color = res.bookmarked ? 'var(--dark)' : '';
+                }
+            });
+        }
+
+        function sharePost(id) {
+            const url = window.location.origin + '${pageContext.request.contextPath}/video/' + id;
+            if(navigator.share) {
+                navigator.share({ title: 'Check this out!', url: url });
+            } else {
+                navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard!'));
+            }
+        }
+
+        /* ── COMMENTS ── */
+        let currentCommentVideoId = null;
+        let replyToParentId = null;
+
+        function openComments(id) {
+            currentCommentVideoId = id;
+            replyToParentId = null;
+            document.getElementById('commentsModal').style.display = 'flex';
+            document.getElementById('commentsList').innerHTML = '<div style="text-align:center;padding:24px;color:var(--sub);"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading comments...</div>';
+            
+            fetch('${pageContext.request.contextPath}/creator-hub/comments-api?videoId=' + id)
+            .then(r => r.json())
+            .then(data => {
+                const list = document.getElementById('commentsList');
+                list.innerHTML = '';
+                if(!data || data.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--sub);"><i class="fa-regular fa-comment-dots" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.6;"></i>No comments yet. Start the conversation!</div>';
+                    return;
+                }
+                data.forEach(c => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'display:flex;gap:12px;margin-bottom:18px;align-items:flex-start;';
+                    const avatarSrc = c.avatar || '${pageContext.request.contextPath}/assets/img/default-avatar.png';
+                    const authorName = c.username || 'User';
+                    const timeAgo = c.timeAgo || '';
+                    
+                    let html = '<img src="' + avatarSrc + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">'
+                        + '<div style="flex:1;">'
+                        + '<div style="background:var(--bg);padding:10px 14px;border-radius:14px;display:inline-block;max-width:100%;">'
+                        + '<div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px;">' + authorName + '</div>'
+                        + '<div style="font-size:14px;color:#334155;word-break:break-word;">' + c.text + '</div>'
+                        + '</div>'
+                        + '<div style="display:flex;gap:16px;align-items:center;font-size:12px;color:var(--sub);margin-top:4px;padding-left:4px;">'
+                        + '<span>' + timeAgo + '</span>'
+                        + '<span style="font-weight:600;cursor:pointer;color:var(--accent);" onclick="setReply(' + c.id + ',\'' + authorName.replace(/'/g, "\\'") + '\')">Reply</span>'
+                        + '</div>';
+                        
+                    // Render replies
+                    if(c.replies && c.replies.length > 0) {
+                        c.replies.forEach(r => {
+                            const rAvatar = r.avatar || '${pageContext.request.contextPath}/assets/img/default-avatar.png';
+                            const rName = r.username || 'User';
+                            const rTime = r.timeAgo || '';
+                            html += '<div style="display:flex;gap:10px;margin-top:10px;margin-left:24px;align-items:flex-start;">'
+                                + '<img src="' + rAvatar + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">'
+                                + '<div style="flex:1;">'
+                                + '<div style="background:var(--bg);padding:8px 12px;border-radius:12px;display:inline-block;max-width:100%;">'
+                                + '<div style="font-size:12px;font-weight:700;color:var(--dark);margin-bottom:2px;">' + rName + '</div>'
+                                + '<div style="font-size:13px;color:#334155;word-break:break-word;">' + r.text + '</div>'
+                                + '</div>'
+                                + '<div style="font-size:11px;color:var(--sub);margin-top:2px;padding-left:4px;">' + rTime + '</div>'
+                                + '</div></div>';
+                        });
+                    }
+                    html += '</div>';
+                    div.innerHTML = html;
+                    list.appendChild(div);
+                });
+            })
+            .catch(err => {
+                document.getElementById('commentsList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--accent);">Failed to load comments.</div>';
+            });
+        }
+
+        function closeComments() { document.getElementById('commentsModal').style.display = 'none'; }
+
+        function setReply(commentId, userName) {
+            replyToParentId = commentId;
+            const input = document.getElementById('commentInput');
+            input.value = '@' + userName + ' ';
+            input.focus();
+        }
+
+        function insertEmoji(emoji) { document.getElementById('commentInput').value += emoji; }
+
+        function submitComment() {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if(!text || !currentCommentVideoId) return;
+
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+            let fd = new FormData();
+            fd.append('videoId', currentCommentVideoId);
+            fd.append('commentText', text);
+            if(replyToParentId) fd.append('parentId', replyToParentId);
+            if(csrfToken) fd.append('_csrf', csrfToken);
+
+            const headers = {};
+            if(csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('${pageContext.request.contextPath}/creator-hub/comment', { 
+                method: 'POST', 
+                headers: headers,
+                body: fd 
+            })
+            .then(r => r.json())
+            .then(res => {
+                if(res.error) {
+                    alert(res.error === 'NOT_LOGGED_IN' ? 'Please log in to comment.' : res.error);
+                    return;
+                }
+                input.value = '';
+                replyToParentId = null;
+                openComments(currentCommentVideoId);
+            })
+            .catch(err => {
+                console.warn('Direct creator-hub comment fallback to /video/comment', err);
+                fetch('${pageContext.request.contextPath}/video/comment', { method: 'POST', headers: headers, body: fd })
+                .then(r => r.json())
+                .then(() => {
+                    input.value = '';
+                    replyToParentId = null;
+                    openComments(currentCommentVideoId);
+                });
+            });
+        }
+
+        function toggleChatPanel() { window.location.href = '${pageContext.request.contextPath}/creator-hub/chat'; }
+        function toggleNotifPanel() { window.location.href = '${pageContext.request.contextPath}/creator-hub/notifications'; }
+    </script>
+
+    <!-- COMMENTS MODAL MOVED TO END OF FILE -->
+    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
+        </div>
+    </div>
+    
+    <!-- STORY VIEWER MODAL -->
+    <div id="storyViewer" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:10000; align-items:center; justify-content:center; flex-direction:column;">
+        <div style="position:absolute; top:20px; right:20px; color:white; font-size:28px; cursor:pointer; z-index:10;" onclick="document.getElementById('storyViewer').style.display='none'"><i class="fa-solid fa-times"></i></div>
+        <div style="position:absolute; top:20px; left:20px; display:flex; align-items:center; gap:12px; color:white; z-index:10;">
+            <img id="storyViewerAvatar" src="" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid white;">
+            <span id="storyViewerName" style="font-weight:700; font-size:16px;"></span>
+        </div>
+        <img id="storyViewerImg" src="" style="max-width:90%; max-height:80vh; border-radius:12px; object-fit:contain;">
+    </div>
+
+    <!-- COMMENTS MODAL -->
+    <div id="commentsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:10000; align-items:flex-end; justify-content:center;">
+        <div style="width:100%; max-width:600px; height:70vh; background:var(--card); border-radius:24px 24px 0 0; display:flex; flex-direction:column; overflow:hidden; animation: slideUp 0.3s ease-out;">
+            <div style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; font-size:18px;">Comments</h3>
+                <i class="fa-solid fa-times" style="font-size:20px; cursor:pointer;" onclick="closeComments()"></i>
+            </div>
+            <div id="commentsList" style="flex:1; overflow-y:auto; padding:20px;"></div>
+            <div style="border-top:1px solid var(--border); padding:12px 16px; padding-bottom: 100px;">
+                <div style="display:flex; gap:10px; margin-bottom:8px; font-size:20px; cursor:pointer;">
+                    <span onclick="insertEmoji('😂')">😂</span><span onclick="insertEmoji('😍')">😍</span><span onclick="insertEmoji('🔥')">🔥</span><span onclick="insertEmoji('👏')">👏</span><span onclick="insertEmoji('😢')">😢</span><span onclick="insertEmoji('🎉')">🎉</span><span onclick="insertEmoji('❤️')">❤️</span><span onclick="insertEmoji('👍')">👍</span>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <img src="${not empty currentUser.profilePhoto ? currentUser.profilePhoto : pageContext.request.contextPath.concat('/assets/img/default-avatar.png')}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">
+                    <input type="text" id="commentInput" placeholder="Add a comment..." style="flex:1; border:none; outline:none; background:var(--bg); padding:10px 16px; border-radius:20px; font-size:14px;" onkeypress="if(event.key==='Enter') submitComment()">
+                    <i class="fa-solid fa-paper-plane" style="color:var(--accent); font-size:20px; cursor:pointer;" onclick="submitComment()"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }@media (max-width: 768px) { .feed-post { border-radius: 0 !important; border-left: none !important; border-right: none !important; } } </style>
+        </div>
+    </div>
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

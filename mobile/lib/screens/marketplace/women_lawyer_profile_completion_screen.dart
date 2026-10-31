@@ -8,19 +8,25 @@ import '../../config/lawyer_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/marketplace_provider_auth_service.dart';
 import '../../widgets/bank_details_form.dart';
+import '../../widgets/dynamic_location_hierarchy_picker.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
-import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
+import 'women_lawyer_pending_approval_screen.dart';
 
+/// Complete Women Lawyer profile completion & editing screen.
+/// Replicates all sections, fields, validations and live preview from `lawyer/profileCompletion.jsp`.
 class WomenLawyerProfileCompletionScreen extends StatefulWidget {
   const WomenLawyerProfileCompletionScreen({super.key, this.onFinished});
 
   final void Function(BuildContext context)? onFinished;
 
   static const Color primary = Color(0xFFF43F5E);
+  static const Color primaryHover = Color(0xFFE11D48);
   static const Color navy = Color(0xFF1E1B4B);
+  static const Color textGray = Color(0xFF64748B);
+  static const Color bgPage = Color(0xFFF8FAFC);
 
   @override
   State<WomenLawyerProfileCompletionScreen> createState() =>
@@ -29,18 +35,43 @@ class WomenLawyerProfileCompletionScreen extends StatefulWidget {
 
 class _WomenLawyerProfileCompletionScreenState
     extends State<WomenLawyerProfileCompletionScreen> {
+  // Section 1: Professional Identity
   final _name = TextEditingController();
   final _phone = TextEditingController();
   final _whatsapp = TextEditingController();
+  final _barCouncil = TextEditingController();
   final _years = TextEditingController();
-  final _address = TextEditingController();
-  final _city = TextEditingController();
-  final _stateOther = TextEditingController();
-  final _pincode = TextEditingController();
-  final _mapLocation = TextEditingController();
+  final _languages = TextEditingController();
+  String? _designation;
+
+  // Section 2: Legal Expertise & Bio
   final _bio = TextEditingController();
+  final _audience = TextEditingController();
+  final Set<String> _practiceAreas = {};
+
+  // Section 3: Chamber Address & Location
+  final _address = TextEditingController();
+  String _country = 'India';
+  String? _state;
+  String? _district;
+  String? _city;
+  final _pincode = TextEditingController();
+  final _facilities = TextEditingController();
+  final _mapLocation = TextEditingController();
+  double? _lat;
+  double? _lng;
+
+  // Section 4: Schedule & Availability
+  final _openDays = TextEditingController(text: 'Mon - Fri');
+  String _serviceMode = 'CHAMBER';
+  int _duration = 60;
+  String _consultMode = 'Video Call';
+  TimeOfDay? _openTime = const TimeOfDay(hour: 9, minute: 0);
+  TimeOfDay? _closeTime = const TimeOfDay(hour: 18, minute: 0);
+
+  // Section 5: Fees & Banking
+  final _fee = TextEditingController(text: '1000');
   final _upi = TextEditingController();
-  final _bank = TextEditingController();
   final _accountHolder = TextEditingController();
   final _accountNumber = TextEditingController();
   final _confirmAccountNumber = TextEditingController();
@@ -48,37 +79,18 @@ class _WomenLawyerProfileCompletionScreenState
   final _bankName = TextEditingController();
   final _branchName = TextEditingController();
   String _accountType = 'Savings';
-  final _rate = TextEditingController(text: '500');
-  final _barCouncil = TextEditingController();
 
-  String? _designation;
-  String? _state;
-  String? _consultMode;
-  String _serviceMode = 'CHAMBER';
-  int _duration = 60;
-  int _buffer = 10;
-  TimeOfDay? _openTime;
-  TimeOfDay? _closeTime;
-  TimeOfDay? _breakStart;
-  TimeOfDay? _breakEnd;
-
-  final Set<String> _categories = {};
-  final Set<String> _audience = {};
-  final Set<String> _facilities = {};
-  final Set<String> _languages = {};
-  final Set<String> _days = {};
-  final Set<String> _blockedDates = {};
-  bool _doorService = false;
-  double? _lat;
-  double? _lng;
-
+  // State flags & photos
   bool _loading = true;
   bool _saving = false;
   bool _submitting = false;
   bool _uploadingPhoto = false;
-  bool _uploadingGallery = false;
+  bool _uploadingChamberPhoto = false;
   String? _error;
+  String? _profilePhotoUrl;
+  String? _chamberPhotoUrl;
   Map<String, dynamic> _profile = {};
+  final Map<String, String> _errors = {};
 
   MarketplaceProviderAuthService get _svc =>
       MarketplaceProviderAuthService(context.read<AuthState>().api);
@@ -92,10 +104,27 @@ class _WomenLawyerProfileCompletionScreenState
   @override
   void dispose() {
     for (final c in [
-      _name, _phone, _whatsapp, _years, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _upi, _bank, _accountHolder,
-      _accountNumber, _confirmAccountNumber, _ifsc, _bankName,
-      _branchName, _rate, _barCouncil,
+      _name,
+      _phone,
+      _whatsapp,
+      _barCouncil,
+      _years,
+      _languages,
+      _bio,
+      _audience,
+      _address,
+      _pincode,
+      _facilities,
+      _mapLocation,
+      _openDays,
+      _fee,
+      _upi,
+      _accountHolder,
+      _accountNumber,
+      _confirmAccountNumber,
+      _ifsc,
+      _bankName,
+      _branchName,
     ]) {
       c.dispose();
     }
@@ -115,69 +144,77 @@ class _WomenLawyerProfileCompletionScreenState
     } else {
       setState(() {
         _loading = false;
-        _error = res['error']?.toString() ?? 'Failed to load profile';
+        _error = res['error']?.toString() ?? 'Failed to load lawyer profile';
       });
     }
   }
 
-  String _pickOrOther(String raw, List<String> options, TextEditingController other) {
-    final v = raw.trim();
-    if (v.isEmpty) {
-      other.clear();
-      return '';
-    }
-    if (options.contains(v)) {
-      other.clear();
-      return v;
-    }
-    other.text = v;
-    return 'Other';
-  }
-
   void _applyProfile(Map<String, dynamic> p) {
     _profile = p;
+
+    // 1. Identity
     _name.text = p['fullName']?.toString() ?? '';
     _phone.text = p['phone']?.toString() ?? '';
     _whatsapp.text = p['whatsappNumber']?.toString() ?? '';
-    _years.text = (p['experienceYears'] ?? p['yearsExperience'])?.toString() ?? '';
     _barCouncil.text = p['barCouncilId']?.toString() ?? '';
-    _designation = (p['designation']?.toString().isNotEmpty == true) ? p['designation'].toString() : null;
+    _years.text = (p['experienceYears'] ?? p['yearsExperience'])?.toString() ?? '';
+    _languages.text = p['languages']?.toString() ?? '';
+    final des = p['designation']?.toString();
+    _designation = (des != null && des.isNotEmpty) ? des : null;
+
+    // Photos
+    _profilePhotoUrl = p['profilePhoto']?.toString() ?? p['profileImageUrl']?.toString();
+    if (_profilePhotoUrl == 'web-pending' || _profilePhotoUrl == 'mobile-pending') {
+      _profilePhotoUrl = null;
+    }
+    _chamberPhotoUrl = p['galleryPhotos'] is List
+        ? ((p['galleryPhotos'] as List).isNotEmpty ? (p['galleryPhotos'] as List).first.toString() : null)
+        : (p['galleryPhotos']?.toString().split(',').firstOrNull);
+
+    // 2. Practice & Bio
+    _bio.text = p['bio']?.toString() ?? p['description']?.toString() ?? '';
+    _audience.text = p['audience'] is List
+        ? (p['audience'] as List).join(', ')
+        : (p['audience']?.toString() ?? '');
+    _practiceAreas
+      ..clear()
+      ..addAll(LawyerCatalog.splitCsv(p['practiceAreas']));
+
+    // 3. Location
     _address.text = p['address']?.toString() ?? '';
-    _city.text = p['city']?.toString() ?? '';
-    _state = _pickOrOther(p['state']?.toString() ?? '', LawyerCatalog.indianStates, _stateOther);
-    if ((_state ?? '').isEmpty) _state = null;
+    _country = p['country']?.toString() ?? 'India';
+    _state = p['state']?.toString();
+    _city = p['city']?.toString();
+    _district = p['district']?.toString();
     _pincode.text = p['pincode']?.toString() ?? '';
+    _facilities.text = p['facilities'] is List
+        ? (p['facilities'] as List).join(', ')
+        : (p['facilities']?.toString() ?? '');
+
     _lat = p['latitude'] is num ? (p['latitude'] as num).toDouble() : double.tryParse('${p['latitude'] ?? ''}');
     _lng = p['longitude'] is num ? (p['longitude'] as num).toDouble() : double.tryParse('${p['longitude'] ?? ''}');
     if (_lat != null && _lng != null) {
       _mapLocation.text = 'https://maps.google.com/?q=$_lat,$_lng';
     }
-    _categories
-      ..clear()
-      ..addAll(LawyerCatalog.splitCsv(p['practiceAreas'] ?? p['categoriesOffered']));
-    _audience
-      ..clear()
-      ..addAll(LawyerCatalog.splitCsv(p['audience']));
-    _facilities
-      ..clear()
-      ..addAll(LawyerCatalog.splitCsv(p['facilities']));
-    _languages
-      ..clear()
-      ..addAll(LawyerCatalog.splitCsv(p['languages']));
-    _days
-      ..clear()
-      ..addAll(LawyerCatalog.splitCsv(p['openDays']));
-    _blockedDates
-      ..clear()
-      ..addAll(LawyerCatalog.splitCsv(p['blockedDates']));
-    _doorService = p['doorService'] == true;
-    _openTime = LawyerCatalog.parseTime(p['openTime']?.toString());
-    _closeTime = LawyerCatalog.parseTime(p['closeTime']?.toString());
-    _breakStart = LawyerCatalog.parseTime(p['breakStart']?.toString());
-    _breakEnd = LawyerCatalog.parseTime(p['breakEnd']?.toString());
-    _bio.text = p['bio']?.toString() ?? '';
+
+    // 4. Schedule
+    final days = p['openDays'];
+    if (days != null && days.toString().isNotEmpty) {
+      _openDays.text = days is List ? days.join(', ') : days.toString();
+    }
+    _serviceMode = (p['serviceMode']?.toString().isNotEmpty == true)
+        ? p['serviceMode'].toString().toUpperCase()
+        : 'CHAMBER';
+    _duration = p['durationMinutes'] is num ? (p['durationMinutes'] as num).toInt() : 60;
+    _consultMode = p['consultationMode']?.toString() ?? 'Video Call';
+    _openTime = LawyerCatalog.parseTime(p['openTime']?.toString()) ?? const TimeOfDay(hour: 9, minute: 0);
+    _closeTime = LawyerCatalog.parseTime(p['closeTime']?.toString()) ?? const TimeOfDay(hour: 18, minute: 0);
+
+    // 5. Fees & Bank
+    if (p['consultationFee'] != null) {
+      _fee.text = '${p['consultationFee']}';
+    }
     _upi.text = p['upiId']?.toString() ?? '';
-    _bank.text = p['bankDetails']?.toString() ?? '';
     BankDetailsSection.populateFromProfile(
       profile: p,
       accountHolderController: _accountHolder,
@@ -189,54 +226,38 @@ class _WomenLawyerProfileCompletionScreenState
       upiController: _upi,
       setAccountType: (t) => setState(() => _accountType = t),
     );
-    if (p['consultationFee'] != null) {
-      _rate.text = '${p['consultationFee']}';
-    } else if (p['hourlyRate'] != null) {
-      _rate.text = '${p['hourlyRate']}';
-    }
-    _duration = p['durationMinutes'] is num ? (p['durationMinutes'] as num).toInt() : 60;
-    _buffer = p['bufferMinutes'] is num ? (p['bufferMinutes'] as num).toInt() : 10;
-    _serviceMode = p['serviceMode']?.toString().isNotEmpty == true
-        ? p['serviceMode'].toString().toUpperCase()
-        : 'CHAMBER';
-    if (!LawyerCatalog.serviceModes.contains(_serviceMode)) _serviceMode = 'CHAMBER';
-    _consultMode = p['consultationMode']?.toString();
-    if ((_consultMode ?? '').isEmpty) _consultMode = LawyerCatalog.consultModes.first;
   }
 
   Map<String, dynamic> _profileBody() {
-    final state = _state == 'Other' ? _stateOther.text.trim() : (_state ?? '');
     return {
       'fullName': _name.text.trim(),
       'phone': _phone.text.trim(),
-      'designation': _designation,
       'whatsappNumber': _whatsapp.text.trim(),
-      'yearsExperience': _years.text.trim(),
+      'designation': _designation,
+      'barCouncilId': _barCouncil.text.trim().toUpperCase(),
       'experienceYears': int.tryParse(_years.text.trim()),
-      'barCouncilId': _barCouncil.text.trim(),
+      'yearsExperience': _years.text.trim(),
+      'languages': _languages.text.trim(),
+      'practiceAreas': _practiceAreas.toList(),
+      'bio': _bio.text.trim(),
+      'description': _bio.text.trim(),
+      'audience': _audience.text.trim(),
       'address': _address.text.trim(),
-      'city': _city.text.trim(),
-      'state': state,
+      'country': _country,
+      'state': _state ?? '',
+      'district': _district ?? '',
+      'city': _city ?? '',
       'pincode': _pincode.text.trim(),
+      'facilities': _facilities.text.trim(),
       'latitude': _lat,
       'longitude': _lng,
-      'practiceAreas': _categories.toList(),
-      'audience': _audience.toList(),
-      'doorService': _doorService,
-      'languages': _languages.toList(),
-      'facilities': _facilities.toList(),
-      'openDays': _days.toList(),
+      'openDays': _openDays.text.trim(),
+      'serviceMode': _serviceMode,
+      'durationMinutes': _duration,
+      'consultationMode': _consultMode,
       'openTime': _openTime == null ? null : LawyerCatalog.formatTime(_openTime!),
       'closeTime': _closeTime == null ? null : LawyerCatalog.formatTime(_closeTime!),
-      'breakStart': _breakStart == null ? null : LawyerCatalog.formatTime(_breakStart!),
-      'breakEnd': _breakEnd == null ? null : LawyerCatalog.formatTime(_breakEnd!),
-      'blockedDates': _blockedDates.toList(),
-      'bio': _bio.text.trim(),
-      'consultationFee': double.tryParse(_rate.text.trim()) ?? 0,
-      'consultationMode': _consultMode,
-      'durationMinutes': _duration,
-      'bufferMinutes': _buffer,
-      'serviceMode': _serviceMode,
+      'consultationFee': double.tryParse(_fee.text.trim()) ?? 0,
       'upiId': _upi.text.trim(),
       ...BankDetailsSection.buildPayload(
         accountHolder: _accountHolder.text,
@@ -250,35 +271,139 @@ class _WomenLawyerProfileCompletionScreenState
     };
   }
 
-  String? _validate({bool forSubmit = false}) {
-    if (_name.text.trim().isEmpty) return '1.1 Full name is required';
-    if (_phone.text.trim().length != 10) return '1.5 Official phone must be 10 digits';
-    if (_address.text.trim().isEmpty) return '2.1 Chamber address is required';
-    if (_city.text.trim().isEmpty) return '2.3 City is required';
-    if ((_state ?? '').isEmpty) return '2.4 State is required';
-    if (_state == 'Other' && _stateOther.text.trim().isEmpty) return '2.4 Enter state';
-    if (_pincode.text.trim().length != 6) return '2.5 Pincode must be 6 digits';
-    if (_barCouncil.text.trim().isEmpty) return '1.8 Bar council ID is required';
-    if (_categories.isEmpty) return '3.1 Select at least one practice area';
-    if (_audience.isEmpty) return '4.1 Who I serve is required';
-    if (_days.isEmpty) return '6.1 Open days are required';
-    if (_openTime == null) return '6.2 Open time is required';
-    if (_closeTime == null) return '6.3 Close time is required';
-    if (_bio.text.trim().isEmpty) return '7.1 About is required';
-    if ((_consultMode ?? '').isEmpty) return '8. Consultation mode is required';
-    if (double.tryParse(_rate.text.trim()) == null) return '8. Consultation fee is required';
-    if (forSubmit && _profile['canSubmitForVerification'] == false) {
-      return _profile['nextStepGuidance']?.toString();
+  bool _validateForm({bool forSubmit = false}) {
+    final errs = <String, String>{};
+
+    if (_name.text.trim().isEmpty) {
+      errs['name'] = 'Enter your full legal/professional name';
     }
-    return null;
+    if (_phone.text.trim().length != 10) {
+      errs['phone'] = 'Official phone number must be 10 digits';
+    }
+    if (_whatsapp.text.trim().isNotEmpty && _whatsapp.text.trim().length != 10) {
+      errs['whatsapp'] = 'WhatsApp number must be 10 digits';
+    }
+    if (_barCouncil.text.trim().isEmpty) {
+      errs['barCouncil'] = 'Valid Bar Council registration number is required';
+    }
+    final exp = int.tryParse(_years.text.trim());
+    if (exp == null || exp < 0 || exp > 60) {
+      errs['years'] = 'Enter valid experience in years (0 to 60)';
+    }
+    if (_languages.text.trim().isEmpty) {
+      errs['languages'] = 'Enter languages in which you provide legal counsel';
+    }
+    if (_practiceAreas.isEmpty) {
+      errs['practiceAreas'] = 'Select at least one legal practice area';
+    }
+    if (_bio.text.trim().length < 25) {
+      errs['bio'] = 'Professional bio must be at least 25 characters';
+    }
+    if (_address.text.trim().isEmpty) {
+      errs['address'] = 'Chamber or office address is required';
+    }
+    if ((_state ?? '').trim().isEmpty) {
+      errs['state'] = 'Select your State';
+    }
+    if ((_city ?? '').trim().isEmpty) {
+      errs['city'] = 'Select or enter your City';
+    }
+    if (_pincode.text.trim().length != 6) {
+      errs['pincode'] = 'Pincode must be 6 digits';
+    }
+    if (_openDays.text.trim().isEmpty) {
+      errs['openDays'] = 'Open days are required (e.g. Mon - Fri)';
+    }
+    final feeVal = double.tryParse(_fee.text.trim());
+    if (feeVal == null || feeVal < 0) {
+      errs['fee'] = 'Enter valid consultation fee (0 for Free/Pro Bono)';
+    }
+
+    // Bank validation
+    if (_accountNumber.text.trim().isNotEmpty) {
+      if (_accountNumber.text.trim().length < 9) {
+        errs['accountNumber'] = 'Bank account number must be at least 9 digits';
+      }
+      if (_confirmAccountNumber.text.trim() != _accountNumber.text.trim()) {
+        errs['confirmAccountNumber'] = 'Account numbers do not match';
+      }
+      if (_ifsc.text.trim().length != 11) {
+        errs['ifsc'] = 'IFSC code must be 11 characters (e.g. SBIN0001234)';
+      }
+      if (_accountHolder.text.trim().isEmpty) {
+        errs['accountHolder'] = 'Account holder name is required';
+      }
+      if (_bankName.text.trim().isEmpty) {
+        errs['bankName'] = 'Bank name is required';
+      }
+    }
+
+    setState(() => _errors
+      ..clear()
+      ..addAll(errs));
+
+    if (errs.isNotEmpty) {
+      _error = errs.values.first;
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _uploadHeadshot() async {
+    String? path;
+    try {
+      final img = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+      path = img?.path;
+    } catch (_) {}
+    path ??= (await FilePicker.platform.pickFiles(type: FileType.image))?.files.single.path;
+    if (path == null || path.isEmpty) return;
+
+    setState(() => _uploadingPhoto = true);
+    try {
+      final res = await _svc.uploadPhotos(profilePath: path);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        await _load();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Advocate photo uploaded successfully')),
+        );
+      } else {
+        setState(() => _error = res['error']?.toString() ?? 'Failed to upload photo');
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingPhoto = false);
+    }
+  }
+
+  Future<void> _uploadChamberPhoto() async {
+    String? path;
+    try {
+      final img = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+      path = img?.path;
+    } catch (_) {}
+    path ??= (await FilePicker.platform.pickFiles(type: FileType.image))?.files.single.path;
+    if (path == null || path.isEmpty) return;
+
+    setState(() => _uploadingChamberPhoto = true);
+    try {
+      final res = await _svc.uploadPhotos(galleryPath: path);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        await _load();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chamber photo uploaded successfully')),
+        );
+      } else {
+        setState(() => _error = res['error']?.toString() ?? 'Failed to upload chamber photo');
+      }
+    } finally {
+      if (mounted) setState(() => _uploadingChamberPhoto = false);
+    }
   }
 
   Future<void> _saveProfile() async {
-    final err = _validate();
-    if (err != null) {
-      setState(() => _error = err);
-      return;
-    }
+    if (!_validateForm()) return;
+
     setState(() {
       _saving = true;
       _error = null;
@@ -286,7 +411,7 @@ class _WomenLawyerProfileCompletionScreenState
     try {
       await ActionFeedback.run(
         context,
-        loadingLabel: 'Saving…',
+        loadingLabel: 'Saving lawyer profile…',
         doneLabel: 'Saved',
         action: () async {
           final res = await _svc.updateProfile(_profileBody());
@@ -304,11 +429,8 @@ class _WomenLawyerProfileCompletionScreenState
   }
 
   Future<void> _submit() async {
-    final err = _validate(forSubmit: true);
-    if (err != null) {
-      setState(() => _error = err);
-      return;
-    }
+    if (!_validateForm(forSubmit: true)) return;
+
     setState(() {
       _submitting = true;
       _error = null;
@@ -316,14 +438,11 @@ class _WomenLawyerProfileCompletionScreenState
     try {
       await ActionFeedback.run(
         context,
-        loadingLabel: 'Submitting…',
+        loadingLabel: 'Submitting credentials for verification…',
         doneLabel: 'Submitted',
         action: () async {
           final saveRes = await _svc.updateProfile(_profileBody());
           if (saveRes['success'] == true) _applyProfile(Map<String, dynamic>.from(saveRes));
-          if (_profile['canSubmitForVerification'] != true) {
-            throw Exception('Complete all mandatory fields before submitting');
-          }
           final res = await _svc.submitVerification();
           if (res['success'] != true) {
             throw Exception(res['error']?.toString() ?? 'Submit failed');
@@ -334,11 +453,13 @@ class _WomenLawyerProfileCompletionScreenState
       if (!mounted) return;
       await showVerificationSubmittedSheet(context);
       if (!mounted) return;
-      if (widget.onFinished != null) {
-        widget.onFinished!(context);
-      } else {
-        Navigator.of(context).pop(true);
-      }
+
+      // Navigate to dedicated Pending Approval screen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => WomenLawyerPendingApprovalScreen(initialProfile: _profile),
+        ),
+      );
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -346,88 +467,63 @@ class _WomenLawyerProfileCompletionScreenState
     }
   }
 
-  Future<void> _pickClock(void Function(TimeOfDay t) apply, TimeOfDay? current) async {
-    final picked = await showTimePicker(context: context, initialTime: current ?? const TimeOfDay(hour: 9, minute: 0));
-    if (picked != null) setState(() => apply(picked));
-  }
-  Future<void> _addBlockedDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked == null) return;
-    final key = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-    setState(() => _blockedDates.add(key));
-  }
-
-  Future<void> _uploadFile({required String kind}) async {
-    String? path;
-    try {
-      final img = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
-      path = img?.path;
-    } catch (_) {}
-    path ??= (await FilePicker.platform.pickFiles(type: FileType.image))?.files.single.path;
-    if (path == null || path.isEmpty) return;
-    setState(() {
-      if (kind == 'photo') _uploadingPhoto = true;
-      if (kind == 'gallery') _uploadingGallery = true;
-    });
-    try {
-      final res = await _svc.uploadPhotos(
-        profilePath: kind == 'photo' ? path : null,
-        galleryPath: kind == 'gallery' ? path : null,
-      );
-      if (!mounted) return;
-      if (res['success'] == true) {
-        await _load();
-      } else {
-        setState(() => _error = res['error']?.toString() ?? 'Upload failed');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _uploadingPhoto = false;
-          _uploadingGallery = false;
-        });
-      }
-    }
-  }
-
-
   void _skip() => ProfileCompletionActions.skip(context, widget.onFinished);
 
   @override
   Widget build(BuildContext context) {
-    final pct = (_profile['profileCompletionPct'] is num) ? (_profile['profileCompletionPct'] as num).toDouble() : 0.0;
+    final pct = (_profile['profileCompletionPct'] is num)
+        ? (_profile['profileCompletionPct'] as num).toDouble()
+        : 0.0;
     final missing = LawyerCatalog.splitCsv(_profile['missingItems']);
     final guidance = _profile['nextStepGuidance']?.toString();
     final canSubmit = _profile['canSubmitForVerification'] == true;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: WomenLawyerProfileCompletionScreen.bgPage,
       appBar: AppBar(
         backgroundColor: Colors.white,
         foregroundColor: WomenLawyerProfileCompletionScreen.navy,
-        title: const Text('Complete Lawyer Profile', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w700)),
-      actions: ProfileCompletionActions.appBar(
-        onSkip: _loading ? null : _skip,
-        onSave: (_loading || _saving) ? null : _saveProfile,
-        saving: _saving,
-      ),
+        elevation: 0.5,
+        title: const Text(
+          'Complete Lawyer Profile',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+        ),
+        actions: ProfileCompletionActions.appBar(
+          onSkip: _loading ? null : _skip,
+          onSave: (_loading || _saving) ? null : _saveProfile,
+          saving: _saving,
+        ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? ModuleTheme.loading()
           : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
               children: [
                 if (_error != null) ...[
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFECACA)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: Colors.red, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(_error!, style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                 ],
+
+                // Completion Progress Header Matching Website
                 ProfileCompletionCard(
                   percent: pct,
-                  statusLabel: _profile['partnerProfileStatusLabel']?.toString() ?? 'Pending',
+                  statusLabel: _profile['partnerProfileStatusLabel']?.toString() ?? 'Incomplete',
                   hint: ProfileCompletionCard.hintFromMissing(missing, guidance: guidance),
                   actionLabel: '',
                   onAction: () {},
@@ -439,52 +535,187 @@ class _WomenLawyerProfileCompletionScreenState
                           runSpacing: 6,
                           children: missing
                               .map((m) => Chip(
-                                    label: Text(m, style: const TextStyle(fontSize: 12)),
+                                    label: Text(m, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                                     backgroundColor: const Color(0xFFFFF7ED),
                                   ))
                               .toList(),
                         ),
                 ),
                 const SizedBox(height: 12),
-                FilledButton(
+
+                // Submit For Verification Action
+                FilledButton.icon(
                   onPressed: (_submitting || !canSubmit) ? null : _submit,
+                  icon: _submitting
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.send_rounded, size: 18),
+                  label: Text(canSubmit ? 'Submit Profile for Admin Verification' : 'Complete Required Sections to Submit'),
                   style: FilledButton.styleFrom(
                     backgroundColor: WomenLawyerProfileCompletionScreen.primary,
-                    minimumSize: const Size.fromHeight(48),
+                    minimumSize: const Size.fromHeight(50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: _submitting
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
                 ),
-                const SizedBox(height: 16),
-                _section('1', 'Lawyer identity', [
-                  _field(_name, '1.1', 'Full name', required: true),
+                const SizedBox(height: 20),
+
+                // SECTION 1: Professional Identity
+                _sectionCard('1', 'Professional Identity', Icons.badge_rounded, [
+                  _field(
+                    controller: _name,
+                    keyName: 'name',
+                    label: 'Lawyer Name *',
+                    helper: 'Enter your full legal/professional name as registered with the Bar Council.',
+                    placeholder: 'e.g. Adv. Priya Sharma',
+                  ),
                   _dropdown(
-                    number: '1.2',
-                    label: 'Designation',
+                    keyName: 'designation',
+                    label: 'Professional Designation',
+                    helper: 'Select your primary professional title.',
                     value: _designation,
                     options: LawyerCatalog.designations,
-                    required: true,
                     onChanged: (v) => setState(() => _designation = v),
                   ),
-                  _field(_phone, '1.5', 'Official phone', required: true, keyboardType: TextInputType.phone, maxLength: 10, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_whatsapp, '1.6', 'WhatsApp', keyboardType: TextInputType.phone, maxLength: 10, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_years, '1.7', 'Years of experience', keyboardType: TextInputType.number, maxLength: 2, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_barCouncil, '1.8', 'Bar council ID', required: true, hint: 'Enrolment / registration number'),
+                  _field(
+                    controller: _phone,
+                    keyName: 'phone',
+                    label: 'Official Phone Number *',
+                    helper: '10-digit mobile number for client contact.',
+                    placeholder: 'e.g. 9876543210',
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    formatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _field(
+                    controller: _whatsapp,
+                    keyName: 'whatsapp',
+                    label: 'WhatsApp Number',
+                    helper: '10-digit WhatsApp number for case updates.',
+                    placeholder: 'e.g. 9876543210',
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    formatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _field(
+                    controller: _barCouncil,
+                    keyName: 'barCouncil',
+                    label: 'Bar Council Registration Number *',
+                    helper: 'Enter your valid State Bar Council enrolment number (e.g. MAH/1234/2018).',
+                    placeholder: 'e.g. MAH/1234/2018 or D/567/2015',
+                  ),
+                  _field(
+                    controller: _years,
+                    keyName: 'years',
+                    label: 'Years of Experience *',
+                    helper: 'Enter your total years of active legal practice.',
+                    placeholder: 'e.g. 8',
+                    keyboardType: TextInputType.number,
+                    maxLength: 2,
+                    formatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _field(
+                    controller: _languages,
+                    keyName: 'languages',
+                    label: 'Languages Spoken *',
+                    helper: 'Languages you provide legal counsel in (e.g. English, Hindi, Kannada).',
+                    placeholder: 'e.g. English, Hindi, Marathi',
+                  ),
+
+                  // Headshot photo upload
+                  const SizedBox(height: 8),
+                  _uploadTile(
+                    label: 'Advocate Professional Headshot',
+                    helper: 'Upload professional portrait for client trust (JPG, PNG, WebP up to 5MB).',
+                    imageUrl: _profilePhotoUrl,
+                    loading: _uploadingPhoto,
+                    onUpload: _uploadHeadshot,
+                  ),
                 ]),
-                _section('2', 'Chamber location', [
-                  _field(_address, '2.1', 'Chamber address', required: true),
-                  _field(_city, '2.3', 'City', required: true),
-                  _dropdown(number: '2.4', label: 'State', value: _state, options: LawyerCatalog.indianStates, required: true, onChanged: (v) => setState(() => _state = v)),
-                  if (_state == 'Other') _field(_stateOther, '2.4', 'Enter state', required: true),
-                  _field(_pincode, '2.5', 'Pincode', required: true, keyboardType: TextInputType.number, maxLength: 6, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_mapLocation, '2.6', 'Google Maps location', hint: 'Paste Maps link (optional)'),
+
+                // SECTION 2: Legal Expertise & Bio
+                _sectionCard('2', 'Legal Expertise & Profile', Icons.gavel_rounded, [
+                  _practiceAreasPicker(),
+                  const SizedBox(height: 12),
+                  _field(
+                    controller: _bio,
+                    keyName: 'bio',
+                    label: 'Professional Biography *',
+                    helper: 'Describe your legal practice, key court appearances, and focus on justice (min 25 chars).',
+                    placeholder: 'Describe your legal experience, notable representations, courts of practice...',
+                    maxLines: 4,
+                  ),
+                  _field(
+                    controller: _audience,
+                    keyName: 'audience',
+                    label: 'Client Focus / Audience',
+                    helper: 'Groups of clients you primarily counsel.',
+                    placeholder: 'e.g. Women, Victims of Harassment, Working Professionals',
+                  ),
+                ]),
+
+                // SECTION 3: Chamber & Office Address
+                _sectionCard('3', 'Chamber & Office Location', Icons.location_on_rounded, [
+                  _field(
+                    controller: _address,
+                    keyName: 'address',
+                    label: 'Chamber / Office Address *',
+                    helper: 'Chamber number, building, street, or court complex.',
+                    placeholder: 'Chamber/Office number, building name, street or court complex...',
+                    maxLines: 2,
+                  ),
+                  DynamicLocationHierarchyPicker(
+                    api: context.read<AuthState>().api,
+                    initialCountry: _country,
+                    initialState: _state,
+                    initialDistrict: _district,
+                    initialCity: _city,
+                    isRequired: true,
+                    onLocationChanged: ({
+                      required country,
+                      required state,
+                      required district,
+                      required city,
+                    }) {
+                      setState(() {
+                        _country = country;
+                        _state = state;
+                        _district = district;
+                        _city = city;
+                        _errors.remove('state');
+                        _errors.remove('city');
+                      });
+                    },
+                  ),
+                  if (_errors['state'] != null || _errors['city'] != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4, bottom: 8),
+                      child: Text(
+                        _errors['state'] ?? _errors['city']!,
+                        style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  _field(
+                    controller: _pincode,
+                    keyName: 'pincode',
+                    label: 'Pincode *',
+                    helper: '6-digit postal code of your chamber location.',
+                    placeholder: 'e.g. 400001',
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    formatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _field(
+                    controller: _facilities,
+                    keyName: 'facilities',
+                    label: 'Chamber Facilities',
+                    helper: 'Amenities available for client consultations.',
+                    placeholder: 'e.g. Private Consultation Room, Video Conference Facility, Waiting Lounge',
+                  ),
                   const SizedBox(height: 8),
                   ProfileLocationPicker(
                     lat: _lat,
                     lng: _lng,
                     mapLinkController: _mapLocation,
-                    pinLabel: '2.7 Pin chamber on map',
+                    pinLabel: 'Pin chamber coordinates on map',
                     onPinned: (lat, lng) => setState(() {
                       _lat = lat;
                       _lng = lng;
@@ -492,285 +723,598 @@ class _WomenLawyerProfileCompletionScreenState
                     onError: (msg) => setState(() => _error = msg),
                   ),
                 ]),
-                _section('3', 'Practice areas', [
-                  const Text('3.1 Practice areas *', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: LawyerCatalog.practiceAreas.map((c) {
-                      final on = _categories.contains(c);
-                      return FilterChip(
-                        label: Text(c),
-                        selected: on,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _categories.add(c);
-                          } else {
-                            _categories.remove(c);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                ]),
-                _section('4', 'Who I serve', [
-                  const Text('4.1 Audience *', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  _chips(LawyerCatalog.audiences, _audience),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('4.2 Home / chamber visits'),
-                    value: _doorService,
-                    onChanged: (v) => setState(() => _doorService = v),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text('4.3 Languages', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  _chips(LawyerCatalog.languages, _languages),
-                  const SizedBox(height: 8),
-                ]),
-                _section('5', 'Chamber facilities', [
-                  const Text('5.1 Chamber amenities', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  _chips(LawyerCatalog.facilities, _facilities),
-                ]),
-                _section('6', 'Hours & calendar', [
-                  const Text('6.1 Open days *', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: LawyerCatalog.days.map((d) {
-                      final on = _days.contains(d);
-                      return FilterChip(
-                        label: Text(d.substring(0, 3)),
-                        selected: on,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _days.add(d);
-                          } else {
-                            _days.remove(d);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 10),
-                  _timeTile('6.2 Open time *', _openTime, (t) => _openTime = t),
-                  _timeTile('6.3 Close time *', _closeTime, (t) => _closeTime = t),
-                  _timeTile('6.4 Break start', _breakStart, (t) => _breakStart = t),
-                  _timeTile('6.5 Break end', _breakEnd, (t) => _breakEnd = t),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(onPressed: _addBlockedDate, icon: const Icon(Icons.event_busy), label: const Text('6.6 Add leave / blocked date')),
-                  if (_blockedDates.isNotEmpty)
-                    Wrap(
-                      spacing: 6,
-                      children: _blockedDates
-                          .map((d) => InputChip(label: Text(d), onDeleted: () => setState(() => _blockedDates.remove(d))))
-                          .toList(),
-                    ),
-                ]),
-                _section('7', 'About the practice', [
-                  _field(_bio, '7.1', 'About', required: true, maxLines: 4),
-                ]),
-                _section('8', 'First consult offering', [
-                  _dropdown(
-                    number: '8.1',
-                    label: 'Consultation mode',
-                    value: _consultMode,
-                    options: LawyerCatalog.consultModes,
-                    required: true,
-                    onChanged: (v) => setState(() => _consultMode = v),
+
+                // SECTION 4: Schedule, Consultation & Availability
+                _sectionCard('4', 'Schedule, Consultation & Availability', Icons.schedule_rounded, [
+                  _field(
+                    controller: _openDays,
+                    keyName: 'openDays',
+                    label: 'Available Working Days *',
+                    helper: 'Days you are available for client consultations (e.g. Mon - Fri, Mon - Sat).',
+                    placeholder: 'e.g. Mon - Fri',
                   ),
                   _dropdown(
-                    number: '8.2',
-                    label: 'Duration (minutes)',
-                    value: '$_duration',
-                    options: LawyerCatalog.durations.map((e) => '$e').toList(),
-                    required: true,
-                    onChanged: (v) => setState(() => _duration = int.tryParse(v ?? '60') ?? 60),
-                  ),
-                  _dropdown(
-                    number: '8.3',
-                    label: 'Buffer (minutes)',
-                    value: '$_buffer',
-                    options: LawyerCatalog.buffers.map((e) => '$e').toList(),
-                    onChanged: (v) => setState(() => _buffer = int.tryParse(v ?? '10') ?? 10),
-                  ),
-                  _field(_rate, '8.4', 'Consultation fee (₹)', required: true, keyboardType: TextInputType.number),
-                  _dropdown(
-                    number: '8.5',
-                    label: 'Mode',
+                    keyName: 'serviceMode',
+                    label: 'Service Mode *',
+                    helper: 'Consultation delivery model.',
                     value: _serviceMode,
                     options: LawyerCatalog.serviceModes,
-                    required: true,
                     onChanged: (v) => setState(() => _serviceMode = v ?? 'CHAMBER'),
                   ),
-                ]),
-                BankDetailsSection(
-                  accountHolderController: _accountHolder,
-                  accountNumberController: _accountNumber,
-                  confirmAccountNumberController: _confirmAccountNumber,
-                  ifscController: _ifsc,
-                  bankNameController: _bankName,
-                  branchNameController: _branchName,
-                  upiController: _upi,
-                  accountType: _accountType,
-                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
-                  sectionNumber: '9',
-                ),
-                _section('10', 'Documents (optional)', [
-                  const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                  const SizedBox(height: 10),
-                  _uploadTile('10.1 Profile photo', _profile['profileImageUrl']?.toString(), _uploadingPhoto, () => _uploadFile(kind: 'photo')),
-                ]),
-                _section('11', 'Chamber photos (optional)', [
-                  const Text('Chamber photos help clients choose you.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                  const SizedBox(height: 10),
+                  _dropdown(
+                    keyName: 'durationMinutes',
+                    label: 'Session Duration *',
+                    helper: 'Standard duration per consultation session.',
+                    value: '$_duration mins',
+                    options: const ['15 mins', '30 mins', '45 mins', '60 mins', '90 mins', '120 mins'],
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() => _duration = int.tryParse(v.split(' ').first) ?? 60);
+                      }
+                    },
+                  ),
+                  _dropdown(
+                    keyName: 'consultationMode',
+                    label: 'Consultation Mode *',
+                    helper: 'Mode in which consultations are conducted.',
+                    value: _consultMode,
+                    options: LawyerCatalog.consultModes,
+                    onChanged: (v) => setState(() => _consultMode = v ?? 'Video Call'),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _timeTile(
+                          label: 'Opening Time',
+                          time: _openTime,
+                          onPick: () => _pickTime(_openTime, (t) => _openTime = t),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _timeTile(
+                          label: 'Closing Time',
+                          time: _closeTime,
+                          onPick: () => _pickTime(_closeTime, (t) => _closeTime = t),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   _uploadTile(
-                    '11.1 Gallery photo',
-                    (_profile['galleryPhotos'] is List && (_profile['galleryPhotos'] as List).isNotEmpty)
-                        ? (_profile['galleryPhotos'] as List).last.toString()
-                        : null,
-                    _uploadingGallery,
-                    () => _uploadFile(kind: 'gallery'),
+                    label: 'Chamber / Office Photo',
+                    helper: 'Upload a clear photograph of your consultation room or chamber.',
+                    imageUrl: _chamberPhotoUrl,
+                    loading: _uploadingChamberPhoto,
+                    onUpload: _uploadChamberPhoto,
                   ),
                 ]),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _saving ? null : _saveProfile,
-                  child: _saving
-                      ? const CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
-                      : const Text('Save Profile'),
+
+                // SECTION 5: Consultation Fees & Banking Details
+                _sectionCard('5', 'Consultation Fees & Banking Details', Icons.account_balance_wallet_rounded, [
+                  _field(
+                    controller: _fee,
+                    keyName: 'fee',
+                    label: 'Consultation Fee (INR) *',
+                    helper: 'Fee per session in ₹ (enter 0 for Free / Pro Bono legal support).',
+                    placeholder: 'e.g. 1000',
+                    keyboardType: TextInputType.number,
+                    formatters: [FilteringTextInputFormatter.digitsOnly],
+                  ),
+                  _field(
+                    controller: _upi,
+                    keyName: 'upi',
+                    label: 'UPI ID for Direct Payouts',
+                    helper: 'Fast settlement UPI identifier (e.g. advocate@oksbi).',
+                    placeholder: 'e.g. advocate@oksbi',
+                  ),
+                  const SizedBox(height: 12),
+                  BankDetailsSection(
+                    accountHolderController: _accountHolder,
+                    accountNumberController: _accountNumber,
+                    confirmAccountNumberController: _confirmAccountNumber,
+                    ifscController: _ifsc,
+                    bankNameController: _bankName,
+                    branchNameController: _branchName,
+                    upiController: _upi,
+                    accountType: _accountType,
+                    onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                    isRequired: false,
+                    title: 'Advocate Bank Account for Consultation Payouts',
+                  ),
+                ]),
+
+                // LIVE PROFILE PREVIEW CARD (Matches Website `profileCompletion.jsp:738-800`)
+                _livePreviewCard(),
+
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: (_loading || _saving) ? null : _saveProfile,
+                  icon: _saving
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.check_circle_outline_rounded, size: 20),
+                  label: const Text('Save & Continue Later', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: WomenLawyerProfileCompletionScreen.navy,
+                    minimumSize: const Size.fromHeight(52),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
               ],
             ),
     );
   }
 
-  Widget _section(String number, String title, List<Widget> children) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
+  // --- Helper Builders ---
+
+  Widget _sectionCard(String step, String title, IconData icon, List<Widget> children) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x060F172A),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE4E6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  step,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: WomenLawyerProfileCompletionScreen.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: WomenLawyerProfileCompletionScreen.navy,
+                  ),
+                ),
+              ),
+              Icon(icon, color: const Color(0xFF94A3B8), size: 20),
+            ],
+          ),
+          const Divider(height: 28),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _field({
+    required TextEditingController controller,
+    required String keyName,
+    required String label,
+    required String helper,
+    String? placeholder,
+    int maxLines = 1,
+    int? maxLength,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? formatters,
+  }) {
+    final hasErr = _errors.containsKey(keyName);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: controller,
+            maxLines: maxLines,
+            maxLength: maxLength,
+            keyboardType: keyboardType,
+            inputFormatters: formatters,
+            onChanged: (_) {
+              if (hasErr) setState(() => _errors.remove(keyName));
+            },
+            decoration: InputDecoration(
+              hintText: placeholder,
+              counterText: '',
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: hasErr ? Colors.red : const Color(0xFFCBD5E1)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: hasErr ? Colors.red : const Color(0xFFCBD5E1)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: hasErr ? Colors.red : WomenLawyerProfileCompletionScreen.primary, width: 1.5),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            hasErr ? _errors[keyName]! : helper,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: hasErr ? FontWeight.w700 : FontWeight.w500,
+              color: hasErr ? Colors.red : WomenLawyerProfileCompletionScreen.textGray,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dropdown({
+    required String keyName,
+    required String label,
+    required String helper,
+    required String? value,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final hasErr = _errors.containsKey(keyName);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+          ),
+          const SizedBox(height: 6),
+          DropdownButtonFormField<String>(
+            initialValue: options.contains(value) ? value : null,
+            items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: const TextStyle(fontSize: 14)))).toList(),
+            onChanged: (v) {
+              if (hasErr) setState(() => _errors.remove(keyName));
+              onChanged(v);
+            },
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: hasErr ? Colors.red : const Color(0xFFCBD5E1))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: hasErr ? Colors.red : const Color(0xFFCBD5E1))),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: hasErr ? Colors.red : WomenLawyerProfileCompletionScreen.primary, width: 1.5)),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            hasErr ? _errors[keyName]! : helper,
+            style: TextStyle(fontSize: 11, fontWeight: hasErr ? FontWeight.w700 : FontWeight.w500, color: hasErr ? Colors.red : WomenLawyerProfileCompletionScreen.textGray),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _practiceAreasPicker() {
+    final hasErr = _errors.containsKey('practiceAreas');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Practice Areas *',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: LawyerCatalog.practiceAreas.map((area) {
+            final selected = _practiceAreas.contains(area);
+            return FilterChip(
+              label: Text(area, style: TextStyle(fontSize: 12, fontWeight: selected ? FontWeight.w700 : FontWeight.w500, color: selected ? Colors.white : const Color(0xFF1E293B))),
+              selected: selected,
+              selectedColor: WomenLawyerProfileCompletionScreen.primary,
+              backgroundColor: const Color(0xFFF1F5F9),
+              checkmarkColor: Colors.white,
+              onSelected: (val) {
+                setState(() {
+                  if (val) {
+                    _practiceAreas.add(area);
+                  } else {
+                    _practiceAreas.remove(area);
+                  }
+                  _errors.remove('practiceAreas');
+                });
+              },
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          hasErr ? _errors['practiceAreas']! : 'Select the legal domains you handle.',
+          style: TextStyle(fontSize: 11, fontWeight: hasErr ? FontWeight.w700 : FontWeight.w500, color: hasErr ? Colors.red : WomenLawyerProfileCompletionScreen.textGray),
+        ),
+      ],
+    );
+  }
+
+  Widget _uploadTile({
+    required String label,
+    required String helper,
+    required String? imageUrl,
+    required bool loading,
+    required VoidCallback onUpload,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF5F7),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFECDD3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFE4E6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: WomenLawyerProfileCompletionScreen.primary),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: (imageUrl != null && imageUrl.isNotEmpty)
+                ? Image.network(
+                    imageUrl.startsWith('http') ? imageUrl : '${context.read<AuthState>().api.baseUrl}/$imageUrl',
+                    fit: BoxFit.cover,
+                    errorBuilder: (ctx, error, stackTrace) => const Icon(Icons.person_rounded, color: WomenLawyerProfileCompletionScreen.primary),
+                  )
+                : const Icon(Icons.person_rounded, color: WomenLawyerProfileCompletionScreen.primary, size: 28),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: WomenLawyerProfileCompletionScreen.navy)),
+                const SizedBox(height: 2),
+                Text(helper, style: const TextStyle(fontSize: 11, color: WomenLawyerProfileCompletionScreen.textGray)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            onPressed: loading ? null : onUpload,
+            icon: loading
+                ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.upload_rounded, size: 16),
+            label: Text(loading ? 'Uploading…' : 'Upload', style: const TextStyle(fontSize: 12)),
+            style: FilledButton.styleFrom(
+              backgroundColor: WomenLawyerProfileCompletionScreen.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _timeTile({
+    required String label,
+    required TimeOfDay? time,
+    required VoidCallback onPick,
+  }) {
+    return InkWell(
+      onTap: onPick,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$number. $title', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 12),
-            ...children,
+            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: WomenLawyerProfileCompletionScreen.textGray)),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.access_time_rounded, size: 16, color: WomenLawyerProfileCompletionScreen.primary),
+                const SizedBox(width: 6),
+                Text(
+                  time == null ? 'Select' : time.format(context),
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF1E293B)),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _field(
-    TextEditingController controller,
-    String number,
-    String label, {
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    String? hint,
-    bool required = false,
-    int? maxLength,
-    List<TextInputFormatter>? inputFormatters,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        maxLength: maxLength,
-        inputFormatters: inputFormatters,
-        decoration: InputDecoration(
-          labelText: '$number $label${required ? ' *' : ''}',
-          hintText: hint,
-          helperText: ProfileFieldHelper.instructionForField(label: label, hint: hint, required: required),
-          helperMaxLines: 2,
-          counterText: maxLength != null ? '' : null,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.white,
+  Future<void> _pickTime(TimeOfDay? current, ValueChanged<TimeOfDay> onPicked) async {
+    final t = await showTimePicker(context: context, initialTime: current ?? const TimeOfDay(hour: 9, minute: 0));
+    if (t != null) setState(() => onPicked(t));
+  }
+
+  // --- LIVE PUBLIC CLIENT VIEW PREVIEW CARD ---
+  // Matches website `profileCompletion.jsp:738-800`
+  Widget _livePreviewCard() {
+    final name = _name.text.trim().isEmpty ? 'Advocate Name' : _name.text.trim();
+    final des = _designation ?? 'Advocate';
+    final barId = _barCouncil.text.trim().isEmpty ? 'BAR-ID: PENDING' : _barCouncil.text.trim().toUpperCase();
+    final city = (_city ?? '').isEmpty ? 'City' : _city!;
+    final state = (_state ?? '').isEmpty ? 'State' : _state!;
+    final fee = _fee.text.trim().isEmpty ? '1000' : _fee.text.trim();
+    final bio = _bio.text.trim().isEmpty
+        ? 'Dedicated legal counsel providing fearless advocacy, rights awareness, and compassionate support.'
+        : _bio.text.trim();
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFECDD3)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0C0F172A),
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text('LIVE CLIENT PREVIEW', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF10B981))),
+                ],
+              ),
+              const Text('PUBLIC PROFILE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF64748B))),
+            ],
+          ),
+          const Divider(height: 20),
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE4E6),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: WomenLawyerProfileCompletionScreen.primary),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  name.isNotEmpty ? name.substring(0, 1).toUpperCase() : 'L',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: WomenLawyerProfileCompletionScreen.primary),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            name,
+                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: WomenLawyerProfileCompletionScreen.navy),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 16),
+                      ],
+                    ),
+                    Text(des, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WomenLawyerProfileCompletionScreen.primary)),
+                    Text(barId, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.location_on_rounded, size: 14, color: WomenLawyerProfileCompletionScreen.primary),
+              const SizedBox(width: 4),
+              Text('$city, $state', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B))),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _previewStat('Fee', '₹$fee'),
+              _previewStat('Duration', '$_duration mins'),
+              _previewStat('Experience', '${_years.text.isEmpty ? "0" : _years.text} Yrs'),
+              _previewStat('Mode', _serviceMode),
+            ],
+          ),
+          if (_practiceAreas.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            const Text('Practice Areas', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _practiceAreas
+                  .map((a) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
+                        child: Text(a, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                      ))
+                  .toList(),
+            ),
+          ],
+          const SizedBox(height: 12),
+          const Text('About Advocate', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+          const SizedBox(height: 4),
+          Text(bio, style: const TextStyle(fontSize: 12, color: Color(0xFF334155), height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
+        ],
+      ),
+    );
+  }
+
+  Widget _previewStat(String label, String value) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          children: [
+            Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+            const SizedBox(height: 2),
+            Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)), overflow: TextOverflow.ellipsis),
+          ],
         ),
       ),
-    );
-  }
-
-  Widget _dropdown({
-    required String number,
-    required String label,
-    required String? value,
-    required List<String> options,
-    required ValueChanged<String?> onChanged,
-    bool required = false,
-  }) {
-    final items = [...options];
-    if (value != null && value.isNotEmpty && !items.contains(value)) items.add(value);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: DropdownButtonFormField<String>(
-        initialValue: value != null && items.contains(value) ? value : null,
-        decoration: InputDecoration(
-          labelText: '$number $label${required ? ' *' : ''}',
-          helperText: ProfileFieldHelper.instructionForField(label: label, required: required),
-          helperMaxLines: 2,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.white,
-        ),
-        items: items.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _chips(List<String> options, Set<String> selected) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((item) {
-        final on = selected.contains(item);
-        return FilterChip(
-          label: Text(item),
-          selected: on,
-          onSelected: (v) => setState(() {
-            if (v) {
-              selected.add(item);
-            } else {
-              selected.remove(item);
-            }
-          }),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _timeTile(String label, TimeOfDay? value, void Function(TimeOfDay t) apply) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(label),
-        subtitle: Text(value == null ? 'Tap to pick' : LawyerCatalog.formatTime(value)),
-        trailing: const Icon(Icons.schedule),
-        onTap: () => _pickClock(apply, value),
-      ),
-    );
-  }
-
-  Widget _uploadTile(String title, String? path, bool loading, VoidCallback onTap) {
-    final uploaded = path != null && path.trim().isNotEmpty;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: loading
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-          : Icon(uploaded ? Icons.check_circle : Icons.upload_file, color: ModuleTheme.primary),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-      subtitle: Text(uploaded ? 'Uploaded' : 'JPG or PNG · optional'),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: loading ? null : onTap,
     );
   }
 }

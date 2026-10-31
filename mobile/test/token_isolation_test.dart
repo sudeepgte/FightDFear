@@ -41,6 +41,7 @@ void main() {
       await api.saveWomenProductsSellerToken('seller-token-999');
       await api.saveFinancialEducatorToken('educator-token-101');
       await api.saveMarketplaceProviderToken('marketplace-token-202');
+      await api.saveWomenLawyerToken('lawyer-token-303');
 
       // 3. Verify Member token is STILL completely intact
       expect(await api.getToken(), 'member-token-111');
@@ -76,6 +77,9 @@ void main() {
 
       expect(await api.getMarketplaceProviderToken(), 'marketplace-token-202');
       expect(prefs.getString('marketplace_provider_auth_token'), 'marketplace-token-202');
+
+      expect(await api.getWomenLawyerToken(), 'lawyer-token-303');
+      expect(prefs.getString('women_lawyer_auth_token'), 'lawyer-token-303');
     });
 
     test('Clearing provider tokens does not clear or affect Member token', () async {
@@ -94,6 +98,7 @@ void main() {
       await api.saveWomenProductsSellerToken('seller-token-999');
       await api.saveFinancialEducatorToken('educator-token-101');
       await api.saveMarketplaceProviderToken('marketplace-token-202');
+      await api.saveWomenLawyerToken('lawyer-token-303');
 
       // Clear creator
       await api.clearCreatorToken();
@@ -185,6 +190,7 @@ void main() {
       await api.saveWomenProductsSellerToken('seller-token-999');
       await api.saveFinancialEducatorToken('educator-token-101');
       await api.saveMarketplaceProviderToken('marketplace-token-202');
+      await api.saveWomenLawyerToken('lawyer-token-303');
 
       // Test each service logout
       await FitnessTrainerAuthService(api).logout();

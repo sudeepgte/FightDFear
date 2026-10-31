@@ -28,9 +28,9 @@ public class SOSResponseController {
      */
     @GetMapping("/respond")
     public String handleResponse(
-            @RequestParam String token,
-            @RequestParam String action,
-            @RequestParam(required = false, defaultValue = "") String message,
+            @RequestParam("token") String token,
+            @RequestParam("action") String action,
+            @RequestParam(value = "message", required = false, defaultValue = "") String message,
             Model model) {
 
         if (!"accept".equalsIgnoreCase(action) && !"reject".equalsIgnoreCase(action)) {

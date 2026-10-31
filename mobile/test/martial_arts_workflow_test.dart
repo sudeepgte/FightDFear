@@ -28,6 +28,7 @@ class _MockApiClient extends ApiClient {
     bool entrepreneurAuth = false,
     bool womenJobsAuth = false,
     bool womenProductsSellerAuth = false,
+    bool womenLawyerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
     Map<String, dynamic>? queryParams,
@@ -55,6 +56,7 @@ class _MockApiClient extends ApiClient {
     bool entrepreneurAuth = false,
     bool womenJobsAuth = false,
     bool womenProductsSellerAuth = false,
+    bool womenLawyerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
     Duration? timeout,
@@ -79,6 +81,7 @@ class _MockApiClient extends ApiClient {
     bool entrepreneurAuth = false,
     bool womenJobsAuth = false,
     bool womenProductsSellerAuth = false,
+    bool womenLawyerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
   }) async {

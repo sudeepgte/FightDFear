@@ -142,7 +142,7 @@ public class OnlineClassController {
 
     @PostMapping("/start/{id}")
     @ResponseBody
-    public ResponseEntity<?> startClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> startClass(@PathVariable("id") Long id, HttpSession session) {
         OnlineClass oc = onlineClassRepository.findById(id).orElse(null);
         if (oc == null) return ResponseEntity.status(404).body(Map.of("message", "Not found"));
 
@@ -153,7 +153,7 @@ public class OnlineClassController {
 
     @PostMapping("/end/{id}")
     @ResponseBody
-    public ResponseEntity<?> endClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> endClass(@PathVariable("id") Long id, HttpSession session) {
         OnlineClass oc = onlineClassRepository.findById(id).orElse(null);
         if (oc == null) return ResponseEntity.status(404).body(Map.of("message", "Not found"));
 
@@ -186,7 +186,7 @@ public class OnlineClassController {
 
     @DeleteMapping("/delete/{id}")
     @ResponseBody
-    public ResponseEntity<?> deleteClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> deleteClass(@PathVariable("id") Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
         MartialArtsCenter center = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (user == null && center == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
@@ -208,7 +208,7 @@ public class OnlineClassController {
 
     @PostMapping("/upload-recording/{id}")
     @ResponseBody
-    public ResponseEntity<?> uploadRecording(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<?> uploadRecording(@PathVariable("id") Long id, @RequestBody Map<String, String> payload) {
         OnlineClass oc = onlineClassRepository.findById(id).orElse(null);
         if (oc == null) return ResponseEntity.status(404).body(Map.of("message", "Not found"));
 
@@ -344,7 +344,7 @@ public class OnlineClassController {
     @Transactional
     @PostMapping("/{id}/update-status")
     @ResponseBody
-    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam OnlineClassStatus status, HttpSession session) {
+    public ResponseEntity<?> updateStatus(@PathVariable("id") Long id, @RequestParam("status") OnlineClassStatus status, HttpSession session) {
         User user = (User) session.getAttribute("user");
         MartialArtsCenter center = (MartialArtsCenter) session.getAttribute("loggedCentre");
         if (user == null && center == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
@@ -360,7 +360,7 @@ public class OnlineClassController {
     @Transactional(readOnly = true)
     @GetMapping("/{id}/joined-trainees")
     @ResponseBody
-    public ResponseEntity<?> getJoinedTrainees(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> getJoinedTrainees(@PathVariable("id") Long id, HttpSession session) {
         // Find attendance records for this class
         OnlineClass oc = onlineClassRepository.findById(id).orElse(null);
         if (oc == null) return ResponseEntity.status(404).body(Map.of("message", "Class not found"));
@@ -381,7 +381,7 @@ public class OnlineClassController {
     @Transactional
     @PostMapping("/trainee-join/{id}")
     @ResponseBody
-    public ResponseEntity<?> traineeJoin(@PathVariable String id, HttpSession session) {
+    public ResponseEntity<?> traineeJoin(@PathVariable("id") String id, HttpSession session) {
         User sessionUser = (User) session.getAttribute("user");
         if (sessionUser == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
 
@@ -445,7 +445,7 @@ public class OnlineClassController {
     @Transactional(readOnly = true)
     @GetMapping("/{id}/batch-details-trainees")
     @ResponseBody
-    public ResponseEntity<?> getEnrolledTrainees(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<?> getEnrolledTrainees(@PathVariable("id") Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
         MartialArtsCenter center = (MartialArtsCenter) session.getAttribute("loggedCentre");
         
@@ -561,7 +561,7 @@ public class OnlineClassController {
     @Transactional
     @PostMapping("/{id}/invite-trainees")
     @ResponseBody
-    public ResponseEntity<?> inviteTrainees(@PathVariable Long id, @RequestBody Map<String, List<Long>> payload, HttpSession session) {
+    public ResponseEntity<?> inviteTrainees(@PathVariable("id") Long id, @RequestBody Map<String, List<Long>> payload, HttpSession session) {
         User sessionUser = (User) session.getAttribute("user");
         if (sessionUser == null && session.getAttribute("loggedCentre") == null) {
             return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));

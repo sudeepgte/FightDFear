@@ -33,10 +33,10 @@ public class MobileBuddyController {
 
     @GetMapping("/matches")
     public ResponseEntity<Map<String, Object>> matches(
-            @RequestParam double latitude,
-            @RequestParam double longitude,
-            @RequestParam String destination,
-            @RequestParam(defaultValue = "3") double radiusKm,
+            @RequestParam("latitude") double latitude,
+            @RequestParam("longitude") double longitude,
+            @RequestParam("destination") String destination,
+            @RequestParam(value = "radiusKm", defaultValue = "3") double radiusKm,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -88,7 +88,7 @@ public class MobileBuddyController {
     }
 
     @PostMapping("/request/{id}/accept")
-    public ResponseEntity<Map<String, Object>> accept(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> accept(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         try {
@@ -100,7 +100,7 @@ public class MobileBuddyController {
     }
 
     @PostMapping("/request/{id}/reject")
-    public ResponseEntity<Map<String, Object>> reject(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> reject(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         try {

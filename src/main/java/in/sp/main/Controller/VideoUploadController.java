@@ -452,8 +452,8 @@ public class VideoUploadController {
 
     @PostMapping("/share/send")
     @ResponseBody
-    public void shareVideoWithUser(@RequestParam Long videoId,
-                                   @RequestParam Long receiverId,
+    public void shareVideoWithUser(@RequestParam("videoId") Long videoId,
+                                   @RequestParam("receiverId") Long receiverId,
                                    HttpSession session) {
 
         User sender = (User) session.getAttribute("user");
@@ -569,7 +569,7 @@ public class VideoUploadController {
     @PostMapping({"/like", "/video/like"})
     @ResponseBody
     public Map<String, Object> likeVideo(
-            @RequestParam Long videoId,
+            @RequestParam("videoId") Long videoId,
             HttpSession session) {
 
         User user = (User) session.getAttribute("user");
@@ -722,7 +722,7 @@ public class VideoUploadController {
     @PostMapping("/view")
     @ResponseBody
     public Map<String, Object> addView(
-            @RequestParam Long videoId,
+            @RequestParam("videoId") Long videoId,
             HttpSession session) {
 
         Map<String, Object> res = new HashMap<>();
@@ -786,8 +786,8 @@ public class VideoUploadController {
     @PostMapping("/video/report")
     @ResponseBody
     @Transactional
-    public String reportVideo(@RequestParam Long videoId, 
-                              @RequestParam String reason, 
+    public String reportVideo(@RequestParam("videoId") Long videoId, 
+                              @RequestParam("reason") String reason, 
                               HttpSession session) {
 
         User user = (User) session.getAttribute("user");

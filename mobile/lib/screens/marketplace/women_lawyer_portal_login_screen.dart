@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/marketplace_provider_auth_service.dart';
-import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../portals/portal_auth_screen.dart';
 import 'women_lawyer_dashboard_screen.dart';
+import 'women_lawyer_pending_approval_screen.dart';
 import 'women_lawyer_profile_completion_screen.dart';
 
 class WomenLawyerPortalLoginScreen extends StatelessWidget {
@@ -20,8 +20,34 @@ class WomenLawyerPortalLoginScreen extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> res,
   ) async {
-    final needsCompletion = ApprovalNavigation.shouldRedirectToProfileCompletion(res);
-    if (needsCompletion) {
+    final provider = res['provider'] is Map
+        ? Map<String, dynamic>.from(res['provider'] as Map)
+        : res;
+    final status = (provider['partnerProfileStatus'] ??
+            res['partnerProfileStatus'] ??
+            '')
+        .toString()
+        .toUpperCase();
+    final verificationStatus = (provider['verificationStatus'] ??
+            res['verificationStatus'] ??
+            '')
+        .toString()
+        .toUpperCase();
+
+    if (status == 'APPROVED' || verificationStatus == 'VERIFIED') {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: _dashboard),
+      );
+    } else if (status == 'PENDING_ADMIN_APPROVAL' ||
+        status == 'READY_FOR_VERIFICATION') {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => WomenLawyerPendingApprovalScreen(
+            initialProfile: provider,
+          ),
+        ),
+      );
+    } else {
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => WomenLawyerProfileCompletionScreen(
@@ -32,10 +58,6 @@ class WomenLawyerPortalLoginScreen extends StatelessWidget {
             },
           ),
         ),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: _dashboard),
       );
     }
   }

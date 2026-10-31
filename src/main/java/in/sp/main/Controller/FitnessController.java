@@ -113,13 +113,13 @@ public class FitnessController {
     // BROWSE TRAINERS & CATEGORIES
     @GetMapping({"", "/browse"})
     public String browseFitness(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String query,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) Double maxPrice,
-            @RequestParam(required = false) Double minRating,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "query", required = false) String query,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "minRating", required = false) Double minRating,
             HttpSession session, Model model) {
 
         User currentUser = getSessionUser(session);
@@ -187,7 +187,7 @@ public class FitnessController {
     // VIEW TRAINER DETAILS
     @GetMapping("/trainer/{id}")
     public String viewTrainerProfile(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session,
             Model model,
             RedirectAttributes redirectAttributes) {
@@ -235,8 +235,8 @@ public class FitnessController {
     @GetMapping("/api/trainer/{id}/available-slots")
     @ResponseBody
     public org.springframework.http.ResponseEntity<?> getTrainerAvailableSlots(
-            @PathVariable Long id,
-            @RequestParam String date) {
+            @PathVariable("id") Long id,
+            @RequestParam("date") String date) {
         try {
             FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
             if (trainer == null || trainer.isSuspended()) {
@@ -351,10 +351,10 @@ public class FitnessController {
     @PostMapping("/book/create-order")
     @ResponseBody
     public ResponseEntity<?> createBookingOrder(
-            @RequestParam Long trainerId,
-            @RequestParam String bookingDate,
-            @RequestParam String bookingTime,
-            @RequestParam(required = false, defaultValue = "SINGLE") String duration,
+            @RequestParam("trainerId") Long trainerId,
+            @RequestParam("bookingDate") String bookingDate,
+            @RequestParam("bookingTime") String bookingTime,
+            @RequestParam(value = "duration", required = false, defaultValue = "SINGLE") String duration,
             HttpSession session) {
 
         User currentUser = getSessionUser(session);
@@ -441,16 +441,16 @@ public class FitnessController {
     @PostMapping("/book")
     @Transactional
     public String bookSession(
-            @RequestParam Long trainerId,
-            @RequestParam String category,
-            @RequestParam String bookingDate,
-            @RequestParam String bookingTime,
-            @RequestParam String sessionType,
-            @RequestParam(required = false) String duration,
-            @RequestParam(required = false, defaultValue = "RAZORPAY") String paymentMethod,
-            @RequestParam(required = false) String razorpayOrderId,
-            @RequestParam(required = false) String razorpayPaymentId,
-            @RequestParam(required = false) String razorpaySignature,
+            @RequestParam("trainerId") Long trainerId,
+            @RequestParam("category") String category,
+            @RequestParam("bookingDate") String bookingDate,
+            @RequestParam("bookingTime") String bookingTime,
+            @RequestParam("sessionType") String sessionType,
+            @RequestParam(value = "duration", required = false) String duration,
+            @RequestParam(value = "paymentMethod", required = false, defaultValue = "RAZORPAY") String paymentMethod,
+            @RequestParam(value = "razorpayOrderId", required = false) String razorpayOrderId,
+            @RequestParam(value = "razorpayPaymentId", required = false) String razorpayPaymentId,
+            @RequestParam(value = "razorpaySignature", required = false) String razorpaySignature,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         User currentUser = getSessionUser(session);
@@ -821,7 +821,7 @@ public class FitnessController {
     // CANCEL BOOKING (WITH REFUND)
     @PostMapping("/booking/cancel")
     @Transactional
-    public String cancelBooking(@RequestParam Long bookingId, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String cancelBooking(@RequestParam("bookingId") Long bookingId, HttpSession session, RedirectAttributes redirectAttributes) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
@@ -854,9 +854,9 @@ public class FitnessController {
     @PostMapping("/booking/rate")
     @Transactional
     public String rateTrainer(
-            @RequestParam Long bookingId,
-            @RequestParam Integer rating,
-            @RequestParam String comment,
+            @RequestParam("bookingId") Long bookingId,
+            @RequestParam("rating") Integer rating,
+            @RequestParam("comment") String comment,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         User currentUser = getSessionUser(session);
@@ -894,17 +894,17 @@ public class FitnessController {
 
     @PostMapping("/trainer/register")
     public String submitTrainerRegistration(
-            @RequestParam String fullName,
-            @RequestParam String email,
-            @RequestParam String phone,
-            @RequestParam String password,
-            @RequestParam(required = false) Integer experience,
-            @RequestParam(required = false) String bio,
-            @RequestParam(required = false) List<String> specializations,
-            @RequestParam(required = false) String availableTimings,
-            @RequestParam(required = false) Double sessionFees,
-            @RequestParam(required = false) MultipartFile profilePhoto,
-            @RequestParam(required = false) MultipartFile certificationDoc,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam("phone") String phone,
+            @RequestParam("password") String password,
+            @RequestParam(value = "experience", required = false) Integer experience,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "specializations", required = false) List<String> specializations,
+            @RequestParam(value = "availableTimings", required = false) String availableTimings,
+            @RequestParam(value = "sessionFees", required = false) Double sessionFees,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+            @RequestParam(value = "certificationDoc", required = false) MultipartFile certificationDoc,
             RedirectAttributes redirectAttributes) {
 
         if (fitnessTrainerRepository.findByEmail(email.trim().toLowerCase()).isPresent()) {
@@ -965,8 +965,8 @@ public class FitnessController {
     // TRAINER LOGIN POST
     @PostMapping("/trainer/login")
     public String handleTrainerLogin(
-            @RequestParam String email,
-            @RequestParam String password,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
             jakarta.servlet.http.HttpServletResponse response,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
@@ -1028,38 +1028,38 @@ public class FitnessController {
     @Transactional
 
     public String updateTrainerProfile(
-            @RequestParam(required = false) Long id,
-            @RequestParam(required = false) String fullName,
-            @RequestParam(required = false) String designation,
-            @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String whatsappNumber,
-            @RequestParam(required = false) Integer experience,
-            @RequestParam(required = false) String credentialNumber,
-            @RequestParam(required = false) String address,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) String pincode,
-            @RequestParam(required = false) String mapLink,
-            @RequestParam(required = false) Double latitude,
-            @RequestParam(required = false) Double longitude,
-            @RequestParam(required = false) List<String> specializations,
-            @RequestParam(required = false) List<String> audience,
-            @RequestParam(required = false, defaultValue = "false") Boolean doorstepService,
-            @RequestParam(required = false) List<String> facilities,
-            @RequestParam(required = false) List<String> availableDays,
-            @RequestParam(required = false) String openTime,
-            @RequestParam(required = false) String closeTime,
-            @RequestParam(required = false) String bio,
-            @RequestParam(required = false) String sessionMode,
-            @RequestParam(required = false) Integer sessionDuration,
-            @RequestParam(required = false) Double sessionFees,
-            @RequestParam(required = false) String upiId,
-            @RequestParam(required = false) String bankAccountHolder,
-            @RequestParam(required = false) String bankName,
-            @RequestParam(required = false) String bankAccountNumber,
-            @RequestParam(required = false) String bankIfsc,
-            @RequestParam(required = false) String bankBranch,
-            @RequestParam(required = false) String bankDetails,
+            @RequestParam(value = "id", required = false) Long id,
+            @RequestParam(value = "fullName", required = false) String fullName,
+            @RequestParam(value = "designation", required = false) String designation,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "whatsappNumber", required = false) String whatsappNumber,
+            @RequestParam(value = "experience", required = false) Integer experience,
+            @RequestParam(value = "credentialNumber", required = false) String credentialNumber,
+            @RequestParam(value = "address", required = false) String address,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "mapLink", required = false) String mapLink,
+            @RequestParam(value = "latitude", required = false) Double latitude,
+            @RequestParam(value = "longitude", required = false) Double longitude,
+            @RequestParam(value = "specializations", required = false) List<String> specializations,
+            @RequestParam(value = "audience", required = false) List<String> audience,
+            @RequestParam(value = "doorstepService", required = false, defaultValue = "false") Boolean doorstepService,
+            @RequestParam(value = "facilities", required = false) List<String> facilities,
+            @RequestParam(value = "availableDays", required = false) List<String> availableDays,
+            @RequestParam(value = "openTime", required = false) String openTime,
+            @RequestParam(value = "closeTime", required = false) String closeTime,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "sessionMode", required = false) String sessionMode,
+            @RequestParam(value = "sessionDuration", required = false) Integer sessionDuration,
+            @RequestParam(value = "sessionFees", required = false) Double sessionFees,
+            @RequestParam(value = "upiId", required = false) String upiId,
+            @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+            @RequestParam(value = "bankName", required = false) String bankName,
+            @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+            @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+            @RequestParam(value = "bankBranch", required = false) String bankBranch,
+            @RequestParam(value = "bankDetails", required = false) String bankDetails,
             @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
             @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile,
             @RequestParam(value = "galleryFiles", required = false) List<MultipartFile> galleryFiles,
@@ -1292,8 +1292,8 @@ public class FitnessController {
     @PostMapping("/trainer/booking/status")
     @Transactional
     public String updateBookingStatus(
-            @RequestParam Long bookingId,
-            @RequestParam String action,
+            @RequestParam("bookingId") Long bookingId,
+            @RequestParam("action") String action,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1343,11 +1343,11 @@ public class FitnessController {
     @PostMapping("/trainer/attendance/mark")
     @Transactional
     public String markTrainerAttendance(
-            @RequestParam Long bookingId,
-            @RequestParam(required = false) String sessionDate,
-            @RequestParam(required = false) String sessionTime,
-            @RequestParam(defaultValue = "PRESENT") String status,
-            @RequestParam(required = false) String notes,
+            @RequestParam("bookingId") Long bookingId,
+            @RequestParam(value = "sessionDate", required = false) String sessionDate,
+            @RequestParam(value = "sessionTime", required = false) String sessionTime,
+            @RequestParam(value = "status", defaultValue = "PRESENT") String status,
+            @RequestParam(value = "notes", required = false) String notes,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1372,9 +1372,9 @@ public class FitnessController {
     @PostMapping("/trainer/update-schedule")
     @Transactional
     public String updateTrainerSchedule(
-            @RequestParam Double sessionFees,
-            @RequestParam String availableTimings,
-            @RequestParam List<String> specializations,
+            @RequestParam("sessionFees") Double sessionFees,
+            @RequestParam("availableTimings") String availableTimings,
+            @RequestParam("specializations") List<String> specializations,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1395,14 +1395,14 @@ public class FitnessController {
     @PostMapping("/trainer/update-profile")
     @Transactional
     public String updateTrainerProfile(
-            @RequestParam String fullName,
-            @RequestParam String phone,
-            @RequestParam Integer experience,
-            @RequestParam Double sessionFees,
-            @RequestParam String availableTimings,
-            @RequestParam(required = false) List<String> specializations,
-            @RequestParam(required = false) String bio,
-            @RequestParam(required = false) MultipartFile profilePhoto,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("phone") String phone,
+            @RequestParam("experience") Integer experience,
+            @RequestParam("sessionFees") Double sessionFees,
+            @RequestParam("availableTimings") String availableTimings,
+            @RequestParam(value = "specializations", required = false) List<String> specializations,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1441,16 +1441,16 @@ public class FitnessController {
     @PostMapping("/trainer/class/create")
     @Transactional
     public String createClass(
-            @RequestParam String className,
-            @RequestParam String category,
-            @RequestParam String description,
-            @RequestParam String classDate,
-            @RequestParam String classTime,
-            @RequestParam Integer durationMinutes,
-            @RequestParam String sessionType,
-            @RequestParam String maxCapacity,
-            @RequestParam String price,
-            @RequestParam(required = false) String meetingLinkOrLocation,
+            @RequestParam("className") String className,
+            @RequestParam("category") String category,
+            @RequestParam("description") String description,
+            @RequestParam("classDate") String classDate,
+            @RequestParam("classTime") String classTime,
+            @RequestParam("durationMinutes") Integer durationMinutes,
+            @RequestParam("sessionType") String sessionType,
+            @RequestParam("maxCapacity") String maxCapacity,
+            @RequestParam("price") String price,
+            @RequestParam(value = "meetingLinkOrLocation", required = false) String meetingLinkOrLocation,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1509,17 +1509,17 @@ public class FitnessController {
     @PostMapping("/trainer/class/edit")
     @Transactional
     public String editClass(
-            @RequestParam Long classId,
-            @RequestParam String className,
-            @RequestParam String category,
-            @RequestParam String description,
-            @RequestParam String classDate,
-            @RequestParam String classTime,
-            @RequestParam Integer durationMinutes,
-            @RequestParam String sessionType,
-            @RequestParam String maxCapacity,
-            @RequestParam String price,
-            @RequestParam(required = false) String meetingLinkOrLocation,
+            @RequestParam("classId") Long classId,
+            @RequestParam("className") String className,
+            @RequestParam("category") String category,
+            @RequestParam("description") String description,
+            @RequestParam("classDate") String classDate,
+            @RequestParam("classTime") String classTime,
+            @RequestParam("durationMinutes") Integer durationMinutes,
+            @RequestParam("sessionType") String sessionType,
+            @RequestParam("maxCapacity") String maxCapacity,
+            @RequestParam("price") String price,
+            @RequestParam(value = "meetingLinkOrLocation", required = false) String meetingLinkOrLocation,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1576,7 +1576,7 @@ public class FitnessController {
     @PostMapping("/trainer/class/delete")
     @Transactional
     public String deleteClass(
-            @RequestParam Long classId,
+            @RequestParam("classId") Long classId,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1611,7 +1611,7 @@ public class FitnessController {
     @PostMapping("/class/book")
     @Transactional
     public String bookClass(
-            @RequestParam Long classId,
+            @RequestParam("classId") Long classId,
             HttpSession session, jakarta.servlet.http.HttpServletRequest request, RedirectAttributes redirectAttributes) {
 
         User currentUser = getSessionUser(session);
@@ -1670,9 +1670,9 @@ public class FitnessController {
     @PostMapping("/review/submit")
     @Transactional
     public String submitReview(
-            @RequestParam Long bookingId,
-            @RequestParam Integer rating,
-            @RequestParam String comment,
+            @RequestParam("bookingId") Long bookingId,
+            @RequestParam("rating") Integer rating,
+            @RequestParam("comment") String comment,
             HttpSession session, RedirectAttributes redirectAttributes) {
         
         User currentUser = getSessionUser(session);
@@ -1706,14 +1706,14 @@ public class FitnessController {
     @PostMapping("/trainer/package/create")
     @Transactional
     public String createTrainerPackage(
-            @RequestParam(required = false) Long packageId,
-            @RequestParam String packageName,
-            @RequestParam String category,
-            @RequestParam(required = false) String description,
-            @RequestParam(defaultValue = "1") Integer sessionCount,
-            @RequestParam(defaultValue = "30") Integer durationDays,
-            @RequestParam(defaultValue = "0.0") Double price,
-            @RequestParam(defaultValue = "OFFLINE") String sessionType,
+            @RequestParam(value = "packageId", required = false) Long packageId,
+            @RequestParam("packageName") String packageName,
+            @RequestParam("category") String category,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "sessionCount", defaultValue = "1") Integer sessionCount,
+            @RequestParam(value = "durationDays", defaultValue = "30") Integer durationDays,
+            @RequestParam(value = "price", defaultValue = "0.0") Double price,
+            @RequestParam(value = "sessionType", defaultValue = "OFFLINE") String sessionType,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1737,7 +1737,7 @@ public class FitnessController {
     @PostMapping("/trainer/package/toggle/{id}")
     @Transactional
     public String toggleTrainerPackage(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1755,7 +1755,7 @@ public class FitnessController {
     @PostMapping("/trainer/package/delete/{id}")
     @Transactional
     public String deleteTrainerPackage(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1829,7 +1829,7 @@ public class FitnessController {
     @PostMapping("/trainer/api/qr-session/{id}/close")
     @ResponseBody
     public org.springframework.http.ResponseEntity<?> closeTrainerQrSession(
-            @PathVariable Long id, HttpSession session) {
+            @PathVariable("id") Long id, HttpSession session) {
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) {
             return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
@@ -1848,7 +1848,7 @@ public class FitnessController {
     @GetMapping("/trainer/api/qr-session/{id}/attendees")
     @ResponseBody
     public org.springframework.http.ResponseEntity<?> getTrainerQrSessionAttendees(
-            @PathVariable Long id, HttpSession session) {
+            @PathVariable("id") Long id, HttpSession session) {
         FitnessTrainer trainer = getSessionTrainer(session);
         if (trainer == null) {
             return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
@@ -1931,12 +1931,12 @@ public class FitnessController {
     @PostMapping("/trainer/progress/log")
     @Transactional
     public String logClientProgress(
-            @RequestParam Long userId,
-            @RequestParam(required = false) Double weightKg,
-            @RequestParam(required = false) Double bodyFatPct,
-            @RequestParam(defaultValue = "1") Integer workoutsCompleted,
-            @RequestParam(required = false) String metricsJson,
-            @RequestParam(required = false) String workoutNotes,
+            @RequestParam("userId") Long userId,
+            @RequestParam(value = "weightKg", required = false) Double weightKg,
+            @RequestParam(value = "bodyFatPct", required = false) Double bodyFatPct,
+            @RequestParam(value = "workoutsCompleted", defaultValue = "1") Integer workoutsCompleted,
+            @RequestParam(value = "metricsJson", required = false) String metricsJson,
+            @RequestParam(value = "workoutNotes", required = false) String workoutNotes,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -1970,9 +1970,9 @@ public class FitnessController {
     @PostMapping("/trainer/booking/reschedule")
     @Transactional
     public String rescheduleBooking(
-            @RequestParam Long bookingId,
-            @RequestParam String newDate,
-            @RequestParam String newTime,
+            @RequestParam("bookingId") Long bookingId,
+            @RequestParam("newDate") String newDate,
+            @RequestParam("newTime") String newTime,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         FitnessTrainer trainer = getSessionTrainer(session);
@@ -2003,7 +2003,7 @@ public class FitnessController {
     @PostMapping("/booking/package/buy")
     @Transactional
     public String buyFitnessPackage(
-            @RequestParam Long packageId,
+            @RequestParam("packageId") Long packageId,
             HttpSession session, RedirectAttributes redirectAttributes) {
 
         User currentUser = getSessionUser(session);

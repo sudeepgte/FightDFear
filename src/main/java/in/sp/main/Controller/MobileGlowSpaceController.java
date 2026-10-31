@@ -38,16 +38,16 @@ public class MobileGlowSpaceController {
 
     @GetMapping("/salons")
     public ResponseEntity<Map<String, Object>> salons(
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) Double minFee,
-            @RequestParam(required = false) Double maxFee,
-            @RequestParam(required = false) Boolean availableToday,
-            @RequestParam(required = false) Boolean doorService,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) Double lat,
-            @RequestParam(required = false) Double lng,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "minFee", required = false) Double minFee,
+            @RequestParam(value = "maxFee", required = false) Double maxFee,
+            @RequestParam(value = "availableToday", required = false) Boolean availableToday,
+            @RequestParam(value = "doorService", required = false) Boolean doorService,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "lat", required = false) Double lat,
+            @RequestParam(value = "lng", required = false) Double lng,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -103,7 +103,7 @@ public class MobileGlowSpaceController {
     }
 
     @GetMapping("/salons/{id}")
-    public ResponseEntity<Map<String, Object>> salonDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> salonDetail(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 
@@ -153,9 +153,9 @@ public class MobileGlowSpaceController {
 
     @GetMapping("/salons/{id}/slots")
     public ResponseEntity<Map<String, Object>> salonSlots(
-            @PathVariable Long id,
-            @RequestParam(required = false) String date,
-            @RequestParam(required = false) Integer durationMinutes,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "date", required = false) String date,
+            @RequestParam(value = "durationMinutes", required = false) Integer durationMinutes,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -181,7 +181,7 @@ public class MobileGlowSpaceController {
     @PostMapping("/salons/{id}/reviews")
     @Transactional
     public ResponseEntity<Map<String, Object>> addReview(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -203,7 +203,7 @@ public class MobileGlowSpaceController {
 
     @PostMapping("/salons/{id}/favorite")
     @Transactional
-    public ResponseEntity<Map<String, Object>> toggleFavorite(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> toggleFavorite(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Salon s = salonRepo.findById(id).orElse(null);
@@ -301,7 +301,7 @@ public class MobileGlowSpaceController {
 
     @GetMapping("/services")
     public ResponseEntity<Map<String, Object>> services(
-            @RequestParam(required = false) String category,
+            @RequestParam(value = "category", required = false) String category,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -420,7 +420,7 @@ public class MobileGlowSpaceController {
 
     @PostMapping("/bookings/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelBooking(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelBooking(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Booking1 b = bookingRepo.findById(id).orElse(null);
@@ -445,7 +445,7 @@ public class MobileGlowSpaceController {
     @PostMapping("/bookings/{id}/reschedule")
     @Transactional
     public ResponseEntity<Map<String, Object>> rescheduleBooking(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -498,7 +498,7 @@ public class MobileGlowSpaceController {
     }
 
     @GetMapping("/bookings/{id}/confirmation")
-    public ResponseEntity<Map<String, Object>> bookingConfirmation(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> bookingConfirmation(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
 

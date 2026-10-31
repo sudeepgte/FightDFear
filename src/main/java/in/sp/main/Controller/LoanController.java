@@ -41,17 +41,17 @@ public class LoanController {
     }
 
     @PostMapping("/application")
-    public String submitLoanApplication(@RequestParam String fullName,
-                                        @RequestParam String email,
-                                        @RequestParam(required = false) String phoneNumber,
-                                        @RequestParam(required = false) String address,
-                                        @RequestParam(required = false) String aadhaarNumber,
-                                        @RequestParam(required = false) String panNumber,
-                                        @RequestParam String loanType,
-                                        @RequestParam(required = false) String occupation,
-                                        @RequestParam(required = false) Double annualIncome,
-                                        @RequestParam Double loanAmount,
-                                        @RequestParam(required = false) String purpose,
+    public String submitLoanApplication(@RequestParam("fullName") String fullName,
+                                        @RequestParam("email") String email,
+                                        @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+                                        @RequestParam(value = "address", required = false) String address,
+                                        @RequestParam(value = "aadhaarNumber", required = false) String aadhaarNumber,
+                                        @RequestParam(value = "panNumber", required = false) String panNumber,
+                                        @RequestParam("loanType") String loanType,
+                                        @RequestParam(value = "occupation", required = false) String occupation,
+                                        @RequestParam(value = "annualIncome", required = false) Double annualIncome,
+                                        @RequestParam("loanAmount") Double loanAmount,
+                                        @RequestParam(value = "purpose", required = false) String purpose,
                                         HttpSession session,
                                         RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("user");

@@ -1,0 +1,340 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <title>Add Workshop - Financial Literacy</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/bootstrap/css/bootstrap.min.css">
+    <script src="${pageContext.request.contextPath}/resources/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/fl-admin.css">
+    <style>
+        :root {
+            --fl-primary: #1E1B4B;
+            --fl-secondary: #312E81;
+            --fl-accent: #F43F5E;
+            --fl-accent-hover: #E02B4C;
+            --fl-heading: #1E1B4B;
+            --fl-text: #1E1B4B;
+            --fl-muted: #64748B;
+            --fl-bg-light: #F8FAFC;
+            --fl-border: rgba(30, 27, 75, 0.12);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: #F8FAFC;
+            color: var(--fl-text);
+        }
+
+        .topbar {
+            background: #1E1B4B;
+            color: white;
+            padding: 14px 18px;
+            font-weight: 600;
+        }
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 56px);
+        }
+
+        .main {
+            flex: 1;
+            padding: 24px 20px 40px;
+            min-width: 0;
+        }
+
+        .mainInner.narrow {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .admin-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 10px 30px rgba(30, 27, 75, 0.08);
+            border: 1px solid var(--fl-border);
+        }
+
+        .admin-card h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            color: var(--fl-heading);
+        }
+
+        .form-label {
+            color: var(--fl-heading) !important;
+            font-weight: 600;
+        }
+
+        .form-label .text-danger {
+            color: var(--fl-accent) !important;
+        }
+
+        .form-control, .form-select {
+            color: var(--fl-text) !important;
+            border: 1px solid var(--fl-border) !important;
+            background-color: #FFFFFF !important;
+            border-radius: 10px;
+            padding: 10px 14px;
+        }
+
+        .form-control::placeholder {
+            color: var(--fl-muted) !important;
+            opacity: 0.85;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--fl-accent) !important;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15) !important;
+            color: var(--fl-text) !important;
+        }
+
+        .btn-outline-secondary {
+            color: var(--fl-text) !important;
+            border-color: var(--fl-border) !important;
+            background-color: #FFFFFF !important;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-secondary:hover {
+            color: #FFFFFF !important;
+            background-color: var(--fl-accent) !important;
+            border-color: var(--fl-accent) !important;
+        }
+
+        .btn-purple, .btn-primary {
+            background-color: var(--fl-accent) !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-purple:hover, .btn-primary:hover {
+            background-color: var(--fl-accent-hover) !important;
+            color: #FFFFFF !important;
+        }
+
+        .btn-light {
+            color: var(--fl-text) !important;
+            background-color: #F1F5F9 !important;
+            border: 1px solid var(--fl-border) !important;
+            font-weight: 600;
+        }
+
+        .btn-light:hover {
+            background-color: #E2E8F0 !important;
+            color: var(--fl-heading) !important;
+        }
+
+        .text-primary {
+            color: var(--fl-accent) !important;
+        }
+
+        .text-muted {
+            color: var(--fl-muted) !important;
+        }
+    </style>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
+    <style>
+        body.ap-page { margin: 0; }
+        .topbar { display: none !important; }
+        .layout { display: flex; min-height: 100vh; }
+        .main { flex: 1; min-width: 0; background: var(--ap-bg); }
+    </style>
+</head>
+<body class="ap-page">
+    <div class="layout">
+        <%@ include file="/WEB-INF/views/globalAdminMenu.jsp" %>
+
+        <main class="main">
+            <%@ include file="_topbar.jsp" %>
+            <div class="ap-main-inner" style="max-width: 860px;">
+                <!-- Back Button -->
+                <div class="mb-3">
+                    <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn-back-theme">
+                        <i class="fas fa-arrow-left me-1"></i> Back
+                    </a>
+                </div>
+
+                <!-- Breadcrumb -->
+                <nav class="ap-crumb">
+                    <a href="${pageContext.request.contextPath}/admin/adminDashboard">Dashboard</a>
+                    <span class="sep">&gt;</span>
+                    <a href="${pageContext.request.contextPath}/financial-literacy/admin">Financial Literacy</a>
+                    <span class="sep">&gt;</span>
+                    <span>Add Workshop</span>
+                </nav>
+
+                <!-- Page Header -->
+                <div class="ap-page-head">
+                    <div class="ap-page-ico"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <div>
+                        <h1>Add Offline Workshop</h1>
+                        <p>Organize an in-person financial literacy workshop with city and venue location details</p>
+                    </div>
+                </div>
+
+                <div class="ap-panel p-4">
+
+                    <form action="${pageContext.request.contextPath}/financial-literacy/admin/add-workshop" method="POST" id="workshopForm" class="needs-validation" novalidate>
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <!-- Workshop Title -->
+                        <div class="mb-3 position-relative">
+                            <label for="title" class="form-label fw-bold">Workshop Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="title" name="title" required minlength="5" placeholder="Enter workshop title">
+                            <div class="invalid-feedback">Please provide a valid title (min 5 characters).</div>
+                        </div>
+
+                        <!-- Category Dropdown -->
+                        <div class="mb-3 position-relative">
+                            <label for="category" class="form-label fw-bold">Category <span class="text-danger">*</span></label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" disabled selected>Select Category</option>
+                                <option value="Saving">Saving</option>
+                                <option value="Investing">Investing</option>
+                                <option value="Loans">Loans</option>
+                                <option value="Banking">Banking</option>
+                                <option value="Insurance">Insurance</option>
+                                <option value="Government Schemes">Government Schemes</option>
+                                <option value="Others">Others</option>
+                            </select>
+                            <div class="invalid-feedback">Category cannot be empty.</div>
+                        </div>
+
+                        <!-- Custom Category Input (shown when Others is selected) -->
+                        <div class="mb-3 position-relative" id="customCategoryGroup" style="display: none;">
+                            <label for="customCategory" class="form-label fw-bold">Enter Category <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" id="customCategory" name="customCategory" placeholder="Enter Category">
+                            <div class="invalid-feedback">Custom category cannot be empty when 'Others' is selected.</div>
+                        </div>
+
+                        <!-- Venue & City -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3 position-relative">
+                                <label for="venue" class="form-label fw-bold">Venue <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="venue" name="venue" required minlength="3" placeholder="E.g. Town Hall">
+                                <div class="invalid-feedback">Please provide the venue (min 3 characters).</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3 position-relative">
+                                <label for="city" class="form-label fw-bold">City <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="city" name="city" required minlength="2" placeholder="E.g. Mumbai">
+                                <div class="invalid-feedback">Please provide the city name.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Date & Timing (Start Time & End Time) -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3 position-relative">
+                                <label for="date" class="form-label fw-bold">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="date" name="date" required>
+                                <div class="invalid-feedback">Please select a valid future date.</div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3 position-relative">
+                                <label for="startTime" class="form-label fw-bold">Start Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="startTime" name="startTime" required>
+                                <div class="invalid-feedback">Please provide the start time.</div>
+                            </div>
+
+                            <div class="col-md-4 mb-3 position-relative">
+                                <label for="endTime" class="form-label fw-bold">End Time <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="endTime" name="endTime" required>
+                                <div class="invalid-feedback">Please provide the end time.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Number of Seats -->
+                        <div class="mb-3 position-relative">
+                            <label for="seats" class="form-label fw-bold">Number of Seats <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="seats" name="seats" min="1" max="5000" required placeholder="E.g. 50">
+                            <div class="invalid-feedback">Please enter a valid number of seats (1-5000).</div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4 position-relative">
+                            <label for="description" class="form-label fw-bold">Description <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required minlength="10" placeholder="Provide a brief description..."></textarea>
+                            <div class="invalid-feedback">Please provide a description (min 10 characters).</div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="${pageContext.request.contextPath}/financial-literacy/admin" class="btn btn-light">Cancel</a>
+                            <button type="submit" class="btn-purple" id="submitBtn">
+                                <i class="fas fa-upload me-2"></i> Publish Workshop
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('workshopForm');
+            const categorySelect = document.getElementById('category');
+            const customCategoryGroup = document.getElementById('customCategoryGroup');
+            const customCategoryInput = document.getElementById('customCategory');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Set min date to today for date input
+            const dateInput = document.getElementById('date');
+            if(dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.setAttribute('min', today);
+            }
+
+            function toggleCustomCategory() {
+                if (categorySelect.value === 'Others') {
+                    customCategoryGroup.style.display = 'block';
+                    customCategoryInput.setAttribute('required', 'true');
+                } else {
+                    customCategoryGroup.style.display = 'none';
+                    customCategoryInput.removeAttribute('required');
+                }
+            }
+
+            categorySelect.addEventListener('change', toggleCustomCategory);
+
+            form.addEventListener('submit', function (event) {
+                let valid = true;
+
+                if (!form.checkValidity()) {
+                    valid = false;
+                }
+
+                if (categorySelect.value === 'Others' && !customCategoryInput.value.trim()) {
+                    customCategoryInput.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    customCategoryInput.classList.remove('is-invalid');
+                }
+
+                if (!valid) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    form.classList.add('was-validated');
+                } else {
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Publishing...';
+                    submitBtn.disabled = true;
+                }
+            });
+        });
+    </script>
+    <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="_csrf" content="${_csrf.token}">
+  <meta name="_csrf_header" content="${_csrf.headerName}">
+    <meta charset="UTF-8">
+    <title>Forgot Password</title>
+    <style>
+    /* ============================================
+       ORIGINAL STYLES (kept exactly as is)
+       ============================================ */
+    /* Brand Theme Styles */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: #F8FAFC; /* Neutral background */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    
+    .container {
+        background: #FFFFFF;
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.05);
+        border: 1px solid #E2E8F0;
+        width: 380px;
+        text-align: center;
+    }
+
+    h2 {
+        color: #0F172A; /* Dark navy text */
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    input {
+        width: 90%;
+        padding: 12px 14px;
+        margin: 15px 0;
+        border: 1px solid #E2E8F0; /* Light gray border */
+        border-radius: 12px;
+        outline: none;
+        transition: 0.3s;
+        font-size: 0.95rem;
+        color: #0F172A;
+    }
+
+    input:focus {
+        border-color: #F43F5E; /* Brand pink on focus */
+        box-shadow: 0px 0px 0px 3px rgba(244, 63, 94, 0.12);
+    }
+
+    button {
+        background: #F43F5E; /* Brand pink */
+        color: white;
+        border: none;
+        padding: 14px;
+        width: 100%;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 10px;
+    }
+
+    button:hover {
+        background: #E11D48; /* Darker pink on hover */
+        transform: translateY(-2px);
+    }
+
+    p {
+        color: #64748B;
+        margin-top: 10px;
+    }
+
+    .message-success {
+        color: #166534;
+        background: #dcfce7;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    .message-error {
+        color: #991b1b;
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    /* ============================================
+       🚀 ADDITIONAL ENHANCEMENTS (no existing rules changed)
+       ============================================ */
+
+    /* 1. Smooth fade-in animation for the container */
+    .container {
+        animation: fadeSlideUp 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
+    }
+    @keyframes fadeSlideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* 2. Button ripple effect on click (micro-interaction) */
+    button {
+        position: relative;
+        overflow: hidden;
+    }
+    button::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.4);
+        transform: translate(-50%, -50%);
+        transition: width 0.4s ease, height 0.4s ease;
+        pointer-events: none;
+    }
+    button:active::after {
+        width: 200px;
+        height: 200px;
+    }
+
+    /* 3. Focus outlines for accessibility (keyboard navigation) */
+    button:focus-visible,
+    input:focus-visible {
+        outline: 3px solid #ffd700; /* gold for contrast */
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
+
+    /* 4. Label hover effect (if labels exist; adds polish) */
+    label {
+        transition: color 0.2s, transform 0.2s;
+        display: inline-block;
+    }
+    label:hover {
+        color: #6A5ACD;
+        transform: translateX(2px);
+    }
+
+    /* 5. Custom scrollbar (matches lavender theme) */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #E6E6FA;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #6A5ACD;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #483D8B;
+    }
+
+    /* 6. Input placeholder styling (softer) */
+    input::placeholder {
+        color: rgba(106, 90, 205, 0.4);
+        transition: opacity 0.2s;
+    }
+    input:focus::placeholder {
+        opacity: 0.6;
+    }
+
+    /* 7. Responsive improvements for mobile */
+    @media (max-width: 480px) {
+        .container {
+            width: 85%;
+            padding: 20px;
+            margin: 15px;
+        }
+        button {
+            padding: 14px;
+            font-size: 1rem;
+        }
+        input {
+            padding: 12px;
+            font-size: 16px; /* prevents zoom on iOS */
+        }
+        h2 {
+            font-size: 1.5rem;
+        }
+    }
+
+    /* 8. Loading skeleton ready (optional – does nothing by default) */
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    .container.skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+        pointer-events: none;
+    }
+</style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Forgot Password</h2>
+        <p style="font-weight: normal; color: #555;">Enter your registered email to reset your password</p>
+        <c:if test="${not empty error}">
+            <p class="message-error">${error}</p>
+        </c:if>
+        <c:if test="${not empty message}">
+            <p class="message-success">${message}</p>
+        </c:if>
+        <form action="${pageContext.request.contextPath}/auth/forgot-password" method="POST">
+  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <input type="email" name="email" placeholder="Enter your email" pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" required>
+            <button type="submit">Reset Password</button>
+        </form>
+    </div>
+
+<script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+</body>
+</html>
+

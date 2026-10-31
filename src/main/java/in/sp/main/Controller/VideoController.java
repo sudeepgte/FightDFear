@@ -45,8 +45,8 @@ public class VideoController {
 
     // Uploads a video
     @RequestMapping(value = "/uploadingVideo", method = RequestMethod.POST)
-    public String uploadVideo(@RequestParam String title,
-                              @RequestParam Category category,
+    public String uploadVideo(@RequestParam("title") String title,
+                              @RequestParam("category") Category category,
                               @RequestParam(value = "isReel", defaultValue = "false") boolean isReel,
                               @RequestParam("videoFile") MultipartFile file,
                               HttpSession session,
@@ -90,7 +90,7 @@ public class VideoController {
 
     // Show video edit form
     @RequestMapping(value = "/edit/{id}", method = RequestMethod.GET)
-    public String editVideoForm(@PathVariable Long id, Model model, HttpSession session) {
+    public String editVideoForm(@PathVariable("id") Long id, Model model, HttpSession session) {
         Admin admin = (Admin) session.getAttribute("admin");
         User user = (User) session.getAttribute("user");
         if (admin == null && user == null) {
@@ -112,10 +112,10 @@ public class VideoController {
 
     // Update video
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
-    public String updateVideo(@PathVariable Long id,
+    public String updateVideo(@PathVariable("id") Long id,
                               @ModelAttribute Video updatedVideo,
-                              @RequestParam String title,
-                              @RequestParam Category category,
+                              @RequestParam("title") String title,
+                              @RequestParam("category") Category category,
                               @RequestParam(value = "videoFile", required = false) MultipartFile file,
                               HttpSession session) throws IOException {
         Admin admin = (Admin) session.getAttribute("admin");
@@ -142,7 +142,7 @@ public class VideoController {
 
     // Delete a video
     @RequestMapping(value = "/delete/{id}", method = {RequestMethod.POST, RequestMethod.DELETE})
-    public String deleteVideo(@PathVariable Long id, HttpSession session) {
+    public String deleteVideo(@PathVariable("id") Long id, HttpSession session) {
         Admin admin = (Admin) session.getAttribute("admin");
         User user = (User) session.getAttribute("user");
         if (admin == null && user == null) {

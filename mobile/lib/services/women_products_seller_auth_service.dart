@@ -47,6 +47,8 @@ class WomenProductsSellerAuthService {
     return res;
   }
 
+  Future<void> clearLocalSession() => _api.clearWomenProductsSellerToken();
+
   Future<Map<String, dynamic>> profile() =>
       _api.get('/api/women-products/seller/profile', womenProductsSellerAuth: true);
 
@@ -69,6 +71,10 @@ class WomenProductsSellerAuthService {
 
   Future<Map<String, dynamic>> updateProduct(int id, Map<String, dynamic> body) =>
       _api.put('/api/women-products/seller/products/$id', womenProductsSellerAuth: true, body: body);
+
+  Future<Map<String, dynamic>> updateStock(int id, int stock) =>
+      _api.post('/api/women-products/seller/products/$id/stock',
+          womenProductsSellerAuth: true, body: {'stock': stock});
 
   Future<Map<String, dynamic>> deleteProduct(int id) =>
       _api.delete('/api/women-products/seller/products/$id', womenProductsSellerAuth: true);
@@ -98,14 +104,26 @@ class WomenProductsSellerAuthService {
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
+    String? identityDocPath,
     String? galleryPath,
+    List<String>? galleryPaths,
   }) async {
     final files = <http.MultipartFile>[];
     if (profilePath != null && profilePath.isNotEmpty) {
       files.add(await http.MultipartFile.fromPath('profileImage', profilePath));
     }
+    if (identityDocPath != null && identityDocPath.isNotEmpty) {
+      files.add(await http.MultipartFile.fromPath('identityDoc', identityDocPath));
+    }
     if (galleryPath != null && galleryPath.isNotEmpty) {
       files.add(await http.MultipartFile.fromPath('galleryPhotos', galleryPath));
+    }
+    if (galleryPaths != null) {
+      for (final p in galleryPaths) {
+        if (p.isNotEmpty) {
+          files.add(await http.MultipartFile.fromPath('galleryPhotos', p));
+        }
+      }
     }
     return _api.postMultipart(
       '/api/women-products/seller/photos',

@@ -54,7 +54,7 @@ public class MedicalDetailsController {
     }
 
     @RequestMapping(value = "/edit/{userId}/{id}", method = RequestMethod.GET)
-    public String showEditForm(@PathVariable Long userId, @PathVariable Long id,
+    public String showEditForm(@PathVariable Long userId, @PathVariable("id") Long id,
                                Model model, HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";
         MedicalDetails medicalDetails = medicalDetailsService.getMedicalDetailsById(id);
@@ -68,7 +68,7 @@ public class MedicalDetailsController {
     }
 
     @RequestMapping(value = "/edit/{userId}/{id}", method = RequestMethod.POST)
-    public String updateMedicalDetails(@PathVariable Long userId, @PathVariable Long id,
+    public String updateMedicalDetails(@PathVariable Long userId, @PathVariable("id") Long id,
                                        @ModelAttribute MedicalDetails medicalDetails,
                                        HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";
@@ -81,7 +81,7 @@ public class MedicalDetailsController {
     }
 
     @RequestMapping(value = "/delete/{userId}/{id}", method = {RequestMethod.POST, RequestMethod.DELETE})
-    public String deleteMedicalDetails(@PathVariable Long userId, @PathVariable Long id,
+    public String deleteMedicalDetails(@PathVariable Long userId, @PathVariable("id") Long id,
                                        HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";
         MedicalDetails existing = medicalDetailsService.getMedicalDetailsById(id);

@@ -55,7 +55,7 @@ public class MobileReminderController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> delete(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> delete(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         reminderService.delete(user, id);
@@ -63,7 +63,7 @@ public class MobileReminderController {
     }
 
     @PatchMapping("/{id}/toggle")
-    public ResponseEntity<Map<String, Object>> toggle(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> toggle(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         reminderService.toggle(user, id);
@@ -79,7 +79,7 @@ public class MobileReminderController {
     }
 
     @PostMapping("/{id}/shown")
-    public ResponseEntity<Map<String, Object>> shown(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> shown(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         reminderService.markShown(id);

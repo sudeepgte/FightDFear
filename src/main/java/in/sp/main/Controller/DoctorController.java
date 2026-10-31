@@ -126,12 +126,12 @@ public class DoctorController {
      */
     @PostMapping("/register")
     public String register(
-            @RequestParam String fullName,
-            @RequestParam String email,
-            @RequestParam String phone,
-            @RequestParam String password,
-            @RequestParam String confirmPassword,
-            @RequestParam(required = false) String acceptedTerms,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("email") String email,
+            @RequestParam("phone") String phone,
+            @RequestParam("password") String password,
+            @RequestParam("confirmPassword") String confirmPassword,
+            @RequestParam(value = "acceptedTerms", required = false) String acceptedTerms,
             HttpSession session,
             RedirectAttributes redirectAttributes,
             Model model) {
@@ -200,8 +200,8 @@ public class DoctorController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String email,
-                        @RequestParam String password,
+    public String login(@RequestParam("email") String email,
+                        @RequestParam("password") String password,
                         HttpSession session,
                         jakarta.servlet.http.HttpServletResponse response,
                         Model model) {
@@ -282,51 +282,51 @@ public class DoctorController {
 
     @PostMapping("/profile-completion")
     public String saveProfileCompletion(
-            @RequestParam String fullName,
-            @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String gender,
-            @RequestParam(required = false) String specialization,
-            @RequestParam(required = false) String qualification,
-            @RequestParam(required = false) Integer experienceYears,
-            @RequestParam(required = false) String medicalRegNumber,
-            @RequestParam(required = false) String hospitalName,
-            @RequestParam(required = false) List<String> consultationModes,
-            @RequestParam(required = false) String consultationType,
-            @RequestParam(required = false) List<String> availableDays,
-            @RequestParam(required = false) String startTime,
-            @RequestParam(required = false) String endTime,
-            @RequestParam(required = false) Integer slotDurationMinutes,
-            @RequestParam(required = false) Integer bufferMinutes,
-            @RequestParam(required = false) String breakStart,
-            @RequestParam(required = false) String breakEnd,
-            @RequestParam(required = false) String blockedDates,
-            @RequestParam(required = false) String autoConfirm,
-            @RequestParam(required = false) String emergencyAvailable,
-            @RequestParam(required = false) String clinicAddress,
-            @RequestParam(required = false) String country,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) String pincode,
-            @RequestParam(required = false) String googleMapLocation,
-            @RequestParam(required = false) String languages,
-            @RequestParam(required = false) String services,
-            @RequestParam(required = false) String bio,
-            @RequestParam(required = false) Double consultationFee,
-            @RequestParam(required = false) Double chatFee,
-            @RequestParam(required = false) Double callFee,
-            @RequestParam(required = false) Double videoFee,
-            @RequestParam(required = false) String upiId,
-            @RequestParam(required = false) String bankDetails,
-            @RequestParam(required = false) String bankAccountHolder,
-            @RequestParam(required = false) String bankName,
-            @RequestParam(required = false) String bankAccountNumber,
-            @RequestParam(required = false) String bankIfsc,
-            @RequestParam(required = false) String bankBranch,
-            @RequestParam(required = false) MultipartFile profilePhoto,
-            @RequestParam(required = false) MultipartFile medicalLicense,
-            @RequestParam(required = false) MultipartFile idProof,
-            @RequestParam(required = false) MultipartFile degreeCertificate,
-            @RequestParam(required = false) String intent,
+            @RequestParam("fullName") String fullName,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "gender", required = false) String gender,
+            @RequestParam(value = "specialization", required = false) String specialization,
+            @RequestParam(value = "qualification", required = false) String qualification,
+            @RequestParam(value = "experienceYears", required = false) Integer experienceYears,
+            @RequestParam(value = "medicalRegNumber", required = false) String medicalRegNumber,
+            @RequestParam(value = "hospitalName", required = false) String hospitalName,
+            @RequestParam(value = "consultationModes", required = false) List<String> consultationModes,
+            @RequestParam(value = "consultationType", required = false) String consultationType,
+            @RequestParam(value = "availableDays", required = false) List<String> availableDays,
+            @RequestParam(value = "startTime", required = false) String startTime,
+            @RequestParam(value = "endTime", required = false) String endTime,
+            @RequestParam(value = "slotDurationMinutes", required = false) Integer slotDurationMinutes,
+            @RequestParam(value = "bufferMinutes", required = false) Integer bufferMinutes,
+            @RequestParam(value = "breakStart", required = false) String breakStart,
+            @RequestParam(value = "breakEnd", required = false) String breakEnd,
+            @RequestParam(value = "blockedDates", required = false) String blockedDates,
+            @RequestParam(value = "autoConfirm", required = false) String autoConfirm,
+            @RequestParam(value = "emergencyAvailable", required = false) String emergencyAvailable,
+            @RequestParam(value = "clinicAddress", required = false) String clinicAddress,
+            @RequestParam(value = "country", required = false) String country,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "googleMapLocation", required = false) String googleMapLocation,
+            @RequestParam(value = "languages", required = false) String languages,
+            @RequestParam(value = "services", required = false) String services,
+            @RequestParam(value = "bio", required = false) String bio,
+            @RequestParam(value = "consultationFee", required = false) Double consultationFee,
+            @RequestParam(value = "chatFee", required = false) Double chatFee,
+            @RequestParam(value = "callFee", required = false) Double callFee,
+            @RequestParam(value = "videoFee", required = false) Double videoFee,
+            @RequestParam(value = "upiId", required = false) String upiId,
+            @RequestParam(value = "bankDetails", required = false) String bankDetails,
+            @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+            @RequestParam(value = "bankName", required = false) String bankName,
+            @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+            @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+            @RequestParam(value = "bankBranch", required = false) String bankBranch,
+            @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
+            @RequestParam(value = "medicalLicense", required = false) MultipartFile medicalLicense,
+            @RequestParam(value = "idProof", required = false) MultipartFile idProof,
+            @RequestParam(value = "degreeCertificate", required = false) MultipartFile degreeCertificate,
+            @RequestParam(value = "intent", required = false) String intent,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
 
@@ -690,12 +690,12 @@ public class DoctorController {
     }
 
     @PostMapping("/update-fees")
-    public String updateFees(@RequestParam(required = false) Double consultationFee,
-                             @RequestParam(required = false) Double chatFee,
-                             @RequestParam(required = false) Double callFee,
-                             @RequestParam(required = false) Double videoFee,
-                             @RequestParam(required = false) String upiId,
-                             @RequestParam(required = false) String bankDetails,
+    public String updateFees(@RequestParam(value = "consultationFee", required = false) Double consultationFee,
+                             @RequestParam(value = "chatFee", required = false) Double chatFee,
+                             @RequestParam(value = "callFee", required = false) Double callFee,
+                             @RequestParam(value = "videoFee", required = false) Double videoFee,
+                             @RequestParam(value = "upiId", required = false) String upiId,
+                             @RequestParam(value = "bankDetails", required = false) String bankDetails,
                              HttpSession session,
                              RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
@@ -733,15 +733,15 @@ public class DoctorController {
     }
 
     @PostMapping("/update-schedule")
-    public String updateSchedule(@RequestParam(required = false) List<String> availableDays,
-                                 @RequestParam(required = false) String startTime,
-                                 @RequestParam(required = false) String endTime,
-                                 @RequestParam(required = false) String emergencyAvailable,
-                                 @RequestParam(required = false) String clinicAddress,
-                                 @RequestParam(required = false) String city,
-                                 @RequestParam(required = false) String state,
-                                 @RequestParam(required = false) String pincode,
-                                 @RequestParam(required = false) String googleMapLocation,
+    public String updateSchedule(@RequestParam(value = "availableDays", required = false) List<String> availableDays,
+                                 @RequestParam(value = "startTime", required = false) String startTime,
+                                 @RequestParam(value = "endTime", required = false) String endTime,
+                                 @RequestParam(value = "emergencyAvailable", required = false) String emergencyAvailable,
+                                 @RequestParam(value = "clinicAddress", required = false) String clinicAddress,
+                                 @RequestParam(value = "city", required = false) String city,
+                                 @RequestParam(value = "state", required = false) String state,
+                                 @RequestParam(value = "pincode", required = false) String pincode,
+                                 @RequestParam(value = "googleMapLocation", required = false) String googleMapLocation,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
@@ -770,12 +770,12 @@ public class DoctorController {
     }
 
     @PostMapping("/update-earnings")
-    public String updateEarnings(@RequestParam(required = false) Double consultationFee,
-                                 @RequestParam(required = false) Double chatFee,
-                                 @RequestParam(required = false) Double callFee,
-                                 @RequestParam(required = false) Double videoFee,
-                                 @RequestParam(required = false) String upiId,
-                                 @RequestParam(required = false) String bankDetails,
+    public String updateEarnings(@RequestParam(value = "consultationFee", required = false) Double consultationFee,
+                                 @RequestParam(value = "chatFee", required = false) Double chatFee,
+                                 @RequestParam(value = "callFee", required = false) Double callFee,
+                                 @RequestParam(value = "videoFee", required = false) Double videoFee,
+                                 @RequestParam(value = "upiId", required = false) String upiId,
+                                 @RequestParam(value = "bankDetails", required = false) String bankDetails,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
@@ -808,7 +808,7 @@ public class DoctorController {
     }
 
     @PostMapping("/update-availability")
-    public String updateAvailability(@RequestParam String availableDays, @RequestParam String startTime, @RequestParam String endTime, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes attrs) {
+    public String updateAvailability(@RequestParam("availableDays") String availableDays, @RequestParam("startTime") String startTime, @RequestParam("endTime") String endTime, HttpSession session, org.springframework.web.servlet.mvc.support.RedirectAttributes attrs) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");
         if (d != null) {
             d = doctorRepo.findById(d.getId()).orElse(d);
@@ -849,8 +849,8 @@ public class DoctorController {
 
     @PostMapping("/appointments/{id}/status")
     public Object updateAppointmentStatus(
-            @PathVariable Long id,
-            @RequestParam String status,
+            @PathVariable("id") Long id,
+            @RequestParam("status") String status,
             HttpServletRequest request,
             HttpSession session,
             RedirectAttributes redirectAttributes) {
@@ -915,7 +915,7 @@ public class DoctorController {
     }
 
     @GetMapping("/view/{id}")
-    public String viewDoctor(@PathVariable Long id, Model model, HttpSession session) {
+    public String viewDoctor(@PathVariable("id") Long id, Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
@@ -938,10 +938,10 @@ public class DoctorController {
     }
 
     @PostMapping("/book")
-    public String book(@RequestParam Long doctorId,
-                       @RequestParam String appointmentTime,
-                       @RequestParam(required = false) String reason,
-                       @RequestParam(required = false, defaultValue = "CLINIC") String consultationType,
+    public String book(@RequestParam("doctorId") Long doctorId,
+                       @RequestParam("appointmentTime") String appointmentTime,
+                       @RequestParam(value = "reason", required = false) String reason,
+                       @RequestParam(value = "consultationType", required = false, defaultValue = "CLINIC") String consultationType,
                        HttpSession session,
                        RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -985,7 +985,7 @@ public class DoctorController {
     }
 
     @GetMapping("/myAppointments")
-    public String myAppointments(@RequestParam(required = false) String section,
+    public String myAppointments(@RequestParam(value = "section", required = false) String section,
                                  HttpSession session, Model model) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -997,7 +997,7 @@ public class DoctorController {
 
     /** Authorized patient view of a prescription linked to their appointment. */
     @GetMapping("/appointments/{id}/prescription/view")
-    public String viewOwnPrescription(@PathVariable Long id, HttpSession session, Model model,
+    public String viewOwnPrescription(@PathVariable("id") Long id, HttpSession session, Model model,
                                       RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -1018,7 +1018,7 @@ public class DoctorController {
 
     /** Authorized patient download of prescription as a plain-text file. */
     @GetMapping("/appointments/{id}/prescription/download")
-    public ResponseEntity<byte[]> downloadOwnPrescription(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<byte[]> downloadOwnPrescription(@PathVariable("id") Long id, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) {
             return ResponseEntity.status(401).build();
@@ -1056,9 +1056,9 @@ public class DoctorController {
     }
 
     @PostMapping("/review")
-    public String addReview(@RequestParam Long doctorId,
-                            @RequestParam(required = false) Integer rating,
-                            @RequestParam(required = false) String comment,
+    public String addReview(@RequestParam("doctorId") Long doctorId,
+                            @RequestParam(value = "rating", required = false) Integer rating,
+                            @RequestParam(value = "comment", required = false) String comment,
                             HttpSession session,
                             RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -1114,7 +1114,7 @@ public class DoctorController {
     // ==============================
     @GetMapping("/chat/{doctorId}")
     public String chatWithDoctor(@PathVariable Long doctorId,
-                                 @RequestParam(required = false) Long userId,
+                                 @RequestParam(value = "userId", required = false) Long userId,
                                  Model model,
                                  HttpSession session,
                                  RedirectAttributes redirectAttributes) {
@@ -1171,10 +1171,10 @@ public class DoctorController {
 
     @PostMapping("/chat/send")
     @org.springframework.web.bind.annotation.ResponseBody
-    public String sendDoctorChat(@RequestParam Long doctorId,
-                                 @RequestParam String message,
-                                 @RequestParam String senderType,
-                                 @RequestParam(required = false) Long userId,
+    public String sendDoctorChat(@RequestParam("doctorId") Long doctorId,
+                                 @RequestParam("message") String message,
+                                 @RequestParam("senderType") String senderType,
+                                 @RequestParam(value = "userId", required = false) Long userId,
                                  HttpSession session) {
         Doctor doc = doctorRepo.findById(doctorId).orElse(null);
         if (doc == null) return "ERROR";
@@ -1222,16 +1222,16 @@ public class DoctorController {
 
     @GetMapping("/video-call/{doctorId}")
     public String videoCallDoctor(@PathVariable Long doctorId,
-                                  @RequestParam(required = false) Long userId,
-                                  @RequestParam(required = false, defaultValue = "false") boolean notify,
+                                  @RequestParam(value = "userId", required = false) Long userId,
+                                  @RequestParam(value = "notify", required = false, defaultValue = "false") boolean notify,
                                   Model model, HttpSession session) {
         return setupDoctorCall(doctorId, userId, notify, false, model, session);
     }
 
     @GetMapping("/voice-call/{doctorId}")
     public String voiceCallDoctor(@PathVariable Long doctorId,
-                                  @RequestParam(required = false) Long userId,
-                                  @RequestParam(required = false, defaultValue = "false") boolean notify,
+                                  @RequestParam(value = "userId", required = false) Long userId,
+                                  @RequestParam(value = "notify", required = false, defaultValue = "false") boolean notify,
                                   Model model, HttpSession session) {
         return setupDoctorCall(doctorId, userId, notify, true, model, session);
     }
@@ -1317,8 +1317,8 @@ public class DoctorController {
     private static final int PRESCRIPTION_MAX_LENGTH = 2000;
 
     @PostMapping("/appointments/{id}/prescription")
-    public String savePrescription(@PathVariable Long id,
-                                   @RequestParam String prescriptionText,
+    public String savePrescription(@PathVariable("id") Long id,
+                                   @RequestParam("prescriptionText") String prescriptionText,
                                    HttpSession session,
                                    RedirectAttributes redirectAttributes) {
         Doctor d = (Doctor) session.getAttribute("loggedDoctor");

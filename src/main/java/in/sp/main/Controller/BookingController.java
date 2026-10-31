@@ -55,11 +55,11 @@ public class BookingController {
 
     // Show booking form
     @GetMapping("/new")
-    public String showBookingForm(@RequestParam(required = false) Long serviceId,
-                                  @RequestParam(required = false) Long treatmentId,
-                                  @RequestParam(required = false) Long offerId,
-                                  @RequestParam(required = false) Long packageId,
-                                  @RequestParam(required = false) Long membershipId,
+    public String showBookingForm(@RequestParam(value = "serviceId", required = false) Long serviceId,
+                                  @RequestParam(value = "treatmentId", required = false) Long treatmentId,
+                                  @RequestParam(value = "offerId", required = false) Long offerId,
+                                  @RequestParam(value = "packageId", required = false) Long packageId,
+                                  @RequestParam(value = "membershipId", required = false) Long membershipId,
                                   HttpSession session,
                                   Model model) {
  
@@ -101,17 +101,17 @@ public class BookingController {
  
     // Handle booking submission
     @PostMapping("/new")
-    public String createBooking(@RequestParam(required = false) Long serviceId,
-                                @RequestParam(required = false) Long treatmentId,
-                                @RequestParam(required = false) Long offerId,
-                                @RequestParam(required = false) Long packageId,
-                                @RequestParam(required = false) Long membershipId,
-                                @RequestParam String bookingType,
-                                @RequestParam(required = false) String address,
-                                @RequestParam(required = false) String notes,
-                                @RequestParam String emergencyContact,
-                                @RequestParam String bookingDate, 
-                                @RequestParam 	LocalTime preferredTime, 
+    public String createBooking(@RequestParam(value = "serviceId", required = false) Long serviceId,
+                                @RequestParam(value = "treatmentId", required = false) Long treatmentId,
+                                @RequestParam(value = "offerId", required = false) Long offerId,
+                                @RequestParam(value = "packageId", required = false) Long packageId,
+                                @RequestParam(value = "membershipId", required = false) Long membershipId,
+                                @RequestParam("bookingType") String bookingType,
+                                @RequestParam(value = "address", required = false) String address,
+                                @RequestParam(value = "notes", required = false) String notes,
+                                @RequestParam("emergencyContact") String emergencyContact,
+                                @RequestParam("bookingDate") String bookingDate, 
+                                @RequestParam("preferredTime") LocalTime preferredTime, 
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
  
@@ -277,8 +277,8 @@ public class BookingController {
     }
 
     @PostMapping("/updateStylistStatus")
-    public String updateStylistBookingStatus(@RequestParam Long bookingId,
-                                             @RequestParam String status,
+    public String updateStylistBookingStatus(@RequestParam("bookingId") Long bookingId,
+                                             @RequestParam("status") String status,
                                              HttpSession session) {
 
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
@@ -297,9 +297,9 @@ public class BookingController {
     }
 
     @PostMapping("/updateStatus")
-    public String updateBookingStatus(@RequestParam Long bookingId,
-                                      @RequestParam String status,
-                                      @RequestParam String bookingType,
+    public String updateBookingStatus(@RequestParam("bookingId") Long bookingId,
+                                      @RequestParam("status") String status,
+                                      @RequestParam("bookingType") String bookingType,
                                       HttpSession session) {
 
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");

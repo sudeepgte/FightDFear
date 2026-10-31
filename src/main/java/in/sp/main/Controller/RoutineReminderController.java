@@ -39,11 +39,11 @@ public class RoutineReminderController {
     }
 
     @PostMapping("/add")
-    public String add(@RequestParam String title,
-                      @RequestParam String message,
-                      @RequestParam(required = false) String dayOfWeek,
-                      @RequestParam(required = false) String reminderDate,
-                      @RequestParam String timeOfDay,
+    public String add(@RequestParam("title") String title,
+                      @RequestParam("message") String message,
+                      @RequestParam(value = "dayOfWeek", required = false) String dayOfWeek,
+                      @RequestParam(value = "reminderDate", required = false) String reminderDate,
+                      @RequestParam("timeOfDay") String timeOfDay,
                       HttpSession session,
                       RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("user");
@@ -68,7 +68,7 @@ public class RoutineReminderController {
     }
 
     @PostMapping("/delete")
-    public String delete(@RequestParam Long id, HttpSession session) {
+    public String delete(@RequestParam("id") Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return "redirect:/login";
         reminderService.delete(user, id);
@@ -76,7 +76,7 @@ public class RoutineReminderController {
     }
 
     @PostMapping("/toggle")
-    public String toggle(@RequestParam Long id, HttpSession session) {
+    public String toggle(@RequestParam("id") Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return "redirect:/login";
         reminderService.toggle(user, id);
@@ -104,7 +104,7 @@ public class RoutineReminderController {
 
     @PostMapping("/shown")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> shown(@RequestParam Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> shown(@RequestParam("id") Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res(false, "Login required."));
         reminderService.markShown(id);

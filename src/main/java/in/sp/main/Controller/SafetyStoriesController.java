@@ -42,7 +42,7 @@ public class SafetyStoriesController {
     }
 
     @PostMapping("/create")
-    public String create(@RequestParam String content,
+    public String create(@RequestParam("content") String content,
                          @RequestParam(value = "media", required = false) MultipartFile media,
                          HttpSession session,
                          RedirectAttributes redirectAttributes) {

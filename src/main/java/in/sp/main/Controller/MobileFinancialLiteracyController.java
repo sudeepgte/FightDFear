@@ -34,9 +34,9 @@ public class MobileFinancialLiteracyController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> home(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
             HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         String cat = category == null ? "" : category.trim().toLowerCase();
@@ -75,7 +75,7 @@ public class MobileFinancialLiteracyController {
     }
 
     @GetMapping("/videos/{id}")
-    public ResponseEntity<Map<String, Object>> video(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> video(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         FinancialVideo v = catalog.findVideo(String.valueOf(id));
         if (!catalog.isPublicVideo(v)) return notFound("Video not found");
@@ -83,7 +83,7 @@ public class MobileFinancialLiteracyController {
     }
 
     @GetMapping("/live-sessions/{id}")
-    public ResponseEntity<Map<String, Object>> live(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> live(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         FinancialLiveSession s = catalog.findLive(String.valueOf(id));
@@ -99,7 +99,7 @@ public class MobileFinancialLiteracyController {
     }
 
     @GetMapping("/workshops/{id}")
-    public ResponseEntity<Map<String, Object>> workshop(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> workshop(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         FinancialWorkshop w = catalog.findWorkshop(String.valueOf(id));
@@ -115,7 +115,7 @@ public class MobileFinancialLiteracyController {
     }
 
     @PostMapping("/live-sessions/{id}/register")
-    public ResponseEntity<Map<String, Object>> registerLive(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> registerLive(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         try {
@@ -136,7 +136,7 @@ public class MobileFinancialLiteracyController {
     }
 
     @PostMapping("/workshops/{id}/register")
-    public ResponseEntity<Map<String, Object>> registerWorkshop(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> registerWorkshop(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         try {
@@ -157,7 +157,7 @@ public class MobileFinancialLiteracyController {
     }
 
     @PostMapping("/enrollments/{id}/cancel")
-    public ResponseEntity<Map<String, Object>> cancel(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancel(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         try {
@@ -179,7 +179,7 @@ public class MobileFinancialLiteracyController {
 
     @PostMapping("/enrollments/{id}/rate")
     public ResponseEntity<Map<String, Object>> rate(
-            @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+            @PathVariable("id") Long id, @RequestBody Map<String, Object> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         FinancialEnrollment e = enrollmentRepo.findById(id).orElse(null);

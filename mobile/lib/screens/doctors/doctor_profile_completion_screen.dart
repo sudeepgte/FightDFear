@@ -12,10 +12,13 @@ import '../../config/doctor_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/doctor_auth_service.dart';
 import '../../widgets/bank_details_form.dart';
+import '../../widgets/dynamic_location_hierarchy_picker.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
+import 'doctor_dashboard_screen.dart';
+import 'doctor_pending_approval_screen.dart';
 
 class DoctorProfileCompletionScreen extends StatefulWidget {
   const DoctorProfileCompletionScreen({super.key, this.onFinished});
@@ -440,6 +443,23 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   }
 
   void _leave() {
+    final status = (_profile['doctorProfileStatus'] ?? '').toString().toUpperCase();
+    final verificationStatus = (_profile['verificationStatus'] ?? '').toString().toUpperCase();
+    final isApproved = status == 'APPROVED' || verificationStatus == 'VERIFIED';
+    if (isApproved) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
+      );
+      return;
+    }
+    if (status == 'PENDING_ADMIN_APPROVAL') {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => DoctorPendingApprovalScreen(initialProfile: _profile),
+        ),
+      );
+      return;
+    }
     final onFinished = widget.onFinished;
     if (onFinished != null) {
       onFinished(context);
@@ -1275,19 +1295,23 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                 _section('2', 'Clinic / Hospital Information', [
                   _field(_hospital, '2.1', 'Hospital / clinic name', required: true),
                   _field(_clinicAddress, '2.2', 'Clinic address', required: true, maxLines: 2),
-                  _field(_city, '2.3', 'City', required: true),
-                  _dropdown(
-                    number: '2.4',
-                    label: 'State',
-                    value: _state,
-                    options: DoctorCatalog.indianStates,
-                    required: true,
-                    onChanged: (v) => setState(() => _state = v),
+                  DynamicLocationHierarchyPicker(
+                    api: context.read<AuthState>().api,
+                    initialCountry: 'India',
+                    initialState: _state,
+                    initialCity: _city.text.isNotEmpty ? _city.text : null,
+                    isRequired: true,
+                    onLocationChanged: ({required country, required state, required district, required city}) {
+                      setState(() {
+                        _state = state;
+                        if (city.isNotEmpty) _city.text = city;
+                      });
+                    },
                   ),
-                  if (_state == 'Other') _field(_stateOther, '2.4', 'Enter state', required: true),
+                  _field(_city, '2.3', 'City / Town', required: true),
                   _field(
                     _pincode,
-                    '2.5',
+                    '2.4',
                     'Pincode',
                     required: true,
                     keyboardType: TextInputType.number,
@@ -1296,7 +1320,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                   ),
                   _field(
                     _mapLocation,
-                    '2.6',
+                    '2.5',
                     'Google Maps location',
                     hint: 'Paste Google Maps link (optional)',
                   ),
@@ -1305,7 +1329,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                     lat: _clinicLat,
                     lng: _clinicLng,
                     mapLinkController: _mapLocation,
-                    pinLabel: '2.7 Pin clinic on map',
+                    pinLabel: '2.6 Pin clinic on map',
                     onPinned: (lat, lng) => setState(() {
                       _clinicLat = lat;
                       _clinicLng = lng;

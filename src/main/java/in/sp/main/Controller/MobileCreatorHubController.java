@@ -57,12 +57,12 @@ public class MobileCreatorHubController {
 
     @GetMapping("/feed")
     public ResponseEntity<Map<String, Object>> feed(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
             HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
@@ -165,7 +165,7 @@ public class MobileCreatorHubController {
     }
 
     @GetMapping("/creators/{id}")
-    public ResponseEntity<Map<String, Object>> creatorProfile(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> creatorProfile(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
@@ -220,7 +220,7 @@ public class MobileCreatorHubController {
     }
 
     @GetMapping("/posts/{id}/comments")
-    public ResponseEntity<Map<String, Object>> comments(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> comments(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         List<Map<String, Object>> items = videoCommentRepository.findByVideo_Id(id).stream().map(c -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -340,17 +340,17 @@ public class MobileCreatorHubController {
     @PostMapping("/upload")
     @Transactional
     public ResponseEntity<Map<String, Object>> upload(
-            @RequestParam String title,
-            @RequestParam String description,
-            @RequestParam String category,
-            @RequestParam String uploadType,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String hashtags,
-            @RequestParam(defaultValue = "false") boolean isDraft,
-            @RequestParam(defaultValue = "false") boolean isPaidContent,
-            @RequestParam(defaultValue = "0.0") Double price,
-            @RequestParam(defaultValue = "false") boolean isSubscriberOnly,
-            @RequestParam(required = false) String affiliateLink,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("category") String category,
+            @RequestParam("uploadType") String uploadType,
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "hashtags", required = false) String hashtags,
+            @RequestParam(value = "isDraft", defaultValue = "false") boolean isDraft,
+            @RequestParam(value = "isPaidContent", defaultValue = "false") boolean isPaidContent,
+            @RequestParam(value = "price", defaultValue = "0.0") Double price,
+            @RequestParam(value = "isSubscriberOnly", defaultValue = "false") boolean isSubscriberOnly,
+            @RequestParam(value = "affiliateLink", required = false) String affiliateLink,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail,
             HttpSession session) {
@@ -408,7 +408,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/creators/{id}/follow")
     @Transactional
-    public ResponseEntity<Map<String, Object>> follow(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> follow(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
@@ -498,7 +498,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/creators/{id}/unsubscribe")
     @Transactional
-    public ResponseEntity<Map<String, Object>> unsubscribe(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> unsubscribe(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
@@ -514,7 +514,7 @@ public class MobileCreatorHubController {
     @PostMapping("/creators/{id}/rate")
     @Transactional
     public ResponseEntity<Map<String, Object>> rateCreator(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User currentUser = requireUser(session);
@@ -536,7 +536,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/unlock")
     @Transactional
-    public ResponseEntity<Map<String, Object>> unlock(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> unlock(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -567,7 +567,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/bookmark")
     @Transactional
-    public ResponseEntity<Map<String, Object>> bookmark(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> bookmark(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -586,7 +586,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/view")
     @Transactional
-    public ResponseEntity<Map<String, Object>> view(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> view(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
         if (video == null) return badRequest("Post not found");
@@ -601,7 +601,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/like")
     @Transactional
-    public ResponseEntity<Map<String, Object>> like(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> like(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -626,7 +626,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/comments")
     @Transactional
-    public ResponseEntity<Map<String, Object>> comment(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> comment(@PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -644,7 +644,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/report")
     @Transactional
-    public ResponseEntity<Map<String, Object>> report(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> report(@PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -661,7 +661,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/creators/{id}/block")
     @Transactional
-    public ResponseEntity<Map<String, Object>> block(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> block(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         User blocked = userRepository.findById(id).orElse(null);

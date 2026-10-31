@@ -498,7 +498,7 @@ public class MobileDoctorAuthController {
     }
 
     @PostMapping("/instant/{id}/accept")
-    public ResponseEntity<Map<String, Object>> instantAccept(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> instantAccept(@PathVariable("id") Long id, HttpSession session) {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         try {
@@ -521,7 +521,7 @@ public class MobileDoctorAuthController {
     }
 
     @PostMapping("/instant/{id}/decline")
-    public ResponseEntity<Map<String, Object>> instantDecline(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> instantDecline(@PathVariable("id") Long id, HttpSession session) {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         try {
@@ -613,7 +613,7 @@ public class MobileDoctorAuthController {
     @PostMapping("/appointments/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateAppointmentStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Doctor d = requireDoctor(session);
@@ -644,7 +644,7 @@ public class MobileDoctorAuthController {
     @PostMapping("/appointments/{id}/prescription")
     @Transactional
     public ResponseEntity<Map<String, Object>> savePrescription(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         Doctor d = requireDoctor(session);
@@ -684,7 +684,7 @@ public class MobileDoctorAuthController {
     @PostMapping("/appointments/{id}/reschedule")
     @Transactional
     public ResponseEntity<Map<String, Object>> rescheduleByDoctor(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Doctor d = requireDoctor(session);
@@ -704,7 +704,7 @@ public class MobileDoctorAuthController {
     }
 
     @PostMapping("/appointments/{id}/waiting")
-    public ResponseEntity<Map<String, Object>> pingWaiting(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> pingWaiting(@PathVariable("id") Long id, HttpSession session) {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         DoctorAppointment a = appointmentRepo.findById(id).orElse(null);

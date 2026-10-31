@@ -1,0 +1,658 @@
+/**
+ * Wallet — 60 / 30 / 10 theme (extends fdf-6010-pages.css)
+ */
+body.wallet-page-shell {
+    background: linear-gradient(160deg, #FFF1F2 0%, #FDF2F8 25%, #F8FAFC 50%, #FFF1F2 100%) !important;
+    background-attachment: fixed !important;
+    color: #0F172A !important;
+}
+
+body.wallet-page-shell #footer,
+body.wallet-page-shell .footer,
+body.wallet-page-shell .global-footer {
+    display: none !important;
+}
+
+body.wallet-page-shell .wallet-summary-card,
+body.wallet-page-shell .wallet-redeem-hero,
+body.wallet-page-shell .reward-card,
+body.wallet-page-shell .wallet-transactions {
+    border-color: #FECDD3 !important;
+}
+
+body.wallet-page-shell .wallet-section-title {
+    color: #0F172A !important;
+    border-left-color: #F43F5E !important;
+    background: #FFF1F2;
+    padding: 10px 14px;
+    border-radius: 0 12px 12px 0;
+}
+
+body.wallet-page-shell .coin-badge {
+    background: #FFF1F2 !important;
+    border-color: #FECDD3 !important;
+    color: #0F172A !important;
+}
+
+body.wallet-page-shell .coin-badge i {
+    color: #CA8A04 !important;
+}
+
+/* Force readable themed text — override global dark-theme rules */
+body.wallet-page-shell h1,
+body.wallet-page-shell h2,
+body.wallet-page-shell h3,
+body.wallet-page-shell h4,
+body.wallet-page-shell h5,
+body.wallet-page-shell h6,
+body.wallet-page-shell p,
+body.wallet-page-shell .card,
+body.wallet-page-shell .card h5,
+body.wallet-page-shell .card p {
+    color: inherit;
+}
+
+@keyframes walletFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+body.wallet-page-shell #page-content-wrapper {
+    background: linear-gradient(180deg, #FFF1F2 0%, #FDF2F8 18%, #F8FAFC 45%, #FFF1F2 100%) !important;
+    overflow-x: hidden;
+    padding-top: 72px;
+}
+
+body.wallet-page-shell .wallet-page,
+body.wallet-page-shell .fdf-page-main {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(254, 205, 211, 0.55);
+    border-radius: 24px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 8px 32px rgba(244, 63, 94, 0.08);
+    padding: 24px clamp(16px, 3vw, 32px) 48px;
+}
+
+body.wallet-page-shell .wallet-container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+/* Go Back — injected by sidebar */
+body.wallet-page-shell #global-back-btn {
+    margin: 0 0 16px;
+    padding: 0;
+}
+
+body.wallet-page-shell #global-back-btn a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 999px !important;
+    padding: 8px 16px !important;
+    font-size: 0.875rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    text-decoration: none;
+}
+
+body.wallet-page-shell #global-back-btn a:hover {
+    transform: translateY(-1px);
+    border-color: #F43F5E !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+    color: #0F172A !important;
+}
+
+body.wallet-page-shell #global-back-btn a:focus-visible {
+    outline: 2px solid #F43F5E;
+    outline-offset: 2px;
+}
+
+/* Wallet Summary Card */
+body.wallet-page-shell .wallet-summary-card {
+    position: relative;
+    margin-top: 24px;
+    margin-bottom: 28px;
+    padding: 28px 24px;
+    background: linear-gradient(145deg, #FFFFFF 0%, #FFF1F2 100%);
+    border: 1px solid #FECDD3;
+    border-radius: 20px;
+    box-shadow: 0 8px 28px rgba(244, 63, 94, 0.08);
+    overflow: hidden;
+}
+
+body.wallet-page-shell .wallet-summary-glow {
+    position: absolute;
+    top: -40%;
+    right: -8%;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(244, 63, 94, 0.12) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+body.wallet-page-shell .wallet-summary-glow--left {
+    top: auto;
+    bottom: -50%;
+    left: -10%;
+    right: auto;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(255, 241, 242, 0.9) 0%, transparent 70%);
+}
+
+body.wallet-page-shell .wallet-summary-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+body.wallet-page-shell .wallet-balance-block {
+    background: #FFFFFF;
+    border: 1px solid #FECDD3;
+    border-radius: 18px;
+    padding: 24px 20px;
+    text-align: center;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.wallet-page-shell .wallet-balance-block--coins {
+    background: linear-gradient(160deg, #FFF1F2 0%, #FFFFFF 100%);
+}
+
+body.wallet-page-shell .wallet-balance-block--cash {
+    background: linear-gradient(160deg, #FFFFFF 0%, #FFF1F2 100%);
+}
+
+body.wallet-page-shell .wallet-balance-block:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(244, 63, 94, 0.08);
+}
+
+body.wallet-page-shell .wallet-balance-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #F43F5E;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+body.wallet-page-shell .wallet-balance-label i {
+    font-size: 1.1rem;
+    color: #F43F5E;
+}
+
+body.wallet-page-shell .wallet-balance-value {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: #0F172A;
+}
+
+body.wallet-page-shell .wallet-coins-value {
+    color: #CA8A04;
+}
+
+body.wallet-page-shell .wallet-balance-block--cash .wallet-balance-value span:not(.wallet-cash-value--negative) {
+    color: #0F172A;
+}
+
+body.wallet-page-shell .wallet-balance-value .coin-icon-gold {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    color: #CA8A04;
+    transition: transform 0.3s ease;
+}
+
+body.wallet-page-shell .wallet-balance-block:hover .coin-icon-gold {
+    transform: scale(1.08) rotate(4deg);
+}
+
+body.wallet-page-shell .wallet-balance-hint {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #64748B;
+    line-height: 1.5;
+}
+
+body.wallet-page-shell .wallet-balance-block--coins .wallet-coins-value {
+    color: #CA8A04;
+    text-shadow: 0 2px 12px rgba(202, 138, 4, 0.2);
+}
+
+body.wallet-page-shell .wallet-balance-block--cash .wallet-balance-value span {
+    color: #0F172A;
+}
+
+body.wallet-page-shell .reward-card .card-text {
+    flex: 1;
+    font-size: 0.9rem;
+    color: #64748B !important;
+    line-height: 1.55;
+    margin-bottom: 0;
+}
+
+body.wallet-page-shell .wallet-alert.alert-success {
+    background: #ECFDF5;
+    border: 1px solid #BBF7D0;
+    color: #166534;
+}
+
+body.wallet-page-shell .wallet-alert.alert-danger {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #991B1B;
+}
+
+body.wallet-page-shell .wallet-cash-value--negative {
+    color: #DC2626;
+}
+
+body.wallet-page-shell .wallet-cash-value--negative + .wallet-balance-hint,
+body.wallet-page-shell .wallet-balance-block--cash .wallet-cash-value--negative ~ .wallet-balance-hint {
+    color: #64748B;
+}
+
+/* Redeem Hero */
+body.wallet-page-shell .wallet-redeem-hero {
+    position: relative;
+    margin-bottom: 32px;
+    padding: 32px 28px;
+    background: linear-gradient(135deg, #FFF1F2 0%, #FFFFFF 55%, #FFF1F2 100%);
+    border: 1px solid #FECDD3;
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(244, 63, 94, 0.1);
+    overflow: hidden;
+}
+
+body.wallet-page-shell .wallet-redeem-hero-orb {
+    position: absolute;
+    top: -20%;
+    right: -4%;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(244, 63, 94, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+body.wallet-page-shell .wallet-redeem-hero-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+body.wallet-page-shell .wallet-redeem-icon-wrap {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFF1F2;
+    border: 1px solid #FECDD3;
+    border-radius: 14px;
+    color: #F43F5E;
+    font-size: 1.4rem;
+    transition: transform 0.25s ease;
+}
+
+body.wallet-page-shell .wallet-redeem-hero:hover .wallet-redeem-icon-wrap {
+    transform: scale(1.05);
+}
+
+body.wallet-page-shell .wallet-redeem-title {
+    margin: 0 0 8px;
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #F43F5E;
+}
+
+body.wallet-page-shell .wallet-redeem-subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: #64748B;
+    line-height: 1.55;
+}
+
+/* Alerts */
+body.wallet-page-shell .wallet-alert {
+    border-radius: 14px;
+    border: none;
+    margin-bottom: 20px;
+}
+
+/* Coupon */
+body.wallet-page-shell .coupon-box {
+    background: #FFFBEB;
+    border: 2px dashed #CA8A04;
+    padding: 20px;
+    border-radius: 18px;
+    margin-bottom: 28px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+body.wallet-page-shell .coupon-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+body.wallet-page-shell .coupon-box h5 {
+    color: #0F172A;
+    font-weight: 700;
+}
+
+body.wallet-page-shell .coupon-box p {
+    color: #64748B;
+}
+
+body.wallet-page-shell .coupon-code {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: 0.08em;
+}
+
+/* Rewards section */
+body.wallet-page-shell .wallet-section-title {
+    margin: 0 0 20px;
+    padding-left: 14px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0F172A;
+    border-left: 4px solid #F43F5E;
+}
+
+body.wallet-page-shell .wallet-rewards-grid {
+    --bs-gutter-x: 1.25rem;
+    --bs-gutter-y: 1.25rem;
+}
+
+body.wallet-page-shell .reward-card {
+    height: 100%;
+    border: 1px solid #FECDD3;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #FFF1F2 0%, #FFFFFF 28%);
+    box-shadow: 0 4px 18px rgba(244, 63, 94, 0.08);
+    transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+    overflow: hidden;
+}
+
+body.wallet-page-shell .reward-card:hover {
+    transform: translateY(-5px);
+    border-color: #F43F5E;
+    box-shadow: 0 14px 32px rgba(244, 63, 94, 0.15);
+}
+
+body.wallet-page-shell .reward-card .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 24px;
+}
+
+body.wallet-page-shell .reward-card-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    background: #FFF1F2;
+    border: 1px solid #FECDD3;
+    border-radius: 12px;
+    color: #F43F5E;
+    font-size: 1.25rem;
+    transition: transform 0.25s ease;
+}
+
+body.wallet-page-shell .reward-card:hover .reward-card-icon {
+    transform: scale(1.06);
+}
+
+body.wallet-page-shell .reward-card .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #F43F5E;
+    margin-bottom: 8px;
+}
+
+body.wallet-page-shell .reward-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #F1F5F9;
+}
+
+body.wallet-page-shell .coin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+body.wallet-page-shell .coin-badge i {
+    color: #CA8A04;
+}
+
+body.wallet-page-shell .btn-redeem {
+    background: #F43F5E !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 999px;
+    padding: 9px 22px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(244, 63, 94, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+body.wallet-page-shell .btn-redeem:hover {
+    background: #E11D48 !important;
+    color: #FFFFFF !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(244, 63, 94, 0.35);
+}
+
+body.wallet-page-shell .btn-redeem:active {
+    transform: translateY(0);
+}
+
+body.wallet-page-shell .btn-redeem:focus-visible {
+    outline: 2px solid #F43F5E;
+    outline-offset: 2px;
+}
+
+/* Transaction History */
+body.wallet-page-shell .wallet-transactions {
+    margin-top: 40px;
+    margin-bottom: 32px;
+    padding: 28px 24px;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 20px;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.04);
+}
+
+body.wallet-page-shell .wallet-transactions-header h4 {
+    color: #0F172A;
+}
+
+body.wallet-page-shell .wallet-transactions-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+body.wallet-page-shell .wallet-transactions-header i {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFF1F2;
+    border-radius: 12px;
+    color: #64748B;
+    font-size: 1.1rem;
+}
+
+body.wallet-page-shell .wallet-transactions-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0F172A;
+}
+
+body.wallet-page-shell .wallet-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 20px;
+    text-align: center;
+    background: #FFF1F2;
+    border: 1px dashed #FECDD3;
+    border-radius: 16px;
+}
+
+body.wallet-page-shell .wallet-empty-state i {
+    font-size: 2rem;
+    color: #F43F5E;
+    margin-bottom: 12px;
+}
+
+body.wallet-page-shell .wallet-empty-state p {
+    margin: 0;
+    color: #64748B;
+    font-size: 0.95rem;
+}
+
+body.wallet-page-shell .wallet-transactions .table {
+    margin-bottom: 0;
+    color: #0F172A;
+}
+
+body.wallet-page-shell .wallet-transactions .table thead th {
+    background: #F8FAFC;
+    color: #64748B;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 12px 16px;
+}
+
+body.wallet-page-shell .wallet-transactions .table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid #F1F5F9;
+    vertical-align: middle;
+}
+
+body.wallet-page-shell .wallet-transactions .table-hover tbody tr:hover {
+    background: #FFF1F2;
+}
+
+/* Scrollbar */
+body.wallet-page-shell ::-webkit-scrollbar {
+    width: 8px;
+}
+
+body.wallet-page-shell ::-webkit-scrollbar-track {
+    background: #F8FAFC;
+}
+
+body.wallet-page-shell ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 10px;
+}
+
+body.wallet-page-shell ::-webkit-scrollbar-thumb:hover {
+    background: #F43F5E;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body.wallet-page-shell .wallet-page {
+        padding: 0 16px 40px;
+    }
+
+    body.wallet-page-shell #global-back-btn {
+        padding: 0 16px;
+    }
+
+    body.wallet-page-shell .wallet-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    body.wallet-page-shell .wallet-summary-card {
+        padding: 22px 18px;
+    }
+
+    body.wallet-page-shell .wallet-redeem-hero {
+        padding: 24px 20px;
+    }
+
+    body.wallet-page-shell .wallet-redeem-hero-inner {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    body.wallet-page-shell .wallet-redeem-hero-orb {
+        width: 100px;
+        height: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    body.wallet-page-shell .reward-card-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    body.wallet-page-shell .btn-redeem {
+        width: 100%;
+    }
+
+    body.wallet-page-shell .coupon-code {
+        font-size: 1.1rem;
+    }
+}

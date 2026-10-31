@@ -328,9 +328,9 @@ public class MobileInvestorAuthController {
 
     @GetMapping("/marketplace")
     public ResponseEntity<Map<String, Object>> marketplace(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
             HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
@@ -360,7 +360,7 @@ public class MobileInvestorAuthController {
 
     @PostMapping("/investments/{id}/withdraw")
     @Transactional
-    public ResponseEntity<Map<String, Object>> withdrawInterest(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> withdrawInterest(@PathVariable("id") Long id, HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
         Investment investment = investmentRepository.findById(id).orElse(null);
@@ -641,7 +641,7 @@ public class MobileInvestorAuthController {
     @PostMapping("/investments/{id}/rate")
     @Transactional
     public ResponseEntity<Map<String, Object>> rate(
-            @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+            @PathVariable("id") Long id, @RequestBody Map<String, Object> body, HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
         Investment i = investmentRepository.findById(id).orElse(null);

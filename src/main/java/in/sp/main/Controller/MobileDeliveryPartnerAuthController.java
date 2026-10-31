@@ -301,7 +301,7 @@ public class MobileDeliveryPartnerAuthController {
     @PostMapping("/orders/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         DeliveryPartner p = requirePartner(session);
@@ -317,7 +317,7 @@ public class MobileDeliveryPartnerAuthController {
 
     @PostMapping("/orders/{id}/accept")
     @Transactional
-    public ResponseEntity<Map<String, Object>> accept(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> accept(@PathVariable("id") Long id, HttpSession session) {
         DeliveryPartner p = requireApproved(session);
         if (p == null) return unauthorized();
         if (p.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
@@ -336,7 +336,7 @@ public class MobileDeliveryPartnerAuthController {
     @PostMapping("/orders/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         DeliveryPartner p = requireApproved(session);
@@ -356,7 +356,7 @@ public class MobileDeliveryPartnerAuthController {
     }
 
     @GetMapping("/orders/{id}/track")
-    public ResponseEntity<Map<String, Object>> track(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> track(@PathVariable("id") Long id, HttpSession session) {
         DeliveryPartner p = requirePartner(session);
         if (p == null) return unauthorized();
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
@@ -371,7 +371,7 @@ public class MobileDeliveryPartnerAuthController {
     @PostMapping("/orders/{id}/location")
     @Transactional
     public ResponseEntity<Map<String, Object>> pingLocation(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         DeliveryPartner p = requireApproved(session);

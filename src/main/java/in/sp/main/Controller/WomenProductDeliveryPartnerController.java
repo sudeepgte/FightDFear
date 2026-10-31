@@ -49,12 +49,12 @@ public class WomenProductDeliveryPartnerController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam String fullName,
-                           @RequestParam String email,
-                           @RequestParam String phone,
-                           @RequestParam String password,
-                           @RequestParam(required = false) String address,
-                           @RequestParam(required = false) String city,
+    public String register(@RequestParam("fullName") String fullName,
+                           @RequestParam("email") String email,
+                           @RequestParam("phone") String phone,
+                           @RequestParam("password") String password,
+                           @RequestParam(value = "address", required = false) String address,
+                           @RequestParam(value = "city", required = false) String city,
                            Model model,
                            RedirectAttributes ra) {
         String cleanedEmail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
@@ -108,8 +108,8 @@ public class WomenProductDeliveryPartnerController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String email,
-                        @RequestParam String password,
+    public String login(@RequestParam("email") String email,
+                        @RequestParam("password") String password,
                         HttpSession session,
                         HttpServletResponse response,
                         Model model) {
@@ -180,8 +180,8 @@ public class WomenProductDeliveryPartnerController {
     }
 
     @PostMapping("/orders/{id}/status")
-    public String updateStatus(@PathVariable Long id,
-                               @RequestParam String status,
+    public String updateStatus(@PathVariable("id") Long id,
+                               @RequestParam("status") String status,
                                HttpSession session,
                                RedirectAttributes ra) {
         DeliveryPartner p = requirePartner(session);

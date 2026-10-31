@@ -483,7 +483,7 @@ public class MobileMarketplaceProviderAuthController {
     @PostMapping("/bookings/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         ServiceProvider p = requireProvider(session);
@@ -500,7 +500,7 @@ public class MobileMarketplaceProviderAuthController {
     @PostMapping("/bookings/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateBookingStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         ServiceProvider p = requireProvider(session);
@@ -587,7 +587,7 @@ public class MobileMarketplaceProviderAuthController {
     }
 
     @GetMapping("/bookings/{id}/messages")
-    public ResponseEntity<Map<String, Object>> bookingMessages(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> bookingMessages(@PathVariable("id") Long id, HttpSession session) {
         ServiceProvider p = requireProvider(session);
         if (p == null) return unauthorized();
         ProviderBooking booking = bookingRepo.findById(id).orElse(null);
@@ -601,7 +601,7 @@ public class MobileMarketplaceProviderAuthController {
     @PostMapping("/bookings/{id}/messages")
     @Transactional
     public ResponseEntity<Map<String, Object>> sendBookingMessage(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         ServiceProvider p = requireProvider(session);

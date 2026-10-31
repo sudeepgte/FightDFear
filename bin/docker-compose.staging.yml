@@ -1,0 +1,19 @@
+# Staging compose override — use with:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env up -d --build
+#
+# Keeps a separate DB volume and exposes the same app port for nginx upstream testing.
+
+services:
+  db:
+    environment:
+      MYSQL_DATABASE: womenbesafe_staging
+    volumes:
+      - db_data_staging:/var/lib/mysql
+
+  app:
+    environment:
+      APP_BASE_URL: ${APP_BASE_URL:-https://staging.fightdfire.example.com}
+      DB_URL: ${DB_URL:-jdbc:mysql://db:3306/womenbesafe_staging?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+
+volumes:
+  db_data_staging:

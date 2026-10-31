@@ -75,7 +75,11 @@ class MarketplaceProviderAuthService {
       },
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveMarketplaceProviderToken(res['token'].toString());
+      final token = res['token'].toString();
+      await _api.saveMarketplaceProviderToken(token);
+      if (expectedCategory == 'WOMEN_LAWYER') {
+        await _api.saveWomenLawyerToken(token);
+      }
     }
     return res;
   }
@@ -146,5 +150,13 @@ class MarketplaceProviderAuthService {
     );
   }
 
-  Future<void> logout() => _api.clearMarketplaceProviderToken();
+  Future<void> clearLocalSession() async {
+    await _api.clearWomenLawyerToken();
+    await _api.clearMarketplaceProviderToken();
+  }
+
+  Future<void> logout() async {
+    await _api.clearWomenLawyerToken();
+    await _api.clearMarketplaceProviderToken();
+  }
 }

@@ -73,16 +73,16 @@ public class MobileMarketplaceController {
 
     @GetMapping("/providers")
     public ResponseEntity<Map<String, Object>> providers(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String practiceArea,
-            @RequestParam(required = false) Double minFee,
-            @RequestParam(required = false) Double maxFee,
-            @RequestParam(required = false) Boolean availableToday,
-            @RequestParam(required = false) Boolean doorService,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) Double lat,
-            @RequestParam(required = false) Double lng,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "practiceArea", required = false) String practiceArea,
+            @RequestParam(value = "minFee", required = false) Double minFee,
+            @RequestParam(value = "maxFee", required = false) Double maxFee,
+            @RequestParam(value = "availableToday", required = false) Boolean availableToday,
+            @RequestParam(value = "doorService", required = false) Boolean doorService,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "lat", required = false) Double lat,
+            @RequestParam(value = "lng", required = false) Double lng,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -131,7 +131,7 @@ public class MobileMarketplaceController {
     }
 
     @GetMapping("/providers/{id}")
-    public ResponseEntity<Map<String, Object>> providerDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> providerDetail(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         ServiceProvider p = providerRepo.findById(id).orElse(null);
@@ -164,8 +164,8 @@ public class MobileMarketplaceController {
 
     @GetMapping("/providers/{id}/slots")
     public ResponseEntity<Map<String, Object>> providerSlots(
-            @PathVariable Long id,
-            @RequestParam(required = false) String date,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "date", required = false) String date,
             HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         ServiceProvider p = providerRepo.findById(id).orElse(null);
@@ -189,7 +189,7 @@ public class MobileMarketplaceController {
     @PostMapping("/providers/{id}/reviews")
     @Transactional
     public ResponseEntity<Map<String, Object>> addProviderReview(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -210,7 +210,7 @@ public class MobileMarketplaceController {
 
     @PostMapping("/providers/{id}/favorite")
     @Transactional
-    public ResponseEntity<Map<String, Object>> toggleLawyerFavorite(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> toggleLawyerFavorite(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         ServiceProvider p = providerRepo.findById(id).orElse(null);
@@ -235,7 +235,7 @@ public class MobileMarketplaceController {
     @PostMapping("/providers/{id}/bookings")
     @Transactional
     public ResponseEntity<Map<String, Object>> book(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -332,7 +332,7 @@ public class MobileMarketplaceController {
 
     @PostMapping("/enrollments/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelEnrollment(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelEnrollment(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         MarketplaceEnrollment e = enrollmentRepo.findById(id).orElse(null);
@@ -406,7 +406,7 @@ public class MobileMarketplaceController {
 
     @PostMapping("/bookings/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelBooking(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelBooking(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         ProviderBooking booking = bookingRepo.findById(id).orElse(null);
@@ -594,15 +594,15 @@ public class MobileMarketplaceController {
 
     @GetMapping("/workers")
     public ResponseEntity<Map<String, Object>> workers(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) Double minFee,
-            @RequestParam(required = false) Double maxFee,
-            @RequestParam(required = false) Boolean availableToday,
-            @RequestParam(required = false) Boolean doorService,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false) Double lat,
-            @RequestParam(required = false) Double lng,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "minFee", required = false) Double minFee,
+            @RequestParam(value = "maxFee", required = false) Double maxFee,
+            @RequestParam(value = "availableToday", required = false) Boolean availableToday,
+            @RequestParam(value = "doorService", required = false) Boolean doorService,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "lat", required = false) Double lat,
+            @RequestParam(value = "lng", required = false) Double lng,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -640,7 +640,7 @@ public class MobileMarketplaceController {
     }
 
     @GetMapping("/workers/{id}")
-    public ResponseEntity<Map<String, Object>> workerDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> workerDetail(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         JobApplication app = jobAppRepo.findById(id).orElse(null);
         if (app == null || app.getStatus() != VerificationStatus.VERIFIED) return badRequest("Worker not found");
@@ -668,8 +668,8 @@ public class MobileMarketplaceController {
 
     @GetMapping("/workers/{id}/slots")
     public ResponseEntity<Map<String, Object>> workerSlots(
-            @PathVariable Long id,
-            @RequestParam(required = false) String date,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "date", required = false) String date,
             HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         JobApplication app = jobAppRepo.findById(id).orElse(null);
@@ -692,7 +692,7 @@ public class MobileMarketplaceController {
     @PostMapping("/workers/{id}/reviews")
     @Transactional
     public ResponseEntity<Map<String, Object>> addWorkerReview(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -713,7 +713,7 @@ public class MobileMarketplaceController {
 
     @PostMapping("/workers/{id}/favorite")
     @Transactional
-    public ResponseEntity<Map<String, Object>> toggleWorkerFavorite(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> toggleWorkerFavorite(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         JobApplication app = jobAppRepo.findById(id).orElse(null);
@@ -738,7 +738,7 @@ public class MobileMarketplaceController {
     @PostMapping("/workers/{id}/book")
     @Transactional
     public ResponseEntity<Map<String, Object>> bookWorker(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -789,7 +789,7 @@ public class MobileMarketplaceController {
 
     @PostMapping("/workers/bookings/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelWorkerBooking(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelWorkerBooking(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         try {
@@ -804,7 +804,7 @@ public class MobileMarketplaceController {
     }
 
     @GetMapping("/bookings/{id}/messages")
-    public ResponseEntity<Map<String, Object>> bookingMessages(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> bookingMessages(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         ProviderBooking booking = bookingRepo.findById(id).orElse(null);
@@ -817,7 +817,7 @@ public class MobileMarketplaceController {
     @PostMapping("/bookings/{id}/messages")
     @Transactional
     public ResponseEntity<Map<String, Object>> sendBookingMessage(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);

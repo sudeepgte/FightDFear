@@ -12,6 +12,7 @@ import '../screens/glow/glow_provider_login_screen.dart';
 import '../screens/investor/investor_portal_login_screen.dart';
 import '../screens/marketplace/marketplace_provider_login_screen.dart';
 import '../screens/marketplace/women_jobs_portal_login_screen.dart';
+import '../screens/marketplace/women_lawyer_portal_login_screen.dart';
 import '../screens/martial_arts/martial_arts_centre_login_screen.dart';
 import '../screens/products/delivery_portal_login_screen.dart';
 import '../screens/products/women_products_seller_login_screen.dart';
@@ -72,6 +73,10 @@ class NavigationService {
       case AuthRole.financialEducator:
         targetScreen = const FinancialEducatorPortalLoginScreen();
         message = 'Your educator session has expired. Please log in again.';
+        break;
+      case AuthRole.womenLawyer:
+        targetScreen = const WomenLawyerPortalLoginScreen();
+        message = 'Your lawyer session has expired. Please log in again.';
         break;
       case AuthRole.marketplaceProvider:
         targetScreen = const MarketplaceProviderLoginScreen();

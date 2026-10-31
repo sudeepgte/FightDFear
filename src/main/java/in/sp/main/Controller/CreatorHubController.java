@@ -127,8 +127,8 @@ public class CreatorHubController {
     // MAIN FEED
     @GetMapping("/feed")
     public String showFeed(HttpSession session, Model model, 
-                           @RequestParam(required = false) String search,
-                           @RequestParam(required = false) String category) {
+                           @RequestParam(value = "search", required = false) String search,
+                           @RequestParam(value = "category", required = false) String category) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
@@ -238,7 +238,7 @@ public class CreatorHubController {
 
     @GetMapping("/comments-api")
     @ResponseBody
-    public List<Map<String, Object>> getCommentsApi(@RequestParam Long videoId) {
+    public List<Map<String, Object>> getCommentsApi(@RequestParam("videoId") Long videoId) {
         List<VideoComment> list = videoCommentRepository.findByVideo_Id(videoId);
         List<Map<String, Object>> result = new ArrayList<>();
         java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
@@ -357,17 +357,17 @@ public class CreatorHubController {
     }
 
     @PostMapping("/upload")
-    public String handleUpload(@RequestParam String title,
-                               @RequestParam String description,
-                               @RequestParam String category,
-                               @RequestParam String uploadType, // REEL, LONG_VIDEO, IMAGE, STORY
-                               @RequestParam(required = false) String location,
-                               @RequestParam(required = false) String hashtags,
-                               @RequestParam(defaultValue = "false") boolean isDraft,
-                               @RequestParam(defaultValue = "false") boolean isPaidContent,
-                               @RequestParam(defaultValue = "0.0") Double price,
-                               @RequestParam(defaultValue = "false") boolean isSubscriberOnly,
-                               @RequestParam(required = false) String affiliateLink,
+    public String handleUpload(@RequestParam("title") String title,
+                               @RequestParam("description") String description,
+                               @RequestParam("category") String category,
+                               @RequestParam("uploadType") String uploadType, // REEL, LONG_VIDEO, IMAGE, STORY
+                               @RequestParam(value = "location", required = false) String location,
+                               @RequestParam(value = "hashtags", required = false) String hashtags,
+                               @RequestParam(value = "isDraft", defaultValue = "false") boolean isDraft,
+                               @RequestParam(value = "isPaidContent", defaultValue = "false") boolean isPaidContent,
+                               @RequestParam(value = "price", defaultValue = "0.0") Double price,
+                               @RequestParam(value = "isSubscriberOnly", defaultValue = "false") boolean isSubscriberOnly,
+                               @RequestParam(value = "affiliateLink", required = false) String affiliateLink,
                                @RequestParam("file") MultipartFile file,
                                @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail,
                                HttpSession session,
@@ -464,7 +464,7 @@ public class CreatorHubController {
 
     // CREATOR PROFILE
     @GetMapping({"/creator/{id}", "/profile/{id}"})
-    public String showCreatorProfile(@PathVariable Long id, HttpSession session, Model model) {
+    public String showCreatorProfile(@PathVariable("id") Long id, HttpSession session, Model model) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
@@ -727,7 +727,7 @@ public class CreatorHubController {
     // ─── DELETE ENDPOINTS ───
     @DeleteMapping("/story/{id}")
     @ResponseBody
-    public Map<String, Object> deleteStory(@PathVariable Long id, HttpSession session) {
+    public Map<String, Object> deleteStory(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = getSessionUser(session);
         Map<String, Object> result = new HashMap<>();
         if (currentUser != null) {
@@ -743,7 +743,7 @@ public class CreatorHubController {
 
     @DeleteMapping("/post/{id}")
     @ResponseBody
-    public Map<String, Object> deletePost(@PathVariable Long id, HttpSession session) {
+    public Map<String, Object> deletePost(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = getSessionUser(session);
         Map<String, Object> result = new HashMap<>();
         if (currentUser != null) {
@@ -785,7 +785,7 @@ public class CreatorHubController {
     @PostMapping("/creator/follow/{id}")
     @ResponseBody
     @Transactional
-    public Map<String, Object> toggleFollow(@PathVariable Long id, HttpSession session) {
+    public Map<String, Object> toggleFollow(@PathVariable("id") Long id, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -839,9 +839,9 @@ public class CreatorHubController {
     @PostMapping("/creator/tip")
     @ResponseBody
     @Transactional
-    public Map<String, Object> tipCreator(@RequestParam Long creatorId, 
-                                          @RequestParam Double amount, 
-                                          @RequestParam(required = false) String message,
+    public Map<String, Object> tipCreator(@RequestParam("creatorId") Long creatorId, 
+                                          @RequestParam("amount") Double amount, 
+                                          @RequestParam(value = "message", required = false) String message,
                                           HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
@@ -902,7 +902,7 @@ public class CreatorHubController {
     @PostMapping("/creator/subscribe")
     @ResponseBody
     @Transactional
-    public Map<String, Object> subscribeToCreator(@RequestParam Long creatorId, HttpSession session) {
+    public Map<String, Object> subscribeToCreator(@RequestParam("creatorId") Long creatorId, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -962,7 +962,7 @@ public class CreatorHubController {
     @PostMapping("/creator/unlock")
     @ResponseBody
     @Transactional
-    public Map<String, Object> unlockPaidContent(@RequestParam Long videoId, HttpSession session) {
+    public Map<String, Object> unlockPaidContent(@RequestParam("videoId") Long videoId, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1026,7 +1026,7 @@ public class CreatorHubController {
     @PostMapping("/video/bookmark")
     @ResponseBody
     @Transactional
-    public Map<String, Object> toggleBookmark(@RequestParam Long videoId, HttpSession session) {
+    public Map<String, Object> toggleBookmark(@RequestParam("videoId") Long videoId, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1059,7 +1059,7 @@ public class CreatorHubController {
     @PostMapping("/video/view-inc")
     @ResponseBody
     @Transactional
-    public Map<String, Object> incrementView(@RequestParam Long videoId, HttpSession session) {
+    public Map<String, Object> incrementView(@RequestParam("videoId") Long videoId, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         
@@ -1161,7 +1161,7 @@ public class CreatorHubController {
     @PostMapping("/dashboard/cashout")
     @ResponseBody
     @Transactional
-    public Map<String, Object> requestCashout(@RequestParam int points, HttpSession session) {
+    public Map<String, Object> requestCashout(@RequestParam("points") int points, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1277,7 +1277,7 @@ public class CreatorHubController {
     @PostMapping("/dashboard/subscription-price")
     @ResponseBody
     @Transactional
-    public Map<String, Object> setSubscriptionPrice(@RequestParam Double price, HttpSession session) {
+    public Map<String, Object> setSubscriptionPrice(@RequestParam("price") Double price, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1304,7 +1304,7 @@ public class CreatorHubController {
     @PostMapping("/dashboard/affiliate-code")
     @ResponseBody
     @Transactional
-    public Map<String, Object> setAffiliateCode(@RequestParam String code, HttpSession session) {
+    public Map<String, Object> setAffiliateCode(@RequestParam("code") String code, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1326,7 +1326,7 @@ public class CreatorHubController {
     @PostMapping("/creator/block")
     @ResponseBody
     @Transactional
-    public Map<String, Object> blockUser(@RequestParam Long blockedUserId, HttpSession session) {
+    public Map<String, Object> blockUser(@RequestParam("blockedUserId") Long blockedUserId, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1364,7 +1364,7 @@ public class CreatorHubController {
     @PostMapping("/dashboard/unblock")
     @ResponseBody
     @Transactional
-    public Map<String, Object> unblockUser(@RequestParam Long blockedUserId, HttpSession session) {
+    public Map<String, Object> unblockUser(@RequestParam("blockedUserId") Long blockedUserId, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1387,7 +1387,7 @@ public class CreatorHubController {
     @PostMapping("/creator/report")
     @ResponseBody
     @Transactional
-    public Map<String, Object> reportContent(@RequestParam Long videoId, @RequestParam String reason, HttpSession session) {
+    public Map<String, Object> reportContent(@RequestParam("videoId") Long videoId, @RequestParam("reason") String reason, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1419,7 +1419,7 @@ public class CreatorHubController {
     @PostMapping("/collab/apply")
     @ResponseBody
     @Transactional
-    public Map<String, Object> applyForCollab(@RequestParam Long campaignId, @RequestParam String pitch, HttpSession session) {
+    public Map<String, Object> applyForCollab(@RequestParam("campaignId") Long campaignId, @RequestParam("pitch") String pitch, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = getSessionUser(session);
         if (currentUser == null) {
@@ -1452,7 +1452,7 @@ public class CreatorHubController {
     // DELETE UPLOAD OR DRAFT
     @PostMapping("/dashboard/deleteUpload")
     @Transactional
-    public String deleteUpload(@RequestParam Long videoId, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String deleteUpload(@RequestParam("videoId") Long videoId, HttpSession session, RedirectAttributes redirectAttributes) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
@@ -1474,7 +1474,7 @@ public class CreatorHubController {
     // DRAFT TO PUBLISH
     @PostMapping("/dashboard/publishDraft")
     @Transactional
-    public String publishDraft(@RequestParam Long videoId, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String publishDraft(@RequestParam("videoId") Long videoId, HttpSession session, RedirectAttributes redirectAttributes) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";
 
@@ -1637,7 +1637,7 @@ public class CreatorHubController {
     @PostMapping("/admin/approve")
     @ResponseBody
     @Transactional
-    public Map<String, Object> adminApproveContent(@RequestParam Long videoId, @RequestParam boolean approve) {
+    public Map<String, Object> adminApproveContent(@RequestParam("videoId") Long videoId, @RequestParam("approve") boolean approve) {
         Map<String, Object> response = new HashMap<>();
         Videoupload video = videoUploadRepository.findById(videoId).orElse(null);
         if (video != null) {
@@ -1668,7 +1668,7 @@ public class CreatorHubController {
     @PostMapping("/admin/delete-reported")
     @ResponseBody
     @Transactional
-    public Map<String, Object> adminDeleteReported(@RequestParam Long reportId) {
+    public Map<String, Object> adminDeleteReported(@RequestParam("reportId") Long reportId) {
         Map<String, Object> response = new HashMap<>();
         VideoReport report = videoReportRepository.findById(reportId).orElse(null);
         if (report != null) {
@@ -1691,7 +1691,7 @@ public class CreatorHubController {
     @PostMapping("/admin/verify")
     @ResponseBody
     @Transactional
-    public Map<String, Object> adminVerifyCreator(@RequestParam Long creatorId, @RequestParam boolean verify) {
+    public Map<String, Object> adminVerifyCreator(@RequestParam("creatorId") Long creatorId, @RequestParam("verify") boolean verify) {
         Map<String, Object> response = new HashMap<>();
         User creator = userRepository.findById(creatorId).orElse(null);
         if (creator != null) {
@@ -1724,7 +1724,7 @@ public class CreatorHubController {
     @PostMapping("/admin/cashout")
     @ResponseBody
     @Transactional
-    public Map<String, Object> adminProcessCashout(@RequestParam Long cashoutId, @RequestParam boolean approve) {
+    public Map<String, Object> adminProcessCashout(@RequestParam("cashoutId") Long cashoutId, @RequestParam("approve") boolean approve) {
         Map<String, Object> response = new HashMap<>();
         CreatorCashout cashout = creatorCashoutRepository.findById(cashoutId).orElse(null);
         if (cashout != null && "PENDING".equals(cashout.getStatus())) {
@@ -1760,10 +1760,10 @@ public class CreatorHubController {
 
     // ADMIN CREATE BRAND CAMPAIGN
     @PostMapping("/admin/create-campaign")
-    public String adminCreateCampaign(@RequestParam String brandName,
-                                      @RequestParam String campaignTitle,
-                                      @RequestParam String description,
-                                      @RequestParam Double payRate,
+    public String adminCreateCampaign(@RequestParam("brandName") String brandName,
+                                      @RequestParam("campaignTitle") String campaignTitle,
+                                      @RequestParam("description") String description,
+                                      @RequestParam("payRate") Double payRate,
                                       HttpSession session,
                                       RedirectAttributes redirectAttributes) {
         Admin admin = (Admin) session.getAttribute("admin");
@@ -1784,8 +1784,8 @@ public class CreatorHubController {
     }
 
     @GetMapping("/chat")
-    public String showChat(@RequestParam(required = false) Long peerId,
-                           @RequestParam(required = false) Long user,
+    public String showChat(@RequestParam(value = "peerId", required = false) Long peerId,
+                           @RequestParam(value = "user", required = false) Long user,
                            HttpSession session, Model model) {
         User currentUser = getSessionUser(session);
         if (currentUser == null) return "redirect:/login";

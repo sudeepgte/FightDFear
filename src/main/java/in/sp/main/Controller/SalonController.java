@@ -973,7 +973,7 @@ public class SalonController {
 
     // Delete profile
     @PostMapping("/salons/deleteProfile")
-    public String deleteProfile(@RequestParam Long id,
+    public String deleteProfile(@RequestParam("id") Long id,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
 
@@ -1205,7 +1205,7 @@ public class SalonController {
  
     // Edit Service Form
     @GetMapping("/salon/editService/{id}")
-    public String editServiceForm(@PathVariable Long id, Model model) {
+    public String editServiceForm(@PathVariable("id") Long id, Model model) {
         Optional<Service1> serviceOpt = serviceRepository.findById(id);
         if (serviceOpt.isPresent()) {
             model.addAttribute("service", serviceOpt.get());
@@ -1220,7 +1220,7 @@ public class SalonController {
     
   
     @PostMapping("/salon/deleteService")
-    public String deleteService(@RequestParam Long id,
+    public String deleteService(@RequestParam("id") Long id,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
 

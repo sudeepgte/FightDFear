@@ -590,6 +590,33 @@ public class PaymentController {
                     return ResponseEntity.badRequest().body(errorBody);
                 }
                 targetId = enrollmentId;
+            } else if ("LAWYER_BOOKING".equals(type)) {
+                Object targetIdObj = data.get("targetId") != null ? data.get("targetId") : data.get("bookingId");
+                if (targetIdObj == null) {
+                    errorBody.put("error", "bookingId or targetId is required for lawyer booking payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                Long bookingId = Long.parseLong(targetIdObj.toString());
+                ProviderBooking booking = providerBookingPayRepo.findById(bookingId).orElse(null);
+                if (booking == null || booking.getUser() == null
+                        || !booking.getUser().getId().equals(user.getId())) {
+                    errorBody.put("error", "Booking not found or access denied");
+                    return ResponseEntity.status(403).body(errorBody);
+                }
+                if (booking.getStatus() == ProviderBookingStatus.PAID) {
+                    errorBody.put("error", "Booking already paid");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                if (booking.getStatus() == ProviderBookingStatus.CANCELLED) {
+                    errorBody.put("error", "Booking is cancelled");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                amount = booking.getTotalAmount() != null ? Math.max(0, booking.getTotalAmount()) : 0.0;
+                if (amount <= 0) {
+                    errorBody.put("error", "This consultation does not require payment");
+                    return ResponseEntity.badRequest().body(errorBody);
+                }
+                targetId = bookingId;
             } else if ("WOMEN_PRODUCT".equals(type)) {
                 List<Long> orderIds = parseWomenProductOrderIds(data);
                 if (orderIds.isEmpty()) {

@@ -7,6 +7,7 @@ import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../portals/portal_auth_screen.dart';
 import 'women_products_seller_dashboard_screen.dart';
+import 'women_products_seller_pending_approval_screen.dart';
 import 'women_products_seller_profile_completion_screen.dart';
 
 class WomenProductsSellerLoginScreen extends StatelessWidget {
@@ -21,24 +22,56 @@ class WomenProductsSellerLoginScreen extends StatelessWidget {
     BuildContext context,
     Map<String, dynamic> res,
   ) async {
+    final seller = res['seller'] is Map ? Map<String, dynamic>.from(res['seller'] as Map) : res;
+    final status = (seller['partnerProfileStatus'] ?? res['partnerProfileStatus'] ?? '').toString().toUpperCase();
+    final verificationStatus = (seller['verificationStatus'] ?? res['verificationStatus'] ?? '').toString().toUpperCase();
+    final isApproved = status == 'APPROVED' || verificationStatus == 'VERIFIED' || res['approved'] == true || seller['approved'] == true || seller['canListProducts'] == true;
+
+    if (isApproved) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: _dashboard),
+      );
+      return;
+    }
+
+    if (status == 'PENDING_ADMIN_APPROVAL' || (verificationStatus == 'PENDING' && status != 'PROFILE_INCOMPLETE' && status != 'CHANGES_REQUESTED')) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => WomenProductsSellerPendingApprovalScreen(
+            initialProfile: seller,
+          ),
+        ),
+      );
+      return;
+    }
+
     final needsCompletion = ApprovalNavigation.shouldRedirectToProfileCompletion(res);
-    if (needsCompletion) {
+    if (needsCompletion ||
+        status == 'REGISTERED' ||
+        status == 'PROFILE_INCOMPLETE' ||
+        status == 'READY_FOR_VERIFICATION' ||
+        status == 'CHANGES_REQUESTED') {
       await Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => WomenProductsSellerProfileCompletionScreen(
             onFinished: (ctx) {
               Navigator.of(ctx).pushReplacement(
-                MaterialPageRoute(builder: _dashboard),
+                MaterialPageRoute(
+                  builder: (_) => WomenProductsSellerPendingApprovalScreen(
+                    initialProfile: seller,
+                  ),
+                ),
               );
             },
           ),
         ),
       );
-    } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: _dashboard),
-      );
+      return;
     }
+
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: _dashboard),
+    );
   }
 
   @override

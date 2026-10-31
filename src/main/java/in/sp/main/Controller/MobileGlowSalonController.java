@@ -99,7 +99,7 @@ public class MobileGlowSalonController {
     @PostMapping("/bookings/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateBookingStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Salon salon = requireSalon(session);
@@ -182,7 +182,7 @@ public class MobileGlowSalonController {
 
     @DeleteMapping("/services/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteService(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteService(@PathVariable("id") Long id, HttpSession session) {
         Salon salon = requireSalon(session);
         if (salon == null) return unauthorized();
         Service1 service = serviceRepo.findById(id).orElse(null);
@@ -226,7 +226,7 @@ public class MobileGlowSalonController {
     @PostMapping("/bookings/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateBookingNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Salon salon = requireSalon(session);

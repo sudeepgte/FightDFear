@@ -34,7 +34,7 @@ public class RecordingController {
     // ✅ Save Selected Platform in Session
     @RequestMapping(value = "/selectPlatform", method = RequestMethod.POST)
     @ResponseBody
-    public void selectPlatform(@RequestParam String platform, HttpSession session) {
+    public void selectPlatform(@RequestParam("platform") String platform, HttpSession session) {
         session.setAttribute(ATTR_STREAMING_PLATFORM, platform);
     }
 
@@ -56,7 +56,7 @@ public class RecordingController {
     // ✅ Start Recording API
     @RequestMapping(value = "/start", method = RequestMethod.POST)
     @ResponseBody
-    public Map<String, String> startRecording(@RequestParam boolean autoTrigger, HttpSession session) {
+    public Map<String, String> startRecording(@RequestParam("autoTrigger") boolean autoTrigger, HttpSession session) {
         Map<String, String> response = new HashMap<>();
         String platform = Objects.toString(session.getAttribute(ATTR_STREAMING_PLATFORM), "None");
         boolean isRecording = Boolean.TRUE.equals(session.getAttribute(ATTR_IS_RECORDING));

@@ -51,7 +51,7 @@ public class WalletController {
     private in.sp.main.Service.AtomicCoinService atomicCoinService;
 
     @PostMapping("/users/redeem")
-    public String redeemReward(@RequestParam int cost, @RequestParam String rewardName, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String redeemReward(@RequestParam("cost") int cost, @RequestParam("rewardName") String rewardName, HttpSession session, RedirectAttributes redirectAttributes) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
             return "redirect:/login";

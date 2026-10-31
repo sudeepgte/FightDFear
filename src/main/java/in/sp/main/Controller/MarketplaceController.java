@@ -216,13 +216,13 @@ public class MarketplaceController {
     }
 
     @PostMapping("/provider/register")
-    public String providerRegister(@RequestParam String fullName,
-                                   @RequestParam String email,
-                                   @RequestParam String password,
-                                   @RequestParam String confirmPassword,
-                                   @RequestParam String category,
-                                   @RequestParam(required = false) String emailOtp,
-                                   @RequestParam(defaultValue = "false") boolean acceptedTerms,
+    public String providerRegister(@RequestParam("fullName") String fullName,
+                                   @RequestParam("email") String email,
+                                   @RequestParam("password") String password,
+                                   @RequestParam("confirmPassword") String confirmPassword,
+                                   @RequestParam("category") String category,
+                                   @RequestParam(value = "emailOtp", required = false) String emailOtp,
+                                   @RequestParam(value = "acceptedTerms", defaultValue = "false") boolean acceptedTerms,
                                    Model model,
                                    RedirectAttributes redirectAttributes) {
         String normEmail = email != null ? email.trim().toLowerCase() : "";
@@ -314,8 +314,8 @@ public class MarketplaceController {
     }
 
     @PostMapping("/provider/login")
-    public String providerLogin(@RequestParam String email,
-                                @RequestParam String password,
+    public String providerLogin(@RequestParam("email") String email,
+                                @RequestParam("password") String password,
                                 HttpSession session,
                                 jakarta.servlet.http.HttpServletResponse response,
                                 Model model,
@@ -409,23 +409,23 @@ public class MarketplaceController {
 
     @PostMapping("/provider/profile-completion")
     public String providerProfileCompletionSubmit(
-            @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String state,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String serviceArea,
-            @RequestParam(required = false) String address,
-            @RequestParam(required = false) String pincode,
-            @RequestParam(required = false) String locationText,
-            @RequestParam(required = false) String description,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String businessName,
-            @RequestParam(required = false) String qualification,
-            @RequestParam(required = false) String experience,
-            @RequestParam(required = false) String availableDays,
-            @RequestParam(required = false) String workingHoursFrom,
-            @RequestParam(required = false) String workingHoursTo,
-            @RequestParam(required = false) String languagesSpoken,
-            @RequestParam(required = false) Double consultationFee,
+            @RequestParam(value = "phone", required = false) String phone,
+            @RequestParam(value = "state", required = false) String state,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "serviceArea", required = false) String serviceArea,
+            @RequestParam(value = "address", required = false) String address,
+            @RequestParam(value = "pincode", required = false) String pincode,
+            @RequestParam(value = "locationText", required = false) String locationText,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "businessName", required = false) String businessName,
+            @RequestParam(value = "qualification", required = false) String qualification,
+            @RequestParam(value = "experience", required = false) String experience,
+            @RequestParam(value = "availableDays", required = false) String availableDays,
+            @RequestParam(value = "workingHoursFrom", required = false) String workingHoursFrom,
+            @RequestParam(value = "workingHoursTo", required = false) String workingHoursTo,
+            @RequestParam(value = "languagesSpoken", required = false) String languagesSpoken,
+            @RequestParam(value = "consultationFee", required = false) Double consultationFee,
             @RequestParam(value = "action", required = false) String formAction,
             @RequestParam(value = "identityDoc", required = false) MultipartFile identityDoc,
             @RequestParam(value = "profilePhotoFile", required = false) MultipartFile profilePhotoFile,
@@ -632,18 +632,18 @@ public class MarketplaceController {
     }
 
     @PostMapping("/provider/profile/update")
-    public String updateProviderProfile(@RequestParam String fullName,
-                                       @RequestParam(required = false) String businessName,
-                                       @RequestParam String phone,
-                                       @RequestParam(required = false) String locationText,
-                                       @RequestParam(required = false) String serviceArea,
-                                       @RequestParam(required = false) String description,
-                                       @RequestParam(required = false) String qualification,
-                                       @RequestParam(required = false) String experience,
-                                       @RequestParam(required = false) String availableDays,
-                                       @RequestParam(required = false) String workingHoursFrom,
-                                       @RequestParam(required = false) String workingHoursTo,
-                                       @RequestParam(required = false) String languagesSpoken,
+    public String updateProviderProfile(@RequestParam("fullName") String fullName,
+                                       @RequestParam(value = "businessName", required = false) String businessName,
+                                       @RequestParam("phone") String phone,
+                                       @RequestParam(value = "locationText", required = false) String locationText,
+                                       @RequestParam(value = "serviceArea", required = false) String serviceArea,
+                                       @RequestParam(value = "description", required = false) String description,
+                                       @RequestParam(value = "qualification", required = false) String qualification,
+                                       @RequestParam(value = "experience", required = false) String experience,
+                                       @RequestParam(value = "availableDays", required = false) String availableDays,
+                                       @RequestParam(value = "workingHoursFrom", required = false) String workingHoursFrom,
+                                       @RequestParam(value = "workingHoursTo", required = false) String workingHoursTo,
+                                       @RequestParam(value = "languagesSpoken", required = false) String languagesSpoken,
                                        @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
                                        HttpSession session, RedirectAttributes ra) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
@@ -690,8 +690,8 @@ public class MarketplaceController {
 
     @PostMapping("/provider/bookings/{id}/status")
     @ResponseBody
-    public Map<String, Object> updateBookingStatus(@PathVariable Long id,
-                                                  @RequestParam String status,
+    public Map<String, Object> updateBookingStatus(@PathVariable("id") Long id,
+                                                  @RequestParam("status") String status,
                                                   HttpSession session) {
         Map<String, Object> response = new HashMap();
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
@@ -741,7 +741,7 @@ public class MarketplaceController {
     }
 
     @GetMapping("/workers")
-    public String workersList(@RequestParam String category, Model model, HttpSession session) {
+    public String workersList(@RequestParam("category") String category, Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
@@ -752,7 +752,7 @@ public class MarketplaceController {
     }
 
     @GetMapping("/worker/{id}")
-    public String workerDetails(@PathVariable Long id, Model model, HttpSession session) {
+    public String workerDetails(@PathVariable("id") Long id, Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
@@ -785,11 +785,11 @@ public class MarketplaceController {
     }
 
     @PostMapping("/worker/{id}/book")
-    public String bookWorker(@PathVariable Long id,
-                             @RequestParam String bookingDate,
-                             @RequestParam(required = false) Integer hours,
-                             @RequestParam(required = false) Double totalAmount,
-                             @RequestParam(required = false) String note,
+    public String bookWorker(@PathVariable("id") Long id,
+                             @RequestParam("bookingDate") String bookingDate,
+                             @RequestParam(value = "hours", required = false) Integer hours,
+                             @RequestParam(value = "totalAmount", required = false) Double totalAmount,
+                             @RequestParam(value = "note", required = false) String note,
                              HttpSession session,
                              RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -856,7 +856,7 @@ public class MarketplaceController {
     }
 
     @GetMapping("/list")
-    public String list(@RequestParam String category, Model model, HttpSession session,
+    public String list(@RequestParam("category") String category, Model model, HttpSession session,
                        RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -873,7 +873,7 @@ public class MarketplaceController {
     }
 
     @GetMapping("/view/{id}")
-    public String view(@PathVariable Long id, Model model, HttpSession session) {
+    public String view(@PathVariable("id") Long id, Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
@@ -904,7 +904,7 @@ public class MarketplaceController {
     }
 
     @PostMapping("/classes/enroll")
-    public String enrollClass(@RequestParam Long classId, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String enrollClass(@RequestParam("classId") Long classId, HttpSession session, RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
 
@@ -1019,17 +1019,17 @@ public class MarketplaceController {
 
     // Provider creates classes (for testing/dashboard)
     @PostMapping("/provider/classes/add")
-    public String addClass(@RequestParam String className,
-                           @RequestParam String description,
-                           @RequestParam String duration,
-                           @RequestParam String dateTime,
-                           @RequestParam String mode,
-                           @RequestParam Double price,
-                           @RequestParam(required = false) Integer seats,
-                           @RequestParam(required = false) String meetingLink,
-                           @RequestParam(required = false) String serviceLocation,
-                           @RequestParam String category,
-                           @RequestParam(required = false) String serviceProvided,
+    public String addClass(@RequestParam("className") String className,
+                           @RequestParam("description") String description,
+                           @RequestParam("duration") String duration,
+                           @RequestParam("dateTime") String dateTime,
+                           @RequestParam("mode") String mode,
+                           @RequestParam("price") Double price,
+                           @RequestParam(value = "seats", required = false) Integer seats,
+                           @RequestParam(value = "meetingLink", required = false) String meetingLink,
+                           @RequestParam(value = "serviceLocation", required = false) String serviceLocation,
+                           @RequestParam("category") String category,
+                           @RequestParam(value = "serviceProvided", required = false) String serviceProvided,
                            HttpSession session,
                            RedirectAttributes redirectAttributes) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedProvider");
@@ -1078,9 +1078,9 @@ public class MarketplaceController {
     }
 
     @PostMapping("/book")
-    public String book(@RequestParam Long providerId,
-                       @RequestParam String requestedTime,
-                       @RequestParam(required = false) String note,
+    public String book(@RequestParam("providerId") Long providerId,
+                       @RequestParam("requestedTime") String requestedTime,
+                       @RequestParam(value = "note", required = false) String note,
                        HttpSession session,
                        RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
@@ -1140,16 +1140,16 @@ public class MarketplaceController {
      * Fake worker payment without Razorpay — disabled. Use /payment/create-order + /payment/verify with type WORKER_BOOKING.
      */
     @PostMapping("/worker-booking/{id}/pay")
-    public String payWorkerBooking(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String payWorkerBooking(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("user") == null) return "redirect:/login";
         redirectAttributes.addFlashAttribute("error", "Direct worker payment is disabled. Complete payment via Razorpay.");
         return "redirect:/marketplace/myBookings";
     }
 
     @PostMapping("/review")
-    public String review(@RequestParam Long providerId,
-                         @RequestParam Integer rating,
-                         @RequestParam(required = false) String comment,
+    public String review(@RequestParam("providerId") Long providerId,
+                         @RequestParam("rating") Integer rating,
+                         @RequestParam(value = "comment", required = false) String comment,
                          HttpSession session,
                          RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");

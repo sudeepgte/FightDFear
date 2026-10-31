@@ -8,9 +8,11 @@ import '../../services/sos_service.dart';
 import '../safety/buddy_mode_screen.dart';
 import '../safety/contacts_screen.dart';
 import '../safety/danger_map_screen.dart';
+// ignore: unused_import
 import '../financial/financial_literacy_screen.dart';
 import '../glow/glow_space_screen.dart';
 import '../safety/home_screen.dart';
+// ignore: unused_import
 import '../marketplace/job_bookings_screen.dart';
 import '../safety/journey_screen.dart';
 import '../landing/landing_notifications_screen.dart';
@@ -270,7 +272,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   List<_DashLink> _allModules() {
     return [
       _DashLink('Women Doctors', Icons.monitor_heart_outlined, () => _push(const WomenDoctorsScreen())),
-      _DashLink('Jobs', Icons.work_outline, () => _push(_isWorker ? const JobBookingsScreen(workerView: true) : const WomenMarketplaceScreen()), subtitle: _isWorker ? 'Your job bookings' : 'Find work & services'),
+      // FUTURE UPDATE: Jobs module navigation is reserved for a future update.
+      // _DashLink('Jobs', Icons.work_outline, () => _push(_isWorker ? const JobBookingsScreen(workerView: true) : const WomenMarketplaceScreen()), subtitle: _isWorker ? 'Your job bookings' : 'Find work & services'),
       _DashLink('Women Events', Icons.event_outlined, () => _push(const WomenEventsScreen())),
       _DashLink('Glow Space', Icons.spa_outlined, () => _push(const GlowSpaceScreen())),
       _DashLink('Fitness & Wellness', Icons.fitness_center_outlined, () => _push(const FitnessWellnessScreen())),
@@ -278,7 +281,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       _DashLink('Self Defence', Icons.sports_martial_arts_outlined, () => _push(const MartialArtsScreen())),
       _DashLink('Women Lawyers', Icons.gavel_outlined, () => _push(const ProviderCatalogScreen(title: 'Women Lawyers', kind: CatalogKind.lawyers))),
       _DashLink('Women Products', Icons.shopping_bag_outlined, () => _push(const WomenProductsScreen())),
-      _DashLink('Financial Literacy', Icons.menu_book_outlined, () => _push(const FinancialLiteracyScreen())),
+      // FUTURE UPDATE: Financial Literacy module navigation is reserved for a future update.
+      // _DashLink('Financial Literacy', Icons.menu_book_outlined, () => _push(const FinancialLiteracyScreen())),
       _DashLink('Creator Hub', Icons.video_camera_front_outlined, () => _push(const CreatorHubScreen())),
       _DashLink('Videos', Icons.play_circle_outline, () => _push(const VideoFeedScreen(title: 'View Videos', mode: VideoFeedMode.videos))),
       _DashLink('Reels', Icons.movie_creation_outlined, () => _push(const VideoFeedScreen(title: 'Reels', mode: VideoFeedMode.reels))),
@@ -385,6 +389,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                         _contextLine(first),
                         style: const TextStyle(color: UserDashboardScreen.textGray, height: 1.35),
                       ),
+                      // FUTURE UPDATE: Verified Worker badge reserved for future updates.
+                      /*
                       if (_isWorker) ...[
                         const SizedBox(height: 8),
                         Align(
@@ -401,6 +407,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                           ),
                         ),
                       ],
+                      */
                       const SizedBox(height: 16),
                       _StatusRow(
                         unread: _unread,
@@ -436,9 +443,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                       _SectionTitle('Explore', actionLabel: 'View all', onAction: _showAllModules),
                       const SizedBox(height: 10),
                       _ExploreGrid(
-                        isWorker: _isWorker,
                         onDoctors: () => _push(const WomenDoctorsScreen()),
-                        onJobs: () => _push(_isWorker ? const JobBookingsScreen(workerView: true) : const WomenMarketplaceScreen()),
+                        onSelfDefence: () => _push(const MartialArtsScreen()),
                         onEvents: () => _push(const WomenEventsScreen()),
                         onGlow: () => _push(const GlowSpaceScreen()),
                         onFitness: () => _push(const FitnessWellnessScreen()),
@@ -467,6 +473,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 }
 
 class _DashLink {
+  // ignore: unused_element_parameter
   const _DashLink(this.title, this.icon, this.onTap, {this.subtitle});
   final String title;
   final IconData icon;
@@ -778,18 +785,17 @@ class _SafetyActions extends StatelessWidget {
 
 class _ExploreGrid extends StatelessWidget {
   const _ExploreGrid({
-    required this.isWorker,
     required this.onDoctors,
-    required this.onJobs,
+    required this.onSelfDefence,
     required this.onEvents,
     required this.onGlow,
     required this.onFitness,
     required this.onMarketplace,
   });
 
-  final bool isWorker;
+  // FUTURE UPDATE: onJobs is reserved for future updates.
   final VoidCallback onDoctors;
-  final VoidCallback onJobs;
+  final VoidCallback onSelfDefence;
   final VoidCallback onEvents;
   final VoidCallback onGlow;
   final VoidCallback onFitness;
@@ -799,7 +805,7 @@ class _ExploreGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       (Icons.monitor_heart_outlined, 'Doctors', onDoctors),
-      (Icons.work_outline, isWorker ? 'My Jobs' : 'Jobs', onJobs),
+      (Icons.sports_martial_arts_outlined, 'Self Defence', onSelfDefence),
       (Icons.event_outlined, 'Events', onEvents),
       (Icons.spa_outlined, 'Glow', onGlow),
       (Icons.fitness_center_outlined, 'Fitness', onFitness),
@@ -1021,10 +1027,13 @@ class _DashboardDrawer extends StatelessWidget {
                   const Text('Fight D Fear', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18, color: UserDashboardScreen.navy)),
                   const SizedBox(height: 8),
                   Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, color: UserDashboardScreen.navy)),
+                  // FUTURE UPDATE: isWorker badge display reserved for future updates.
+                  /*
                   if (isWorker) ...[
                     const SizedBox(height: 6),
                     const Text('Verified Worker', style: TextStyle(color: UserDashboardScreen.primary, fontWeight: FontWeight.w700, fontSize: 12)),
                   ],
+                  */
                 ],
               ),
             ),

@@ -54,10 +54,10 @@ public class ContactController {
     }
 
     @PostMapping("/sendMessage")
-    public Object sendMessage(@RequestParam(required = false) String name,
-                              @RequestParam(required = false) String email,
-                              @RequestParam(required = false) String subject,
-                              @RequestParam(required = false) String message,
+    public Object sendMessage(@RequestParam(value = "name", required = false) String name,
+                              @RequestParam(value = "email", required = false) String email,
+                              @RequestParam(value = "subject", required = false) String subject,
+                              @RequestParam(value = "message", required = false) String message,
                               HttpServletRequest request,
                               RedirectAttributes redirectAttributes) {
         String trimmedEmail = email != null ? email.trim() : "";

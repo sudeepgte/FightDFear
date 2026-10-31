@@ -17,6 +17,7 @@ enum AuthRole {
   womenProductsSeller,
   financialEducator,
   marketplaceProvider,
+  womenLawyer,
   doctor,
   centre,
   salon,
@@ -62,6 +63,7 @@ class ApiClient {
   static const _womenProductsSellerTokenKey = 'women_products_seller_auth_token';
   static const _financialEducatorTokenKey = 'financial_educator_auth_token';
   static const _marketplaceProviderTokenKey = 'marketplace_provider_auth_token';
+  static const _womenLawyerTokenKey = 'women_lawyer_auth_token';
   static const _browseTimeout = Duration(seconds: 8);
   static const _uploadTimeout = Duration(seconds: 120);
 
@@ -209,6 +211,10 @@ class ApiClient {
   Future<void> saveMarketplaceProviderToken(String token) => writeStorage(_marketplaceProviderTokenKey, token);
   Future<void> clearMarketplaceProviderToken() => removeStorage(_marketplaceProviderTokenKey);
 
+  Future<String?> getWomenLawyerToken() => readStorage(_womenLawyerTokenKey);
+  Future<void> saveWomenLawyerToken(String token) => writeStorage(_womenLawyerTokenKey, token);
+  Future<void> clearWomenLawyerToken() => removeStorage(_womenLawyerTokenKey);
+
   Future<void> clearTokenForRole(AuthRole role) async {
     switch (role) {
       case AuthRole.member:
@@ -243,6 +249,9 @@ class ApiClient {
         break;
       case AuthRole.marketplaceProvider:
         await clearMarketplaceProviderToken();
+        break;
+      case AuthRole.womenLawyer:
+        await clearWomenLawyerToken();
         break;
       case AuthRole.doctor:
         await clearDoctorToken();
@@ -293,6 +302,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
   }) {
     if (adminAuth) return AuthRole.admin;
     if (doctorAuth) return AuthRole.doctor;
@@ -308,6 +318,7 @@ class ApiClient {
     if (womenJobsAuth) return AuthRole.womenJobs;
     if (womenProductsSellerAuth) return AuthRole.womenProductsSeller;
     if (financialEducatorAuth) return AuthRole.financialEducator;
+    if (womenLawyerAuth) return AuthRole.womenLawyer;
     if (marketplaceProviderAuth) return AuthRole.marketplaceProvider;
     if (auth) return AuthRole.member;
     return null;
@@ -352,6 +363,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
   }) async {
     if (adminAuth) return getAdminToken();
     if (doctorAuth) return getDoctorToken();
@@ -371,6 +383,11 @@ class ApiClient {
     if (womenJobsAuth) return getWomenJobsToken();
     if (womenProductsSellerAuth) return getWomenProductsSellerToken();
     if (financialEducatorAuth) return getFinancialEducatorToken();
+    if (womenLawyerAuth) {
+      final t = await getWomenLawyerToken();
+      if (t != null && t.isNotEmpty) return t;
+      return getMarketplaceProviderToken();
+    }
     if (marketplaceProviderAuth) return getMarketplaceProviderToken();
     if (auth) return getToken();
     return null;
@@ -393,6 +410,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
   }) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -415,6 +433,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     if (token != null && token.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
@@ -442,6 +461,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
     void Function(double progress)? onProgress,
   }) async {
     final role = _determineAuthRole(
@@ -461,6 +481,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     final req = http.MultipartRequest('POST', _uri(path));
     req.fields.addAll(fields);
@@ -483,6 +504,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     if (token != null && token.isNotEmpty) {
       req.headers['Authorization'] = 'Bearer $token';
@@ -543,6 +565,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
     Duration? timeout,
   }) async {
     final role = _determineAuthRole(
@@ -562,6 +585,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     final res = await http
         .post(
@@ -583,6 +607,7 @@ class ApiClient {
             womenProductsSellerAuth: womenProductsSellerAuth,
             financialEducatorAuth: financialEducatorAuth,
             marketplaceProviderAuth: marketplaceProviderAuth,
+            womenLawyerAuth: womenLawyerAuth,
           ),
           body: body == null ? null : jsonEncode(body),
         )
@@ -608,6 +633,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
     Duration? timeout,
   }) async {
     final role = _determineAuthRole(
@@ -627,6 +653,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     final res = await http
         .get(
@@ -648,6 +675,7 @@ class ApiClient {
             womenProductsSellerAuth: womenProductsSellerAuth,
             financialEducatorAuth: financialEducatorAuth,
             marketplaceProviderAuth: marketplaceProviderAuth,
+            womenLawyerAuth: womenLawyerAuth,
           ),
         )
         .timeout(timeout ?? _browseTimeout);
@@ -692,6 +720,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
     Duration? timeout,
   }) async {
     final role = _determineAuthRole(
@@ -711,6 +740,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     final res = await http
         .put(
@@ -732,6 +762,7 @@ class ApiClient {
             womenProductsSellerAuth: womenProductsSellerAuth,
             financialEducatorAuth: financialEducatorAuth,
             marketplaceProviderAuth: marketplaceProviderAuth,
+            womenLawyerAuth: womenLawyerAuth,
           ),
           body: body == null ? null : jsonEncode(body),
         )
@@ -758,6 +789,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
     Duration? timeout,
   }) async {
     final role = _determineAuthRole(
@@ -777,6 +809,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     final req = http.Request('PATCH', _uri(path));
     req.headers.addAll(await _headers(
@@ -796,6 +829,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     ));
     if (body != null) req.body = jsonEncode(body);
     final streamed = await req.send().timeout(timeout ?? _browseTimeout);
@@ -820,6 +854,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
   }) async {
     final hasProvider = doctorAuth ||
         centreAuth ||
@@ -835,7 +870,8 @@ class ApiClient {
         womenJobsAuth ||
         womenProductsSellerAuth ||
         financialEducatorAuth ||
-        marketplaceProviderAuth;
+        marketplaceProviderAuth ||
+        womenLawyerAuth;
     final role = _determineAuthRole(
       auth: !hasProvider,
       doctorAuth: doctorAuth,
@@ -853,6 +889,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     final res = await http
         .delete(
@@ -874,6 +911,7 @@ class ApiClient {
             womenProductsSellerAuth: womenProductsSellerAuth,
             financialEducatorAuth: financialEducatorAuth,
             marketplaceProviderAuth: marketplaceProviderAuth,
+            womenLawyerAuth: womenLawyerAuth,
           ),
         )
         .timeout(_browseTimeout);
@@ -899,6 +937,7 @@ class ApiClient {
     bool womenProductsSellerAuth = false,
     bool financialEducatorAuth = false,
     bool marketplaceProviderAuth = false,
+    bool womenLawyerAuth = false,
   }) async {
     final role = _determineAuthRole(
       auth: auth,
@@ -917,6 +956,7 @@ class ApiClient {
       womenProductsSellerAuth: womenProductsSellerAuth,
       financialEducatorAuth: financialEducatorAuth,
       marketplaceProviderAuth: marketplaceProviderAuth,
+      womenLawyerAuth: womenLawyerAuth,
     );
     final res = await http
         .get(
@@ -938,6 +978,7 @@ class ApiClient {
             womenProductsSellerAuth: womenProductsSellerAuth,
             financialEducatorAuth: financialEducatorAuth,
             marketplaceProviderAuth: marketplaceProviderAuth,
+            womenLawyerAuth: womenLawyerAuth,
           ),
         )
         .timeout(_uploadTimeout);

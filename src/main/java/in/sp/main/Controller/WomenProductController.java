@@ -75,7 +75,7 @@ public class WomenProductController {
 
     @PostMapping("/seller/send-otp")
     @ResponseBody
-    public Map<String, Object> sendSellerOtp(@RequestParam String email) {
+    public Map<String, Object> sendSellerOtp(@RequestParam("email") String email) {
         Map<String, Object> response = new HashMap<>();
         try {
             String cleaned = email == null ? "" : email.trim().toLowerCase();
@@ -99,7 +99,7 @@ public class WomenProductController {
 
     @PostMapping("/seller/verify-otp")
     @ResponseBody
-    public Map<String, Object> verifySellerOtp(@RequestParam String email, @RequestParam String otp) {
+    public Map<String, Object> verifySellerOtp(@RequestParam("email") String email, @RequestParam("otp") String otp) {
         Map<String, Object> response = new HashMap<>();
         String cleaned = email == null ? "" : email.trim().toLowerCase();
         String code = otp == null ? "" : otp.replaceAll("\\D", "");
@@ -116,16 +116,16 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/register")
-    public String sellerRegister(@RequestParam String fullName,
-                                 @RequestParam String email,
-                                 @RequestParam String phone,
-                                 @RequestParam String password,
-                                 @RequestParam(required = false) String confirmPassword,
-                                 @RequestParam String businessName,
-                                 @RequestParam(required = false) String description,
-                                 @RequestParam String address,
-                                 @RequestParam(required = false) String city,
-                                 @RequestParam(required = false) Boolean acceptedTerms,
+    public String sellerRegister(@RequestParam("fullName") String fullName,
+                                 @RequestParam("email") String email,
+                                 @RequestParam("phone") String phone,
+                                 @RequestParam("password") String password,
+                                 @RequestParam(value = "confirmPassword", required = false) String confirmPassword,
+                                 @RequestParam("businessName") String businessName,
+                                 @RequestParam(value = "description", required = false) String description,
+                                 @RequestParam("address") String address,
+                                 @RequestParam(value = "city", required = false) String city,
+                                 @RequestParam(value = "acceptedTerms", required = false) Boolean acceptedTerms,
                                  @RequestParam("profilePhoto") MultipartFile profilePhoto,
                                  @RequestParam("identityDoc") MultipartFile identityDoc,
                                  Model model,
@@ -243,8 +243,8 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/login")
-    public String loginSeller(@RequestParam String email,
-                              @RequestParam String password,
+    public String loginSeller(@RequestParam("email") String email,
+                              @RequestParam("password") String password,
                               HttpSession session,
                               jakarta.servlet.http.HttpServletResponse response,
                               Model model) {
@@ -317,8 +317,8 @@ public class WomenProductController {
     // SELLER: Dashboard
     // ══════════════════════════════════════
     @GetMapping("/seller/dashboard")
-    public String sellerDashboard(@RequestParam(defaultValue = "overview") String section,
-                                  @RequestParam(required = false) String orderStatus,
+    public String sellerDashboard(@RequestParam(value = "section", defaultValue = "overview") String section,
+                                  @RequestParam(value = "orderStatus", required = false) String orderStatus,
                                   HttpSession session, Model model) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -396,37 +396,37 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/profile/update")
-    public String updateSellerProfile(@RequestParam String fullName,
-                                     @RequestParam String businessName,
-                                     @RequestParam String phone,
-                                     @RequestParam String address,
-                                     @RequestParam(required = false) String category,
-                                     @RequestParam(required = false) String serviceArea,
-                                     @RequestParam(required = false) String description,
-                                     @RequestParam(required = false) String qualification,
-                                     @RequestParam(required = false) String experience,
-                                     @RequestParam(required = false) String availableDays,
-                                     @RequestParam(required = false) String workingHoursFrom,
-                                     @RequestParam(required = false) String workingHoursTo,
-                                     @RequestParam(required = false) String languagesSpoken,
-                                     @RequestParam(required = false) String designation,
-                                     @RequestParam(required = false) String whatsappNumber,
-                                     @RequestParam(required = false) String city,
-                                     @RequestParam(required = false) String state,
-                                     @RequestParam(required = false) String pincode,
-                                     @RequestParam(required = false) Double latitude,
-                                     @RequestParam(required = false) Double longitude,
-                                     @RequestParam(required = false) String audience,
-                                     @RequestParam(required = false) String facilities,
-                                     @RequestParam(required = false) String brandType,
-                                     @RequestParam(required = false) String gstin,
-                                     @RequestParam(required = false) String upiId,
-                                     @RequestParam(required = false) String bankDetails,
-                                      @RequestParam(required = false) String bankAccountHolder,
-                                      @RequestParam(required = false) String bankName,
-                                      @RequestParam(required = false) String bankAccountNumber,
-                                      @RequestParam(required = false) String bankIfsc,
-                                      @RequestParam(required = false) String bankBranch,
+    public String updateSellerProfile(@RequestParam("fullName") String fullName,
+                                     @RequestParam("businessName") String businessName,
+                                     @RequestParam("phone") String phone,
+                                     @RequestParam("address") String address,
+                                     @RequestParam(value = "category", required = false) String category,
+                                     @RequestParam(value = "serviceArea", required = false) String serviceArea,
+                                     @RequestParam(value = "description", required = false) String description,
+                                     @RequestParam(value = "qualification", required = false) String qualification,
+                                     @RequestParam(value = "experience", required = false) String experience,
+                                     @RequestParam(value = "availableDays", required = false) String availableDays,
+                                     @RequestParam(value = "workingHoursFrom", required = false) String workingHoursFrom,
+                                     @RequestParam(value = "workingHoursTo", required = false) String workingHoursTo,
+                                     @RequestParam(value = "languagesSpoken", required = false) String languagesSpoken,
+                                     @RequestParam(value = "designation", required = false) String designation,
+                                     @RequestParam(value = "whatsappNumber", required = false) String whatsappNumber,
+                                     @RequestParam(value = "city", required = false) String city,
+                                     @RequestParam(value = "state", required = false) String state,
+                                     @RequestParam(value = "pincode", required = false) String pincode,
+                                     @RequestParam(value = "latitude", required = false) Double latitude,
+                                     @RequestParam(value = "longitude", required = false) Double longitude,
+                                     @RequestParam(value = "audience", required = false) String audience,
+                                     @RequestParam(value = "facilities", required = false) String facilities,
+                                     @RequestParam(value = "brandType", required = false) String brandType,
+                                     @RequestParam(value = "gstin", required = false) String gstin,
+                                     @RequestParam(value = "upiId", required = false) String upiId,
+                                     @RequestParam(value = "bankDetails", required = false) String bankDetails,
+                                      @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+                                      @RequestParam(value = "bankName", required = false) String bankName,
+                                      @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+                                      @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+                                      @RequestParam(value = "bankBranch", required = false) String bankBranch,
                                      @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
                                      @RequestParam(value = "identityDoc", required = false) MultipartFile identityDoc,
                                      @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
@@ -609,26 +609,26 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/products/add")
-    public String addProduct(@RequestParam String name,
-                             @RequestParam(required = false) String brand,
-                             @RequestParam(required = false) String description,
-                             @RequestParam(required = false) String fullDescription,
-                             @RequestParam Double price,
-                             @RequestParam(required = false) Double originalPrice,
-                             @RequestParam(required = false) String offerBadge,
-                             @RequestParam Integer stock,
-                             @RequestParam(required = false, defaultValue = "5") Integer lowStockAlertLevel,
-                             @RequestParam(required = false) String sku,
-                             @RequestParam String category,
-                             @RequestParam(required = false) String weightSize,
-                             @RequestParam(required = false) String manufacturer,
-                             @RequestParam(required = false) String ingredients,
-                             @RequestParam(required = false) String benefits,
-                             @RequestParam(required = false) String usageInstructions,
-                             @RequestParam(required = false) String tags,
-                             @RequestParam(required = false, defaultValue = "true") Boolean active,
-                             @RequestParam(required = false, defaultValue = "false") Boolean featured,
-                             @RequestParam(required = false, defaultValue = "true") Boolean trackInventory,
+    public String addProduct(@RequestParam("name") String name,
+                             @RequestParam(value = "brand", required = false) String brand,
+                             @RequestParam(value = "description", required = false) String description,
+                             @RequestParam(value = "fullDescription", required = false) String fullDescription,
+                             @RequestParam("price") Double price,
+                             @RequestParam(value = "originalPrice", required = false) Double originalPrice,
+                             @RequestParam(value = "offerBadge", required = false) String offerBadge,
+                             @RequestParam("stock") Integer stock,
+                             @RequestParam(value = "lowStockAlertLevel", required = false, defaultValue = "5") Integer lowStockAlertLevel,
+                             @RequestParam(value = "sku", required = false) String sku,
+                             @RequestParam("category") String category,
+                             @RequestParam(value = "weightSize", required = false) String weightSize,
+                             @RequestParam(value = "manufacturer", required = false) String manufacturer,
+                             @RequestParam(value = "ingredients", required = false) String ingredients,
+                             @RequestParam(value = "benefits", required = false) String benefits,
+                             @RequestParam(value = "usageInstructions", required = false) String usageInstructions,
+                             @RequestParam(value = "tags", required = false) String tags,
+                             @RequestParam(value = "active", required = false, defaultValue = "true") Boolean active,
+                             @RequestParam(value = "featured", required = false, defaultValue = "false") Boolean featured,
+                             @RequestParam(value = "trackInventory", required = false, defaultValue = "true") Boolean trackInventory,
                              @RequestParam(value = "images", required = false) java.util.List<MultipartFile> images,
                              HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
@@ -673,27 +673,27 @@ public class WomenProductController {
 
     @PostMapping({"/seller/products/{id}/edit", "/seller/products/edit", "/seller/products//edit"})
     public String editProduct(@PathVariable(required = false) Long id,
-                              @RequestParam(required = false) Long productId,
-                              @RequestParam(required = false) String name,
-                              @RequestParam(required = false) String brand,
-                              @RequestParam(required = false) String description,
-                              @RequestParam(required = false) String fullDescription,
-                              @RequestParam(required = false) Double price,
-                              @RequestParam(required = false) Double originalPrice,
-                              @RequestParam(required = false) String offerBadge,
-                              @RequestParam(required = false) Integer stock,
-                              @RequestParam(required = false, defaultValue = "5") Integer lowStockAlertLevel,
-                              @RequestParam(required = false) String sku,
-                              @RequestParam(required = false) String category,
-                              @RequestParam(required = false) String weightSize,
-                              @RequestParam(required = false) String manufacturer,
-                              @RequestParam(required = false) String ingredients,
-                              @RequestParam(required = false) String benefits,
-                              @RequestParam(required = false) String usageInstructions,
-                              @RequestParam(required = false) String tags,
-                              @RequestParam(required = false, defaultValue = "true") Boolean active,
-                              @RequestParam(required = false, defaultValue = "false") Boolean featured,
-                              @RequestParam(required = false, defaultValue = "true") Boolean trackInventory,
+                              @RequestParam(value = "productId", required = false) Long productId,
+                              @RequestParam(value = "name", required = false) String name,
+                              @RequestParam(value = "brand", required = false) String brand,
+                              @RequestParam(value = "description", required = false) String description,
+                              @RequestParam(value = "fullDescription", required = false) String fullDescription,
+                              @RequestParam(value = "price", required = false) Double price,
+                              @RequestParam(value = "originalPrice", required = false) Double originalPrice,
+                              @RequestParam(value = "offerBadge", required = false) String offerBadge,
+                              @RequestParam(value = "stock", required = false) Integer stock,
+                              @RequestParam(value = "lowStockAlertLevel", required = false, defaultValue = "5") Integer lowStockAlertLevel,
+                              @RequestParam(value = "sku", required = false) String sku,
+                              @RequestParam(value = "category", required = false) String category,
+                              @RequestParam(value = "weightSize", required = false) String weightSize,
+                              @RequestParam(value = "manufacturer", required = false) String manufacturer,
+                              @RequestParam(value = "ingredients", required = false) String ingredients,
+                              @RequestParam(value = "benefits", required = false) String benefits,
+                              @RequestParam(value = "usageInstructions", required = false) String usageInstructions,
+                              @RequestParam(value = "tags", required = false) String tags,
+                              @RequestParam(value = "active", required = false, defaultValue = "true") Boolean active,
+                              @RequestParam(value = "featured", required = false, defaultValue = "false") Boolean featured,
+                              @RequestParam(value = "trackInventory", required = false, defaultValue = "true") Boolean trackInventory,
                               @RequestParam(value = "images", required = false) java.util.List<MultipartFile> images,
                               HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
@@ -835,7 +835,7 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/products/{id}/delete")
-    public String deleteProduct(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String deleteProduct(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
         WomenProduct p = productRepo.findById(id).orElse(null);
@@ -856,7 +856,7 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/orders/{id}/status")
-    public String updateOrderStatus(@PathVariable Long id, @RequestParam String status,
+    public String updateOrderStatus(@PathVariable("id") Long id, @RequestParam("status") String status,
                                     HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -872,7 +872,7 @@ public class WomenProductController {
 
     @PostMapping("/seller/orders/{id}/status/ajax")
     @ResponseBody
-    public Map<String, Object> updateOrderStatusAjax(@PathVariable Long id, @RequestParam String status,
+    public Map<String, Object> updateOrderStatusAjax(@PathVariable("id") Long id, @RequestParam("status") String status,
                                                       HttpSession session) {
         Map<String, Object> resp = new HashMap<>();
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
@@ -893,7 +893,7 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/orders/{id}/assign")
-    public String assignDeliveryPartner(@PathVariable Long id, @RequestParam Long partnerId,
+    public String assignDeliveryPartner(@PathVariable("id") Long id, @RequestParam("partnerId") Long partnerId,
                                         HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -908,7 +908,7 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/products/{id}/stock")
-    public String updateProductStock(@PathVariable Long id, @RequestParam Integer stock,
+    public String updateProductStock(@PathVariable("id") Long id, @RequestParam("stock") Integer stock,
                                      HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -927,8 +927,8 @@ public class WomenProductController {
     }
 
     @PostMapping("/seller/returns/{id}/status")
-    public String updateReturnStatus(@PathVariable Long id, @RequestParam String status,
-                                     @RequestParam(required = false, defaultValue = "returns") String section,
+    public String updateReturnStatus(@PathVariable("id") Long id, @RequestParam("status") String status,
+                                     @RequestParam(value = "section", required = false, defaultValue = "returns") String section,
                                      HttpSession session, RedirectAttributes ra) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -950,7 +950,7 @@ public class WomenProductController {
     // SELLER: Shop Preview (seller's own catalog)
     // ══════════════════════════════════════
     @GetMapping("/seller/shop-preview")
-    public String sellerShopPreview(@RequestParam(required = false) String category,
+    public String sellerShopPreview(@RequestParam(value = "category", required = false) String category,
                                     HttpSession session, Model model) {
         WomenProductSeller s = (WomenProductSeller) session.getAttribute("loggedSeller");
         if (s == null) return "redirect:/women-products/seller/login";
@@ -977,13 +977,13 @@ public class WomenProductController {
     // ══════════════════════════════════════
     @GetMapping
     public String shopHome(Model model, HttpSession session,
-                           @RequestParam(required = false) String category,
-                           @RequestParam(required = false) String q,
-                           @RequestParam(required = false) String price,
-                           @RequestParam(required = false) String rating,
-                           @RequestParam(required = false) String stock,
-                           @RequestParam(required = false) String brand,
-                           @RequestParam(required = false) String sort) {
+                           @RequestParam(value = "category", required = false) String category,
+                           @RequestParam(value = "q", required = false) String q,
+                           @RequestParam(value = "price", required = false) String price,
+                           @RequestParam(value = "rating", required = false) String rating,
+                           @RequestParam(value = "stock", required = false) String stock,
+                           @RequestParam(value = "brand", required = false) String brand,
+                           @RequestParam(value = "sort", required = false) String sort) {
         List<WomenProduct> listed = productRepo.findByActiveTrueAndDeletedFalseOrderByCreatedAtDesc()
                 .stream()
                 .filter(WomenProduct::isListedForShop)
@@ -1103,7 +1103,7 @@ public class WomenProductController {
     }
 
     @GetMapping("/view/{id}")
-    public String viewProduct(@PathVariable Long id, Model model, HttpSession session) {
+    public String viewProduct(@PathVariable("id") Long id, Model model, HttpSession session) {
         WomenProduct p = productRepo.findById(id).orElse(null);
         if (p == null || !Boolean.TRUE.equals(p.getActive()) || p.getDeleted() || !p.isListedForShop()) {
             return "redirect:/women-products";
@@ -1162,8 +1162,8 @@ public class WomenProductController {
     // USER: Wishlist
     // ══════════════════════════════════════
     @PostMapping("/wishlist/toggle")
-    public String toggleWishlist(@RequestParam Long productId,
-                                 @RequestParam(required = false) String returnTo,
+    public String toggleWishlist(@RequestParam("productId") Long productId,
+                                 @RequestParam(value = "returnTo", required = false) String returnTo,
                                  HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -1195,7 +1195,7 @@ public class WomenProductController {
 
     @GetMapping("/api/product/{id}/stock")
     @ResponseBody
-    public Map<String, Object> getProductStockApi(@PathVariable Long id) {
+    public Map<String, Object> getProductStockApi(@PathVariable("id") Long id) {
         Map<String, Object> res = new HashMap<>();
         WomenProduct p = productRepo.findById(id).orElse(null);
         if (p == null || p.getDeleted()) {
@@ -1214,8 +1214,8 @@ public class WomenProductController {
     // USER: Cart & Checkout
     // ══════════════════════════════════════
     @PostMapping("/cart/add")
-    public String addToCart(@RequestParam Long productId,
-                            @RequestParam(required = false, defaultValue = "1") Integer quantity,
+    public String addToCart(@RequestParam("productId") Long productId,
+                            @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
                             HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -1264,8 +1264,8 @@ public class WomenProductController {
     }
 
     @PostMapping("/buy-now")
-    public String buyNow(@RequestParam Long productId,
-                         @RequestParam(required = false, defaultValue = "1") Integer quantity,
+    public String buyNow(@RequestParam("productId") Long productId,
+                         @RequestParam(value = "quantity", required = false, defaultValue = "1") Integer quantity,
                          HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -1294,7 +1294,7 @@ public class WomenProductController {
     }
 
     @PostMapping("/cart/{id}/update")
-    public String updateCartQty(@PathVariable Long id, @RequestParam int quantity,
+    public String updateCartQty(@PathVariable("id") Long id, @RequestParam("quantity") int quantity,
                                 HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -1317,7 +1317,7 @@ public class WomenProductController {
     }
 
     @PostMapping("/cart/{id}/remove")
-    public String removeCartItem(@PathVariable Long id, HttpSession session) {
+    public String removeCartItem(@PathVariable("id") Long id, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
         WomenCartItem c = cartRepo.findById(id).orElse(null);
@@ -1328,7 +1328,7 @@ public class WomenProductController {
     }
 
     @GetMapping("/checkout")
-    public String checkoutPage(@RequestParam(required = false) String buyNow,
+    public String checkoutPage(@RequestParam(value = "buyNow", required = false) String buyNow,
                                Model model, HttpSession session) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -1376,9 +1376,9 @@ public class WomenProductController {
     }
 
     @PostMapping("/checkout/place")
-    public String placeOrder(@RequestParam String paymentMethod,
-                            @RequestParam String shippingAddress,
-                            @RequestParam(required = false) String razorpayPaymentId,
+    public String placeOrder(@RequestParam("paymentMethod") String paymentMethod,
+                            @RequestParam("shippingAddress") String shippingAddress,
+                            @RequestParam(value = "razorpayPaymentId", required = false) String razorpayPaymentId,
                             HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
@@ -1421,9 +1421,9 @@ public class WomenProductController {
 
     @PostMapping("/checkout/place/ajax")
     @ResponseBody
-    public Map<String, Object> placeOrderAjax(@RequestParam String paymentMethod,
-                                            @RequestParam String shippingAddress,
-                                            @RequestParam(required = false) String razorpayPaymentId,
+    public Map<String, Object> placeOrderAjax(@RequestParam("paymentMethod") String paymentMethod,
+                                            @RequestParam("shippingAddress") String shippingAddress,
+                                            @RequestParam(value = "razorpayPaymentId", required = false) String razorpayPaymentId,
                                             HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User u = (User) session.getAttribute("user");
@@ -1554,9 +1554,9 @@ public class WomenProductController {
 
     @PostMapping("/order/rate")
     @ResponseBody
-    public Map<String, Object> submitOrderRating(@RequestParam Long orderId,
-                                               @RequestParam Integer rating,
-                                               @RequestParam String review,
+    public Map<String, Object> submitOrderRating(@RequestParam("orderId") Long orderId,
+                                               @RequestParam("rating") Integer rating,
+                                               @RequestParam("review") String review,
                                                HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User u = (User) session.getAttribute("user");
@@ -1672,7 +1672,7 @@ public class WomenProductController {
     }
 
     @PostMapping("/orders/{id}/cancel")
-    public String cancelOrder(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String cancelOrder(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
@@ -1708,20 +1708,20 @@ public class WomenProductController {
     }
 
     @PostMapping("/orders/{id}/return")
-    public String submitReturnRequest(@PathVariable Long id,
-                                      @RequestParam String type,
-                                      @RequestParam String reason,
-                                      @RequestParam(required = false) String comments,
-                                      @RequestParam(required = false) String bankDetails,
-                                      @RequestParam(required = false) String bankAccountHolder,
-                                      @RequestParam(required = false) String bankName,
-                                      @RequestParam(required = false) String bankAccountNumber,
-                                      @RequestParam(required = false) String bankIfsc,
-                                      @RequestParam(required = false) String bankBranch,
-                                      @RequestParam(required = false) String holderName,
-                                      @RequestParam(required = false) String accountNumber,
-                                      @RequestParam(required = false) String ifsc,
-                                      @RequestParam(required = false) String branch,
+    public String submitReturnRequest(@PathVariable("id") Long id,
+                                      @RequestParam("type") String type,
+                                      @RequestParam("reason") String reason,
+                                      @RequestParam(value = "comments", required = false) String comments,
+                                      @RequestParam(value = "bankDetails", required = false) String bankDetails,
+                                      @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+                                      @RequestParam(value = "bankName", required = false) String bankName,
+                                      @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+                                      @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+                                      @RequestParam(value = "bankBranch", required = false) String bankBranch,
+                                      @RequestParam(value = "holderName", required = false) String holderName,
+                                      @RequestParam(value = "accountNumber", required = false) String accountNumber,
+                                      @RequestParam(value = "ifsc", required = false) String ifsc,
+                                      @RequestParam(value = "branch", required = false) String branch,
                                       @RequestParam(value = "image", required = false) MultipartFile image,
                                       HttpSession session, RedirectAttributes ra) {
         User u = (User) session.getAttribute("user");

@@ -449,7 +449,7 @@ public class MobileFitnessTrainerAuthController {
     @PostMapping("/bookings/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateBookingStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         FitnessTrainer t = requireTrainer(session);
@@ -486,7 +486,7 @@ public class MobileFitnessTrainerAuthController {
     @PostMapping("/bookings/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         FitnessTrainer t = requireTrainer(session);
@@ -599,7 +599,7 @@ public class MobileFitnessTrainerAuthController {
 
     @DeleteMapping("/packages/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deletePackage(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deletePackage(@PathVariable("id") Long id, HttpSession session) {
         FitnessTrainer t = requireTrainer(session);
         if (t == null) return unauthorized();
         try {
@@ -736,7 +736,7 @@ public class MobileFitnessTrainerAuthController {
 
     @PostMapping("/qr-session/{id}/close")
     public ResponseEntity<Map<String, Object>> closeQrSession(
-            @PathVariable Long id, HttpSession session) {
+            @PathVariable("id") Long id, HttpSession session) {
         FitnessTrainer t = requireTrainer(session);
         if (t == null) return unauthorized();
 
@@ -753,7 +753,7 @@ public class MobileFitnessTrainerAuthController {
 
     @GetMapping("/qr-session/{id}/attendees")
     public ResponseEntity<Map<String, Object>> getQrAttendees(
-            @PathVariable Long id, HttpSession session) {
+            @PathVariable("id") Long id, HttpSession session) {
         FitnessTrainer t = requireTrainer(session);
         if (t == null) return unauthorized();
 

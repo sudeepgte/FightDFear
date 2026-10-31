@@ -59,9 +59,9 @@ public class FinancialLiteracyController {
     }
 
     @PostMapping("/live-session/register")
-    public String registerLiveSession(@RequestParam String sessionId, @RequestParam String fullName,
-                                      @RequestParam String mobile, @RequestParam String email,
-                                      @RequestParam(required = false) String occupation,
+    public String registerLiveSession(@RequestParam("sessionId") String sessionId, @RequestParam("fullName") String fullName,
+                                      @RequestParam("mobile") String mobile, @RequestParam("email") String email,
+                                      @RequestParam(value = "occupation", required = false) String occupation,
                                       HttpSession httpSession) {
         User user = httpSession == null ? null : (User) httpSession.getAttribute("user");
         try {
@@ -324,15 +324,15 @@ public class FinancialLiteracyController {
     }
 
     @PostMapping("/admin/add-live-session")
-    public String addLiveSessionSubmit(@RequestParam String title, @RequestParam String speaker,
+    public String addLiveSessionSubmit(@RequestParam("title") String title, @RequestParam("speaker") String speaker,
                                        @RequestParam(value = "category", required = false) String category,
                                        @RequestParam(value = "customCategory", required = false) String customCategory,
-                                       @RequestParam String date,
+                                       @RequestParam("date") String date,
                                        @RequestParam(value = "startTime", required = false) String startTime,
                                        @RequestParam(value = "endTime", required = false) String endTime,
                                        @RequestParam(value = "time", required = false) String time,
-                                       @RequestParam String meetingUrl, @RequestParam int seats,
-                                       @RequestParam String description,
+                                       @RequestParam("meetingUrl") String meetingUrl, @RequestParam("seats") int seats,
+                                       @RequestParam("description") String description,
                                        org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         String finalTime = time;
         if ((finalTime == null || finalTime.isBlank()) && startTime != null && !startTime.isBlank()) {
@@ -383,15 +383,15 @@ public class FinancialLiteracyController {
 
     @PostMapping("/admin/edit-live-session/{sessionId}")
     public String editLiveSessionSubmit(@PathVariable String sessionId,
-                                        @RequestParam String title, @RequestParam String speaker,
+                                        @RequestParam("title") String title, @RequestParam("speaker") String speaker,
                                         @RequestParam(value = "category", required = false) String category,
                                         @RequestParam(value = "customCategory", required = false) String customCategory,
-                                        @RequestParam String date,
+                                        @RequestParam("date") String date,
                                         @RequestParam(value = "startTime", required = false) String startTime,
                                         @RequestParam(value = "endTime", required = false) String endTime,
                                         @RequestParam(value = "time", required = false) String time,
-                                        @RequestParam String meetingUrl, @RequestParam int seats,
-                                        @RequestParam String description,
+                                        @RequestParam("meetingUrl") String meetingUrl, @RequestParam("seats") int seats,
+                                        @RequestParam("description") String description,
                                         org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         FinancialLiveSession s = catalog.findLive(sessionId);
         if (s == null) {
@@ -439,15 +439,15 @@ public class FinancialLiteracyController {
     }
 
     @PostMapping("/admin/add-workshop")
-    public String addWorkshopSubmit(@RequestParam String title, @RequestParam String venue,
+    public String addWorkshopSubmit(@RequestParam("title") String title, @RequestParam("venue") String venue,
                                     @RequestParam(value = "category", required = false) String category,
                                     @RequestParam(value = "customCategory", required = false) String customCategory,
-                                    @RequestParam String date,
+                                    @RequestParam("date") String date,
                                     @RequestParam(value = "startTime", required = false) String startTime,
                                     @RequestParam(value = "endTime", required = false) String endTime,
                                     @RequestParam(value = "time", required = false) String time,
-                                    @RequestParam String city, @RequestParam int seats,
-                                    @RequestParam String description,
+                                    @RequestParam("city") String city, @RequestParam("seats") int seats,
+                                    @RequestParam("description") String description,
                                     org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         String finalTime = time;
         if ((finalTime == null || finalTime.isBlank()) && startTime != null && !startTime.isBlank()) {
@@ -498,15 +498,15 @@ public class FinancialLiteracyController {
 
     @PostMapping("/admin/edit-workshop/{workshopId}")
     public String editWorkshopSubmit(@PathVariable String workshopId,
-                                     @RequestParam String title, @RequestParam String venue,
+                                     @RequestParam("title") String title, @RequestParam("venue") String venue,
                                      @RequestParam(value = "category", required = false) String category,
                                      @RequestParam(value = "customCategory", required = false) String customCategory,
-                                     @RequestParam String date,
+                                     @RequestParam("date") String date,
                                      @RequestParam(value = "startTime", required = false) String startTime,
                                      @RequestParam(value = "endTime", required = false) String endTime,
                                      @RequestParam(value = "time", required = false) String time,
-                                     @RequestParam String city, @RequestParam int seats,
-                                     @RequestParam String description,
+                                     @RequestParam("city") String city, @RequestParam("seats") int seats,
+                                     @RequestParam("description") String description,
                                      org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         FinancialWorkshop w = catalog.findWorkshop(workshopId);
         if (w == null) {
@@ -549,9 +549,9 @@ public class FinancialLiteracyController {
     }
 
     @PostMapping("/workshop/register")
-    public String registerWorkshop(@RequestParam String workshopId, @RequestParam String fullName,
-                                   @RequestParam String mobile, @RequestParam String email,
-                                   @RequestParam String city, @RequestParam(required = false) String occupation,
+    public String registerWorkshop(@RequestParam("workshopId") String workshopId, @RequestParam("fullName") String fullName,
+                                   @RequestParam("mobile") String mobile, @RequestParam("email") String email,
+                                   @RequestParam("city") String city, @RequestParam(value = "occupation", required = false) String occupation,
                                    HttpSession httpSession) {
         User user = httpSession == null ? null : (User) httpSession.getAttribute("user");
         try {
@@ -572,14 +572,14 @@ public class FinancialLiteracyController {
     }
 
     @PostMapping("/admin/registration/approve")
-    public String approveRegistration(@RequestParam String registrationId, @RequestParam String type) {
+    public String approveRegistration(@RequestParam("registrationId") String registrationId, @RequestParam("type") String type) {
         FinancialEnrollment e = catalog.findEnrollment(registrationId);
         if (e != null) catalog.setEnrollmentStatus(e.getId(), "approved");
         return "redirect:/financial-literacy/admin/registrations";
     }
 
     @PostMapping("/admin/registration/reject")
-    public String rejectRegistration(@RequestParam String registrationId, @RequestParam String type) {
+    public String rejectRegistration(@RequestParam("registrationId") String registrationId, @RequestParam("type") String type) {
         FinancialEnrollment e = catalog.findEnrollment(registrationId);
         if (e != null) catalog.setEnrollmentStatus(e.getId(), "rejected");
         return "redirect:/financial-literacy/admin/registrations";

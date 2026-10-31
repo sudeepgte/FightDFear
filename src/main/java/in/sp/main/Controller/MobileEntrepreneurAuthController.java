@@ -420,7 +420,7 @@ public class MobileEntrepreneurAuthController {
     @PutMapping("/proposals/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateProposal(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
@@ -481,7 +481,7 @@ public class MobileEntrepreneurAuthController {
 
     @PostMapping("/proposals/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelProposal(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelProposal(@PathVariable("id") Long id, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized();
         BusinessProposal p = businessProposalRepository.findById(id).orElse(null);
@@ -668,7 +668,7 @@ public class MobileEntrepreneurAuthController {
     @PostMapping("/investments/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+            @PathVariable("id") Long id, @RequestBody Map<String, Object> body, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized();
         Investment i = investmentRepository.findById(id).orElse(null);

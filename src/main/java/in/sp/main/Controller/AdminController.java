@@ -202,7 +202,7 @@ public class AdminController {
     // Sidebar counts are now handled globally via GlobalSidebarAdvice.java
 
     @RequestMapping(value = "/approve/{id}", method = POST)
-    public String approveCentre(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String approveCentre(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         try {
             centreService.approveCenter(id);
@@ -233,7 +233,7 @@ public class AdminController {
 
     
     @RequestMapping(value = "/reject/{id}", method = POST)
-    public String rejectCentre(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String rejectCentre(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         MartialArtsCenter centre = centreService.getCenterById(id);
         boolean deleted = centreService.rejectCenter(id);
@@ -244,7 +244,7 @@ public class AdminController {
 
    
     @RequestMapping(value = "/view-certificate/{id}", method = GET)
-    public String viewTrainerCertificate(@PathVariable Long id, HttpSession session, Model model) {
+    public String viewTrainerCertificate(@PathVariable("id") Long id, HttpSession session, Model model) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         String certificatePath = centreService.getCertificatePath(id);
         model.addAttribute("certificatePath", certificatePath);
@@ -279,10 +279,10 @@ public class AdminController {
      * Creates a new admin account.
      */
     @RequestMapping(value = "/registerAdmin", method = POST)
-    public String registerAdmin(@RequestParam String name,
-                                @RequestParam String email,
-                                @RequestParam String password,
-                                @RequestParam(required = false) String confirmPassword,
+    public String registerAdmin(@RequestParam("name") String name,
+                                @RequestParam("email") String email,
+                                @RequestParam("password") String password,
+                                @RequestParam(value = "confirmPassword", required = false) String confirmPassword,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
@@ -333,8 +333,8 @@ public class AdminController {
 
     
     @RequestMapping(value = "/loginAdmin", method = POST)
-    public String loginAdmin(@RequestParam String email,
-                             @RequestParam String password,
+    public String loginAdmin(@RequestParam("email") String email,
+                             @RequestParam("password") String password,
                              HttpSession session,
                              jakarta.servlet.http.HttpServletResponse response,
                              RedirectAttributes redirectAttributes) {
@@ -742,7 +742,7 @@ public class AdminController {
 
     
     @RequestMapping(value = "/edit/{id}", method = GET)
-    public String showEditForm(@PathVariable int id, Model model) {
+    public String showEditForm(@PathVariable("id") int id, Model model) {
         Admin admin = adminService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Admin not found with id: " + id));
         model.addAttribute("admin", admin);
@@ -771,7 +771,7 @@ public class AdminController {
 
    
     @RequestMapping(value = "/delete/{id}", method = POST)
-    public String deleteAdmin(@PathVariable int id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String deleteAdmin(@PathVariable("id") int id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         adminService.deleteAdmin(id);
         redirectAttributes.addFlashAttribute("successMessage", "Admin deleted successfully!");
@@ -787,7 +787,7 @@ public class AdminController {
 
     
     @RequestMapping(value = "/profile/{id}", method = GET)
-    public String showAdminProfile(@PathVariable int id, HttpSession session, Model model) {
+    public String showAdminProfile(@PathVariable("id") int id, HttpSession session, Model model) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         Admin admin = adminService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Admin not found with id: " + id));
@@ -820,7 +820,7 @@ public class AdminController {
     }
 
     @PostMapping("/approve-suggestion/{id}")
-    public String approveSuggestion(@PathVariable Long id,
+    public String approveSuggestion(@PathVariable("id") Long id,
                                     @RequestParam("password") String password,
                                     HttpSession session,
                                     RedirectAttributes redirectAttributes) {
@@ -844,7 +844,7 @@ public class AdminController {
     }
 
     @PostMapping("/reject-suggestion/{id}")
-    public String rejectSuggestion(@PathVariable Long id,
+    public String rejectSuggestion(@PathVariable("id") Long id,
                                    HttpSession session,
                                    RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -864,7 +864,7 @@ public class AdminController {
     // Purpose: admin rejects a volunteer — called from approvedVolunteers.jsp and
     // pendingVolunteers.jsp forms which POST to /admin/rejectvolunteer/{id}.
     @PostMapping("/rejectvolunteer/{id}")
-    public String rejectVolunteer(@PathVariable Long id,
+    public String rejectVolunteer(@PathVariable("id") Long id,
                                   HttpSession session,
                                   RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -908,7 +908,7 @@ public class AdminController {
 
     // Purpose: admin approves a user — allows them to login.
     @PostMapping("/users/{id}/approve")
-    public String approveUser(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         userRepository.findById(id).ifPresent(u -> {
             u.setVerificationStatus(VerificationStatus.VERIFIED);
@@ -922,7 +922,7 @@ public class AdminController {
 
     // Purpose: admin bans a user — sets banned=true, blocks login.
     @PostMapping("/users/{id}/ban")
-    public String banUser(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String banUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         userRepository.findById(id).ifPresent(u -> {
             u.setBanned(true);
@@ -934,7 +934,7 @@ public class AdminController {
 
     // Purpose: admin unbans a previously banned user.
     @PostMapping("/users/{id}/unban")
-    public String unbanUser(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String unbanUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         userRepository.findById(id).ifPresent(u -> {
             u.setBanned(false);
@@ -946,7 +946,7 @@ public class AdminController {
 
     // Purpose: admin permanently deletes a user account.
     @PostMapping("/users/{id}/delete")
-    public String deleteUser(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String deleteUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         try {
             userService.deleteUser(id);
@@ -1095,7 +1095,7 @@ public class AdminController {
     // Purpose: Admin manually resolves an SOS alert.
     @PostMapping("/sos/{id}/resolve")
     @ResponseBody
-    public Map<String, Object> resolveSos(@PathVariable String id, HttpSession session) {
+    public Map<String, Object> resolveSos(@PathVariable("id") String id, HttpSession session) {
         Map<String, Object> res = new HashMap<>();
         if (session.getAttribute("admin") == null) {
             res.put("success", false);
@@ -1157,7 +1157,7 @@ public class AdminController {
         return "adminVideoRewards";
     }
     @RequestMapping(value = "/videos/reward/{id}", method = POST)
-    public String rewardVideo(@PathVariable Long id,
+    public String rewardVideo(@PathVariable("id") Long id,
                               HttpSession session,
                               RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -1228,7 +1228,7 @@ public class AdminController {
 
     // Purpose: verify a user after identity document review.
     @PostMapping("/users/{id}/verify")
-    public String verifyUser(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String verifyUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1247,7 +1247,7 @@ public class AdminController {
 
     // Purpose: reject a user if documents are invalid.
     @PostMapping("/users/{id}/reject")
-    public String rejectUser(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String rejectUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1266,7 +1266,7 @@ public class AdminController {
 
     // Purpose: admin views full profile of a specific user.
     @GetMapping("/users/{id}/profile")
-    public String viewUserProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+    public String viewUserProfile(@PathVariable("id") Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1347,7 +1347,7 @@ public class AdminController {
 
     // Purpose: admin views full profile of a specific doctor.
     @GetMapping("/doctors/{id}/profile")
-    public String viewDoctorProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+    public String viewDoctorProfile(@PathVariable("id") Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1368,7 +1368,7 @@ public class AdminController {
 
     @Transactional
     @PostMapping("/doctors/{id}/verify")
-    public String verifyDoctor(@PathVariable Long id,
+    public String verifyDoctor(@PathVariable("id") Long id,
                                @RequestParam(value = "notes", required = false) String notes,
                                HttpSession session,
                                RedirectAttributes redirectAttributes) {
@@ -1393,7 +1393,7 @@ public class AdminController {
 
     @Transactional
     @PostMapping("/doctors/{id}/reject")
-    public String rejectDoctor(@PathVariable Long id,
+    public String rejectDoctor(@PathVariable("id") Long id,
                                @RequestParam(value = "reason", required = false) String reason,
                                @RequestParam(value = "notes", required = false) String notes,
                                HttpSession session,
@@ -1424,7 +1424,7 @@ public class AdminController {
 
     @Transactional
     @PostMapping("/doctors/{id}/request-changes")
-    public String requestDoctorChanges(@PathVariable Long id,
+    public String requestDoctorChanges(@PathVariable("id") Long id,
                                        @RequestParam(value = "reasons", required = false) String reasons,
                                        @RequestParam(value = "notes", required = false) String notes,
                                        HttpSession session,
@@ -1456,7 +1456,7 @@ public class AdminController {
 
     // Purpose: admin verification for marketplace providers / service partners.
     @GetMapping("/pending-providers")
-    public String viewPendingProviders(@RequestParam(required = false) ProviderCategory category,
+    public String viewPendingProviders(@RequestParam(value = "category", required = false) ProviderCategory category,
                                       @RequestParam(value = "q", required = false) String q,
                                       @RequestParam(value = "filter", required = false) String filter,
                                       Model model, HttpSession session) {
@@ -1571,7 +1571,7 @@ public class AdminController {
 
     @PostMapping("/providers/{id}/verify")
     @Transactional
-    public String verifyProvider(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String verifyProvider(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1590,7 +1590,7 @@ public class AdminController {
 
     @PostMapping("/providers/{id}/reject")
     @Transactional
-    public String rejectProvider(@PathVariable Long id,
+    public String rejectProvider(@PathVariable("id") Long id,
                                  @RequestParam(value = "reason", required = false) String reason,
                                  HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -1610,7 +1610,7 @@ public class AdminController {
 
     @PostMapping("/providers/{id}/request-changes")
     @Transactional
-    public String requestProviderChanges(@PathVariable Long id,
+    public String requestProviderChanges(@PathVariable("id") Long id,
                                          @RequestParam(value = "note", required = false) String note,
                                          HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -1638,7 +1638,7 @@ public class AdminController {
 
     // Purpose: admin views full profile of a specific marketplace provider.
     @GetMapping("/providers/{id}/profile")
-    public String viewProviderProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
+    public String viewProviderProfile(@PathVariable("id") Long id, HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1667,7 +1667,7 @@ public class AdminController {
 
     @Transactional
     @PostMapping("/user-reels/delete/{id}")
-    public String deleteUserReel(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpSession session) {
+    public String deleteUserReel(@PathVariable("id") Long id, RedirectAttributes redirectAttributes, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1695,7 +1695,7 @@ public class AdminController {
     }
 
     @PostMapping("/contact-messages/{id}/read")
-    public String markContactMessageRead(@PathVariable Long id, HttpSession session) {
+    public String markContactMessageRead(@PathVariable("id") Long id, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1704,7 +1704,7 @@ public class AdminController {
     }
 
     @PostMapping("/contact-messages/delete/{id}")
-    public String deleteContactMessage(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String deleteContactMessage(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1718,8 +1718,8 @@ public class AdminController {
     }
 
     @PostMapping("/contact-messages/{id}/reply")
-    public String replyToContactMessage(@PathVariable Long id,
-                                        @RequestParam String reply,
+    public String replyToContactMessage(@PathVariable("id") Long id,
+                                        @RequestParam("reply") String reply,
                                         HttpSession session,
                                         RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -1751,9 +1751,9 @@ public class AdminController {
     }
 
     @PostMapping("/broadcast/send")
-    public String sendBroadcast(@RequestParam String title, 
-                                @RequestParam String message, 
-                                @RequestParam String type, 
+    public String sendBroadcast(@RequestParam("title") String title, 
+                                @RequestParam("message") String message, 
+                                @RequestParam("type") String type, 
                                 HttpSession session, 
                                 RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
@@ -1775,7 +1775,7 @@ public class AdminController {
     }
 
     @PostMapping("/broadcast/delete/{id}")
-    public String deleteBroadcast(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String deleteBroadcast(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -1857,7 +1857,7 @@ public class AdminController {
     }
 
     @PostMapping("/reported-videos/block/{id}")
-    public String blockReportedVideo(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpSession session) {
+    public String blockReportedVideo(@PathVariable("id") Long id, RedirectAttributes redirectAttributes, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         Videoupload video = videouploadRepository.findById(id).orElse(null);
         if (video != null) {
@@ -1936,7 +1936,7 @@ public class AdminController {
 
     @PostMapping("/sellers/{id}/verify")
     @Transactional
-    public String verifySeller(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String verifySeller(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         WomenProductSeller s = womenSellerRepo.findById(id).orElse(null);
         if (s != null) {
@@ -1951,7 +1951,7 @@ public class AdminController {
 
     @PostMapping("/sellers/{id}/reject")
     @Transactional
-    public String rejectSeller(@PathVariable Long id,
+    public String rejectSeller(@PathVariable("id") Long id,
                                @RequestParam(value = "reason", required = false) String reason,
                                HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -1972,7 +1972,7 @@ public class AdminController {
 
     @PostMapping("/sellers/{id}/request-changes")
     @Transactional
-    public String requestSellerChanges(@PathVariable Long id,
+    public String requestSellerChanges(@PathVariable("id") Long id,
                                        @RequestParam(value = "note", required = false) String note,
                                        HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -2033,7 +2033,7 @@ public class AdminController {
     }
 
     @PostMapping("/products/{id}/approve")
-    public String approveProduct(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveProduct(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         WomenProduct p = womenProductRepo.findById(id).orElse(null);
         if (p != null) {
@@ -2046,7 +2046,7 @@ public class AdminController {
     }
 
     @PostMapping("/products/{id}/reject")
-    public String rejectProduct(@PathVariable Long id,
+    public String rejectProduct(@PathVariable("id") Long id,
                                 @RequestParam(value = "reason", required = false) String reason,
                                 HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -2165,7 +2165,7 @@ public class AdminController {
     }
 
     @GetMapping("/event-hosts/{id}/profile")
-    public String viewEventHostProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes ra) {
+    public String viewEventHostProfile(@PathVariable("id") Long id, HttpSession session, Model model, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         EventHost h = eventHostRepository.findById(id).orElse(null);
         if (h == null) {
@@ -2196,7 +2196,7 @@ public class AdminController {
 
     @PostMapping("/event-hosts/{id}/approve")
     @Transactional
-    public String approveEventHost(@PathVariable Long id,
+    public String approveEventHost(@PathVariable("id") Long id,
                                    @RequestParam(value = "notes", required = false) String notes,
                                    HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -2213,7 +2213,7 @@ public class AdminController {
 
     @PostMapping("/event-hosts/{id}/reject")
     @Transactional
-    public String rejectEventHost(@PathVariable Long id,
+    public String rejectEventHost(@PathVariable("id") Long id,
                                   @RequestParam(value = "reason", required = false) String reason,
                                   @RequestParam(value = "notes", required = false) String notes,
                                   HttpSession session, RedirectAttributes ra) {
@@ -2232,7 +2232,7 @@ public class AdminController {
 
     @PostMapping("/event-hosts/{id}/request-changes")
     @Transactional
-    public String requestEventHostChanges(@PathVariable Long id,
+    public String requestEventHostChanges(@PathVariable("id") Long id,
                                           @RequestParam(value = "note", required = false) String note,
                                           @RequestParam(value = "notes", required = false) String notes,
                                           @RequestParam(value = "reasons", required = false) String reasons,
@@ -2255,7 +2255,7 @@ public class AdminController {
     }
 
     @PostMapping("/women-events/{id}/approve")
-    public String approveWomenEventFromAdmin(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveWomenEventFromAdmin(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
             e.setStatus("APPROVED");
@@ -2266,7 +2266,7 @@ public class AdminController {
     }
 
     @PostMapping("/women-events/{id}/reject")
-    public String rejectWomenEventFromAdmin(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String rejectWomenEventFromAdmin(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         womenEventRepository.findById(id).ifPresent(e -> {
             e.setStatus("REJECTED");
@@ -2278,7 +2278,7 @@ public class AdminController {
 
     // Purpose: admin views full profile of a specific women product seller.
     @GetMapping("/sellers/{id}/profile")
-    public String viewSellerProfile(@PathVariable Long id, HttpSession session, Model model, RedirectAttributes ra) {
+    public String viewSellerProfile(@PathVariable("id") Long id, HttpSession session, Model model, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         WomenProductSeller seller = womenSellerRepo.findById(id).orElse(null);
         if (seller == null) {
@@ -2325,7 +2325,7 @@ public class AdminController {
     }
 
     @PostMapping("/safety-points/danger/{id}/verify")
-    public String verifyDangerPoint(@PathVariable Long id, RedirectAttributes ra) {
+    public String verifyDangerPoint(@PathVariable("id") Long id, RedirectAttributes ra) {
         dangerPointRepository.findById(id).ifPresent(p -> {
             p.setVerified(true);
             dangerPointRepository.save(p);
@@ -2335,14 +2335,14 @@ public class AdminController {
     }
 
     @PostMapping("/safety-points/danger/{id}/delete")
-    public String deleteDangerPoint(@PathVariable Long id, RedirectAttributes ra) {
+    public String deleteDangerPoint(@PathVariable("id") Long id, RedirectAttributes ra) {
         dangerPointRepository.deleteById(id);
         ra.addFlashAttribute("message", "Danger point removed.");
         return "redirect:/admin/safety-points";
     }
 
     @PostMapping("/safety-points/route/{id}/verify")
-    public String verifySafeRoute(@PathVariable Long id, RedirectAttributes ra) {
+    public String verifySafeRoute(@PathVariable("id") Long id, RedirectAttributes ra) {
         safeRouteRepository.findById(id).ifPresent(r -> {
             r.setVerified(true);
             safeRouteRepository.save(r);
@@ -2352,7 +2352,7 @@ public class AdminController {
     }
 
     @PostMapping("/safety-points/route/{id}/delete")
-    public String deleteSafeRoute(@PathVariable Long id, RedirectAttributes ra) {
+    public String deleteSafeRoute(@PathVariable("id") Long id, RedirectAttributes ra) {
         safeRouteRepository.deleteById(id);
         ra.addFlashAttribute("message", "Safe route removed.");
         return "redirect:/admin/safety-points";
@@ -2416,7 +2416,7 @@ public class AdminController {
     }
 
     @PostMapping("/salons/{id}/approve")
-    public String approveSalon(@PathVariable Long id, RedirectAttributes ra) {
+    public String approveSalon(@PathVariable("id") Long id, RedirectAttributes ra) {
         salonRepository.findById(id).ifPresent(s -> {
             salonProfileService.setLifecycleStatus(s, PartnerProfileStatus.APPROVED);
             s.setApproved(true);
@@ -2429,7 +2429,7 @@ public class AdminController {
     }
 
     @PostMapping("/salons/{id}/reject")
-    public String rejectSalon(@PathVariable Long id,
+    public String rejectSalon(@PathVariable("id") Long id,
                               @RequestParam(value = "reason", required = false) String reason,
                               RedirectAttributes ra) {
         Salon s = salonRepository.findById(id).orElse(null);
@@ -2446,14 +2446,14 @@ public class AdminController {
     }
 
     @PostMapping("/salons/{id}/delete")
-    public String deleteSalon(@PathVariable Long id, RedirectAttributes ra) {
+    public String deleteSalon(@PathVariable("id") Long id, RedirectAttributes ra) {
         salonRepository.deleteById(id);
         ra.addFlashAttribute("message", "Salon deleted successfully.");
         return "redirect:/admin/salons";
     }
 
     @GetMapping("/salons/{id}/profile")
-    public String viewSalonProfile(@PathVariable Long id, Model model, HttpSession session) {
+    public String viewSalonProfile(@PathVariable("id") Long id, Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         Salon salon = salonRepository.findById(id).orElse(null);
         if (salon == null) return "redirect:/admin/salons";
@@ -2491,7 +2491,7 @@ public class AdminController {
     }
 
     @PostMapping("/stylists/{id}/approve")
-    public String approveStylist(@PathVariable Long id, RedirectAttributes ra) {
+    public String approveStylist(@PathVariable("id") Long id, RedirectAttributes ra) {
         Stylist stylist = stylistRepository.findById(id).orElse(null);
         if (stylist != null) {
             stylist.setApproved(true);
@@ -2502,14 +2502,14 @@ public class AdminController {
     }
 
     @PostMapping("/stylists/{id}/reject")
-    public String rejectStylist(@PathVariable Long id, RedirectAttributes ra) {
+    public String rejectStylist(@PathVariable("id") Long id, RedirectAttributes ra) {
         stylistRepository.deleteById(id);
         ra.addFlashAttribute("message", "Stylist rejected and removed.");
         return "redirect:/admin/stylists";
     }
 
     @GetMapping("/stylists/{id}/profile")
-    public String viewStylistProfile(@PathVariable Long id, Model model, HttpSession session) {
+    public String viewStylistProfile(@PathVariable("id") Long id, Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         Stylist stylist = stylistRepository.findById(id).orElse(null);
         if (stylist == null) return "redirect:/admin/stylists";
@@ -2531,7 +2531,7 @@ public class AdminController {
     }
 
     @PostMapping("/job-applications/{id}/approve")
-    public String approveJobApplication(@PathVariable Long id, RedirectAttributes ra) {
+    public String approveJobApplication(@PathVariable("id") Long id, RedirectAttributes ra) {
         jobApplicationRepository.findById(id).ifPresent(app -> {
             app.setStatus(VerificationStatus.VERIFIED);
             jobApplicationRepository.save(app);
@@ -2541,7 +2541,7 @@ public class AdminController {
     }
 
     @PostMapping("/job-applications/{id}/reject")
-    public String rejectJobApplication(@PathVariable Long id, RedirectAttributes ra) {
+    public String rejectJobApplication(@PathVariable("id") Long id, RedirectAttributes ra) {
         jobApplicationRepository.findById(id).ifPresent(app -> {
             app.setStatus(VerificationStatus.REJECTED);
             jobApplicationRepository.save(app);
@@ -2660,7 +2660,7 @@ public class AdminController {
     }
 
     @GetMapping("/proposals/about/{id}")
-    public String viewProposalDetails(@PathVariable Long id, HttpSession session, Model model) {
+    public String viewProposalDetails(@PathVariable("id") Long id, HttpSession session, Model model) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         in.sp.main.Entities.BusinessProposal p = businessProposalRepository.findById(id).orElse(null);
         if (p == null) {
@@ -2671,7 +2671,7 @@ public class AdminController {
     }
 
     @PostMapping("/proposals/{id}/approve")
-    public String approveProposal(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveProposal(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         businessProposalRepository.findById(id).ifPresent(p -> {
             p.setStatus(VerificationStatus.VERIFIED);
@@ -2692,7 +2692,7 @@ public class AdminController {
     }
 
     @PostMapping("/proposals/{id}/reject")
-    public String rejectProposal(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String rejectProposal(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         businessProposalRepository.findById(id).ifPresent(p -> {
             p.setStatus(VerificationStatus.REJECTED);
@@ -2704,7 +2704,7 @@ public class AdminController {
 
     @PostMapping("/entrepreneurs/{id}/approve")
     @Transactional
-    public String approveEntrepreneur(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveEntrepreneur(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         entrepreneurRepository.findById(id).ifPresent(e -> {
             entrepreneurProfileService.setLifecycleStatus(e, PartnerProfileStatus.APPROVED);
@@ -2720,7 +2720,7 @@ public class AdminController {
 
     @PostMapping("/entrepreneurs/{id}/reject")
     @Transactional
-    public String rejectEntrepreneur(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String rejectEntrepreneur(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         entrepreneurRepository.findById(id).ifPresent(e -> {
             entrepreneurProfileService.setLifecycleStatus(e, PartnerProfileStatus.REJECTED);
@@ -2732,7 +2732,7 @@ public class AdminController {
 
     @PostMapping("/investors/{id}/approve")
     @Transactional
-    public String approveInvestor(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveInvestor(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         investorRepository.findById(id).ifPresent(i -> {
             investorProfileService.setLifecycleStatus(i, PartnerProfileStatus.APPROVED);
@@ -2749,7 +2749,7 @@ public class AdminController {
 
     @PostMapping("/investors/{id}/reject")
     @Transactional
-    public String rejectInvestor(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String rejectInvestor(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         investorRepository.findById(id).ifPresent(i -> {
             investorProfileService.setLifecycleStatus(i, PartnerProfileStatus.REJECTED);
@@ -2762,7 +2762,7 @@ public class AdminController {
     @PostMapping("/investors/{id}/request-changes")
     @Transactional
     public String requestInvestorChanges(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam(value = "note", required = false) String note,
             HttpSession session,
             RedirectAttributes ra) {
@@ -2777,7 +2777,7 @@ public class AdminController {
     }
 
     @GetMapping({"/investors/about/{id}", "/investors/{id}/details"})
-    public String viewInvestorProfileDetails(@PathVariable Long id, Model model, HttpSession session) {
+    public String viewInvestorProfileDetails(@PathVariable("id") Long id, Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         Optional<Investor> opt = investorRepository.findById(id);
         if (opt.isPresent()) {
@@ -2953,8 +2953,8 @@ public class AdminController {
     @PostMapping("/fitness/verify")
     @Transactional
     public String verifyFitnessTrainer(
-            @RequestParam Long id,
-            @RequestParam boolean approve,
+            @RequestParam("id") Long id,
+            @RequestParam("approve") boolean approve,
             HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
@@ -2980,8 +2980,8 @@ public class AdminController {
     @PostMapping("/fitness/suspend")
     @Transactional
     public String suspendFitnessTrainer(
-            @RequestParam Long id,
-            @RequestParam boolean suspend,
+            @RequestParam("id") Long id,
+            @RequestParam("suspend") boolean suspend,
             HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
 
@@ -3048,7 +3048,7 @@ public class AdminController {
 
     @PostMapping("/trainers/{id}/approve")
     @Transactional
-    public String approveTrainer(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveTrainer(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         FitnessTrainer trainer = fitnessTrainerRepository.findById(id).orElse(null);
         if (trainer == null) {
@@ -3088,7 +3088,7 @@ public class AdminController {
 
     @PostMapping("/delivery-partners/{id}/approve")
     @Transactional
-    public String approveDeliveryPartner(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveDeliveryPartner(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         DeliveryPartner d = deliveryPartnerRepository.findById(id).orElse(null);
         if (d == null) {
@@ -3106,7 +3106,7 @@ public class AdminController {
 
     @PostMapping("/delivery-partners/{id}/reject")
     @Transactional
-    public String rejectDeliveryPartner(@PathVariable Long id,
+    public String rejectDeliveryPartner(@PathVariable("id") Long id,
                                         @RequestParam(value = "reason", required = false) String reason,
                                         HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3124,7 +3124,7 @@ public class AdminController {
 
     @PostMapping("/delivery-partners/{id}/request-changes")
     @Transactional
-    public String requestDeliveryPartnerChanges(@PathVariable Long id,
+    public String requestDeliveryPartnerChanges(@PathVariable("id") Long id,
                                                 @RequestParam(value = "note", required = false) String note,
                                                 HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3157,7 +3157,7 @@ public class AdminController {
 
     @PostMapping("/creators/{id}/approve")
     @Transactional
-    public String approveCreator(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveCreator(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         User creator = userRepository.findById(id).orElse(null);
         if (creator == null) {
@@ -3176,7 +3176,7 @@ public class AdminController {
 
     @PostMapping("/creators/{id}/reject")
     @Transactional
-    public String rejectCreator(@PathVariable Long id,
+    public String rejectCreator(@PathVariable("id") Long id,
                                 @RequestParam(value = "reason", required = false) String reason,
                                 HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3196,7 +3196,7 @@ public class AdminController {
 
     @PostMapping("/creators/{id}/request-changes")
     @Transactional
-    public String requestCreatorChanges(@PathVariable Long id,
+    public String requestCreatorChanges(@PathVariable("id") Long id,
                                         @RequestParam(value = "note", required = false) String note,
                                         HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3239,7 +3239,7 @@ public class AdminController {
 
     @PostMapping("/educators/{id}/approve")
     @Transactional
-    public String approveEducator(@PathVariable Long id, HttpSession session, RedirectAttributes ra) {
+    public String approveEducator(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         FinancialEducator e = financialEducatorRepository.findById(id).orElse(null);
         if (e == null) {
@@ -3257,7 +3257,7 @@ public class AdminController {
 
     @PostMapping("/educators/{id}/reject")
     @Transactional
-    public String rejectEducator(@PathVariable Long id,
+    public String rejectEducator(@PathVariable("id") Long id,
                                  @RequestParam(value = "reason", required = false) String reason,
                                  HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3275,7 +3275,7 @@ public class AdminController {
 
     @PostMapping("/educators/{id}/request-changes")
     @Transactional
-    public String requestEducatorChanges(@PathVariable Long id,
+    public String requestEducatorChanges(@PathVariable("id") Long id,
                                          @RequestParam(value = "note", required = false) String note,
                                          HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3294,7 +3294,7 @@ public class AdminController {
 
     @PostMapping("/trainers/{id}/reject")
     @Transactional
-    public String rejectTrainer(@PathVariable Long id,
+    public String rejectTrainer(@PathVariable("id") Long id,
                                 @RequestParam(value = "reason", required = false) String reason,
                                 HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3312,7 +3312,7 @@ public class AdminController {
 
     @PostMapping("/trainers/{id}/request-changes")
     @Transactional
-    public String requestTrainerChanges(@PathVariable Long id,
+    public String requestTrainerChanges(@PathVariable("id") Long id,
                                         @RequestParam(value = "note", required = false) String note,
                                         HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3334,7 +3334,7 @@ public class AdminController {
     // ==========================================
 
     @GetMapping({"/fitness/trainer/{id}", "/trainers/{id}"})
-    public String viewFitnessTrainerReviewProfile(@PathVariable Long id, Model model, HttpSession session) {
+    public String viewFitnessTrainerReviewProfile(@PathVariable("id") Long id, Model model, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }
@@ -3352,7 +3352,7 @@ public class AdminController {
 
     @PostMapping({"/centres/{id}/approve", "/admin/centres/{id}/approve"})
     @Transactional
-    public String approveCentreDirect(@PathVariable Long id,
+    public String approveCentreDirect(@PathVariable("id") Long id,
                                       @RequestParam(value = "notes", required = false) String notes,
                                       HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
@@ -3387,7 +3387,7 @@ public class AdminController {
 
     @PostMapping({"/centres/{id}/reject", "/admin/centres/{id}/reject"})
     @Transactional
-    public String rejectCentreWithReason(@PathVariable Long id,
+    public String rejectCentreWithReason(@PathVariable("id") Long id,
                                          @RequestParam(value = "reason", required = false) String reason,
                                          @RequestParam(value = "notes", required = false) String notes,
                                          HttpSession session, RedirectAttributes ra) {
@@ -3408,7 +3408,7 @@ public class AdminController {
 
     @PostMapping({"/centres/{id}/request-changes", "/admin/centres/{id}/request-changes"})
     @Transactional
-    public String requestCentreChanges(@PathVariable Long id,
+    public String requestCentreChanges(@PathVariable("id") Long id,
                                        @RequestParam(value = "note", required = false) String note,
                                        @RequestParam(value = "notes", required = false) String notes,
                                        @RequestParam(value = "reasons", required = false) String reasons,

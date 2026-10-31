@@ -49,8 +49,8 @@ public class MobileFitnessController {
 
     @GetMapping("/trainers")
     public ResponseEntity<Map<String, Object>> trainers(
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
             HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         String cityQ = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
@@ -82,7 +82,7 @@ public class MobileFitnessController {
     }
 
     @GetMapping("/trainers/{id}")
-    public ResponseEntity<Map<String, Object>> trainerDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> trainerDetail(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         FitnessTrainer t = trainerRepo.findById(id).orElse(null);
         if (t == null || !FitnessTrainerProfileService.isApproved(t)) {
@@ -100,8 +100,8 @@ public class MobileFitnessController {
 
     @GetMapping("/trainers/{id}/available-slots")
     public ResponseEntity<Map<String, Object>> getAvailableSlots(
-            @PathVariable Long id,
-            @RequestParam(required = false) String date) {
+            @PathVariable("id") Long id,
+            @RequestParam(value = "date", required = false) String date) {
         FitnessTrainer t = trainerRepo.findById(id).orElse(null);
         if (t == null || t.isSuspended()) {
             return badRequest("Trainer not found");
@@ -173,7 +173,7 @@ public class MobileFitnessController {
 
     @PostMapping("/trainers/{id}/bookings")
     @Transactional
-    public ResponseEntity<Map<String, Object>> book(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> book(@PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         FitnessTrainer t = trainerRepo.findById(id).orElse(null);
@@ -293,7 +293,7 @@ public class MobileFitnessController {
 
     @PostMapping("/bookings/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancel(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancel(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         FitnessBooking booking = bookingRepo.findById(id).orElse(null);
@@ -315,7 +315,7 @@ public class MobileFitnessController {
     @PostMapping("/bookings/{id}/review")
     @Transactional
     public ResponseEntity<Map<String, Object>> submitReview(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -361,7 +361,7 @@ public class MobileFitnessController {
     }
 
     @GetMapping("/trainers/{id}/packages")
-    public ResponseEntity<Map<String, Object>> getTrainerPackages(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getTrainerPackages(@PathVariable("id") Long id) {
         List<FitnessPackage> packages = fitnessPackageRepo.findByTrainer_IdAndActiveTrue(id);
         List<Map<String, Object>> dtos = packages.stream().map(p -> {
             Map<String, Object> m = new LinkedHashMap<>();
