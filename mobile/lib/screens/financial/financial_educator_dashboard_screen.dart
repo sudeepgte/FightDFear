@@ -78,7 +78,7 @@ class _FinancialEducatorDashboardScreenState extends State<FinancialEducatorDash
   }
 
   Future<void> _logout() async {
-    await context.read<AuthState>().api.clearToken();
+    await context.read<AuthState>().api.clearFinancialEducatorToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),

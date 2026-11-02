@@ -59,6 +59,12 @@ public class WomenProductOrderLifecycleService {
     private ProductDeliveryTrackingService trackingService;
     @Autowired
     private AtomicStockService atomicStockService;
+    @Autowired
+    private PushNotificationService pushNotificationService;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private SellerNotificationService sellerNotificationService;
 
     /**
      * Normalizes aliases without collapsing distinct delivery stages.
@@ -269,7 +275,117 @@ public class WomenProductOrderLifecycleService {
         if (READY_FOR_PICKUP.equals(next) || SHIPPED.equals(next) || OUT_FOR_DELIVERY.equals(next)) {
             trackingService.ensureGeocoded(order);
         }
+        sendStatusNotifications(order, seller, next);
         return order;
+    }
+
+    private void sendStatusNotifications(WomenProductOrder order, WomenProductSeller seller, String next) {
+        if (order == null) return;
+        in.sp.main.Entities.User user = order.getUser();
+        String productName = order.getProduct() != null && order.getProduct().getName() != null
+                ? order.getProduct().getName() : "Product";
+        String sellerName = seller != null && seller.getFullName() != null && !seller.getFullName().isBlank()
+                ? seller.getFullName() : (seller != null && seller.getBusinessName() != null ? seller.getBusinessName() : "Seller");
+        String clientName = user != null && user.getFullName() != null && !user.getFullName().isBlank()
+                ? user.getFullName() : "Customer";
+
+        if (CONFIRMED.equals(next)) {
+            if (user != null && pushNotificationService != null) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Order Confirmed!",
+                        "Seller " + sellerName + " confirmed your order for " + productName + ".",
+                        Map.of("type", "PRODUCT_ORDER_CONFIRMED", "orderId", String.valueOf(order.getId()))
+                );
+                if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Order Confirmed: #" + order.getId(),
+                                "Hello " + clientName + ",\n\nGreat news! Your order #" + order.getId()
+                                        + " for " + productName + " has been confirmed by " + sellerName
+                                        + " and is now being prepared.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (seller != null && sellerNotificationService != null) {
+                sellerNotificationService.notifySeller(
+                        seller,
+                        "ORDER_CONFIRMED",
+                        "Order Confirmed: #" + order.getId(),
+                        "You confirmed order #" + order.getId() + " for " + productName + ".",
+                        order.getId(),
+                        false
+                );
+            }
+        } else if (PACKED.equals(next)) {
+            if (user != null && pushNotificationService != null) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Order Packed",
+                        "Your order #" + order.getId() + " (" + productName + ") is packed and ready for dispatch.",
+                        Map.of("type", "PRODUCT_ORDER_PACKED", "orderId", String.valueOf(order.getId()))
+                );
+            }
+        } else if (READY_FOR_PICKUP.equals(next) || SHIPPED.equals(next)) {
+            if (user != null && pushNotificationService != null) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Order Shipped!",
+                        "Your order #" + order.getId() + " for " + productName + " has been shipped.",
+                        Map.of("type", "PRODUCT_ORDER_SHIPPED", "orderId", String.valueOf(order.getId()))
+                );
+                if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Order Shipped: #" + order.getId(),
+                                "Hello " + clientName + ",\n\nYour order #" + order.getId()
+                                        + " for " + productName + " is on its way!\n\nOpen the app to track your delivery.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+            }
+        } else if (OUT_FOR_DELIVERY.equals(next)) {
+            if (user != null && pushNotificationService != null) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Out for Delivery",
+                        "Your order #" + order.getId() + " for " + productName + " is out for delivery today.",
+                        Map.of("type", "PRODUCT_ORDER_OUT_FOR_DELIVERY", "orderId", String.valueOf(order.getId()))
+                );
+            }
+        } else if (DELIVERED.equals(next)) {
+            if (user != null && pushNotificationService != null) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Order Delivered!",
+                        "Your order #" + order.getId() + " has been delivered. Tap to leave a rating and review.",
+                        Map.of("type", "PRODUCT_ORDER_DELIVERED", "orderId", String.valueOf(order.getId()))
+                );
+                if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Order Delivered: #" + order.getId(),
+                                "Hello " + clientName + ",\n\nYour order #" + order.getId()
+                                        + " for " + productName + " has been delivered.\n\nWe hope you love your purchase! Open the app to rate and review.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+            }
+            if (seller != null && sellerNotificationService != null) {
+                sellerNotificationService.notifySeller(
+                        seller,
+                        "ORDER_DELIVERED",
+                        "Order Delivered: #" + order.getId(),
+                        "Order #" + order.getId() + " for " + productName + " was delivered successfully.",
+                        order.getId(),
+                        false
+                );
+            }
+        }
     }
 
     @Transactional

@@ -242,7 +242,7 @@ public class MartialArtsCenterService {
     public MartialArtsCenter getApprovedCenterById(Long id) {
         MartialArtsCenter center = centerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Center not found"));
-        if (!center.isApproved()) {
+        if (!center.isApproved() && center.getCentreProfileStatus() != CentreProfileStatus.APPROVED) {
             throw new IllegalStateException("This training centre is not available for booking yet.");
         }
         initializeLazyCollections(center);

@@ -116,6 +116,7 @@
   .review-card {
     background: #FFFFFF; border-radius: 16px; border: 1px solid var(--ap-border);
     box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04); padding: 22px 26px; margin-bottom: 20px;
+    max-width: 100%; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word; min-width: 0;
   }
   .section-header {
     display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
@@ -139,13 +140,15 @@
     font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.55px; color: var(--ap-muted);
   }
-  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--ap-navy-mid); word-break: break-word; }
+  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--ap-navy-mid); word-break: break-word; overflow-wrap: anywhere; }
   .empty-text { color: var(--ap-muted); font-style: italic; font-weight: 500; font-size: 0.88rem; }
 
   /* 30% SECONDARY STRUCTURE ELEMENTS */
   .bio-box {
     background: var(--ap-accent-surface); border: 1px solid var(--ap-accent-border); border-radius: 12px;
-    padding: 14px 16px; font-size: 0.94rem; line-height: 1.65; color: var(--ap-navy-mid);
+    padding: 14px 18px; font-size: 0.94rem; line-height: 1.65; color: var(--ap-navy-mid);
+    white-space: pre-wrap; word-break: break-all; word-break: break-word; overflow-wrap: anywhere; word-wrap: break-word;
+    max-width: 100%; width: 100%; min-height: 48px; box-sizing: border-box; overflow-x: hidden;
   }
   .tag-pill {
     display: inline-flex; align-items: center; background: var(--ap-accent-soft); color: var(--ap-accent-text);
@@ -488,28 +491,28 @@
           <i class="bi bi-file-text-fill"></i>
           <h3>3. About Centre & Training Methodology</h3>
         </div>
-        <div class="d-flex flex-column gap-3">
-          <div>
+        <div class="d-flex flex-column gap-3" style="min-width: 0; width: 100%;">
+          <div style="min-width: 0; width: 100%;">
             <span class="info-field-label d-block mb-1">About the Centre</span>
-            <div class="bio-box">
+            <div class="bio-box" style="word-break: break-all; overflow-wrap: anywhere; word-wrap: break-word; white-space: pre-wrap; width: 100%; max-width: 100%; overflow-x: hidden;">
               <c:choose>
                 <c:when test="${not empty center.about}"><c:out value="${center.about}"/></c:when>
                 <c:otherwise><span class="empty-text">No description provided yet.</span></c:otherwise>
               </c:choose>
             </div>
           </div>
-          <div>
+          <div style="min-width: 0; width: 100%;">
             <span class="info-field-label d-block mb-1">How We Teach (Training Methodology)</span>
-            <div class="bio-box">
+            <div class="bio-box" style="word-break: break-all; overflow-wrap: anywhere; word-wrap: break-word; white-space: pre-wrap; width: 100%; max-width: 100%; overflow-x: hidden;">
               <c:choose>
                 <c:when test="${not empty center.howWeTeach}"><c:out value="${center.howWeTeach}"/></c:when>
                 <c:otherwise><span class="empty-text">No teaching methodology specified.</span></c:otherwise>
               </c:choose>
             </div>
           </div>
-          <div>
+          <div style="min-width: 0; width: 100%;">
             <span class="info-field-label d-block mb-1">What We Offer & Syllabus Scope</span>
-            <div class="bio-box">
+            <div class="bio-box" style="word-break: break-all; overflow-wrap: anywhere; word-wrap: break-word; white-space: pre-wrap; width: 100%; max-width: 100%; overflow-x: hidden;">
               <c:choose>
                 <c:when test="${not empty center.whatWeOffer}"><c:out value="${center.whatWeOffer}"/></c:when>
                 <c:otherwise><span class="empty-text">No details specified.</span></c:otherwise>

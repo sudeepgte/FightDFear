@@ -68,14 +68,14 @@ public class QnAController {
 
     // View a full Q&A thread with admin answer and comments
     @RequestMapping(value = "/thread/{id}", method = RequestMethod.GET)
-    public String viewThread(@PathVariable Long id, Model model) {
+    public String viewThread(@PathVariable("id") Long id, Model model) {
         model.addAttribute("thread", qnaService.getFullThread(id));
         return "questions/qna-thread";
     }
 
     // Post a comment to a question or answer
     @RequestMapping(value = "/thread/{id}/comment", method = RequestMethod.POST)
-    public String postComment(@PathVariable Long id,
+    public String postComment(@PathVariable("id") Long id,
                               @ModelAttribute CommentSubmissionDTO dto,
                               HttpSession session) {
         String displayName = getOrGenerateDisplayName(session);
@@ -85,7 +85,7 @@ public class QnAController {
 
     // Admin posts an answer to a question
     @RequestMapping(value = "/thread/{id}/answer", method = RequestMethod.POST)
-    public String postAnswer(@PathVariable Long id, @ModelAttribute AnswerSubmissionDTO dto) {
+    public String postAnswer(@PathVariable("id") Long id, @ModelAttribute AnswerSubmissionDTO dto) {
         qnaService.answerQuestion(dto);
         return "redirect:/qna/thread/" + id;
     }
@@ -139,7 +139,7 @@ public class QnAController {
 
     // Admin delete question
     @RequestMapping(value = "/admin/qna/delete", method = RequestMethod.POST)
-    public String deleteQuestion(@RequestParam Long questionId, HttpSession session) {
+    public String deleteQuestion(@RequestParam("questionId") Long questionId, HttpSession session) {
         if (!"ADMIN".equals(session.getAttribute("userRole"))) {
             return "redirect:/access-denied";
         }

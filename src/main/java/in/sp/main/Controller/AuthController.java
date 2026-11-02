@@ -22,7 +22,7 @@ public class AuthController {
     }
 
     @RequestMapping(value = "/forgot-password", method = POST)
-    public String forgotPassword(@RequestParam(required = false) String email, Model model) {
+    public String forgotPassword(@RequestParam(value = "email", required = false) String email, Model model) {
         if (email == null || email.trim().isEmpty()) {
             model.addAttribute("error", "Please enter your email address.");
             return "forgotPassword";
@@ -44,7 +44,7 @@ public class AuthController {
     }
 
     @RequestMapping(value = "/reset-password", method = GET)
-    public String showResetPasswordPage(@RequestParam String token, @RequestParam String type, Model model) {
+    public String showResetPasswordPage(@RequestParam("token") String token, @RequestParam("type") String type, Model model) {
         model.addAttribute("token", token);
         model.addAttribute("userType", type);
         return "resetPassword";
@@ -54,7 +54,7 @@ public class AuthController {
     private in.sp.main.Repository.PasswordResetTokenRepository tokenRepository;
 
     @RequestMapping(value = "/reset-password", method = POST)
-    public String resetPassword(@RequestParam String token, @RequestParam String newPassword, Model model) {
+    public String resetPassword(@RequestParam("token") String token, @RequestParam("newPassword") String newPassword, Model model) {
         String loginView = "login";
         java.util.Optional<in.sp.main.Entities.PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
         if (tokenOpt.isPresent()) {

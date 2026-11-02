@@ -1165,7 +1165,7 @@
                         <h2 class="info-card-title">
                             <i class="fas fa-info-circle"></i> About the Centre
                         </h2>
-                        <div class="text-secondary" style="font-size: 0.95rem; line-height: 1.7;">
+                        <div class="text-secondary" style="font-size: 0.95rem; line-height: 1.7; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap;">
                             <c:choose>
                                 <c:when test="${not empty center.about}">
                                     <c:out value="${center.about}"/>
@@ -1184,7 +1184,7 @@
                         </h2>
                         <c:choose>
                             <c:when test="${not empty center.howWeTeach}">
-                                <div class="text-secondary" style="font-size: 0.95rem; line-height: 1.7;">
+                                <div class="text-secondary" style="font-size: 0.95rem; line-height: 1.7; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap;">
                                     ${center.howWeTeach}
                                 </div>
                             </c:when>

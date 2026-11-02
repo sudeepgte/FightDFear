@@ -3,9 +3,12 @@ package in.sp.main.Controller;
 import in.sp.main.Config.JwtUtil;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
+import in.sp.main.Service.EmailService;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.ProviderNotificationService;
+import in.sp.main.Service.PushNotificationService;
 import in.sp.main.Service.ServiceProviderProfileService;
 import in.sp.main.Service.ServiceProviderRegistrationService;
 import in.sp.main.Service.WomenLawyerCareService;
@@ -57,6 +60,12 @@ public class MobileMarketplaceProviderAuthController {
     private WomenLawyerCareService lawyerCareService;
     @Autowired
     private FileUploadService fileUploadService;
+    @Autowired
+    private ProviderNotificationService providerNotificationService;
+    @Autowired
+    private PushNotificationService pushNotificationService;
+    @Autowired
+    private EmailService emailService;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -236,16 +245,18 @@ public class MobileMarketplaceProviderAuthController {
 
         session.setAttribute("loggedProvider", p);
         String token = jwtUtil.generateToken(p.getEmail(), "PROVIDER");
+        boolean isApproved = p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || p.getVerificationStatus() == VerificationStatus.VERIFIED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "PROVIDER");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (p.getPartnerProfileStatus() != null ? p.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (p.getPartnerProfileStatus() != null ? p.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("provider", providerSummary(p));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(p.getPartnerProfileStatus()));
-        res.put("canSubmitForVerification",
-                providerProfileService.isReadyForVerification(p)
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(p.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification", !isApproved && providerProfileService.isReadyForVerification(p)
                         && p.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }
@@ -418,17 +429,20 @@ public class MobileMarketplaceProviderAuthController {
                 .mapToDouble(b -> b.getTotalAmount() == null ? 0.0 : b.getTotalAmount())
                 .sum();
 
-        return ResponseEntity.ok(ok(Map.of(
-                "provider", providerSummary(p),
-                "bookings", bookings,
-                "classes", classes,
-                "enrollments", enrollments,
-                "totalEarnings", classEarnings + consultEarnings,
-                "payoutBalance", p.getPayoutBalance(),
-                "upiId", p.getUpiId() == null ? "" : p.getUpiId(),
-                "cancelPolicy", WomenLawyerCareService.CANCEL_POLICY,
-                "canCreateClass", p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED
-        )));
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("provider", providerSummary(p));
+        data.put("bookings", bookings);
+        data.put("classes", classes);
+        data.put("enrollments", enrollments);
+        data.put("totalEarnings", classEarnings + consultEarnings);
+        data.put("payoutBalance", p.getPayoutBalance());
+        data.put("upiId", p.getUpiId() == null ? "" : p.getUpiId());
+        data.put("cancelPolicy", WomenLawyerCareService.CANCEL_POLICY);
+        data.put("canCreateClass", p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED);
+        data.put("notifications", providerNotificationService.listForProvider(p.getId()));
+        data.put("unreadNotificationCount", providerNotificationService.unreadCount(p.getId()));
+
+        return ResponseEntity.ok(ok(data));
     }
 
     @PostMapping("/payout/request")
@@ -483,7 +497,7 @@ public class MobileMarketplaceProviderAuthController {
     @PostMapping("/bookings/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         ServiceProvider p = requireProvider(session);
@@ -500,7 +514,7 @@ public class MobileMarketplaceProviderAuthController {
     @PostMapping("/bookings/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateBookingStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         ServiceProvider p = requireProvider(session);
@@ -533,7 +547,120 @@ public class MobileMarketplaceProviderAuthController {
         }
         b.setStatus(next);
         bookingRepo.save(b);
+
+        sendBookingStatusNotification(b, current, next, p);
+
         return ResponseEntity.ok(ok(Map.of("message", "Booking updated", "status", next.name())));
+    }
+
+    private void sendBookingStatusNotification(ProviderBooking b, ProviderBookingStatus from, ProviderBookingStatus to, ServiceProvider p) {
+        if (b == null) return;
+        User user = b.getUser();
+        String lawyerName = p != null && p.getFullName() != null && !p.getFullName().isBlank() ? p.getFullName() : "Lawyer";
+        String timeStr = b.getRequestedTime() != null
+                ? b.getRequestedTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
+                : "scheduled time";
+
+        if (user != null) {
+            String clientName = user.getFullName() != null && !user.getFullName().isBlank() ? user.getFullName() : "Client";
+            if (to == ProviderBookingStatus.CONFIRMED) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Appointment Confirmed!",
+                        "Adv. " + lawyerName + " has confirmed your legal consultation for " + timeStr + ".",
+                        Map.of("type", "LAWYER_CONFIRMED", "bookingId", String.valueOf(b.getId()))
+                );
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Appointment Confirmed - Adv. " + lawyerName,
+                                "Hello " + clientName + ",\n\nGreat news! Adv. " + lawyerName
+                                        + " has confirmed your legal consultation scheduled for " + timeStr
+                                        + ".\n\nYou can now open the app to view consultation details or message your lawyer.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+                if (p != null) {
+                    providerNotificationService.notifyProvider(
+                            p,
+                            "BOOKING_CONFIRMED",
+                            "Consultation Confirmed",
+                            "You confirmed the appointment with " + clientName + " for " + timeStr + ".",
+                            b.getId(),
+                            false
+                    );
+                }
+            } else if (to == ProviderBookingStatus.CANCELLED) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Appointment Declined",
+                        "Adv. " + lawyerName + " was unable to confirm your consultation for " + timeStr + ".",
+                        Map.of("type", "LAWYER_CANCELLED", "bookingId", String.valueOf(b.getId()))
+                );
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Appointment Update - Adv. " + lawyerName,
+                                "Hello " + clientName + ",\n\nAdv. " + lawyerName
+                                        + " was unable to take your legal consultation for " + timeStr
+                                        + ".\n\nPlease visit the Legal directory to find alternative slots or connect with another verified lawyer.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+                if (p != null) {
+                    providerNotificationService.notifyProvider(
+                            p,
+                            "BOOKING_CANCELLED",
+                            "Consultation Cancelled",
+                            "Consultation with " + clientName + " for " + timeStr + " was cancelled.",
+                            b.getId(),
+                            false
+                    );
+                }
+            } else if (to == ProviderBookingStatus.COMPLETED) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Consultation Completed",
+                        "Your consultation with Adv. " + lawyerName + " is complete. Tap to leave a rating and review.",
+                        Map.of("type", "LAWYER_COMPLETED", "bookingId", String.valueOf(b.getId()))
+                );
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Consultation Completed - Adv. " + lawyerName,
+                                "Hello " + clientName + ",\n\nYour consultation with Adv. " + lawyerName
+                                        + " has concluded.\n\nWe would love to hear your feedback. Open the app to leave a review!\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<Map<String, Object>> getNotifications(HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("notifications", providerNotificationService.listForProvider(p.getId()));
+        res.put("unreadCount", providerNotificationService.unreadCount(p.getId()));
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/notifications/read-all")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> markNotificationsReadAll(HttpSession session) {
+        ServiceProvider p = requireProvider(session);
+        if (p == null) return unauthorized();
+        providerNotificationService.markAllRead(p.getId());
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "All notifications marked as read");
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/classes")
@@ -587,7 +714,7 @@ public class MobileMarketplaceProviderAuthController {
     }
 
     @GetMapping("/bookings/{id}/messages")
-    public ResponseEntity<Map<String, Object>> bookingMessages(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> bookingMessages(@PathVariable("id") Long id, HttpSession session) {
         ServiceProvider p = requireProvider(session);
         if (p == null) return unauthorized();
         ProviderBooking booking = bookingRepo.findById(id).orElse(null);
@@ -601,7 +728,7 @@ public class MobileMarketplaceProviderAuthController {
     @PostMapping("/bookings/{id}/messages")
     @Transactional
     public ResponseEntity<Map<String, Object>> sendBookingMessage(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         ServiceProvider p = requireProvider(session);

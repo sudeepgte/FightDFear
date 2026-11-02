@@ -38,10 +38,10 @@ public class BuddyController {
 
     @PostMapping("/availability/start")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> start(@RequestParam double latitude,
-                                                     @RequestParam double longitude,
-                                                     @RequestParam String destination,
-                                                     @RequestParam(defaultValue = "60") int windowMinutes,
+    public ResponseEntity<Map<String, Object>> start(@RequestParam("latitude") double latitude,
+                                                     @RequestParam("longitude") double longitude,
+                                                     @RequestParam("destination") String destination,
+                                                     @RequestParam(value = "windowMinutes", defaultValue = "60") int windowMinutes,
                                                      HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res(false, "Login required."));
@@ -79,10 +79,10 @@ public class BuddyController {
 
     @GetMapping("/matches")
     @ResponseBody
-    public ResponseEntity<?> matches(@RequestParam double latitude,
-                                     @RequestParam double longitude,
-                                     @RequestParam String destination,
-                                     @RequestParam(defaultValue = "3") double radiusKm,
+    public ResponseEntity<?> matches(@RequestParam("latitude") double latitude,
+                                     @RequestParam("longitude") double longitude,
+                                     @RequestParam("destination") String destination,
+                                     @RequestParam(value = "radiusKm", defaultValue = "3") double radiusKm,
                                      HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res(false, "Login required."));
@@ -102,7 +102,7 @@ public class BuddyController {
 
     @PostMapping("/request")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> send(@RequestParam Long availabilityId, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> send(@RequestParam("availabilityId") Long availabilityId, HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res(false, "Login required."));
 
@@ -120,7 +120,7 @@ public class BuddyController {
 
     @PostMapping("/request/{id}/accept")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> accept(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> accept(@PathVariable("id") Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res(false, "Login required."));
 
@@ -143,7 +143,7 @@ public class BuddyController {
 
     @PostMapping("/request/{id}/reject")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> reject(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> reject(@PathVariable("id") Long id, HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res(false, "Login required."));
 

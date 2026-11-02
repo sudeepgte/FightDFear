@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import '../../config/marketplace_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/marketplace_provider_auth_service.dart';
-import '../../widgets/registration_form_kit.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
+import '../../widgets/registration_form_kit.dart';
 import '../../widgets/ux_feedback.dart';
 
 /// Complete marketplace provider profile after quick registration.
@@ -308,6 +309,8 @@ class _MarketplaceProviderProfileCompletionScreenState
                       : MarketplaceCatalog.servicePartnerCodes.first,
                   decoration: const InputDecoration(
                     labelText: 'Service category *',
+                    helperText: 'Select your primary marketplace service category',
+                    helperMaxLines: 2,
                     border: OutlineInputBorder(),
                   ),
                   items: MarketplaceCatalog.servicePartnerItems
@@ -362,6 +365,8 @@ class _MarketplaceProviderProfileCompletionScreenState
         keyboardType: keyboard,
         decoration: InputDecoration(
           labelText: label,
+          helperText: ProfileFieldHelper.instructionForField(label: label),
+          helperMaxLines: 2,
           border: const OutlineInputBorder(),
         ),
       ),

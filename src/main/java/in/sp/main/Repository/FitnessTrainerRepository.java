@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public interface FitnessTrainerRepository extends JpaRepository<FitnessTrainer, Long> {
     Optional<FitnessTrainer> findByEmail(String email);
+    Optional<FitnessTrainer> findByEmailIgnoreCase(String email);
     List<FitnessTrainer> findByVerificationStatus(VerificationStatus status);
     long countByVerificationStatus(VerificationStatus status);
     List<FitnessTrainer> findByVerificationStatusAndSuspended(VerificationStatus status, boolean suspended);

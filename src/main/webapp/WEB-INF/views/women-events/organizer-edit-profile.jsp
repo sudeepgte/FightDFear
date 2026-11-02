@@ -1064,8 +1064,8 @@
     <!-- Header Navigation -->
     <header class="app-header">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" style="color: var(--navy); font-size: 1.25rem; text-decoration: none;" title="Back to Dashboard">
-                <i class="bi bi-arrow-left"></i>
+            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-events/organizer/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 6px;" title="Go Back">
+                <i class="bi bi-arrow-left"></i> Back
             </a>
             <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="header-brand">
                 <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
@@ -1074,6 +1074,9 @@
             </a>
         </div>
         <div class="header-actions">
+            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="margin-right:8px;">
+                <i class="bi bi-house-door"></i> Back to Home
+            </a>
             <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="btn-skip">
                 <i class="bi bi-speedometer2"></i> Dashboard
             </a>
@@ -1087,6 +1090,15 @@
     </header>
 
     <main class="main-container">
+
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-events/organizer/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-house-door"></i> Back to Home
+            </a>
+        </div>
 
         <c:set var="statusStr" value="${host.partnerProfileStatus != null ? host.partnerProfileStatus : 'PROFILE_INCOMPLETE'}"/>
 

@@ -166,8 +166,8 @@ public class StylistController {
     }
 
     @PostMapping("/login")
-    public String loginStylist(@RequestParam String email,
-                               @RequestParam String password,
+    public String loginStylist(@RequestParam("email") String email,
+                               @RequestParam("password") String password,
                                HttpSession session,
                                jakarta.servlet.http.HttpServletResponse response,
                                Model model) {
@@ -242,7 +242,7 @@ public class StylistController {
     // 4️⃣ Assign Available Timing for Booking (Confirm)
     // ==============================
     @PostMapping("/booking/confirm")
-    public String confirmBooking(@RequestParam Long bookingId,
+    public String confirmBooking(@RequestParam("bookingId") Long bookingId,
                                  HttpSession session) {
         Stylist stylist = (Stylist) session.getAttribute("loggedStylist");
         if (stylist == null) return "redirect:/stylists/login";
@@ -259,7 +259,7 @@ public class StylistController {
         return "redirect:/stylists/dashboard";
     }
     @PostMapping("/booking/reject")
-    public String rejectBooking(@RequestParam Long bookingId,
+    public String rejectBooking(@RequestParam("bookingId") Long bookingId,
                                 HttpSession session) {
 
         Stylist stylist = (Stylist) session.getAttribute("loggedStylist");
@@ -278,7 +278,7 @@ public class StylistController {
     }
 
     @PostMapping("/booking/complete")
-    public String completeBooking(@RequestParam Long bookingId, HttpSession session, Model model) {
+    public String completeBooking(@RequestParam("bookingId") Long bookingId, HttpSession session, Model model) {
         Stylist stylist = (Stylist) session.getAttribute("loggedStylist");
         if (stylist == null) return "redirect:/stylists/login";
 

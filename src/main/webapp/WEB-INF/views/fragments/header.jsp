@@ -306,40 +306,45 @@
     <nav id="navmenu" class="navmenu">
       <ul>
         <c:choose>
+            <c:when test="${not empty sessionScope.admin}">
+                <li><a href="${pageContext.request.contextPath}/admin/adminDashboard">Admin Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedDoctor}">
+                <li><a href="${pageContext.request.contextPath}/doctors/dashboard">Doctor Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedSalon}">
+                <li><a href="${pageContext.request.contextPath}/salon/salon-dashboard">Glow Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/salons/logout">Sign Out</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedLawyer}">
+                <li><a href="${pageContext.request.contextPath}/marketplace/provider/dashboard">Provider Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedCentre}">
+                <li><a href="${pageContext.request.contextPath}/centreDashboard">Centre Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
+            </c:when>
             <c:when test="${not empty sessionScope.loggedTrainer}">
-                <!-- Notification Bell for Broadcasts -->
-                <li>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
-                        <div style="position: relative; display: inline-block;">
-                            <i class="fas fa-bell fs-5 bell-dynamic ${unreadBroadcastCount > 0 ? 'bell-ringing' : ''}"></i>
-                            <c:if test="${unreadBroadcastCount > 0}">
-                                <span id="broadcastBadge" class="position-absolute badge rounded-pill bg-danger" 
-                                      style="font-size: 0.65rem; top: -5px; right: -10px; padding: 3px 6px;">
-                                    ${unreadBroadcastCount}
-                                </span>
-                            </c:if>
-                        </div>
-                    </a>
-                </li>
-                <li><a href="${pageContext.request.contextPath}/fitness/trainer/dashboard">${sessionScope.loggedTrainer.fullName} (Coach)</a></li>
+                <li><a href="${pageContext.request.contextPath}/fitness/trainer/dashboard">Coach Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
             </c:when>
             <c:when test="${not empty sessionScope.loggedHost}">
-                <li><a href="${pageContext.request.contextPath}/women-events/organizer/dashboard">Dashboard</a></li>
-                <!-- Notification Bell for Broadcasts -->
-                <li>
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#broadcastModal" onclick="markBroadcastsAsRead()" style="display: flex; align-items: center; color: #334155 !important;">
-                        <div style="position: relative; display: inline-block;">
-                            <i class="fas fa-bell fs-5 bell-dynamic ${unreadBroadcastCount > 0 ? 'bell-ringing' : ''}"></i>
-                            <c:if test="${unreadBroadcastCount > 0}">
-                                <span id="broadcastBadge" class="position-absolute badge rounded-pill bg-danger" 
-                                      style="font-size: 0.65rem; top: -5px; right: -10px; padding: 3px 6px;">
-                                    ${unreadBroadcastCount}
-                                </span>
-                            </c:if>
-                        </div>
-                    </a>
-                </li>
-                <li><a href="${pageContext.request.contextPath}/women-events/organizer/dashboard">${sessionScope.loggedHost.fullName} (Host)</a></li>
+                <li><a href="${pageContext.request.contextPath}/women-events/organizer/dashboard">Host Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedEntrepreneur}">
+                <li><a href="${pageContext.request.contextPath}/entrepreneur/dashboard">Entrepreneur Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedInvestor}">
+                <li><a href="${pageContext.request.contextPath}/investor/dashboard">Investor Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedSeller}">
+                <li><a href="${pageContext.request.contextPath}/women-products/seller/dashboard">Seller Dashboard</a></li>
+                <li><a href="${pageContext.request.contextPath}/logout">Sign Out</a></li>
             </c:when>
             <c:when test="${not empty headerUser}">
                 <li><a href="${pageContext.request.contextPath}/">Home</a></li>
@@ -373,11 +378,16 @@
             </c:otherwise>
         </c:choose>
       </ul>
-      <!-- Removed mobile-nav-toggle per user request -->
     </nav>
         <c:choose>
-            <c:when test="${not empty sessionScope.loggedTrainer}">
-                <!-- Profile Image Removed -->
+            <c:when test="${not empty sessionScope.admin}">
+                <a href="${pageContext.request.contextPath}/admin/adminDashboard" class="btn-getstarted ms-3 d-none d-sm-inline-block">Admin</a>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedDoctor}">
+                <a href="${pageContext.request.contextPath}/doctors/dashboard" class="btn-getstarted ms-3 d-none d-sm-inline-block">Doctor</a>
+            </c:when>
+            <c:when test="${not empty sessionScope.loggedSalon}">
+                <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn-getstarted ms-3 d-none d-sm-inline-block">Glow Space</a>
             </c:when>
             <c:when test="${not empty sessionScope.loggedHost}">
                 <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="ms-3">

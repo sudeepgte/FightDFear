@@ -11,6 +11,11 @@ import java.util.*;
 @Service
 public class LocationDirectoryService {
 
+    private static final List<String> ALL_COUNTRIES = List.of(
+            "India", "United States", "United Kingdom", "Canada",
+            "Australia", "United Arab Emirates", "Singapore", "Other"
+    );
+
     private static final List<String> ALL_STATES = List.of(
             "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
             "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
@@ -254,6 +259,10 @@ public class LocationDirectoryService {
         ));
     }
 
+    public List<String> getCountries() {
+        return ALL_COUNTRIES;
+    }
+
     public List<String> getStates() {
         return ALL_STATES;
     }
@@ -267,6 +276,79 @@ public class LocationDirectoryService {
             }
         }
         return Collections.emptyList();
+    }
+
+    public List<String> getDistricts(String state) {
+        return getCities(state);
+    }
+
+    /**
+     * Resolves a city, district, or area search query to its Country, State, District, and City.
+     */
+    public Map<String, Object> lookupHierarchy(String query) {
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", false);
+        res.put("country", "India");
+        if (query == null || query.isBlank()) {
+            return res;
+        }
+        String q = query.trim().toLowerCase(Locale.ROOT);
+
+        // 1. Search in Localities/Areas first
+        for (Map.Entry<String, List<String>> entry : CITY_AREAS.entrySet()) {
+            String districtOrCity = entry.getKey();
+            for (String area : entry.getValue()) {
+                if (area.toLowerCase(Locale.ROOT).contains(q) || q.contains(area.toLowerCase(Locale.ROOT))) {
+                    // Find parent state
+                    String state = findStateForDistrictOrCity(districtOrCity);
+                    res.put("success", true);
+                    res.put("state", state);
+                    res.put("district", districtOrCity);
+                    res.put("city", area);
+                    return res;
+                }
+            }
+        }
+
+        // 2. Search in Districts/Cities
+        for (Map.Entry<String, List<String>> entry : STATE_CITIES.entrySet()) {
+            String state = entry.getKey();
+            for (String dist : entry.getValue()) {
+                if (dist.toLowerCase(Locale.ROOT).contains(q) || q.contains(dist.toLowerCase(Locale.ROOT))) {
+                    res.put("success", true);
+                    res.put("state", state);
+                    res.put("district", dist);
+                    res.put("city", dist);
+                    return res;
+                }
+            }
+        }
+
+        // 3. Search in States
+        for (String st : ALL_STATES) {
+            if (st.toLowerCase(Locale.ROOT).contains(q) || q.contains(st.toLowerCase(Locale.ROOT))) {
+                res.put("success", true);
+                res.put("state", st);
+                List<String> dists = getDistricts(st);
+                String firstDist = dists.isEmpty() ? st : dists.get(0);
+                res.put("district", firstDist);
+                res.put("city", firstDist);
+                return res;
+            }
+        }
+
+        return res;
+    }
+
+    private String findStateForDistrictOrCity(String districtOrCity) {
+        for (Map.Entry<String, List<String>> entry : STATE_CITIES.entrySet()) {
+            for (String c : entry.getValue()) {
+                if (c.equalsIgnoreCase(districtOrCity)) {
+                    return entry.getKey();
+                }
+            }
+        }
+        return "Karnataka";
     }
 
     public List<String> getAreas(String state, String city) {

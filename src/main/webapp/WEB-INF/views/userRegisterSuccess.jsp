@@ -117,6 +117,9 @@
         </a>
         <p class="note">Your email (and password for this browser session) will be ready on the login form.</p>
     </div>
+<script>
+    window.location.href = "${pageContext.request.contextPath}/login?registered=true";
+</script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

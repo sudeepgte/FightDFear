@@ -130,7 +130,7 @@ public class ChatController {
     // Video call window
     @GetMapping("/video-call/{receiverId}")
     public String openVideoCall(@PathVariable Long receiverId, 
-                                @RequestParam(required = false) boolean notify,
+                                @RequestParam(value = "notify", required = false) boolean notify,
                                 Model model, HttpSession session) {
         User sender = (User) session.getAttribute("user");
         if (sender == null) return "redirect:/login";
@@ -160,7 +160,7 @@ public class ChatController {
 
     @GetMapping("/call/{receiverId}")
     public String openVoiceCall(@PathVariable Long receiverId, 
-                                @RequestParam(required = false) boolean notify,
+                                @RequestParam(value = "notify", required = false) boolean notify,
                                 Model model, HttpSession session) {
         User sender = (User) session.getAttribute("user");
         if (sender == null) return "redirect:/login";
@@ -193,8 +193,8 @@ public class ChatController {
 
     @PostMapping("/sendReel")
     @ResponseBody
-    public String sendReel(@RequestParam Long receiverId,
-                           @RequestParam String videoUrl,
+    public String sendReel(@RequestParam("receiverId") Long receiverId,
+                           @RequestParam("videoUrl") String videoUrl,
                            HttpSession session) {
 
         User sender = (User) session.getAttribute("user");
@@ -271,7 +271,7 @@ public class ChatController {
     @ResponseBody
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> apiPollMessages(@PathVariable Long otherUserId,
-                                                                 @RequestParam(required = false) String since,
+                                                                 @RequestParam(value = "since", required = false) String since,
                                                                  HttpSession session) {
         User me = (User) session.getAttribute("user");
         if (me == null) {

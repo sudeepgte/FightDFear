@@ -91,6 +91,9 @@ public class MobileMartialArtsCentreController {
     @Autowired
     private in.sp.main.Repository.CentreInstructorRepository instructorRepository;
 
+    @Autowired
+    private in.sp.main.Repository.CentreReviewRepository centreReviewRepository;
+
     @PostMapping("/otp/send-email")
 
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -149,14 +152,14 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, Object>> registerCentre(
-            @RequestParam String name,
-            @RequestParam String location,
-            @RequestParam String phoneNumber,
-            @RequestParam String email,
-            @RequestParam String password,
-            @RequestParam(required = false) String about,
-            @RequestParam(required = false) String howWeTeach,
-            @RequestParam(required = false) String whatWeOffer,
+            @RequestParam("name") String name,
+            @RequestParam("location") String location,
+            @RequestParam("phoneNumber") String phoneNumber,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam(value = "about", required = false) String about,
+            @RequestParam(value = "howWeTeach", required = false) String howWeTeach,
+            @RequestParam(value = "whatWeOffer", required = false) String whatWeOffer,
             @RequestParam(value = "availableDays", required = false) String availableDaysCsv,
             @RequestParam("martialArtsJson") String martialArtsJson,
             @RequestPart(value = "certificate", required = false) MultipartFile certificate,
@@ -365,18 +368,19 @@ public class MobileMartialArtsCentreController {
 
         session.setAttribute("loggedCentre", center);
         String token = jwtUtil.generateToken(center.getEmail(), "CENTRE");
+        boolean isApproved = center.isApproved() || center.getCentreProfileStatus() == CentreProfileStatus.APPROVED;
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("success", true);
         response.put("token", token);
         response.put("tokenType", "Bearer");
         response.put("role", "CENTRE");
+        response.put("approved", isApproved);
+        response.put("status", isApproved ? "APPROVED" : (center.getCentreProfileStatus() != null ? center.getCentreProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        response.put("partnerProfileStatus", isApproved ? "APPROVED" : (center.getCentreProfileStatus() != null ? center.getCentreProfileStatus().name() : "PROFILE_INCOMPLETE"));
         response.put("centre", centreDto(center));
-        response.put("needsProfileCompletion",
-                center.getCentreProfileStatus() != CentreProfileStatus.APPROVED
-                        && center.getCentreProfileStatus() != CentreProfileStatus.PENDING_ADMIN_APPROVAL);
-        response.put("canSubmitForVerification",
-                centreProfileService.isReadyForVerification(center)
+        response.put("needsProfileCompletion", !isApproved && center.getCentreProfileStatus() != CentreProfileStatus.PENDING_ADMIN_APPROVAL);
+        response.put("canSubmitForVerification", !isApproved && centreProfileService.isReadyForVerification(center)
                         && center.getCentreProfileStatus() != CentreProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(response);
     }
@@ -556,6 +560,12 @@ public class MobileMartialArtsCentreController {
 
         try {
             MartialArtsCenter center = centreRepository.findById(centre.getId()).orElse(centre);
+
+            // Approval gate enforcement
+            if (!center.isApproved() && center.getCentreProfileStatus() != CentreProfileStatus.APPROVED) {
+                return badRequest("Your centre must be approved by an Admin before you can publish batches.");
+            }
+
             MartialArtsBatch batch;
             Object idObj = body.get("id");
             if (idObj != null && !idObj.toString().isBlank()) {
@@ -583,26 +593,47 @@ public class MobileMartialArtsCentreController {
             if (body.get("availableDays") != null) batch.setAvailableDays(body.get("availableDays").toString());
             if (body.get("batchType") != null) batch.setBatchType(body.get("batchType").toString());
             if (body.get("status") != null) batch.setStatus(body.get("status").toString());
-            if (body.get("capacity") != null) batch.setCapacity(Integer.parseInt(body.get("capacity").toString()));
+            if (batch.getStatus() == null || batch.getStatus().isBlank()) batch.setStatus("Active");
+            if (batch.getBatchType() == null || batch.getBatchType().isBlank()) batch.setBatchType("Offline");
+
+            if (body.get("capacity") != null && !body.get("capacity").toString().isBlank()) {
+                try {
+                    batch.setCapacity(Integer.parseInt(body.get("capacity").toString().trim()));
+                } catch (Exception ignored) {}
+            }
             if (body.get("meetingLink") != null) batch.setMeetingLink(body.get("meetingLink").toString());
             if (body.get("location") != null) batch.setLocation(body.get("location").toString());
             if (body.get("timeSlot") != null) batch.setTimeSlot(body.get("timeSlot").toString());
-            if (body.get("fee") != null) batch.setFee(Double.parseDouble(body.get("fee").toString()));
+            if (body.get("fee") != null && !body.get("fee").toString().isBlank()) {
+                try {
+                    batch.setFee(Double.parseDouble(body.get("fee").toString().trim()));
+                } catch (Exception ignored) {}
+            }
             if (body.get("admissionFee") != null && !body.get("admissionFee").toString().isBlank()) {
-                batch.setAdmissionFee(Double.parseDouble(body.get("admissionFee").toString()));
+                try {
+                    batch.setAdmissionFee(Double.parseDouble(body.get("admissionFee").toString().trim()));
+                } catch (Exception ignored) {}
             }
             if (body.get("trialType") != null) batch.setTrialType(body.get("trialType").toString());
             if (body.get("bufferMinutes") != null && !body.get("bufferMinutes").toString().isBlank()) {
-                batch.setBufferMinutes(Integer.parseInt(body.get("bufferMinutes").toString()));
+                try {
+                    batch.setBufferMinutes(Integer.parseInt(body.get("bufferMinutes").toString().trim()));
+                } catch (Exception ignored) {}
             }
             if (body.get("durationMinutes") != null && !body.get("durationMinutes").toString().isBlank()) {
-                batch.setDurationMinutes(Integer.parseInt(body.get("durationMinutes").toString()));
+                try {
+                    batch.setDurationMinutes(Integer.parseInt(body.get("durationMinutes").toString().trim()));
+                } catch (Exception ignored) {}
             }
-            if (body.get("startDate") != null && !body.get("startDate").toString().isBlank()) {
-                batch.setStartDate(java.time.LocalDate.parse(body.get("startDate").toString()));
+            if (body.get("startDate") != null && !body.get("startDate").toString().trim().isEmpty()) {
+                try {
+                    batch.setStartDate(java.time.LocalDate.parse(body.get("startDate").toString().trim()));
+                } catch (Exception ignored) {}
             }
-            if (body.get("endDate") != null && !body.get("endDate").toString().isBlank()) {
-                batch.setEndDate(java.time.LocalDate.parse(body.get("endDate").toString()));
+            if (body.get("endDate") != null && !body.get("endDate").toString().trim().isEmpty()) {
+                try {
+                    batch.setEndDate(java.time.LocalDate.parse(body.get("endDate").toString().trim()));
+                } catch (Exception ignored) {}
             }
 
             MartialArtsBatch saved = batchRepository.save(batch);
@@ -618,7 +649,7 @@ public class MobileMartialArtsCentreController {
 
     @DeleteMapping("/batches/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteBatch(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteBatch(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -698,17 +729,19 @@ public class MobileMartialArtsCentreController {
                 ? java.time.LocalDate.now()
                 : java.time.LocalDate.parse(dateStr);
         String dayOfWeek = date.getDayOfWeek().name().toUpperCase(Locale.ROOT);
+        String shortDay = dayOfWeek.substring(0, Math.min(3, dayOfWeek.length()));
 
         List<MartialArtsBatch> allBatches = batchRepository.findByCenterId(centre.getId());
         List<Map<String, Object>> todayBatches = allBatches.stream()
                 .filter(b -> b.getAvailableDays() != null
-                        && b.getAvailableDays().toUpperCase(Locale.ROOT).contains(dayOfWeek))
+                        && (b.getAvailableDays().toUpperCase(Locale.ROOT).contains(dayOfWeek)
+                            || b.getAvailableDays().toUpperCase(Locale.ROOT).contains(shortDay)))
                 .map(b -> sessionItem(b.getId(), b.getName(), b.getTimeSlot(), "BATCH", "OFFLINE"))
                 .collect(java.util.stream.Collectors.toList());
 
         if (todayBatches.isEmpty()) {
             todayBatches = allBatches.stream()
-                    .filter(b -> "Active".equalsIgnoreCase(b.getStatus()))
+                    .filter(b -> "Active".equalsIgnoreCase(b.getStatus()) || b.getStatus() == null || b.getStatus().isBlank())
                     .map(b -> sessionItem(b.getId(), b.getName() + " (All Days)", b.getTimeSlot(), "BATCH", "OFFLINE"))
                     .collect(java.util.stream.Collectors.toList());
         }
@@ -731,9 +764,9 @@ public class MobileMartialArtsCentreController {
     @GetMapping("/attendance/trainees")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> attendanceTrainees(
-            @RequestParam String type,
-            @RequestParam Long id,
-            @RequestParam String date,
+            @RequestParam("type") String type,
+            @RequestParam("id") Long id,
+            @RequestParam("date") String date,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -759,19 +792,25 @@ public class MobileMartialArtsCentreController {
         }
 
         Map<Long, Attendance> attendanceMap = existing.stream()
+                .filter(a -> a.getUser() != null)
                 .collect(java.util.stream.Collectors.toMap(
                         a -> a.getUser().getId(), a -> a, (a1, a2) -> a1));
 
-        List<Map<String, Object>> traineeList = enrollments.stream().map(e -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("userId", e.getUser().getId());
-            m.put("name", e.getUser().getFullName());
-            m.put("email", e.getUser().getEmail());
-            Attendance a = attendanceMap.get(e.getUser().getId());
-            m.put("status", a != null ? a.getStatus().name() : "PENDING");
-            m.put("notes", a != null ? a.getNotes() : "");
-            return m;
-        }).collect(java.util.stream.Collectors.toList());
+        List<Map<String, Object>> traineeList = enrollments.stream()
+                .filter(e -> e.getStatus() != TrainingStatus.CANCELLED && e.getStatus() != TrainingStatus.REJECTED)
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    Long uId = e.getUser() != null ? e.getUser().getId() : e.getId();
+                    m.put("userId", uId);
+                    m.put("name", e.getFullName() != null && !e.getFullName().isBlank() ? e.getFullName()
+                            : (e.getUser() != null ? e.getUser().getFullName() : "Student #" + e.getId()));
+                    m.put("email", e.getEmail() != null ? e.getEmail()
+                            : (e.getUser() != null ? e.getUser().getEmail() : ""));
+                    Attendance a = attendanceMap.get(uId);
+                    m.put("status", a != null && a.getStatus() != null ? a.getStatus().name() : "PENDING");
+                    m.put("notes", a != null && a.getNotes() != null ? a.getNotes() : "");
+                    return m;
+                }).collect(java.util.stream.Collectors.toList());
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
@@ -802,7 +841,13 @@ public class MobileMartialArtsCentreController {
             for (Map<String, Object> t : trainees) {
                 Long userId = Long.parseLong(t.get("userId").toString());
                 AttendanceStatus status = AttendanceStatus.valueOf(t.get("status").toString());
-                User user = userRepository.findById(userId).orElseThrow();
+                Optional<User> uOpt = userRepository.findById(userId);
+                User user = uOpt.orElse(null);
+                if (user == null) {
+                    Enrollment enr = enrollmentRepository.findById(userId).orElse(null);
+                    if (enr != null) user = enr.getUser();
+                }
+                if (user == null) continue;
 
                 Attendance attendance;
                 if ("BATCH".equalsIgnoreCase(type)) {
@@ -963,7 +1008,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/online-classes/{id}/start")
     @Transactional
-    public ResponseEntity<Map<String, Object>> startOnlineClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> startOnlineClass(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -993,7 +1038,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/online-classes/{id}/end")
     @Transactional
-    public ResponseEntity<Map<String, Object>> endOnlineClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> endOnlineClass(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -1013,7 +1058,7 @@ public class MobileMartialArtsCentreController {
 
     @DeleteMapping("/online-classes/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteOnlineClass(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteOnlineClass(@PathVariable("id") Long id, HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
 
@@ -1032,13 +1077,13 @@ public class MobileMartialArtsCentreController {
     @PostMapping(value = "/settings", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<Map<String, Object>> updateSettings(
-            @RequestParam String name,
-            @RequestParam String email,
-            @RequestParam(required = false) String phoneNumber,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String about,
-            @RequestParam(required = false) String howWeTeach,
-            @RequestParam(required = false) String whatWeOffer,
+            @RequestParam("name") String name,
+            @RequestParam("email") String email,
+            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "about", required = false) String about,
+            @RequestParam(value = "howWeTeach", required = false) String howWeTeach,
+            @RequestParam(value = "whatWeOffer", required = false) String whatWeOffer,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             @RequestParam(value = "certificate", required = false) MultipartFile certificate,
             @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
@@ -1259,7 +1304,14 @@ public class MobileMartialArtsCentreController {
         meta.put("popularProgram", popular);
         meta.put("bestTrainer", bestTrainer);
         meta.put("highestRevenueProgram", popular);
-        meta.put("rating", center.getRating() == null || center.getRating() <= 0 ? 4.8 : center.getRating());
+
+        List<CentreReview> revs = centreReviewRepository.findByCentre_IdOrderByCreatedAtDesc(center.getId());
+        long reviewCount = revs != null ? revs.size() : 0;
+        double avgRating = (reviewCount > 0)
+                ? Math.round(revs.stream().mapToInt(CentreReview::getRating).average().orElse(0.0) * 10.0) / 10.0
+                : (center.getRating() != null ? center.getRating() : 0.0);
+        meta.put("rating", avgRating);
+        meta.put("reviewCount", reviewCount);
         meta.put("payoutBalance", center.getPayoutBalance() == null ? 0 : center.getPayoutBalance());
         meta.put("upiId", center.getUpiId());
         meta.put("bankDetails", center.getBankDetails());
@@ -1355,7 +1407,11 @@ public class MobileMartialArtsCentreController {
         m.put("phoneNumber", c.getPhoneNumber());
         m.put("location", c.getLocation());
         m.put("locationLabel", prettyLocation(c.getLocation()));
-        m.put("mapsUrl", mapsUrl(c.getLocation()));
+        m.put("mapsUrl", mapsUrl(c));
+        m.put("googleMapLocation", c.getGoogleMapLocation());
+        m.put("centreLat", c.getCentreLat());
+        m.put("centreLng", c.getCentreLng());
+        m.put("area", c.getArea());
         m.put("profilePhoto", c.getProfilePhoto());
         m.put("about", c.getAbout());
         m.put("howWeTeach", c.getHowWeTeach());
@@ -1374,7 +1430,14 @@ public class MobileMartialArtsCentreController {
         m.put("pincode", c.getPincode());
         m.put("upiId", c.getUpiId());
         m.put("payoutBalance", c.getPayoutBalance() == null ? 0 : c.getPayoutBalance());
-        m.put("rating", c.getRating() == null ? 0 : c.getRating());
+
+        List<CentreReview> revs = centreReviewRepository.findByCentre_IdOrderByCreatedAtDesc(c.getId());
+        long count = revs != null ? revs.size() : 0;
+        double avg = (count > 0)
+                ? Math.round(revs.stream().mapToInt(CentreReview::getRating).average().orElse(0.0) * 10.0) / 10.0
+                : (c.getRating() != null ? c.getRating() : 0.0);
+        m.put("rating", avg);
+        m.put("reviewCount", count);
         m.put("trialAvailable", Boolean.TRUE.equals(c.getTrialAvailable()));
         return m;
     }
@@ -1400,11 +1463,19 @@ public class MobileMartialArtsCentreController {
         return v;
     }
 
-    private static String mapsUrl(String location) {
-        if (location == null || location.isBlank()) return null;
-        String v = location.trim();
-        if (v.startsWith("http://") || v.startsWith("https://")) return v;
-        return "https://maps.google.com/?q=" + java.net.URLEncoder.encode(v, java.nio.charset.StandardCharsets.UTF_8);
+    private static String mapsUrl(MartialArtsCenter c) {
+        if (c.getGoogleMapLocation() != null && !c.getGoogleMapLocation().isBlank()) {
+            return c.getGoogleMapLocation().trim();
+        }
+        if (c.getCentreLat() != null && c.getCentreLng() != null) {
+            return "https://www.google.com/maps/search/?api=1&query=" + c.getCentreLat() + "," + c.getCentreLng();
+        }
+        if (c.getLocation() != null && !c.getLocation().isBlank()) {
+            String v = c.getLocation().trim();
+            if (v.startsWith("http://") || v.startsWith("https://")) return v;
+            return "https://www.google.com/maps/search/?api=1&query=" + java.net.URLEncoder.encode(v, java.nio.charset.StandardCharsets.UTF_8);
+        }
+        return null;
     }
 
     private static String managerFromEmail(String email) {
@@ -1453,9 +1524,24 @@ public class MobileMartialArtsCentreController {
     }
 
     private MartialArtsCenter requireCentre(HttpSession session) {
-        if (session == null) return null;
-        Object c = session.getAttribute("loggedCentre");
-        return c instanceof MartialArtsCenter ? (MartialArtsCenter) c : null;
+        if (session != null) {
+            Object c = session.getAttribute("loggedCentre");
+            if (c instanceof MartialArtsCenter) return (MartialArtsCenter) c;
+        }
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
+            String email = auth.getName().trim();
+            Optional<MartialArtsCenter> opt = centreRepository.findByEmail(email.toLowerCase(Locale.ROOT));
+            if (opt.isEmpty()) {
+                opt = centreRepository.findByEmail(email);
+            }
+            if (opt.isPresent()) {
+                if (session != null) session.setAttribute("loggedCentre", opt.get());
+                return opt.get();
+            }
+        }
+        return null;
     }
 
     private ResponseEntity<Map<String, Object>> unauthorized() {
@@ -1471,6 +1557,7 @@ public class MobileMartialArtsCentreController {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("success", false);
         body.put("error", error);
+        body.put("message", error);
         return body;
     }
 
@@ -1510,8 +1597,8 @@ public class MobileMartialArtsCentreController {
 
     @GetMapping("/qr-session")
     public ResponseEntity<Map<String, Object>> getMobileQrSession(
-            @RequestParam Long batchId,
-            @RequestParam(required = false) String date,
+            @RequestParam("batchId") Long batchId,
+            @RequestParam(value = "date", required = false) String date,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1537,7 +1624,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/qr-session/{id}/close")
     public ResponseEntity<Map<String, Object>> closeMobileQrSession(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1555,7 +1642,7 @@ public class MobileMartialArtsCentreController {
     // ==========================================
 
     @GetMapping("/grading/criteria")
-    public ResponseEntity<Map<String, Object>> getMobileGradingCriteria(@RequestParam(required = false) String discipline) {
+    public ResponseEntity<Map<String, Object>> getMobileGradingCriteria(@RequestParam(value = "discipline", required = false) String discipline) {
         List<String> criteria = beltGradingService.getDisciplineCriteria(discipline);
         List<String> belts = beltGradingService.getBeltHierarchy(discipline);
         return ResponseEntity.ok(Map.of("success", true, "criteria", criteria, "belts", belts));
@@ -1601,7 +1688,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/gradings/{id}/score")
     public ResponseEntity<Map<String, Object>> conductMobileAssessment(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
@@ -1629,7 +1716,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/gradings/{id}/promote")
     public ResponseEntity<Map<String, Object>> approveMobilePromotion(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1685,7 +1772,7 @@ public class MobileMartialArtsCentreController {
 
     @DeleteMapping("/instructors/{id}")
     public ResponseEntity<Map<String, Object>> removeMobileInstructor(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);
         if (centre == null) return unauthorized();
@@ -1701,7 +1788,7 @@ public class MobileMartialArtsCentreController {
 
     @PostMapping("/enrollments/{id}/renewal")
     public ResponseEntity<Map<String, Object>> updateMobileRenewal(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         MartialArtsCenter centre = requireCentre(session);

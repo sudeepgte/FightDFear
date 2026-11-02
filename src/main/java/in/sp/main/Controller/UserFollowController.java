@@ -78,8 +78,8 @@ public class UserFollowController {
     // 🔍 SEARCH USERS + FOLLOWERS + FOLLOWING + REQUESTS
     @GetMapping("/search")
     public String searchUsers(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String tab,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "tab", required = false) String tab,
             Model model,
             HttpSession session) {
 
@@ -183,7 +183,7 @@ public class UserFollowController {
     // ➕ FOLLOW USER (creates PENDING request)
     @PostMapping("/follow/{id}")
     public String followUser(@PathVariable("id") Long followedId, 
-                             @RequestParam(required = false) String tab,
+                             @RequestParam(value = "tab", required = false) String tab,
                              HttpSession session) {
         User currentUser = (User) session.getAttribute("user");
         if (currentUser == null) return "redirect:/login";
@@ -324,8 +324,8 @@ public class UserFollowController {
 
     @GetMapping("/search1/{id}")
     public String searchUsers1(
-            @PathVariable Long id,
-            @RequestParam(required = false) Long videoId,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "videoId", required = false) Long videoId,
             Model model,
             HttpSession session) {
 
@@ -343,8 +343,8 @@ public class UserFollowController {
     @PostMapping("/chat/sendReel")
     @ResponseBody
     public String sendReelToChat(
-            @RequestParam Long videoId,
-            @RequestParam Long receiverId,
+            @RequestParam("videoId") Long videoId,
+            @RequestParam("receiverId") Long receiverId,
             HttpSession session) {
 
         User sender = (User) session.getAttribute("user");
@@ -369,8 +369,8 @@ public class UserFollowController {
 
     @GetMapping("/searchs/{id}")
     public String searchUserss(
-            @PathVariable Long id,
-            @RequestParam(required = false) Long videoId,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "videoId", required = false) Long videoId,
             Model model,
             HttpSession session) {
 
@@ -386,8 +386,8 @@ public class UserFollowController {
         return "friendse";
     }
     @PostMapping("/groups/create")
-    public String createGroup(@RequestParam String groupName,
-                              @RequestParam(required = false) List<Long> memberIds,
+    public String createGroup(@RequestParam("groupName") String groupName,
+                              @RequestParam(value = "memberIds", required = false) List<Long> memberIds,
                               HttpSession session) {
 
         User creator = (User) session.getAttribute("user");
@@ -467,7 +467,7 @@ public class UserFollowController {
     @PostMapping("/groups/{groupId}/send")
     public String sendGroupMessage(
             @PathVariable Long groupId,
-            @RequestParam String message,
+            @RequestParam("message") String message,
             HttpSession session) {
 
         User sender = (User) session.getAttribute("user");
@@ -492,7 +492,7 @@ public class UserFollowController {
     @PostMapping("/groups/{groupId}/add-member")
     public String addMemberToGroup(
             @PathVariable Long groupId,
-            @RequestParam Long userId,
+            @RequestParam("userId") Long userId,
             HttpSession session) {
 
         User currentUser = (User) session.getAttribute("user");

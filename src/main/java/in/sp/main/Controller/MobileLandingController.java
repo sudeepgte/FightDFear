@@ -34,6 +34,8 @@ public class MobileLandingController {
     @Autowired private CreatorNotificationRepository creatorNotificationRepo;
     @Autowired private UserRepository userRepo;
     @Autowired private MartialArtsCenterRepository centreRepo;
+    @Autowired(required = false) private ProviderBookingRepository bookingRepo;
+    @Autowired(required = false) private WomenProductOrderRepository productOrderRepo;
 
     @GetMapping("/feed")
     @Transactional(readOnly = true)
@@ -248,6 +250,109 @@ public class MobileLandingController {
                 }
             } catch (Exception ignored) {
                 // Creator notifications table/method may vary — broadcasts still work.
+            }
+
+            if (bookingRepo != null) {
+                try {
+                    List<ProviderBooking> bookings = bookingRepo.findByUserOrderByRequestedTimeDesc(user);
+                    java.time.format.DateTimeFormatter dtf = java.time.format.DateTimeFormatter.ofPattern("dd MMM, hh:mm a");
+                    for (ProviderBooking b : bookings) {
+                        if (items.size() >= 50) break;
+                        String lawyerName = b.getProvider() != null && b.getProvider().getFullName() != null
+                                ? b.getProvider().getFullName() : "Lawyer";
+                        String timeStr = b.getRequestedTime() != null ? b.getRequestedTime().format(dtf) : "Upcoming";
+                        ProviderBookingStatus st = b.getStatus() != null ? b.getStatus() : ProviderBookingStatus.PENDING;
+                        String title;
+                        String msg;
+                        String type;
+                        switch (st) {
+                            case CONFIRMED:
+                                title = "Appointment Confirmed: Adv. " + lawyerName;
+                                msg = "Your legal consultation on " + timeStr + " is confirmed.";
+                                type = "SUCCESS";
+                                break;
+                            case CANCELLED:
+                                title = "Appointment Cancelled: Adv. " + lawyerName;
+                                msg = "Your legal consultation on " + timeStr + " was cancelled.";
+                                type = "WARNING";
+                                break;
+                            case COMPLETED:
+                                title = "Consultation Completed: Adv. " + lawyerName;
+                                msg = "Consultation on " + timeStr + " completed. Tap to review.";
+                                type = "INFO";
+                                break;
+                            default:
+                                title = "Consultation Requested: Adv. " + lawyerName;
+                                msg = "Requested for " + timeStr + ". Waiting for lawyer confirmation.";
+                                type = "INFO";
+                                break;
+                        }
+                        Map<String, Object> m = new LinkedHashMap<>();
+                        m.put("id", "booking-" + b.getId() + "-" + st.name().toLowerCase());
+                        m.put("source", "LAWYER");
+                        m.put("type", type);
+                        m.put("title", title);
+                        m.put("message", msg);
+                        m.put("createdAt", b.getRequestedTime() == null ? null : b.getRequestedTime().toString());
+                        m.put("route", "lawyer");
+                        items.add(0, m);
+                    }
+                } catch (Exception ignored) {
+                    // Consultation notifications optional
+                }
+            }
+
+            if (productOrderRepo != null) {
+                try {
+                    List<WomenProductOrder> productOrders = productOrderRepo.findByUserOrderByOrderTimeDesc(user);
+                    for (WomenProductOrder po : productOrders) {
+                        if (items.size() >= 60) break;
+                        String productName = po.getProduct() != null && po.getProduct().getName() != null
+                                ? po.getProduct().getName() : "Product Order";
+                        String st = po.getStatus() != null ? po.getStatus().toUpperCase() : "PLACED";
+                        String title;
+                        String msg;
+                        String type;
+                        switch (st) {
+                            case "DELIVERED":
+                                title = "Order Delivered: " + productName;
+                                msg = "Order #" + po.getId() + " has been delivered successfully.";
+                                type = "SUCCESS";
+                                break;
+                            case "SHIPPED":
+                            case "OUT_FOR_DELIVERY":
+                                title = "Order Shipped: " + productName;
+                                msg = "Order #" + po.getId() + " is " + st.toLowerCase().replace('_', ' ') + ".";
+                                type = "INFO";
+                                break;
+                            case "CONFIRMED":
+                                title = "Order Confirmed: " + productName;
+                                msg = "Order #" + po.getId() + " has been confirmed by the seller.";
+                                type = "SUCCESS";
+                                break;
+                            case "CANCELLED":
+                                title = "Order Cancelled: Order #" + po.getId();
+                                msg = "Your order for " + productName + " was cancelled.";
+                                type = "WARNING";
+                                break;
+                            default:
+                                title = "Order Placed: Order #" + po.getId();
+                                msg = "Order for " + productName + " is " + st.toLowerCase() + ".";
+                                type = "INFO";
+                                break;
+                        }
+                        Map<String, Object> m = new LinkedHashMap<>();
+                        m.put("id", "product-order-" + po.getId() + "-" + st.toLowerCase());
+                        m.put("source", "PRODUCT");
+                        m.put("type", type);
+                        m.put("title", title);
+                        m.put("message", msg);
+                        m.put("createdAt", po.getOrderTime() == null ? null : po.getOrderTime().toString());
+                        m.put("route", "products");
+                        items.add(0, m);
+                    }
+                } catch (Exception ignored) {
+                }
             }
 
             Map<String, Object> tip = new LinkedHashMap<>();

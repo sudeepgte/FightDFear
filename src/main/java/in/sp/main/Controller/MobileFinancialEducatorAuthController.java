@@ -22,6 +22,7 @@ import in.sp.main.Entities.FinancialLiveSession;
 import in.sp.main.Entities.FinancialVideo;
 import in.sp.main.Entities.FinancialWorkshop;
 import in.sp.main.Entities.PartnerProfileStatus;
+import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Repository.FinancialEducatorRepository;
 import in.sp.main.Repository.FinancialEnrollmentRepository;
 import in.sp.main.Repository.FinancialLiveSessionRepository;
@@ -114,13 +115,17 @@ public class MobileFinancialEducatorAuthController {
         profileService.refreshCompletion(e);
         session.setAttribute("loggedEducator", e);
         String token = jwtUtil.generateToken(e.getEmail(), "EDUCATOR");
+        boolean isApproved = e.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || e.getVerificationStatus() == VerificationStatus.VERIFIED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "EDUCATOR");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (e.getPartnerProfileStatus() != null ? e.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (e.getPartnerProfileStatus() != null ? e.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.putAll(profileService.profilePayload(e));
-        res.put("needsProfileCompletion", PartnerLifecycleSupport.needsProfileCompletion(e.getPartnerProfileStatus()));
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(e.getPartnerProfileStatus()));
         return ResponseEntity.ok(res);
     }
 
@@ -241,7 +246,7 @@ public class MobileFinancialEducatorAuthController {
 
     @DeleteMapping("/videos/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteVideo(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteVideo(@PathVariable("id") Long id, HttpSession session) {
         FinancialEducator e = requireEducator(session);
         if (e == null) return unauthorized();
         FinancialVideo v = videoRepo.findById(id).orElse(null);
@@ -271,7 +276,7 @@ public class MobileFinancialEducatorAuthController {
 
     @DeleteMapping("/live-sessions/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteLive(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteLive(@PathVariable("id") Long id, HttpSession session) {
         FinancialEducator e = requireEducator(session);
         if (e == null) return unauthorized();
         FinancialLiveSession s = liveRepo.findById(id).orElse(null);
@@ -302,7 +307,7 @@ public class MobileFinancialEducatorAuthController {
 
     @DeleteMapping("/workshops/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteWorkshop(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteWorkshop(@PathVariable("id") Long id, HttpSession session) {
         FinancialEducator e = requireEducator(session);
         if (e == null) return unauthorized();
         FinancialWorkshop w = workshopRepo.findById(id).orElse(null);
@@ -316,7 +321,7 @@ public class MobileFinancialEducatorAuthController {
 
     @PostMapping("/enrollments/{id}/status")
     public ResponseEntity<Map<String, Object>> enrollmentStatus(
-            @PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+            @PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         FinancialEducator e = requireApproved(session);
         if (e == null) return unauthorized();
         FinancialEnrollment en = enrollmentRepo.findById(id).orElse(null);
@@ -393,7 +398,7 @@ public class MobileFinancialEducatorAuthController {
     @PostMapping("/enrollments/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         FinancialEducator e = requireEducator(session);

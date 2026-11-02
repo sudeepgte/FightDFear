@@ -170,7 +170,7 @@ public class TreatmentController {
 
     @GetMapping("/edit/{id}")
 
-    public String editTreatment(@PathVariable Long id, Model model) {
+    public String editTreatment(@PathVariable("id") Long id, Model model) {
 
         Treatment treatment = treatmentService.getTreatmentById(id);
 
@@ -187,7 +187,7 @@ public class TreatmentController {
     // Delete
 
     @PostMapping("/delete/{id}")
-    public String deleteTreatment(@PathVariable Long id) {
+    public String deleteTreatment(@PathVariable("id") Long id) {
 
         treatmentService.deleteTreatment(id);
 

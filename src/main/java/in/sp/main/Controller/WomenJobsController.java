@@ -64,8 +64,8 @@ public class WomenJobsController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String email,
-                        @RequestParam String password,
+    public String login(@RequestParam("email") String email,
+                        @RequestParam("password") String password,
                         HttpSession session,
                         jakarta.servlet.http.HttpServletResponse response,
                         Model model) {
@@ -119,14 +119,14 @@ public class WomenJobsController {
     }
 
     @PostMapping("/register")
-    public String register(@RequestParam String fullName,
-                           @RequestParam String email,
-                           @RequestParam String phone,
-                           @RequestParam String password,
-                           @RequestParam String confirmPassword,
-                           @RequestParam String jobCategory,
-                           @RequestParam String jobSubCategory,
-                           @RequestParam Double hourlyRate,
+    public String register(@RequestParam("fullName") String fullName,
+                           @RequestParam("email") String email,
+                           @RequestParam("phone") String phone,
+                           @RequestParam("password") String password,
+                           @RequestParam("confirmPassword") String confirmPassword,
+                           @RequestParam("jobCategory") String jobCategory,
+                           @RequestParam("jobSubCategory") String jobSubCategory,
+                           @RequestParam("hourlyRate") Double hourlyRate,
                            @RequestParam("proofDocument") MultipartFile proofDocument,
                            Model model,
                            RedirectAttributes ra) {
@@ -260,7 +260,7 @@ public class WomenJobsController {
     }
 
     @PostMapping("/booking/{id}/status")
-    public String updateWorkerBookingStatus(@PathVariable Long id, @RequestParam String status, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String updateWorkerBookingStatus(@PathVariable("id") Long id, @RequestParam("status") String status, HttpSession session, RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");
         if (u == null) return "redirect:/login";
         
@@ -303,7 +303,7 @@ public class WomenJobsController {
 
     @PostMapping("/send-otp")
     @ResponseBody
-    public java.util.Map<String, Object> sendOtp(@RequestParam String email) {
+    public java.util.Map<String, Object> sendOtp(@RequestParam("email") String email) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         try {
             otpVerificationService.sendOtp(email, in.sp.main.Entities.OtpPurpose.JOB_WORKER_REGISTER, in.sp.main.Entities.OtpChannel.EMAIL);
@@ -318,7 +318,7 @@ public class WomenJobsController {
 
     @PostMapping("/verify-otp")
     @ResponseBody
-    public java.util.Map<String, Object> verifyOtp(@RequestParam String email, @RequestParam String otp) {
+    public java.util.Map<String, Object> verifyOtp(@RequestParam("email") String email, @RequestParam("otp") String otp) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         boolean verified = otpVerificationService.verifyOtp(email, otp, in.sp.main.Entities.OtpPurpose.JOB_WORKER_REGISTER);
         if (verified) {
@@ -378,7 +378,7 @@ public class WomenJobsController {
 
     @PostMapping("/profile/verify-otp")
     @ResponseBody
-    public java.util.Map<String, Object> verifyProfileOtp(@RequestParam String otp, HttpSession session) {
+    public java.util.Map<String, Object> verifyProfileOtp(@RequestParam("otp") String otp, HttpSession session) {
         java.util.Map<String, Object> response = new java.util.HashMap<>();
         User u = (User) session.getAttribute("user");
         if (u == null) {
@@ -398,39 +398,39 @@ public class WomenJobsController {
     }
 
     @PostMapping("/profile")
-    public String updateWorkerProfile(@RequestParam(required=false) String fullName,
-                                      @RequestParam(required=false) String phone,
-                                      @RequestParam(required=false) String designation,
-                                      @RequestParam(required=false) String yearsExperience,
-                                      @RequestParam(required=false) String bio,
-                                      @RequestParam(required=false) String whatsappNumber,
-                                      @RequestParam(required=false) String skills,
-                                      @RequestParam(required=false) String languages,
-                                      @RequestParam(required=false) String address,
-                                      @RequestParam(required=false) String city,
-                                      @RequestParam(required=false) String state,
-                                      @RequestParam(required=false) String pincode,
-                                      @RequestParam(required=false) String latitude,
-                                      @RequestParam(required=false) String longitude,
-                                      @RequestParam(required=false) String categoriesOffered,
-                                      @RequestParam(required=false) String jobCategory,
-                                      @RequestParam(required=false) String jobSubCategory,
-                                      @RequestParam(required=false) String audience,
-                                      @RequestParam(required=false) String doorService,
-                                      @RequestParam(required=false) String facilities,
-                                      @RequestParam(required=false) String openDays,
-                                      @RequestParam(required=false) String openTime,
-                                      @RequestParam(required=false) String closeTime,
-                                      @RequestParam(required=false) String breakStart,
-                                      @RequestParam(required=false) String breakEnd,
-                                      @RequestParam(required=false) String blockedDates,
-                                      @RequestParam(required=false) String hourlyRate,
-                                      @RequestParam(required=false) String durationMinutes,
-                                      @RequestParam(required=false) String bufferMinutes,
-                                      @RequestParam(required=false) String serviceMode,
-                                      @RequestParam(required=false) String workType,
-                                      @RequestParam(required=false) String bankDetails,
-                                      @RequestParam(required=false) String upiId,
+    public String updateWorkerProfile(@RequestParam(value = "fullName", required=false) String fullName,
+                                      @RequestParam(value = "phone", required=false) String phone,
+                                      @RequestParam(value = "designation", required=false) String designation,
+                                      @RequestParam(value = "yearsExperience", required=false) String yearsExperience,
+                                      @RequestParam(value = "bio", required=false) String bio,
+                                      @RequestParam(value = "whatsappNumber", required=false) String whatsappNumber,
+                                      @RequestParam(value = "skills", required=false) String skills,
+                                      @RequestParam(value = "languages", required=false) String languages,
+                                      @RequestParam(value = "address", required=false) String address,
+                                      @RequestParam(value = "city", required=false) String city,
+                                      @RequestParam(value = "state", required=false) String state,
+                                      @RequestParam(value = "pincode", required=false) String pincode,
+                                      @RequestParam(value = "latitude", required=false) String latitude,
+                                      @RequestParam(value = "longitude", required=false) String longitude,
+                                      @RequestParam(value = "categoriesOffered", required=false) String categoriesOffered,
+                                      @RequestParam(value = "jobCategory", required=false) String jobCategory,
+                                      @RequestParam(value = "jobSubCategory", required=false) String jobSubCategory,
+                                      @RequestParam(value = "audience", required=false) String audience,
+                                      @RequestParam(value = "doorService", required=false) String doorService,
+                                      @RequestParam(value = "facilities", required=false) String facilities,
+                                      @RequestParam(value = "openDays", required=false) String openDays,
+                                      @RequestParam(value = "openTime", required=false) String openTime,
+                                      @RequestParam(value = "closeTime", required=false) String closeTime,
+                                      @RequestParam(value = "breakStart", required=false) String breakStart,
+                                      @RequestParam(value = "breakEnd", required=false) String breakEnd,
+                                      @RequestParam(value = "blockedDates", required=false) String blockedDates,
+                                      @RequestParam(value = "hourlyRate", required=false) String hourlyRate,
+                                      @RequestParam(value = "durationMinutes", required=false) String durationMinutes,
+                                      @RequestParam(value = "bufferMinutes", required=false) String bufferMinutes,
+                                      @RequestParam(value = "serviceMode", required=false) String serviceMode,
+                                      @RequestParam(value = "workType", required=false) String workType,
+                                      @RequestParam(value = "bankDetails", required=false) String bankDetails,
+                                      @RequestParam(value = "upiId", required=false) String upiId,
                                       @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
                                       @RequestParam(value = "proofDocument", required = false) MultipartFile proofDocument,
                                       @RequestParam(value = "galleryPhotos", required = false) MultipartFile[] galleryPhotos,
@@ -573,9 +573,9 @@ public class WomenJobsController {
     }
 
     @PostMapping("/earnings/update")
-    public String updatePayoutInfo(@RequestParam(required=false) Double hourlyRate,
-                                    @RequestParam(required=false) String bankDetails,
-                                    @RequestParam(required=false) String upiId,
+    public String updatePayoutInfo(@RequestParam(value = "hourlyRate", required=false) Double hourlyRate,
+                                    @RequestParam(value = "bankDetails", required=false) String bankDetails,
+                                    @RequestParam(value = "upiId", required=false) String upiId,
                                     HttpSession session,
                                     RedirectAttributes redirectAttributes) {
         User u = (User) session.getAttribute("user");

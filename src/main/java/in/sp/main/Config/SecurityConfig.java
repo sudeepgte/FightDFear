@@ -71,6 +71,12 @@ public class SecurityConfig {
             "/api/glow/provider/stylist/register-quick",
             "/api/glow/provider/stylist/otp/send-email",
             "/api/glow/provider/stylist/otp/verify-email",
+            "/api/glow/salons",
+            "/api/glow/salons/**",
+            "/api/glow/categories",
+            "/api/glow/treatments",
+            "/api/glow/offers",
+            "/api/glow/services",
             "/api/marketplace/provider/register/**",
             "/api/marketplace/provider/register-quick",
             "/api/marketplace/provider/otp/send-email",
@@ -313,9 +319,12 @@ public class SecurityConfig {
                     request -> {
                         String path = request.getRequestURI();
                         if (path == null) return false;
-                        return path.equals("/payment/webhook/razorpay")
+                        return path.startsWith("/api/")
+                                || path.equals("/payment/webhook/razorpay")
                                 || path.startsWith("/actuator/")
                                 || path.contains("/otp/")
+                                || path.contains("/login")
+                                || path.contains("/register")
                                 || path.endsWith("/register-quick")
                                 || path.equals("/login")
                                 || path.startsWith("/auth/")

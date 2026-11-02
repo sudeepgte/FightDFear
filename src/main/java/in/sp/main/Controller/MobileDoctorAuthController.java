@@ -7,6 +7,7 @@ import in.sp.main.Entities.DoctorAppointment;
 import in.sp.main.Entities.DoctorAppointmentStatus;
 import in.sp.main.Entities.DoctorDocumentType;
 import in.sp.main.Entities.DoctorProfileStatus;
+import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Entities.Gender;
 import in.sp.main.Entities.User;
 import in.sp.main.Repository.DoctorAppointmentRepository;
@@ -157,15 +158,19 @@ public class MobileDoctorAuthController {
 
         session.setAttribute("loggedDoctor", d);
         String token = jwtUtil.generateToken(d.getEmail(), "DOCTOR");
+        boolean isApproved = d.getDoctorProfileStatus() == DoctorProfileStatus.APPROVED || d.getVerificationStatus() == VerificationStatus.VERIFIED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "DOCTOR");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (d.getDoctorProfileStatus() != null ? d.getDoctorProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (d.getDoctorProfileStatus() != null ? d.getDoctorProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("doctor", doctorSummary(d));
-        res.put("doctorProfileStatus", d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name());
+        res.put("doctorProfileStatus", isApproved ? "APPROVED" : (d.getDoctorProfileStatus() == null ? null : d.getDoctorProfileStatus().name()));
         res.put("profileCompletionPct", d.getProfileCompletionPct());
-        res.put("needsProfileCompletion", needsProfileCompletion(d));
+        res.put("needsProfileCompletion", !isApproved && needsProfileCompletion(d));
         return ResponseEntity.ok(res);
     }
 
@@ -498,7 +503,7 @@ public class MobileDoctorAuthController {
     }
 
     @PostMapping("/instant/{id}/accept")
-    public ResponseEntity<Map<String, Object>> instantAccept(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> instantAccept(@PathVariable("id") Long id, HttpSession session) {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         try {
@@ -521,7 +526,7 @@ public class MobileDoctorAuthController {
     }
 
     @PostMapping("/instant/{id}/decline")
-    public ResponseEntity<Map<String, Object>> instantDecline(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> instantDecline(@PathVariable("id") Long id, HttpSession session) {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         try {
@@ -613,7 +618,7 @@ public class MobileDoctorAuthController {
     @PostMapping("/appointments/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateAppointmentStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Doctor d = requireDoctor(session);
@@ -644,7 +649,7 @@ public class MobileDoctorAuthController {
     @PostMapping("/appointments/{id}/prescription")
     @Transactional
     public ResponseEntity<Map<String, Object>> savePrescription(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         Doctor d = requireDoctor(session);
@@ -684,7 +689,7 @@ public class MobileDoctorAuthController {
     @PostMapping("/appointments/{id}/reschedule")
     @Transactional
     public ResponseEntity<Map<String, Object>> rescheduleByDoctor(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Doctor d = requireDoctor(session);
@@ -704,7 +709,7 @@ public class MobileDoctorAuthController {
     }
 
     @PostMapping("/appointments/{id}/waiting")
-    public ResponseEntity<Map<String, Object>> pingWaiting(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> pingWaiting(@PathVariable("id") Long id, HttpSession session) {
         Doctor d = requireDoctor(session);
         if (d == null) return unauthorized();
         DoctorAppointment a = appointmentRepo.findById(id).orElse(null);

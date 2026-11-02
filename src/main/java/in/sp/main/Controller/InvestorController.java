@@ -111,16 +111,16 @@ public class InvestorController {
     }
 
     @GetMapping("/login")
-    public String showLoginForm(HttpSession session) {
-        Investor existing = getLoggedInvestor(session);
-        if (existing != null) {
-            Investor fresh = investorRepository.findById(existing.getId()).orElse(existing);
-            fresh = investorProfileService.healApproval(fresh);
-            session.setAttribute("loggedInvestor", fresh);
-            if (InvestorProfileService.isApproved(fresh) || !InvestorProfileService.shouldForceProfileCompletion(fresh)) {
-                return "redirect:/investor/dashboard";
-            }
-            return "redirect:/investor/complete-profile";
+    public String showLoginForm(@RequestParam(value = "logout", required = false) String logout,
+                                HttpSession session,
+                                HttpServletResponse response) {
+        if (logout != null) {
+            session.removeAttribute("loggedInvestor");
+            Cookie cookie = new Cookie("JWT_TOKEN", null);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            cookie.setHttpOnly(true);
+            response.addCookie(cookie);
         }
         return "investor/login";
     }
@@ -197,10 +197,14 @@ public class InvestorController {
             org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
                     .getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
-                Optional<Investor> opt = investorRepository.findByEmail(auth.getName());
-                if (opt.isPresent()) {
-                    inv = opt.get();
-                    session.setAttribute("loggedInvestor", inv);
+                boolean isInvestorRole = auth.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_INVESTOR") || a.getAuthority().equals("INVESTOR"));
+                if (isInvestorRole) {
+                    Optional<Investor> opt = investorRepository.findByEmail(auth.getName());
+                    if (opt.isPresent()) {
+                        inv = opt.get();
+                        session.setAttribute("loggedInvestor", inv);
+                    }
                 }
             }
         }

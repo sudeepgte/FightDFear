@@ -64,6 +64,8 @@ public class MobileWomenProductsSellerAuthController {
     private WomenProductsCareService productsCareService;
     @Autowired
     private WomenProductOrderLifecycleService orderLifecycle;
+    @Autowired
+    private in.sp.main.Service.SellerNotificationService sellerNotificationService;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody(required = false) Map<String, Object> body) {
@@ -256,16 +258,18 @@ public class MobileWomenProductsSellerAuthController {
 
         session.setAttribute("loggedSeller", s);
         String token = jwtUtil.generateToken(s.getEmail(), "SELLER");
+        boolean isApproved = s.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || s.getVerificationStatus() == VerificationStatus.VERIFIED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "SELLER");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (s.getPartnerProfileStatus() != null ? s.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (s.getPartnerProfileStatus() != null ? s.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("seller", sellerSummary(s));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(s.getPartnerProfileStatus()));
-        res.put("canSubmitForVerification",
-                sellerProfileService.isReadyForVerification(s)
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(s.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification", !isApproved && sellerProfileService.isReadyForVerification(s)
                         && s.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }
@@ -373,7 +377,33 @@ public class MobileWomenProductsSellerAuthController {
         data.put("payoutBalance", s.getPayoutBalance());
         data.put("upiId", s.getUpiId() == null ? "" : s.getUpiId());
         data.put("cancelPolicy", WomenProductsCareService.CANCEL_POLICY);
+        if (sellerNotificationService != null) {
+            data.put("notifications", sellerNotificationService.listForSeller(s));
+            data.put("unreadNotificationCount", sellerNotificationService.countUnreadForSeller(s));
+        } else {
+            data.put("notifications", List.of());
+            data.put("unreadNotificationCount", 0);
+        }
         return ResponseEntity.ok(ok(data));
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<Map<String, Object>> getNotifications(HttpSession session) {
+        WomenProductSeller s = requireSeller(session);
+        if (s == null) return unauthorized();
+        List<Map<String, Object>> list = sellerNotificationService != null ? sellerNotificationService.listForSeller(s.getId()) : List.of();
+        int unread = sellerNotificationService != null ? sellerNotificationService.countUnreadForSeller(s) : 0;
+        return ResponseEntity.ok(ok(Map.of("notifications", list, "unreadCount", unread)));
+    }
+
+    @PostMapping("/notifications/read-all")
+    public ResponseEntity<Map<String, Object>> markNotificationsRead(HttpSession session) {
+        WomenProductSeller s = requireSeller(session);
+        if (s == null) return unauthorized();
+        if (sellerNotificationService != null) {
+            sellerNotificationService.markAllRead(s.getId());
+        }
+        return ResponseEntity.ok(ok(Map.of("message", "All notifications marked as read")));
     }
 
     @PostMapping("/payout/request")
@@ -428,7 +458,7 @@ public class MobileWomenProductsSellerAuthController {
     @PostMapping("/orders/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         WomenProductSeller s = requireSeller(session);
@@ -504,7 +534,7 @@ public class MobileWomenProductsSellerAuthController {
     @PutMapping("/products/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateProduct(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         WomenProductSeller s = requireApprovedSeller(session);
@@ -576,7 +606,7 @@ public class MobileWomenProductsSellerAuthController {
 
     @DeleteMapping("/products/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable("id") Long id, HttpSession session) {
         WomenProductSeller s = requireApprovedSeller(session);
         if (s == null) return unauthorized();
         if (s.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
@@ -596,7 +626,7 @@ public class MobileWomenProductsSellerAuthController {
     @PostMapping(value = "/products/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<Map<String, Object>> uploadProductImage(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam("image") MultipartFile image,
             HttpSession session) {
         WomenProductSeller s = requireApprovedSeller(session);
@@ -623,10 +653,36 @@ public class MobileWomenProductsSellerAuthController {
         }
     }
 
+    @PostMapping("/products/{id}/stock")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> updateProductStock(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestParam(value = "stock", required = false) Integer stockParam,
+            HttpSession session) {
+        WomenProductSeller s = requireApprovedSeller(session);
+        if (s == null) return unauthorized();
+        if (s.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(error("Your shop must be approved before you can update stock."));
+        }
+        WomenProduct p = productRepo.findById(id).orElse(null);
+        if (p == null || p.getDeleted() || p.getSeller() == null || !p.getSeller().getId().equals(s.getId())) {
+            return badRequest("Product not found");
+        }
+        int newStock = stockParam != null ? stockParam : parseInt(body == null ? null : body.get("stock"), 0);
+        if (newStock < 0 || newStock > WomenProduct.STOCK_MAX) {
+            return badRequest("Stock quantity must be between 0 and " + WomenProduct.STOCK_MAX + ".");
+        }
+        p.setStock(newStock);
+        productRepo.save(p);
+        return ResponseEntity.ok(ok(Map.of("message", "Stock updated", "product", productDto(p))));
+    }
+
     @PostMapping("/orders/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateOrderStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         WomenProductSeller s = requireApprovedSeller(session);
@@ -656,7 +712,7 @@ public class MobileWomenProductsSellerAuthController {
     @PostMapping("/orders/{id}/assign")
     @Transactional
     public ResponseEntity<Map<String, Object>> assignOrder(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         WomenProductSeller s = requireApprovedSeller(session);
@@ -679,7 +735,7 @@ public class MobileWomenProductsSellerAuthController {
     }
 
     @GetMapping("/orders/{id}/track")
-    public ResponseEntity<Map<String, Object>> trackOrder(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> trackOrder(@PathVariable("id") Long id, HttpSession session) {
         WomenProductSeller s = requireSeller(session);
         if (s == null) return unauthorized();
         WomenProductOrder o = orderRepo.findById(id).orElse(null);

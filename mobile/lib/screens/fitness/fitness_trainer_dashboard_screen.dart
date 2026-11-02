@@ -5,8 +5,10 @@ import '../../services/auth_state.dart';
 import '../../services/fitness_trainer_auth_service.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/ux_feedback.dart';
+import 'fitness_qr_scanner_screen.dart';
 import 'fitness_trainer_portal_login_screen.dart';
 import 'fitness_trainer_profile_completion_screen.dart';
+import 'fitness_wellness_screen.dart';
 
 /// Fitness trainer home — screenshot layout + martial-arts Quick Actions.
 class FitnessTrainerDashboardScreen extends StatefulWidget {
@@ -21,6 +23,7 @@ class FitnessTrainerDashboardScreen extends StatefulWidget {
 }
 
 class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final FitnessTrainerAuthService _svc;
   bool _loading = true;
   String? _error;
@@ -227,10 +230,161 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
     );
   }
 
+  Widget _buildTrainerDrawer(BuildContext context) {
+    final name = _trainer['fullName']?.toString() ?? 'Coach';
+    final photo = _raw['profilePhoto']?.toString() ?? _raw['profileImageUrl']?.toString();
+
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: Column(
+        children: [
+          UserAccountsDrawerHeader(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [FitnessTrainerDashboardScreen.navy, Color(0xFF312E81)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: FitnessTrainerDashboardScreen.primary,
+              backgroundImage: photo != null && photo.isNotEmpty
+                  ? NetworkImage(photo)
+                  : null,
+              child: (photo == null || photo.isEmpty)
+                  ? Text(
+                      name[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                    )
+                  : null,
+            ),
+            accountName: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            accountEmail: Text(
+              _trainer['email']?.toString() ?? _trainer['phone']?.toString() ?? 'Fitness Trainer',
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.dashboard_rounded, color: FitnessTrainerDashboardScreen.primary),
+                  title: const Text('Dashboard Home', style: TextStyle(fontWeight: FontWeight.w700)),
+                  selected: _navIndex == 0,
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _navIndex = 0);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.calendar_today_rounded, color: Color(0xFF2563EB)),
+                  title: const Text('Bookings & Clients', style: TextStyle(fontWeight: FontWeight.w700)),
+                  selected: _navIndex == 1,
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _navIndex = 1);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.fitness_center_rounded, color: Color(0xFF7C3AED)),
+                  title: const Text('Classes & Availability', style: TextStyle(fontWeight: FontWeight.w700)),
+                  selected: _navIndex == 2,
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _navIndex = 2);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF059669)),
+                  title: const Text('Earnings & Payout', style: TextStyle(fontWeight: FontWeight.w700)),
+                  selected: _navIndex == 3,
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _navIndex = 3);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.qr_code_scanner_rounded, color: Color(0xFFD97706)),
+                  title: const Text('QR Attendance Scanner', style: TextStyle(fontWeight: FontWeight.w700)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FitnessQrScannerScreen(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.person_outline_rounded, color: FitnessTrainerDashboardScreen.navy),
+                  title: const Text('Trainer Profile', style: TextStyle(fontWeight: FontWeight.w700)),
+                  selected: _navIndex == 4,
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() => _navIndex = 4);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.edit_note_rounded, color: Color(0xFF475569)),
+                  title: const Text('Complete / Edit Profile', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _openProfileCompletion();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.visibility_outlined, color: Color(0xFF475569)),
+                  title: const Text('User View Preview', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const FitnessWellnessScreen(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.notifications_none_rounded, color: Color(0xFF475569)),
+                  title: const Text('Notifications', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showNotifications();
+                  },
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.logout_rounded, color: Colors.red),
+            title: const Text('Sign Out', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            onTap: () {
+              Navigator.pop(context);
+              _logout();
+            },
+          ),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: const Color(0xFFF8FAFC),
+      drawer: _buildTrainerDrawer(context),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -238,7 +392,7 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
         foregroundColor: FitnessTrainerDashboardScreen.navy,
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
-          onPressed: () => _snack('Menu coming soon'),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -454,6 +608,10 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
                     _openQrAttendanceSheet),
                 _CircleAction('Attendance', Icons.fact_check_outlined, const Color(0xFF16A34A),
                     _openAttendanceRosterSheet),
+                _CircleAction('Classes', Icons.grid_view_rounded, const Color(0xFF8B5CF6),
+                    _openClassesSheet),
+                _CircleAction('Log Progress', Icons.trending_up_rounded, const Color(0xFF0284C7),
+                    _openLogProgressSheet),
                 _CircleAction('Availability', Icons.calendar_month, const Color(0xFF2563EB),
                     () => setState(() => _navIndex = 2)),
                 _CircleAction('Bookings', Icons.event_note, const Color(0xFF16A34A),
@@ -1461,7 +1619,7 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: status,
+                    initialValue: status,
                     decoration: const InputDecoration(labelText: 'Status'),
                     items: const [
                       DropdownMenuItem(value: 'PRESENT', child: Text('Present (Deduct session)')),
@@ -1493,6 +1651,542 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
                   child: const Text('Confirm'),
                 ),
               ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openClassesSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              minChildSize: 0.4,
+              maxChildSize: 0.95,
+              expand: false,
+              builder: (_, scrollCtrl) {
+                return FutureBuilder<Map<String, dynamic>>(
+                  future: _svc.getClasses(),
+                  builder: (context, snapshot) {
+                    final data = snapshot.data;
+                    final classes = (data?['classes'] is List)
+                        ? (data!['classes'] as List).map((e) => Map<String, dynamic>.from(e as Map)).toList()
+                        : <Map<String, dynamic>>[];
+                    final loading = snapshot.connectionState == ConnectionState.waiting;
+
+                    return ListView(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Group Fitness Classes', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                            FilledButton.icon(
+                              onPressed: () => _showCreateOrEditClassDialog(onSaved: () => setSheetState(() {})),
+                              icon: const Icon(Icons.add, size: 18),
+                              label: const Text('Add Class'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: FitnessTrainerDashboardScreen.primary,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Text('Schedule recurring or one-off group fitness classes for members.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                        const SizedBox(height: 16),
+                        if (loading)
+                          const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+                        else if (classes.isEmpty)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32),
+                              child: Text('No classes scheduled yet. Tap "Add Class" to schedule your first workout session.'),
+                            ),
+                          )
+                        else
+                          ...classes.map((c) {
+                            final id = int.tryParse('${c['id']}');
+                            final enrolled = c['currentEnrollment'] ?? 0;
+                            final max = c['maxCapacity'] ?? 20;
+                            final price = c['price'] ?? 0;
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              child: Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            c['className']?.toString() ?? 'Class',
+                                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFFF1F2),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            c['category']?.toString() ?? 'Fitness',
+                                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFFE11D48)),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${c['classDate']} at ${c['classTime']} · ${c['durationMinutes']} mins · ${c['sessionType']}',
+                                      style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.people_outline, size: 16, color: Colors.grey[700]),
+                                        const SizedBox(width: 4),
+                                        Text('$enrolled / $max enrolled', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                                        const SizedBox(width: 14),
+                                        Text('₹$price', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: FitnessTrainerDashboardScreen.primary)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        OutlinedButton.icon(
+                                          onPressed: () => _showCreateOrEditClassDialog(classData: c, onSaved: () => setSheetState(() {})),
+                                          icon: const Icon(Icons.edit_outlined, size: 16),
+                                          label: const Text('Edit'),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                          onPressed: () => _deleteClassDialog(id, c['className']?.toString() ?? 'Class', () => setSheetState(() {})),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+                      ],
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showCreateOrEditClassDialog({Map<String, dynamic>? classData, VoidCallback? onSaved}) {
+    final isEdit = classData != null;
+    final id = isEdit ? int.tryParse('${classData['id']}') : null;
+    final nameCtrl = TextEditingController(text: classData?['className']?.toString() ?? '');
+    final catCtrl = TextEditingController(text: classData?['category']?.toString() ?? 'General Fitness');
+    final descCtrl = TextEditingController(text: classData?['description']?.toString() ?? '');
+    final dateCtrl = TextEditingController(
+      text: classData?['classDate']?.toString() ?? DateTime.now().add(const Duration(days: 1)).toString().substring(0, 10),
+    );
+    final timeCtrl = TextEditingController(text: classData?['classTime']?.toString() ?? '08:00');
+    final durationCtrl = TextEditingController(text: '${classData?['durationMinutes'] ?? 60}');
+    final capacityCtrl = TextEditingController(text: '${classData?['maxCapacity'] ?? 20}');
+    final priceCtrl = TextEditingController(text: '${classData?['price'] ?? 0}');
+    final locationCtrl = TextEditingController(text: classData?['meetingLinkOrLocation']?.toString() ?? '');
+    String sessionType = classData?['sessionType']?.toString() ?? 'ONLINE';
+
+    bool submitting = false;
+    String? localError;
+
+    showDialog(
+      context: context,
+      builder: (dCtx) {
+        return StatefulBuilder(
+          builder: (context, setDState) {
+            Future<void> pickDate() async {
+              DateTime initial = DateTime.tryParse(dateCtrl.text.trim()) ?? DateTime.now();
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: initial.isBefore(DateTime.now()) ? DateTime.now() : initial,
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                setDState(() {
+                  dateCtrl.text =
+                      '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+                });
+              }
+            }
+
+            Future<void> pickTime() async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: const TimeOfDay(hour: 8, minute: 0),
+              );
+              if (picked != null) {
+                setDState(() {
+                  timeCtrl.text =
+                      '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                });
+              }
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Text(isEdit ? 'Edit Class' : 'Create New Class', style: const TextStyle(fontWeight: FontWeight.w800)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameCtrl,
+                      enabled: !submitting,
+                      decoration: const InputDecoration(labelText: 'Class Name *'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: catCtrl,
+                      enabled: !submitting,
+                      decoration: const InputDecoration(labelText: 'Category (e.g. HIIT, Yoga, Zumba)'),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: dateCtrl,
+                            enabled: !submitting,
+                            readOnly: true,
+                            onTap: submitting ? null : pickDate,
+                            decoration: const InputDecoration(
+                              labelText: 'Date (YYYY-MM-DD) *',
+                              suffixIcon: Icon(Icons.calendar_month, size: 18),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: timeCtrl,
+                            enabled: !submitting,
+                            readOnly: true,
+                            onTap: submitting ? null : pickTime,
+                            decoration: const InputDecoration(
+                              labelText: 'Time (HH:mm) *',
+                              suffixIcon: Icon(Icons.access_time, size: 18),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: durationCtrl,
+                            enabled: !submitting,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: 'Duration (mins)'),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: capacityCtrl,
+                            enabled: !submitting,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: 'Max Capacity'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      initialValue: sessionType,
+                      decoration: const InputDecoration(labelText: 'Session Type'),
+                      items: const [
+                        DropdownMenuItem(value: 'ONLINE', child: Text('Online / Live Stream')),
+                        DropdownMenuItem(value: 'STUDIO', child: Text('Studio / In-Person')),
+                        DropdownMenuItem(value: 'GYM', child: Text('Gym Training Centre')),
+                      ],
+                      onChanged: submitting ? null : (v) => setDState(() => sessionType = v ?? 'ONLINE'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: priceCtrl,
+                      enabled: !submitting,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Price per spot (₹)'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: locationCtrl,
+                      enabled: !submitting,
+                      decoration: const InputDecoration(labelText: 'Meeting Link or Studio Location'),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: descCtrl,
+                      enabled: !submitting,
+                      maxLines: 2,
+                      decoration: const InputDecoration(labelText: 'Description'),
+                    ),
+                    if (localError != null) ...[
+                      const SizedBox(height: 10),
+                      Text(
+                        localError!,
+                        style: TextStyle(color: Colors.red.shade700, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.pop(dCtx),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: FitnessTrainerDashboardScreen.primary),
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          if (nameCtrl.text.trim().isEmpty) {
+                            setDState(() => localError = 'Class name is required');
+                            return;
+                          }
+                          String rawTime = timeCtrl.text.trim();
+                          if (rawTime.contains(':') && rawTime.split(':')[0].length == 1) {
+                            rawTime = '0$rawTime';
+                          }
+
+                          setDState(() {
+                            submitting = true;
+                            localError = null;
+                          });
+
+                          final payload = {
+                            'className': nameCtrl.text.trim(),
+                            'category': catCtrl.text.trim(),
+                            'description': descCtrl.text.trim(),
+                            'classDate': dateCtrl.text.trim(),
+                            'classTime': rawTime,
+                            'durationMinutes': int.tryParse(durationCtrl.text.trim()) ?? 60,
+                            'sessionType': sessionType,
+                            'maxCapacity': int.tryParse(capacityCtrl.text.trim()) ?? 20,
+                            'price': double.tryParse(priceCtrl.text.trim()) ?? 0,
+                            'meetingLinkOrLocation': locationCtrl.text.trim(),
+                          };
+
+                          try {
+                            Map<String, dynamic> res;
+                            if (isEdit && id != null) {
+                              res = await _svc.editClass(id, payload);
+                            } else {
+                              res = await _svc.createClass(payload);
+                            }
+
+                            if (!dCtx.mounted) return;
+                            if (res['success'] == true) {
+                              Navigator.pop(dCtx);
+                              _snack(isEdit ? 'Class updated successfully' : 'Class created successfully');
+                              if (onSaved != null) onSaved();
+                            } else {
+                              setDState(() {
+                                submitting = false;
+                                localError = res['error']?.toString() ?? 'Operation failed';
+                              });
+                            }
+                          } catch (e) {
+                            if (!dCtx.mounted) return;
+                            setDState(() {
+                              submitting = false;
+                              localError = '$e';
+                            });
+                          }
+                        },
+                  child: submitting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Text(isEdit ? 'Save Changes' : 'Create Class'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _deleteClassDialog(int? classId, String className, VoidCallback onDeleted) {
+    if (classId == null) return;
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: Text('Delete "$className"?'),
+        content: const Text('Deleting this class will cancel all attendee bookings and refund their fees to wallet.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Keep Class')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              final res = await _svc.deleteClass(classId);
+              Navigator.pop(dCtx);
+              if (res['success'] == true) {
+                _snack('Class deleted and members refunded');
+                onDeleted();
+              } else {
+                _snack(res['error']?.toString() ?? 'Failed to delete class');
+              }
+            },
+            child: const Text('Delete & Refund'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openLogProgressSheet() {
+    final userIdCtrl = TextEditingController();
+    final weightCtrl = TextEditingController();
+    final bodyFatCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('Log Client Progress & Milestones', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 6),
+                    const Text('Track client body transformations, weigh-ins, and performance logs.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    const SizedBox(height: 16),
+                    if (_clients.isNotEmpty) ...[
+                      DropdownButtonFormField<int>(
+                        decoration: const InputDecoration(labelText: 'Select Client'),
+                        items: _clients.map((c) {
+                          final uid = int.tryParse('${c['userId']}');
+                          return DropdownMenuItem<int>(
+                            value: uid,
+                            child: Text('${c['fullName']} (${c['phone'] ?? c['email'] ?? 'User #$uid'})'),
+                          );
+                        }).toList(),
+                        onChanged: (uid) {
+                          if (uid != null) setSheetState(() => userIdCtrl.text = '$uid');
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    TextField(
+                      controller: userIdCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Client User ID *', hintText: 'Enter member user ID'),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: weightCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(labelText: 'Weight (kg) *', hintText: 'e.g. 68.5'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: TextField(
+                            controller: bodyFatCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: const InputDecoration(labelText: 'Body Fat %', hintText: 'e.g. 18.2'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: notesCtrl,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Coach Workout Notes & Achievements',
+                        hintText: 'e.g. Completed 45 mins HIIT, form improved, 3x12 squats at 60kg',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: FitnessTrainerDashboardScreen.primary,
+                        minimumSize: const Size.fromHeight(48),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () async {
+                        final uid = int.tryParse(userIdCtrl.text.trim());
+                        if (uid == null) {
+                          _snack('Valid client user ID is required');
+                          return;
+                        }
+                        final weight = double.tryParse(weightCtrl.text.trim());
+                        if (weight == null || weight < 20 || weight > 300) {
+                          _snack('Please enter a valid weight in kg (20 - 300)');
+                          return;
+                        }
+                        final bodyFat = double.tryParse(bodyFatCtrl.text.trim());
+
+                        final res = await _svc.logProgress(
+                          userId: uid,
+                          weightKg: weight,
+                          bodyFatPct: bodyFat,
+                          workoutNotes: notesCtrl.text.trim().isNotEmpty ? notesCtrl.text.trim() : null,
+                        );
+
+                        if (res['success'] == true) {
+                          Navigator.pop(ctx);
+                          _snack('Progress logged successfully for client #$uid');
+                        } else {
+                          _snack(res['error']?.toString() ?? 'Failed to log progress');
+                        }
+                      },
+                      child: const Text('Record Progress Log', style: TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         );

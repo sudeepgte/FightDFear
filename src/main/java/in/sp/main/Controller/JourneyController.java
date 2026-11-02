@@ -57,11 +57,11 @@ public class JourneyController {
 
     @PostMapping("/start")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> start(@RequestParam String destination,
-                                                     @RequestParam String startFrom,
-                                                     @RequestParam long expectedArrivalEpochMs,
-                                                     @RequestParam(required = false) Double latitude,
-                                                     @RequestParam(required = false) Double longitude,
+    public ResponseEntity<Map<String, Object>> start(@RequestParam("destination") String destination,
+                                                     @RequestParam("startFrom") String startFrom,
+                                                     @RequestParam("expectedArrivalEpochMs") long expectedArrivalEpochMs,
+                                                     @RequestParam(value = "latitude", required = false) Double latitude,
+                                                     @RequestParam(value = "longitude", required = false) Double longitude,
                                                      HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(res(false, "Login required."));

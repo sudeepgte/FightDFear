@@ -40,7 +40,7 @@ public class SalonReviewController {
     // Show salon profile with reviews
 
     @GetMapping("/reviews")
-    public String showReviews(@RequestParam Long id, Model model) {
+    public String showReviews(@RequestParam("id") Long id, Model model) {
         Salon salon = salonRepo.findById(id).orElse(null);
         if (salon == null) {
             model.addAttribute("error", "Salon not found!");
@@ -64,10 +64,10 @@ public class SalonReviewController {
 
     // Save new review
     @PostMapping("/reviews/save")
-    public String saveReview(@RequestParam Long salonId,
-                             @RequestParam(required = false) String userName,
-                             @RequestParam(required = false) Integer rating,
-                             @RequestParam(required = false) String comment,
+    public String saveReview(@RequestParam("salonId") Long salonId,
+                             @RequestParam(value = "userName", required = false) String userName,
+                             @RequestParam(value = "rating", required = false) Integer rating,
+                             @RequestParam(value = "comment", required = false) String comment,
                              RedirectAttributes redirectAttributes) {
 
         Salon salon = salonRepo.findById(salonId).orElse(null);
@@ -139,9 +139,9 @@ public class SalonReviewController {
 
     @PostMapping("/reviews/reply")
 
-    public String replyToReview(@RequestParam Long reviewId,
+    public String replyToReview(@RequestParam("reviewId") Long reviewId,
 
-                                @RequestParam String reply,
+                                @RequestParam("reply") String reply,
 
                                 RedirectAttributes redirectAttributes) {
  

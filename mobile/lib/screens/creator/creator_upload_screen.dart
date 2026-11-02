@@ -24,9 +24,11 @@ class _CreatorUploadScreenState extends State<CreatorUploadScreen> {
   final _locationCtrl = TextEditingController();
   final _hashtagsCtrl = TextEditingController();
   final _priceCtrl = TextEditingController(text: '0');
+  final _affiliateCtrl = TextEditingController();
   String _uploadType = 'LONG_VIDEO';
   String _category = CreatorUploadScreen._categories.first;
   File? _file;
+  File? _thumbnail;
   bool _isDraft = false;
   bool _isPaid = false;
   bool _subscriberOnly = false;
@@ -45,6 +47,7 @@ class _CreatorUploadScreenState extends State<CreatorUploadScreen> {
     _locationCtrl.dispose();
     _hashtagsCtrl.dispose();
     _priceCtrl.dispose();
+    _affiliateCtrl.dispose();
     super.dispose();
   }
 
@@ -56,6 +59,12 @@ class _CreatorUploadScreenState extends State<CreatorUploadScreen> {
         ? await picker.pickImage(source: ImageSource.gallery)
         : await picker.pickVideo(source: ImageSource.gallery, maxDuration: isStory ? const Duration(seconds: 30) : null);
     if (picked != null) setState(() => _file = File(picked.path));
+  }
+
+  Future<void> _pickThumbnail() async {
+    final picker = ImagePicker();
+    final XFile? picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) setState(() => _thumbnail = File(picked.path));
   }
 
   Future<void> _submit() async {
@@ -75,12 +84,14 @@ class _CreatorUploadScreenState extends State<CreatorUploadScreen> {
         category: _category,
         uploadType: _uploadType,
         file: _file!,
+        thumbnail: _thumbnail,
         location: _locationCtrl.text.trim(),
         hashtags: _hashtagsCtrl.text.trim(),
         isDraft: _isDraft,
         isPaidContent: _isPaid,
         price: double.tryParse(_priceCtrl.text) ?? 0,
         isSubscriberOnly: _subscriberOnly,
+        affiliateLink: _affiliateCtrl.text.trim().isEmpty ? null : _affiliateCtrl.text.trim(),
       );
       if (!mounted) return;
       if (res['success'] == true) {
@@ -127,39 +138,59 @@ class _CreatorUploadScreenState extends State<CreatorUploadScreen> {
               icon: const Icon(Icons.photo_library_outlined),
               label: Text(_file == null ? 'Pick media' : 'Selected: ${_file!.path.split(Platform.pathSeparator).last}'),
             ),
+            if (_uploadType == 'LONG_VIDEO' || _uploadType == 'REEL') ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _pickThumbnail,
+                icon: const Icon(Icons.image_outlined),
+                label: Text(_thumbnail == null ? 'Pick thumbnail (optional)' : 'Thumbnail: ${_thumbnail!.path.split(Platform.pathSeparator).last}'),
+              ),
+            ],
             const SizedBox(height: 12),
-            TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
+            if (_uploadType != 'STORY') ...[
+              TextField(controller: _titleCtrl, decoration: const InputDecoration(labelText: 'Title', border: OutlineInputBorder())),
+              const SizedBox(height: 12),
+            ],
             TextField(
               controller: _descCtrl,
               maxLines: 3,
-              decoration: const InputDecoration(labelText: 'Caption / Description', border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _category,
-              decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-              items: CreatorUploadScreen._categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-              onChanged: (v) => setState(() => _category = v ?? _category),
-            ),
-            const SizedBox(height: 12),
-            TextField(controller: _locationCtrl, decoration: const InputDecoration(labelText: 'Location (optional)', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            TextField(controller: _hashtagsCtrl, decoration: const InputDecoration(labelText: '#Hashtags', border: OutlineInputBorder())),
-            const SizedBox(height: 12),
-            SwitchListTile(title: const Text('Save as draft'), value: _isDraft, onChanged: (v) => setState(() => _isDraft = v)),
-            SwitchListTile(title: const Text('Paid content'), value: _isPaid, onChanged: (v) => setState(() => _isPaid = v)),
-            if (_isPaid)
-              TextField(
-                controller: _priceCtrl,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Price (Rs)', border: OutlineInputBorder()),
+              decoration: InputDecoration(
+                labelText: _uploadType == 'STORY' ? 'Story Caption' : 'Caption / Description',
+                border: const OutlineInputBorder(),
               ),
-            SwitchListTile(
-              title: const Text('Subscriber only'),
-              value: _subscriberOnly,
-              onChanged: (v) => setState(() => _subscriberOnly = v),
             ),
+            if (_uploadType != 'STORY') ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: _category,
+                decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                items: CreatorUploadScreen._categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                onChanged: (v) => setState(() => _category = v ?? _category),
+              ),
+              const SizedBox(height: 12),
+              TextField(controller: _locationCtrl, decoration: const InputDecoration(labelText: 'Location (optional)', border: OutlineInputBorder())),
+              const SizedBox(height: 12),
+              TextField(controller: _hashtagsCtrl, decoration: const InputDecoration(labelText: '#Hashtags', border: OutlineInputBorder())),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _affiliateCtrl,
+                decoration: const InputDecoration(labelText: 'Affiliate link (optional)', hintText: 'https://...', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile(title: const Text('Save as draft'), value: _isDraft, onChanged: (v) => setState(() => _isDraft = v)),
+              SwitchListTile(title: const Text('Paid content'), value: _isPaid, onChanged: (v) => setState(() => _isPaid = v)),
+              if (_isPaid)
+                TextField(
+                  controller: _priceCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Price (Rs)', border: OutlineInputBorder()),
+                ),
+              SwitchListTile(
+                title: const Text('Subscriber only'),
+                value: _subscriberOnly,
+                onChanged: (v) => setState(() => _subscriberOnly = v),
+              ),
+            ],
             const SizedBox(height: 20),
             FilledButton(
               onPressed: _uploading ? null : _submit,

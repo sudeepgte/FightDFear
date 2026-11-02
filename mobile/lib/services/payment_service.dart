@@ -20,6 +20,17 @@ class PaymentService {
         timeout: const Duration(seconds: 45),
       );
 
+  /// Fitness booking — server validates amount and booking ownership from record.
+  Future<Map<String, dynamic>> createFitnessBookingOrder(int bookingId) =>
+      _api.post(
+        '/payment/create-order',
+        body: {
+          'type': 'FITNESS',
+          'bookingId': bookingId,
+        },
+        timeout: const Duration(seconds: 45),
+      );
+
   /// Generic amount-based order (marketplace / martial arts / etc.).
   Future<Map<String, dynamic>> createOrder(double amount, {String? type, Map<String, dynamic>? extra}) =>
       _api.post(
@@ -47,6 +58,52 @@ class PaymentService {
           'consultationType': consultationType,
           'appointmentTime': appointmentTime,
           if (reason.isNotEmpty) 'reason': reason,
+        },
+        timeout: const Duration(seconds: 45),
+      );
+
+  /// Creator tip order.
+  Future<Map<String, dynamic>> createCreatorTipOrder({
+    required int creatorId,
+    required double amount,
+    String? message,
+  }) =>
+      _api.post(
+        '/payment/create-order',
+        body: {
+          'type': 'CREATOR_TIP',
+          'creatorId': creatorId,
+          'targetId': creatorId,
+          'amount': amount,
+          if (message != null && message.isNotEmpty) 'message': message,
+        },
+        timeout: const Duration(seconds: 45),
+      );
+
+  /// Creator monthly subscription order.
+  Future<Map<String, dynamic>> createCreatorSubOrder({
+    required int creatorId,
+  }) =>
+      _api.post(
+        '/payment/create-order',
+        body: {
+          'type': 'CREATOR_SUB',
+          'creatorId': creatorId,
+          'targetId': creatorId,
+        },
+        timeout: const Duration(seconds: 45),
+      );
+
+  /// Creator post/video unlock order.
+  Future<Map<String, dynamic>> createCreatorUnlockOrder({
+    required int videoId,
+  }) =>
+      _api.post(
+        '/payment/create-order',
+        body: {
+          'type': 'CREATOR_UNLOCK',
+          'videoId': videoId,
+          'targetId': videoId,
         },
         timeout: const Duration(seconds: 45),
       );

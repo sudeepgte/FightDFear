@@ -531,6 +531,81 @@ public class SosService {
     }
 
     /**
+     * Update active SOS coordinates continuously from mobile foreground tracking.
+     */
+    public Map<String, Object> updateSOSLocation(Long sosId, Long userId, double lat, double lng) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        Optional<SOSRequest> opt = sosRequestRepository.findById(sosId);
+        if (opt.isEmpty()) {
+            result.put("success", false);
+            result.put("error", "SOS request not found");
+            return result;
+        }
+        SOSRequest sos = opt.get();
+        if (sos.getUser() == null || !sos.getUser().getId().equals(userId)) {
+            result.put("success", false);
+            result.put("error", "Unauthorized: SOS does not belong to user");
+            return result;
+        }
+        if (sos.getStatus() != SOSRequest.SOSStatus.ACTIVE && sos.getStatus() != SOSRequest.SOSStatus.ACCEPTED) {
+            result.put("success", false);
+            result.put("error", "SOS session is not active (status: " + sos.getStatus() + ")");
+            return result;
+        }
+
+        sos.setLatitude(lat);
+        sos.setLongitude(lng);
+        String mapsLink = "https://www.google.com/maps?q=" + lat + "," + lng;
+        sos.setGoogleMapsLink(mapsLink);
+        sosRequestRepository.save(sos);
+
+        // Record in live_location history
+        try {
+            LiveLocation liveLoc = new LiveLocation();
+            liveLoc.setUserId(userId);
+            liveLoc.setLatitude(lat);
+            liveLoc.setLongitude(lng);
+            liveLoc.setActive(true);
+            liveLoc.setTrackingStartTime(LocalDateTime.now());
+            liveLoc.setTimestamp(LocalDateTime.now());
+            liveLocationRepository.save(liveLoc);
+        } catch (Exception e) {
+            log.warn("Could not save live_location entry for user {}: {}", userId, e.getMessage());
+        }
+
+        // Broadcast to WebSocket for live monitoring
+        try {
+            Map<String, Object> wsPayload = new LinkedHashMap<>();
+            wsPayload.put("type", "LOCATION_UPDATE");
+            wsPayload.put("sosId", sosId);
+            wsPayload.put("latitude", lat);
+            wsPayload.put("longitude", lng);
+            wsPayload.put("mapsLink", mapsLink);
+            wsPayload.put("timestamp", System.currentTimeMillis());
+            messagingTemplate.convertAndSend("/topic/sos-updates/user-" + userId, wsPayload);
+
+            Map<String, Object> adminPayload = new LinkedHashMap<>();
+            adminPayload.put("type", "SOS_LOCATION_UPDATE");
+            adminPayload.put("sosId", sosId);
+            adminPayload.put("userId", userId);
+            adminPayload.put("lat", lat);
+            adminPayload.put("lng", lng);
+            adminPayload.put("mapsLink", mapsLink);
+            messagingTemplate.convertAndSend("/topic/admin-sos", adminPayload);
+        } catch (Exception e) {
+            log.warn("WebSocket location broadcast error for SOS {}: {}", sosId, e.getMessage());
+        }
+
+        result.put("success", true);
+        result.put("message", "Location updated");
+        result.put("sosId", sosId);
+        result.put("latitude", lat);
+        result.put("longitude", lng);
+        result.put("mapsLink", mapsLink);
+        return result;
+    }
+
+    /**
      * Update SOS request counters based on contact responses
      */
     private void updateSOSRequestCounters(SOSRequest sosRequest) {

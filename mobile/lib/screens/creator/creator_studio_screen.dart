@@ -33,7 +33,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
   void initState() {
     super.initState();
     _api = CreatorHubService(context.read<AuthState>().api);
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 4, vsync: this);
     _tabs.addListener(() {
       if (!_tabs.indexIsChanging) setState(() {});
     });
@@ -69,7 +69,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
   }
 
   Future<void> _logout() async {
-    await context.read<AuthState>().logout();
+    await context.read<AuthState>().api.clearCreatorToken();
     if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LandingScreen()),
@@ -151,7 +151,8 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
             tabs: const [
               Tab(text: 'Content'),
               Tab(text: 'Monetize'),
-              Tab(text: 'Safety'),
+              Tab(text: 'Collabs'),
+              Tab(text: 'Settings'),
             ],
           ),
         ),
@@ -167,6 +168,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
                 children: [
                   _contentTab(),
                   _monetizeTab(_user),
+                  _collabsTab(),
                   _safetyTab(_user),
                 ],
               ),
@@ -262,8 +264,8 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
   }
 
   Widget _monetizeTab(Map<String, dynamic>? user) {
-    final campaigns = ModuleTheme.toList(_data?['brandCampaigns']);
     final priceCtrl = TextEditingController(text: '${user?['subscriptionPrice'] ?? 0}');
+    final affiliateCtrl = TextEditingController(text: '${user?['affiliateCode'] ?? ''}');
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -314,11 +316,41 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
           onPressed: !_approved
               ? null
               : () async {
-                  final res = await _api.cashout(100);
-                  _snack(res['success'] == true ? 'Cashout requested' : res['error']?.toString() ?? '');
-                  _load();
+                  final pointsCtrl = TextEditingController(text: '100');
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Redeem Atomic Coins'),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Rate: 100 points = ₹10 (Min 100 points)'),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: pointsCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(labelText: 'Points to redeem', border: OutlineInputBorder()),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Redeem')),
+                      ],
+                    ),
+                  );
+                  if (ok == true) {
+                    final pts = int.tryParse(pointsCtrl.text) ?? 0;
+                    if (pts < 100) {
+                      _snack('Minimum 100 points required');
+                      return;
+                    }
+                    final res = await _api.cashout(pts);
+                    _snack(res['success'] == true ? 'Redeemed ₹${res['amount']} successfully' : res['error']?.toString() ?? '');
+                    _load();
+                  }
                 },
-          child: const Text('Redeem 100 points'),
+          child: const Text('Redeem Atomic Coins'),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -338,34 +370,123 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
                 },
           child: const Text('Save subscription price'),
         ),
-        const SizedBox(height: 24),
-        const Text('Brand campaigns', style: TextStyle(fontWeight: FontWeight.w700)),
-        if (!_approved)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text('Available after admin approval.', style: TextStyle(color: ModuleTheme.textGray)),
-          )
-        else
-          ...campaigns.map((c) {
-            final id = c['id'];
-            return Card(
-              child: ListTile(
-                title: Text(c['title']?.toString() ?? 'Campaign'),
-                subtitle: Text('${c['description'] ?? ''}\nBudget: ₹${c['budget'] ?? 0}'),
-                isThreeLine: true,
-                trailing: id is num
-                    ? IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: () async {
-                          final res = await _api.applyCollab(campaignId: id.toInt(), pitch: 'Interested from mobile');
-                          _snack(res['success'] == true ? 'Applied' : res['error']?.toString() ?? '');
-                        },
-                      )
-                    : null,
-              ),
-            );
-          }),
+        const SizedBox(height: 16),
+        TextField(
+          controller: affiliateCtrl,
+          enabled: _approved,
+          decoration: const InputDecoration(labelText: 'Creator Affiliate Code', border: OutlineInputBorder()),
+        ),
+        const SizedBox(height: 8),
+        FilledButton(
+          onPressed: !_approved
+              ? null
+              : () async {
+                  final code = affiliateCtrl.text.trim();
+                  final res = await _api.setAffiliateCode(code);
+                  _snack(res['success'] == true ? 'Affiliate code updated' : res['error']?.toString() ?? '');
+                },
+          child: const Text('Save affiliate code'),
+        ),
       ],
+    );
+  }
+
+  Widget _collabsTab() {
+    final campaigns = ModuleTheme.toList(_data?['brandCampaigns']);
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _gateCard(),
+          const Text('Active Brand Campaigns', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+          const SizedBox(height: 8),
+          if (!_approved)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text('Brand campaigns become available after admin approval.', style: TextStyle(color: ModuleTheme.textGray)),
+            )
+          else if (campaigns.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 16),
+              child: Center(child: Text('No active brand campaigns right now.', style: TextStyle(color: ModuleTheme.textGray))),
+            )
+          else
+            ...campaigns.map((c) {
+              final id = c['id'];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              c['title']?.toString() ?? 'Campaign',
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Budget: ₹${c['budget'] ?? 0}',
+                              style: TextStyle(fontWeight: FontWeight.w700, color: Colors.green.shade800, fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(c['description']?.toString() ?? '', style: const TextStyle(color: ModuleTheme.textGray, fontSize: 13)),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: FilledButton.icon(
+                          onPressed: id is num
+                              ? () async {
+                                  final pitchCtrl = TextEditingController();
+                                  final ok = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: Text('Apply: ${c['title'] ?? 'Campaign'}'),
+                                      content: TextField(
+                                        controller: pitchCtrl,
+                                        maxLines: 4,
+                                        decoration: const InputDecoration(
+                                          hintText: 'Tell the brand why your content is a good fit...',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                                        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Submit Pitch')),
+                                      ],
+                                    ),
+                                  );
+                                  if (ok == true && pitchCtrl.text.trim().isNotEmpty) {
+                                    final res = await _api.applyCollab(campaignId: id.toInt(), pitch: pitchCtrl.text.trim());
+                                    _snack(res['success'] == true ? 'Application submitted!' : res['error']?.toString() ?? '');
+                                  }
+                                }
+                              : null,
+                          icon: const Icon(Icons.send, size: 16),
+                          label: const Text('Apply with Pitch'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
     );
   }
 

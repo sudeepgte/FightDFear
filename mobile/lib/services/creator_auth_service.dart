@@ -4,10 +4,9 @@ import 'auth_state.dart';
 import 'api_client.dart';
 
 class CreatorAuthService {
-  CreatorAuthService(this._api, [this._auth]);
+  CreatorAuthService(this._api, [AuthState? _]);
 
   final ApiClient _api;
-  final AuthState? _auth;
 
   Future<Map<String, dynamic>> sendEmailOtp(String email) => _api.post(
         '/api/creator-hub/otp/send-email',
@@ -43,22 +42,23 @@ class CreatorAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
-      _auth?.applyUserSession(res);
+      await _api.saveCreatorToken(res['token'].toString());
     }
     return res;
   }
 
-  Future<Map<String, dynamic>> profile() => _api.get('/api/creator-hub/creator-profile');
+  Future<Map<String, dynamic>> profile() =>
+      _api.get('/api/creator-hub/creator-profile', creatorAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) =>
-      _api.put('/api/creator-hub/creator-profile', body: body, timeout: const Duration(seconds: 30));
+      _api.put('/api/creator-hub/creator-profile',
+          creatorAuth: true, body: body, timeout: const Duration(seconds: 30));
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/creator-hub/submit-verification');
+      _api.post('/api/creator-hub/submit-verification', creatorAuth: true);
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/creator-hub/payout/request');
+      _api.post('/api/creator-hub/payout/request', creatorAuth: true);
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -74,7 +74,9 @@ class CreatorAuthService {
     return _api.postMultipart(
       '/api/creator-hub/photos',
       files: files,
-      auth: true,
+      creatorAuth: true,
     );
   }
+
+  Future<void> logout() => _api.clearCreatorToken();
 }

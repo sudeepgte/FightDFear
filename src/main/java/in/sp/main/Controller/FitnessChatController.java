@@ -72,7 +72,7 @@ public class FitnessChatController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<?> sendMessage(@RequestParam Long userId, @RequestParam Long trainerId, @RequestParam String message, HttpSession session) {
+    public ResponseEntity<?> sendMessage(@RequestParam("userId") Long userId, @RequestParam("trainerId") Long trainerId, @RequestParam("message") String message, HttpSession session) {
         User currentUser = getSessionUser(session);
         FitnessTrainer currentTrainer = getSessionTrainer(session);
 

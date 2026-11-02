@@ -242,6 +242,9 @@
     </header>
 
     <main class="main-container">
+        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
         <div class="form-card">
             <div class="card-header">
                 <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 64px; width: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(244,63,94,0.15);" onerror="this.src='https://via.placeholder.com/64'">

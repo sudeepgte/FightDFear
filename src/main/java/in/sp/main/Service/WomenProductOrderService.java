@@ -14,8 +14,10 @@ import in.sp.main.Entities.User;
 import in.sp.main.Entities.WomenCartItem;
 import in.sp.main.Entities.WomenProduct;
 import in.sp.main.Entities.WomenProductOrder;
+import in.sp.main.Entities.WomenProductSeller;
 import in.sp.main.Repository.WomenCartItemRepository;
 import in.sp.main.Repository.WomenProductOrderRepository;
+import java.util.Map;
 
 @Service
 public class WomenProductOrderService {
@@ -34,6 +36,15 @@ public class WomenProductOrderService {
 
     @Autowired
     private ProductDeliveryTrackingService trackingService;
+
+    @Autowired
+    private SellerNotificationService sellerNotificationService;
+
+    @Autowired
+    private PushNotificationService pushNotificationService;
+
+    @Autowired
+    private EmailService emailService;
 
     @Transactional
     public List<Long> placeOrders(User user, List<WomenCartItem> items, String paymentMethod,
@@ -85,6 +96,44 @@ public class WomenProductOrderService {
                 }
             }
             orderIds.add(order.getId());
+
+            // Notify Seller
+            WomenProductSeller seller = lockedProduct.getSeller();
+            String clientName = user.getFullName() != null && !user.getFullName().isBlank() ? user.getFullName() : "Customer";
+            String productName = lockedProduct.getName() != null ? lockedProduct.getName() : "Product";
+            double orderTotal = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
+            if (seller != null && sellerNotificationService != null) {
+                sellerNotificationService.notifySeller(
+                        seller,
+                        "ORDER_PLACED",
+                        "New Order: " + productName,
+                        "Customer " + clientName + " placed order #" + order.getId() + " for " + productName + " (Qty: " + finalQty + ", ₹" + String.format("%.2f", orderTotal) + ").",
+                        order.getId(),
+                        true
+                );
+            }
+
+            // Notify User
+            if (pushNotificationService != null) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Order Placed Successfully!",
+                        "Your order #" + order.getId() + " for " + productName + " (₹" + String.format("%.2f", orderTotal) + ") has been received.",
+                        Map.of("type", "PRODUCT_ORDER_PLACED", "orderId", String.valueOf(order.getId()))
+                );
+            }
+            if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                try {
+                    emailService.sendEmail(
+                            user.getEmail(),
+                            "Order Confirmation: #" + order.getId(),
+                            "Hello " + clientName + ",\n\nThank you for your order!\n\nOrder #" + order.getId()
+                                    + " for " + productName + " (Qty: " + finalQty + ", Total: ₹" + String.format("%.2f", orderTotal)
+                                    + ") has been received and is being processed by the seller.\n\nDelivery Address:\n" + address
+                                    + "\n\nThank you,\nFight D Fear"
+                    );
+                } catch (Exception ignored) {}
+            }
         }
 
 

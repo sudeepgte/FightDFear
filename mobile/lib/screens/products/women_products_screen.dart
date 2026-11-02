@@ -11,7 +11,9 @@ import 'order_live_tracking_screen.dart';
 import 'women_product_detail_screen.dart';
 
 class WomenProductsScreen extends StatefulWidget {
-  const WomenProductsScreen({super.key});
+  const WomenProductsScreen({super.key, this.initialTab = 0});
+
+  final int initialTab;
 
   static const Color primary = Color(0xFFF43F5E);
   static const Color navy = Color(0xFF1E1B4B);
@@ -53,7 +55,7 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
       onSuccess: (r) => _checkout.handleSuccess(context, r),
       onError: (r) => _checkout.handleError(r),
     );
-    _tabs = TabController(length: 3, vsync: this);
+    _tabs = TabController(length: 3, vsync: this, initialIndex: widget.initialTab.clamp(0, 2));
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
       if (_tabs.index == 1) {
@@ -62,6 +64,11 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
         _loadOrders();
       }
     });
+    if (widget.initialTab == 1) {
+      _loadCart();
+    } else if (widget.initialTab == 2) {
+      _loadOrders();
+    }
     _loadProducts();
   }
 
@@ -202,10 +209,10 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
     );
     if (ok != true) return;
     final address = ctrl.text.trim();
-    if (address.length < 8) {
+    if (address.length < 10) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a complete delivery address.')),
+        const SnackBar(content: Text('Delivery address must be at least 10 characters long.')),
       );
       return;
     }
@@ -240,6 +247,15 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
       context: context,
       amount: amount,
       description: 'Women Products · Order #$id',
+      createOrderFn: () => PaymentService(context.read<AuthState>().api).createOrder(
+        amount,
+        type: 'WOMEN_PRODUCT',
+        extra: {
+          'targetId': id,
+          'orderId': id,
+          'orderIds': [id],
+        },
+      ),
       verifyPayload: (response) => {
         'razorpay_order_id': response.orderId,
         'razorpay_payment_id': response.paymentId,
@@ -247,6 +263,7 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
         'type': 'WOMEN_PRODUCT',
         'orderId': id,
         'targetId': id,
+        'orderIds': [id],
         'amount': amount,
       },
       onSuccess: () {

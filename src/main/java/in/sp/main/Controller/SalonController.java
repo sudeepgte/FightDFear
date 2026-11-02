@@ -222,6 +222,10 @@ public class SalonController {
                 cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
                 response.addCookie(cookie);
                 
+                boolean isApproved = salon.isApproved() || salon.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
+                if (isApproved) {
+                    return "redirect:/salon/salon-dashboard";
+                }
                 return "redirect:/salons/profile";
             } else {
                 model.addAttribute("error", "Invalid password");
@@ -471,20 +475,14 @@ public class SalonController {
         Optional<Salon> salonOpt = salonRepository.findById(loggedSalon.getId());
         if (salonOpt.isEmpty()) { session.invalidate(); return "redirect:/salons/login"; }
         Salon salon = salonOpt.get();
+        boolean isApproved = salon.isApproved() || salon.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
+        if (isApproved) {
+            return "redirect:/salon/salon-dashboard";
+        }
         model.addAttribute("salon", salon);
-        
-
-        if (salonOpt.isEmpty()) {
-            session.invalidate();
-            return "redirect:/salons/login";
-        }
-        if (salonOpt.isPresent()) {
-            populateProfileModel(model, salonOpt.get());
-            addProfileImageUploadHints(model);
-            return "salon/salon-profile"; // loads profile.jsp
-        }
-
-        return "redirect:/salons/login";
+        populateProfileModel(model, salon);
+        addProfileImageUploadHints(model);
+        return "salon/salon-profile"; // loads profile.jsp
     }
 
     private void addProfileImageUploadHints(Model model) {
@@ -973,7 +971,7 @@ public class SalonController {
 
     // Delete profile
     @PostMapping("/salons/deleteProfile")
-    public String deleteProfile(@RequestParam Long id,
+    public String deleteProfile(@RequestParam("id") Long id,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
 
@@ -1205,7 +1203,7 @@ public class SalonController {
  
     // Edit Service Form
     @GetMapping("/salon/editService/{id}")
-    public String editServiceForm(@PathVariable Long id, Model model) {
+    public String editServiceForm(@PathVariable("id") Long id, Model model) {
         Optional<Service1> serviceOpt = serviceRepository.findById(id);
         if (serviceOpt.isPresent()) {
             model.addAttribute("service", serviceOpt.get());
@@ -1220,7 +1218,7 @@ public class SalonController {
     
   
     @PostMapping("/salon/deleteService")
-    public String deleteService(@RequestParam Long id,
+    public String deleteService(@RequestParam("id") Long id,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
 

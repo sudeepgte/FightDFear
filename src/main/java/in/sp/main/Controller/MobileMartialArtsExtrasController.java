@@ -375,9 +375,24 @@ public class MobileMartialArtsExtrasController {
     }
 
     private User requireUser(HttpSession session) {
-        if (session == null) return null;
-        Object u = session.getAttribute("user");
-        return u instanceof User ? (User) u : null;
+        if (session != null) {
+            Object u = session.getAttribute("user");
+            if (u instanceof User) return (User) u;
+        }
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
+            String email = auth.getName().trim();
+            Optional<User> opt = userRepository.findByEmail(email.toLowerCase(Locale.ROOT));
+            if (opt.isEmpty()) {
+                opt = userRepository.findByEmail(email);
+            }
+            if (opt.isPresent()) {
+                if (session != null) session.setAttribute("user", opt.get());
+                return opt.get();
+            }
+        }
+        return null;
     }
 
     private ResponseEntity<Map<String, Object>> unauthorized() {
@@ -392,6 +407,7 @@ public class MobileMartialArtsExtrasController {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("success", false);
         body.put("error", error);
+        body.put("message", error);
         return body;
     }
 }

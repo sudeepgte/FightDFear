@@ -47,7 +47,7 @@ public class SafeRouteController {
     }
 
     @RequestMapping(value = "/delete/{id}", method = {RequestMethod.POST, RequestMethod.DELETE})
-    public String deleteRoute(@PathVariable Long id, HttpSession session) {
+    public String deleteRoute(@PathVariable("id") Long id, HttpSession session) {
         if (session.getAttribute("admin") == null) {
             return "redirect:/admin/loginAdmin";
         }

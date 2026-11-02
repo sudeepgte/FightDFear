@@ -93,7 +93,7 @@ public class MobileMartialArtsAdminController {
 
     @GetMapping("/centres/{id}")
     @Transactional(readOnly = true)
-    public ResponseEntity<Map<String, Object>> centreDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> centreDetail(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         try {
             MartialArtsCenter c = centreService.getCenterById(id);
@@ -109,7 +109,7 @@ public class MobileMartialArtsAdminController {
 
     @PostMapping("/centres/{id}/approve")
     @Transactional
-    public ResponseEntity<Map<String, Object>> approveCentre(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> approveCentre(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
 
         try {
@@ -134,7 +134,7 @@ public class MobileMartialArtsAdminController {
     @PostMapping("/centres/{id}/reject")
     @Transactional
     public ResponseEntity<Map<String, Object>> rejectCentre(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody(required = false) Map<String, String> body,
             HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
@@ -165,7 +165,7 @@ public class MobileMartialArtsAdminController {
     @PostMapping("/centres/{id}/request-changes")
     @Transactional
     public ResponseEntity<Map<String, Object>> requestChanges(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody(required = false) Map<String, String> body,
             HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();

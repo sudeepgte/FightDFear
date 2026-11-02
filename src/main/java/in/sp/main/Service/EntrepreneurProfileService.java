@@ -40,34 +40,49 @@ public class EntrepreneurProfileService {
     public List<String> missingItems(Entrepreneur e) {
         List<String> missing = new ArrayList<>();
         if (e == null) {
+            missing.add("0. Profile photo");
             missing.add("1.1 Full name");
             return missing;
         }
-        if (PartnerLifecycleSupport.blank(e.getFullName())) missing.add("1.1 Full name");
-        if (PartnerLifecycleSupport.blank(e.getDesignation())) missing.add("1.2 Role");
-        if (PartnerLifecycleSupport.blank(e.getBusinessName())) missing.add("1.3 Business name");
-        if (PartnerLifecycleSupport.blank(e.getPhone()) || !e.getPhone().trim().matches("\\d{10}")) {
-            missing.add("1.5 Official phone");
-        }
-        if (PartnerLifecycleSupport.blank(e.getCredentialNumber())) missing.add("1.8 GST / Udyam / CIN number");
-        if (PartnerLifecycleSupport.blank(e.getAddress())) missing.add("2.1 Address");
+        // 1. Profile photo / founder portrait
+        if (PartnerLifecycleSupport.blank(e.getProfilePhoto())) missing.add("0. Profile photo");
+        // 2. Full name (min 2 chars)
+        if (PartnerLifecycleSupport.blank(e.getFullName()) || e.getFullName().trim().length() < 2) missing.add("1.1 Full name");
+        // 3. Business / venture name (min 2 chars, not placeholder)
+        if (PartnerLifecycleSupport.blank(e.getBusinessName()) || e.getBusinessName().trim().length() < 2
+                || "Pending Profile Completion".equalsIgnoreCase(e.getBusinessName().trim())) missing.add("1.2 Business name");
+        // 4. Business category
+        if (PartnerLifecycleSupport.blank(e.getBusinessCategory()) && PartnerLifecycleSupport.blank(e.getCategoriesOffered())) missing.add("1.3 Business category");
+        // 5. Account email (valid email format)
+        if (PartnerLifecycleSupport.blank(e.getEmail()) || !e.getEmail().trim().matches("^[A-Za-z0-9+_.-]+@(.+)$")) missing.add("1.5 Account email");
+        // 6. Mobile phone (10 digits)
+        if (PartnerLifecycleSupport.blank(e.getPhone()) || !e.getPhone().trim().matches("^[0-9]{10}$")) missing.add("1.6 Mobile phone");
+        // 7. Street address / landmark (min 3 chars, not placeholder)
+        String location = firstNonBlank(e.getBusinessLocation(), e.getAddress());
+        if (PartnerLifecycleSupport.blank(location) || location.trim().length() < 3 || "Pending".equalsIgnoreCase(location.trim())) missing.add("2.1 Street address / Landmark");
+        // 8. State
+        if (PartnerLifecycleSupport.blank(e.getState())) missing.add("2.2 State");
+        // 9. City
         String city = firstNonBlank(e.getCity(), e.getBusinessLocation());
         if (PartnerLifecycleSupport.blank(city)) missing.add("2.3 City");
-        if (PartnerLifecycleSupport.blank(e.getState())) missing.add("2.4 State");
-        if (PartnerLifecycleSupport.blank(e.getPincode()) || !e.getPincode().trim().matches("\\d{6}")) {
-            missing.add("2.5 Pincode");
-        }
-        if (PartnerLifecycleSupport.blank(e.getCategoriesOffered()) && PartnerLifecycleSupport.blank(e.getBusinessCategory())) {
-            missing.add("3.1 Categories");
-        }
-        if (PartnerLifecycleSupport.blank(e.getAudience())) missing.add("4.1 Who I serve");
-        if (PartnerLifecycleSupport.blank(e.getOpenDays())) missing.add("6.1 Open days");
-        if (e.getOpenTime() == null) missing.add("6.2 Open time");
-        if (e.getCloseTime() == null) missing.add("6.3 Close time");
-        if (PartnerLifecycleSupport.blank(e.getBusinessDescription())) missing.add("7.1 About");
-        if (PartnerLifecycleSupport.blank(e.getRaiseMode()) || e.getInvestmentNeeded() == null) {
-            missing.add("8. First raise");
-        }
+        // 10. Pincode (6 digits)
+        if (PartnerLifecycleSupport.blank(e.getPincode()) || !e.getPincode().trim().matches("^[0-9]{6}$")) missing.add("2.4 Pincode");
+        // 11. Investment / funding required (> 0)
+        if (e.getInvestmentNeeded() == null || e.getInvestmentNeeded() <= 0) missing.add("3.1 Funding required");
+        // 12. Expected monthly income (> 0)
+        if (e.getExpectedMonthlyIncome() == null || e.getExpectedMonthlyIncome() <= 0) missing.add("3.2 Expected monthly revenue");
+        // 13. Business experience (>= 0)
+        if (e.getBusinessExperience() == null || e.getBusinessExperience() < 0) missing.add("3.3 Business experience");
+        // 14. Aadhaar number (12 digits)
+        if (PartnerLifecycleSupport.blank(e.getAadhaarNumber()) || !e.getAadhaarNumber().trim().matches("^[0-9]{12}$")) missing.add("4.1 Aadhaar number");
+        // 15. Business description & vision (min 10 chars, not placeholder)
+        String desc = e.getBusinessDescription();
+        if (PartnerLifecycleSupport.blank(desc) || desc.trim().length() < 10 || "Profile pending completion by entrepreneur.".equalsIgnoreCase(desc.trim())) missing.add("5.1 Business description");
+        // 16. Payout info: valid UPI ID OR complete valid Bank Details
+        boolean hasUpi = e.getUpiId() != null && e.getUpiId().trim().matches("^[a-zA-Z0-9.\\-_]{2,256}@[a-zA-Z]{2,64}$");
+        boolean hasBank = e.getAccountNumber() != null && e.getAccountNumber().trim().matches("^[0-9]{9,18}$") &&
+                e.getIfscCode() != null && e.getIfscCode().trim().matches("^[A-Z]{4}0[A-Z0-9]{6}$");
+        if (!hasUpi && !hasBank) missing.add("6.1 Payout UPI or Bank Account");
         return missing;
     }
 
@@ -142,6 +157,11 @@ public class EntrepreneurProfileService {
 
     public static void putExtra(Map<String, Object> m, Entrepreneur e) {
         if (m == null || e == null) return;
+        m.put("dob", e.getDob());
+        m.put("gender", e.getGender() == null ? null : e.getGender().name());
+        m.put("aadhaarNumber", e.getAadhaarNumber());
+        m.put("panNumber", e.getCredentialNumber());
+        m.put("gstNumber", e.getCredentialNumber());
         m.put("designation", e.getDesignation());
         m.put("whatsappNumber", e.getWhatsappNumber());
         m.put("address", e.getAddress());
@@ -167,8 +187,14 @@ public class EntrepreneurProfileService {
         m.put("bufferMinutes", e.getBufferMinutes());
         m.put("typicalPrice", e.getInvestmentNeeded());
         m.put("upiId", e.getUpiId());
+        m.put("bankName", e.getBankName());
+        m.put("accountNumber", e.getAccountNumber());
+        m.put("ifscCode", e.getIfscCode());
         m.put("bankDetails", firstNonBlank(e.getBankDetails(), composeBank(e)));
         m.put("payoutBalance", e.getPayoutBalance());
+        m.put("documentsPath", e.getDocumentsPath());
+        m.put("photosPath", e.getPhotosPath());
+        m.put("pitchDeckPath", e.getDocumentsPath());
         m.put("galleryPhotos", splitCsv(firstNonBlank(e.getGalleryPhotos(), e.getPhotosPath())));
         m.put("profileImageUrl", e.getProfilePhoto());
         m.put("rating", e.getRating());
@@ -182,6 +208,13 @@ public class EntrepreneurProfileService {
         if (e == null || body == null) return e;
         if (body.get("fullName") != null) e.setFullName(blankToNull(str(body.get("fullName"))));
         if (body.get("phone") != null) e.setPhone(blankToNull(str(body.get("phone"))));
+        if (body.get("dob") != null) e.setDob(blankToNull(str(body.get("dob"))));
+        if (body.get("gender") != null && !str(body.get("gender")).isBlank()) {
+            try {
+                e.setGender(in.sp.main.Entities.Gender.valueOf(str(body.get("gender")).toUpperCase()));
+            } catch (Exception ignored) {}
+        }
+        if (body.get("aadhaarNumber") != null) e.setAadhaarNumber(blankToNull(str(body.get("aadhaarNumber"))));
         if (body.get("designation") != null) e.setDesignation(blankToNull(str(body.get("designation"))));
         if (body.get("whatsappNumber") != null) e.setWhatsappNumber(blankToNull(str(body.get("whatsappNumber"))));
         if (body.get("businessName") != null) e.setBusinessName(blankToNull(str(body.get("businessName"))));
@@ -228,7 +261,13 @@ public class EntrepreneurProfileService {
                 try { e.setBusinessExperience(Integer.parseInt(str(raw))); } catch (Exception ignored) {}
             }
         }
-        if (body.get("credentialNumber") != null) e.setCredentialNumber(blankToNull(str(body.get("credentialNumber"))));
+        if (body.get("credentialNumber") != null) {
+            e.setCredentialNumber(blankToNull(str(body.get("credentialNumber"))));
+        } else if (body.get("panNumber") != null) {
+            e.setCredentialNumber(blankToNull(str(body.get("panNumber"))));
+        } else if (body.get("gstNumber") != null) {
+            e.setCredentialNumber(blankToNull(str(body.get("gstNumber"))));
+        }
         if (body.get("sessionMode") != null || body.get("raiseMode") != null) {
             e.setRaiseMode(blankToNull(str(body.get("raiseMode") != null ? body.get("raiseMode") : body.get("sessionMode"))));
         }
@@ -248,7 +287,34 @@ public class EntrepreneurProfileService {
             try { e.setExpectedMonthlyIncome(Double.parseDouble(str(body.get("expectedMonthlyIncome")))); } catch (Exception ignored) {}
         }
         if (body.get("upiId") != null) e.setUpiId(blankToNull(str(body.get("upiId"))));
-        if (body.get("bankDetails") != null) e.setBankDetails(blankToNull(str(body.get("bankDetails"))));
+        if (body.get("bankName") != null) e.setBankName(blankToNull(str(body.get("bankName"))));
+        if (body.get("bankAccountNumber") != null || body.get("accountNumber") != null) {
+            String acc = str(body.get("bankAccountNumber") != null ? body.get("bankAccountNumber") : body.get("accountNumber"));
+            e.setAccountNumber(blankToNull(acc));
+        }
+        if (body.get("bankIfsc") != null || body.get("ifscCode") != null) {
+            String ifsc = str(body.get("bankIfsc") != null ? body.get("bankIfsc") : body.get("ifscCode"));
+            e.setIfscCode(blankToNull(ifsc == null ? null : ifsc.toUpperCase()));
+        }
+        if (body.get("bankDetails") != null) {
+            e.setBankDetails(blankToNull(str(body.get("bankDetails"))));
+        } else if (e.getAccountNumber() != null && !e.getAccountNumber().isBlank()) {
+            String holder = str(body.get("bankAccountHolder"));
+            String branch = str(body.get("bankBranch"));
+            String serialized = "Account Holder: " + holder
+                    + " | Bank: " + (e.getBankName() != null ? e.getBankName() : "")
+                    + " | A/C: " + e.getAccountNumber()
+                    + " | IFSC: " + (e.getIfscCode() != null ? e.getIfscCode() : "")
+                    + " | Branch: " + branch;
+            e.setBankDetails(serialized);
+        }
+        if (body.get("documentsPath") != null || body.get("pitchDeckPath") != null) {
+            String path = str(body.get("pitchDeckPath") != null ? body.get("pitchDeckPath") : body.get("documentsPath"));
+            e.setDocumentsPath(blankToNull(path));
+        }
+        if (body.get("photosPath") != null) {
+            e.setPhotosPath(blankToNull(str(body.get("photosPath"))));
+        }
         return e;
     }
 

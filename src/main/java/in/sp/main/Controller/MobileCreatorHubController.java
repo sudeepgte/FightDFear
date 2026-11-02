@@ -57,12 +57,12 @@ public class MobileCreatorHubController {
 
     @GetMapping("/feed")
     public ResponseEntity<Map<String, Object>> feed(
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size,
             HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
@@ -165,7 +165,7 @@ public class MobileCreatorHubController {
     }
 
     @GetMapping("/creators/{id}")
-    public ResponseEntity<Map<String, Object>> creatorProfile(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> creatorProfile(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
@@ -220,7 +220,7 @@ public class MobileCreatorHubController {
     }
 
     @GetMapping("/posts/{id}/comments")
-    public ResponseEntity<Map<String, Object>> comments(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> comments(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         List<Map<String, Object>> items = videoCommentRepository.findByVideo_Id(id).stream().map(c -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -329,28 +329,37 @@ public class MobileCreatorHubController {
                 m.put("senderId", n.getSender().getId());
             }
             items.add(m);
-            if (!n.isRead()) {
-                n.setRead(true);
-                creatorNotificationRepository.save(n);
-            }
         }
         return ok(Map.of("notifications", items));
+    }
+
+    @PostMapping("/notifications/mark-all-read")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> markAllNotificationsRead(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        List<CreatorNotification> unread = creatorNotificationRepository.findByUser_IdAndIsReadFalse(user.getId());
+        for (CreatorNotification n : unread) {
+            n.setRead(true);
+            creatorNotificationRepository.save(n);
+        }
+        return ok(Map.of("success", true, "markedCount", unread.size()));
     }
 
     @PostMapping("/upload")
     @Transactional
     public ResponseEntity<Map<String, Object>> upload(
-            @RequestParam String title,
-            @RequestParam String description,
-            @RequestParam String category,
-            @RequestParam String uploadType,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String hashtags,
-            @RequestParam(defaultValue = "false") boolean isDraft,
-            @RequestParam(defaultValue = "false") boolean isPaidContent,
-            @RequestParam(defaultValue = "0.0") Double price,
-            @RequestParam(defaultValue = "false") boolean isSubscriberOnly,
-            @RequestParam(required = false) String affiliateLink,
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("category") String category,
+            @RequestParam("uploadType") String uploadType,
+            @RequestParam(value = "location", required = false) String location,
+            @RequestParam(value = "hashtags", required = false) String hashtags,
+            @RequestParam(value = "isDraft", defaultValue = "false") boolean isDraft,
+            @RequestParam(value = "isPaidContent", defaultValue = "false") boolean isPaidContent,
+            @RequestParam(value = "price", defaultValue = "0.0") Double price,
+            @RequestParam(value = "isSubscriberOnly", defaultValue = "false") boolean isSubscriberOnly,
+            @RequestParam(value = "affiliateLink", required = false) String affiliateLink,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "thumbnail", required = false) MultipartFile thumbnail,
             HttpSession session) {
@@ -408,7 +417,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/creators/{id}/follow")
     @Transactional
-    public ResponseEntity<Map<String, Object>> follow(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> follow(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
@@ -498,7 +507,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/creators/{id}/unsubscribe")
     @Transactional
-    public ResponseEntity<Map<String, Object>> unsubscribe(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> unsubscribe(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
@@ -514,7 +523,7 @@ public class MobileCreatorHubController {
     @PostMapping("/creators/{id}/rate")
     @Transactional
     public ResponseEntity<Map<String, Object>> rateCreator(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User currentUser = requireUser(session);
@@ -536,7 +545,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/unlock")
     @Transactional
-    public ResponseEntity<Map<String, Object>> unlock(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> unlock(@PathVariable("id") Long id, HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -567,7 +576,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/bookmark")
     @Transactional
-    public ResponseEntity<Map<String, Object>> bookmark(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> bookmark(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -586,7 +595,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/view")
     @Transactional
-    public ResponseEntity<Map<String, Object>> view(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> view(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
         if (video == null) return badRequest("Post not found");
@@ -601,7 +610,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/like")
     @Transactional
-    public ResponseEntity<Map<String, Object>> like(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> like(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -626,7 +635,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/comments")
     @Transactional
-    public ResponseEntity<Map<String, Object>> comment(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> comment(@PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -644,7 +653,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/posts/{id}/report")
     @Transactional
-    public ResponseEntity<Map<String, Object>> report(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> report(@PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Videoupload video = videoUploadRepository.findById(id).orElse(null);
@@ -661,7 +670,7 @@ public class MobileCreatorHubController {
 
     @PostMapping("/creators/{id}/block")
     @Transactional
-    public ResponseEntity<Map<String, Object>> block(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> block(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         User blocked = userRepository.findById(id).orElse(null);
@@ -812,6 +821,137 @@ public class MobileCreatorHubController {
         app.setStatus("PENDING");
         brandCollabApplicationRepository.save(app);
         return ok(Map.of("message", "Application submitted"));
+    }
+
+    @GetMapping("/collab/campaigns")
+    public ResponseEntity<Map<String, Object>> getCampaigns(HttpSession session) {
+        if (requireUser(session) == null) return unauthorized();
+        List<Map<String, Object>> campaigns = brandCollaborationRepository.findByStatus("ACTIVE").stream().map(c -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", c.getId());
+            m.put("title", c.getCampaignTitle());
+            m.put("description", c.getDescription());
+            m.put("budget", c.getPayRate());
+            return m;
+        }).toList();
+        return ok(Map.of("campaigns", campaigns));
+    }
+
+    @PostMapping("/dashboard/affiliate-code")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> setAffiliateCode(@RequestBody Map<String, Object> body, HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        String code = str(body.get("code"));
+        user.setCreatorAffiliateCode(code);
+        userRepository.save(user);
+        session.setAttribute("user", user);
+        return ok(Map.of("success", true, "affiliateCode", code));
+    }
+
+    @PostMapping("/story/upload")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadStory(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "caption", required = false) String caption,
+            HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        if (!CreatorProfileService.isApprovedCreator(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "success", false,
+                    "error", "Your creator profile must be approved by admin before you can upload stories."));
+        }
+        if (file.isEmpty()) return badRequest("File is required");
+        try {
+            String mediaPath = fileUploadService.saveFile(file);
+            String fileType = (file.getContentType() != null && file.getContentType().startsWith("video")) ? "VIDEO" : "IMAGE";
+            CreatorStory story = new CreatorStory();
+            story.setUser(currentUser);
+            story.setMediaPath(mediaPath);
+            story.setFileType(fileType);
+            story.setCaption(caption != null ? caption : "");
+            story.setDraft(false);
+            story.setPrivate(currentUser.isPrivate());
+            story.setUploadTime(LocalDateTime.now());
+            creatorStoryRepository.save(story);
+
+            return ok(Map.of(
+                    "message", "Story uploaded",
+                    "id", story.getId(),
+                    "mediaPath", mediaPath,
+                    "fileType", fileType,
+                    "caption", story.getCaption(),
+                    "uploadTime", story.getUploadTime().toString()
+            ));
+        } catch (IOException e) {
+            return badRequest("Upload failed: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/story/my")
+    public ResponseEntity<Map<String, Object>> getMyStories(HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        LocalDateTime since = LocalDateTime.now().minusHours(24);
+        List<Map<String, Object>> items = creatorStoryRepository
+                .findByUser_IdAndIsDraftFalseAndUploadTimeAfter(currentUser.getId(), since)
+                .stream().map(s -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", s.getId());
+                    m.put("mediaPath", s.getMediaPath());
+                    m.put("fileType", s.getFileType());
+                    m.put("caption", s.getCaption());
+                    m.put("uploadTime", s.getUploadTime() == null ? null : s.getUploadTime().toString());
+                    m.put("viewCount", s.getViewCount());
+                    return m;
+                }).toList();
+        return ok(Map.of("stories", items));
+    }
+
+    @PostMapping("/story/{id}/view")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> viewStory(@PathVariable("id") Long id, HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        CreatorStory story = creatorStoryRepository.findById(id).orElse(null);
+        if (story == null) return badRequest("Story not found");
+        if (!story.getUser().getId().equals(currentUser.getId())) {
+            story.getViewers().add(currentUser);
+            story.setViewCount(story.getViewers().size());
+            creatorStoryRepository.save(story);
+        }
+        return ok(Map.of("viewCount", story.getViewCount()));
+    }
+
+    @GetMapping("/story/{id}/viewers")
+    public ResponseEntity<Map<String, Object>> getStoryViewers(@PathVariable("id") Long id, HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        CreatorStory story = creatorStoryRepository.findById(id).orElse(null);
+        if (story == null) return badRequest("Story not found");
+        List<Map<String, Object>> viewers = story.getViewers().stream().map(v -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", v.getId());
+            m.put("name", v.getFullName());
+            m.put("avatar", v.getProfilePhoto());
+            return m;
+        }).toList();
+        return ok(Map.of("viewers", viewers));
+    }
+
+    @DeleteMapping("/story/{id}")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> deleteStory(@PathVariable("id") Long id, HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        CreatorStory story = creatorStoryRepository.findById(id).orElse(null);
+        if (story == null) return badRequest("Story not found");
+        if (!story.getUser().getId().equals(currentUser.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("success", false, "error", "Not authorized"));
+        }
+        creatorStoryRepository.delete(story);
+        return ok(Map.of("message", "Story deleted"));
     }
 
     // ── helpers ──

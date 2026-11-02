@@ -40,52 +40,59 @@ class FinancialEducatorAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveFinancialEducatorToken(res['token'].toString());
     }
     return res;
   }
 
   Future<Map<String, dynamic>> profile() =>
-      _api.get('/api/financial-literacy/educator/profile');
+      _api.get('/api/financial-literacy/educator/profile', financialEducatorAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) =>
       _api.put('/api/financial-literacy/educator/profile',
-          body: body, timeout: const Duration(seconds: 30));
+          financialEducatorAuth: true, body: body, timeout: const Duration(seconds: 30));
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/financial-literacy/educator/submit-verification');
+      _api.post('/api/financial-literacy/educator/submit-verification',
+          financialEducatorAuth: true);
 
   Future<Map<String, dynamic>> dashboard() =>
-      _api.get('/api/financial-literacy/educator/me');
+      _api.get('/api/financial-literacy/educator/me', financialEducatorAuth: true);
 
   Future<Map<String, dynamic>> addVideo(Map<String, dynamic> body) =>
-      _api.post('/api/financial-literacy/educator/videos', body: body);
+      _api.post('/api/financial-literacy/educator/videos',
+          financialEducatorAuth: true, body: body);
 
   Future<Map<String, dynamic>> deleteVideo(int id) =>
-      _api.delete('/api/financial-literacy/educator/videos/$id');
+      _api.delete('/api/financial-literacy/educator/videos/$id', financialEducatorAuth: true);
 
   Future<Map<String, dynamic>> addLive(Map<String, dynamic> body) =>
-      _api.post('/api/financial-literacy/educator/live-sessions', body: body);
+      _api.post('/api/financial-literacy/educator/live-sessions',
+          financialEducatorAuth: true, body: body);
 
   Future<Map<String, dynamic>> deleteLive(int id) =>
-      _api.delete('/api/financial-literacy/educator/live-sessions/$id');
+      _api.delete('/api/financial-literacy/educator/live-sessions/$id',
+          financialEducatorAuth: true);
 
   Future<Map<String, dynamic>> addWorkshop(Map<String, dynamic> body) =>
-      _api.post('/api/financial-literacy/educator/workshops', body: body);
+      _api.post('/api/financial-literacy/educator/workshops',
+          financialEducatorAuth: true, body: body);
 
   Future<Map<String, dynamic>> deleteWorkshop(int id) =>
-      _api.delete('/api/financial-literacy/educator/workshops/$id');
+      _api.delete('/api/financial-literacy/educator/workshops/$id',
+          financialEducatorAuth: true);
 
   Future<Map<String, dynamic>> setEnrollmentStatus(int id, String status) =>
       _api.post('/api/financial-literacy/educator/enrollments/$id/status',
-          body: {'status': status});
+          financialEducatorAuth: true, body: {'status': status});
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/financial-literacy/educator/payout/request');
+      _api.post('/api/financial-literacy/educator/payout/request',
+          financialEducatorAuth: true);
 
   Future<Map<String, dynamic>> updateEnrollmentNotes(int id, String coachNotes) =>
       _api.post('/api/financial-literacy/educator/enrollments/$id/notes',
-          body: {'coachNotes': coachNotes});
+          financialEducatorAuth: true, body: {'coachNotes': coachNotes});
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -101,7 +108,9 @@ class FinancialEducatorAuthService {
     return _api.postMultipart(
       '/api/financial-literacy/educator/photos',
       files: files,
-      auth: true,
+      financialEducatorAuth: true,
     );
   }
+
+  Future<void> logout() => _api.clearFinancialEducatorToken();
 }

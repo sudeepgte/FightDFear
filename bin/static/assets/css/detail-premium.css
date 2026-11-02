@@ -170,11 +170,28 @@ body {
 /* Layout Grid */
 .detail-grid {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 32px;
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 24px 16px 80px;
+  padding: 24px 24px 80px;
+  box-sizing: border-box;
+}
+
+.main-content-column {
+  min-width: 0;
+  width: 100%;
+}
+
+.sidebar-column {
+  width: 380px;
+  max-width: 100%;
+}
+
+.register-sidebar {
+  position: sticky;
+  top: 96px;
+  z-index: 10;
 }
 
 /* Main Content Blocks */

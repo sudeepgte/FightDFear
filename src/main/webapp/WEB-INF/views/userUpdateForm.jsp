@@ -423,7 +423,9 @@
                             <div class="col-6"><strong>DOB:</strong> <span id="previewDob">${user.dob}</span></div>
                             <div class="col-6"><strong>Gender:</strong> <span id="previewGender">${user.gender}</span></div>
                             <div class="col-6"><strong>City:</strong> <span id="previewCity">${user.city}</span></div>
+                            <div class="col-12"><strong>Home Address:</strong> <span id="previewAddress">${user.homeAddress}</span></div>
                             <div class="col-6"><strong>Emergency Contact:</strong> <span id="previewEmergencyContact">${not empty user.emergencyContacts ? user.emergencyContacts[0].name : '—'}</span></div>
+                            <div class="col-6"><strong>Emergency Contact Phone:</strong> <span id="previewEmergencyPhone">${not empty user.emergencyContacts ? user.emergencyContacts[0].phone : '—'}</span></div>
                             <div class="col-6"><strong>Emergency WhatsApp:</strong> <span id="previewWhatsappNumber">${not empty user.whatsappNumber ? user.whatsappNumber : '—'}</span></div>
                         </div>
                         <div class="d-flex gap-2 flex-wrap mt-3">
@@ -450,7 +452,12 @@ function syncPreview() {
     el = document.getElementById('previewDob'); if (el) el.textContent = document.getElementById('dob').value || '—';
     el = document.getElementById('previewGender'); if (el) el.textContent = document.getElementById('gender').value || '—';
     el = document.getElementById('previewCity'); if (el) el.textContent = document.getElementById('city').value || '—';
-    el = document.getElementById('previewEmergencyContact'); if (el) el.textContent = document.getElementById('emergencyContactName').value || '—';
+    el = document.getElementById('previewAddress'); if (el) el.textContent = document.getElementById('address').value || '—';
+    var eName = document.getElementById('emergencyContactName').value || '—';
+    var ePhone = document.getElementById('emergencyContactPhone').value || '—';
+    var eRel = document.getElementById('emergencyContactRelation').value || '';
+    el = document.getElementById('previewEmergencyContact'); if (el) el.textContent = eName + (eRel ? ' (' + eRel + ')' : '');
+    el = document.getElementById('previewEmergencyPhone'); if (el) el.textContent = ePhone;
     el = document.getElementById('previewWhatsappNumber'); if (el) el.textContent = document.getElementById('whatsappNumber').value || '—';
 }
 function showPreview() {

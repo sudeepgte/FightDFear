@@ -37,6 +37,10 @@ public class MobileFitnessController {
     private in.sp.main.Repository.UserRepository userRepo;
     @Autowired
     private in.sp.main.Service.FitnessQrAttendanceService fitnessQrAttendanceService;
+    @Autowired
+    private in.sp.main.Repository.FitnessAttendanceRepository fitnessAttendanceRepo;
+    @Autowired
+    private in.sp.main.Repository.FitnessClassRepository fitnessClassRepo;
 
 
     @GetMapping("/categories")
@@ -49,8 +53,8 @@ public class MobileFitnessController {
 
     @GetMapping("/trainers")
     public ResponseEntity<Map<String, Object>> trainers(
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
             HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         String cityQ = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
@@ -82,7 +86,7 @@ public class MobileFitnessController {
     }
 
     @GetMapping("/trainers/{id}")
-    public ResponseEntity<Map<String, Object>> trainerDetail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> trainerDetail(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null) return unauthorized();
         FitnessTrainer t = trainerRepo.findById(id).orElse(null);
         if (t == null || !FitnessTrainerProfileService.isApproved(t)) {
@@ -100,8 +104,8 @@ public class MobileFitnessController {
 
     @GetMapping("/trainers/{id}/available-slots")
     public ResponseEntity<Map<String, Object>> getAvailableSlots(
-            @PathVariable Long id,
-            @RequestParam(required = false) String date) {
+            @PathVariable("id") Long id,
+            @RequestParam(value = "date", required = false) String date) {
         FitnessTrainer t = trainerRepo.findById(id).orElse(null);
         if (t == null || t.isSuspended()) {
             return badRequest("Trainer not found");
@@ -173,7 +177,7 @@ public class MobileFitnessController {
 
     @PostMapping("/trainers/{id}/bookings")
     @Transactional
-    public ResponseEntity<Map<String, Object>> book(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> book(@PathVariable("id") Long id, @RequestBody Map<String, String> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         FitnessTrainer t = trainerRepo.findById(id).orElse(null);
@@ -293,7 +297,7 @@ public class MobileFitnessController {
 
     @PostMapping("/bookings/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancel(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancel(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         FitnessBooking booking = bookingRepo.findById(id).orElse(null);
@@ -315,7 +319,7 @@ public class MobileFitnessController {
     @PostMapping("/bookings/{id}/review")
     @Transactional
     public ResponseEntity<Map<String, Object>> submitReview(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -361,7 +365,7 @@ public class MobileFitnessController {
     }
 
     @GetMapping("/trainers/{id}/packages")
-    public ResponseEntity<Map<String, Object>> getTrainerPackages(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getTrainerPackages(@PathVariable("id") Long id) {
         List<FitnessPackage> packages = fitnessPackageRepo.findByTrainer_IdAndActiveTrue(id);
         List<Map<String, Object>> dtos = packages.stream().map(p -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -537,6 +541,193 @@ public class MobileFitnessController {
         }
     }
 
+    @GetMapping("/classes")
+    public ResponseEntity<Map<String, Object>> getUpcomingClasses() {
+        List<FitnessClass> classes = fitnessClassRepo.findByClassDateGreaterThanEqualAndStatusOrderByClassDateAsc(LocalDate.now(), "ACTIVE");
+        List<Map<String, Object>> dtos = classes.stream().map(this::classSummaryDto).toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("classes", dtos);
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/trainers/{id}/classes")
+    public ResponseEntity<Map<String, Object>> getTrainerClasses(@PathVariable("id") Long id) {
+        List<FitnessClass> classes = fitnessClassRepo.findByTrainer_IdOrderByClassDateAsc(id);
+        List<Map<String, Object>> dtos = classes.stream().map(this::classSummaryDto).toList();
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("classes", dtos);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/classes/{id}/book")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> bookClass(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        FitnessClass fc = fitnessClassRepo.findById(id).orElse(null);
+        if (fc == null || !"ACTIVE".equalsIgnoreCase(fc.getStatus())) {
+            return badRequest("Class not found or inactive");
+        }
+
+        if (fc.getCurrentEnrollment() != null && fc.getMaxCapacity() != null
+                && fc.getCurrentEnrollment() >= fc.getMaxCapacity()) {
+            return badRequest("Class is already at maximum capacity");
+        }
+
+        double price = fc.getPrice() != null ? Math.max(0, fc.getPrice()) : 0.0;
+        String payMethod = body != null && body.containsKey("paymentMethod")
+                ? String.valueOf(body.get("paymentMethod")).toUpperCase(Locale.ROOT) : "WALLET";
+
+        boolean paid = false;
+        if (price <= 0) {
+            paid = true;
+        } else if ("WALLET".equalsIgnoreCase(payMethod)) {
+            double bal = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
+            if (bal < price) {
+                return badRequest("Insufficient wallet balance. Please add funds or pay via Razorpay.");
+            }
+            user.setWalletBalance(bal - price);
+            userRepo.save(user);
+            session.setAttribute("user", user);
+            paid = true;
+        }
+
+        FitnessBooking b = new FitnessBooking();
+        b.setUser(user);
+        b.setTrainer(fc.getTrainer());
+        b.setFitnessClass(fc);
+        b.setCategory(fc.getCategory() != null ? fc.getCategory() : "Group Class");
+        b.setBookingDate(fc.getClassDate());
+        b.setStartDate(fc.getClassDate());
+        b.setEndDate(fc.getClassDate());
+        b.setBookingTime(fc.getClassTime() != null ? fc.getClassTime().toString() : "Class Time");
+        b.setSessionType(fc.getSessionType() != null ? fc.getSessionType() : "ONLINE");
+        b.setStatus("APPROVED");
+        b.setPaymentStatus(paid ? "PAID" : "PENDING");
+        b.setPaymentAmount(price);
+        b.setDuration("SINGLE");
+        b.setTotalSessions(1);
+        b.setRemainingSessions(paid ? 1 : 0);
+        b.setCompletedSessions(0);
+
+        bookingRepo.save(b);
+
+        fc.setCurrentEnrollment((fc.getCurrentEnrollment() != null ? fc.getCurrentEnrollment() : 0) + 1);
+        fitnessClassRepo.save(fc);
+
+        if (paid && fc.getTrainer() != null) {
+            fitnessCareService.creditPayout(b);
+        }
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", paid ? "Enrolled in class successfully!" : "Booking created, complete payment to confirm.");
+        res.put("bookingId", b.getId());
+        res.put("paymentStatus", b.getPaymentStatus());
+        res.put("paymentRequired", !paid && price > 0);
+        res.put("amount", price);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/my-progress")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> logMyProgress(
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+        if (body == null) return badRequest("Request body required");
+
+        Double weightKg = null;
+        if (body.get("weightKg") != null) {
+            try {
+                weightKg = Double.parseDouble(body.get("weightKg").toString().trim());
+            } catch (Exception ignored) {}
+        }
+        if (weightKg == null || weightKg < 20 || weightKg > 300) {
+            return badRequest("Please enter a valid weight between 20kg and 300kg");
+        }
+
+        Double bodyFat = null;
+        if (body.get("bodyFatPct") != null) {
+            try {
+                bodyFat = Double.parseDouble(body.get("bodyFatPct").toString().trim());
+            } catch (Exception ignored) {}
+        }
+
+        String notes = body.get("workoutNotes") != null ? body.get("workoutNotes").toString().trim() : null;
+
+        fitnessService.logClientProgress(user.getId(), null, LocalDate.now(), weightKg, bodyFat, 1, null, notes);
+
+        Map<String, Object> summary = fitnessService.getUserFitnessProgressSummary(user.getId());
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("message", "Fitness progress logged successfully");
+        res.putAll(summary);
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/attendance/me")
+    public ResponseEntity<Map<String, Object>> getMyAttendance(HttpSession session) {
+        User user = requireUser(session);
+        if (user == null) return unauthorized();
+
+        List<FitnessAttendance> list = fitnessAttendanceRepo.findByUser_IdOrderBySessionDateDesc(user.getId());
+        List<Map<String, Object>> dtos = list.stream().map(a -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", a.getId());
+            m.put("sessionDate", a.getSessionDate() == null ? null : a.getSessionDate().toString());
+            m.put("sessionTime", a.getSessionTime());
+            m.put("status", a.getStatus());
+            m.put("notes", a.getNotes());
+            m.put("creditsDeducted", a.getCreditsDeducted() != null ? a.getCreditsDeducted() : 1);
+            if (a.getTrainer() != null) {
+                m.put("trainerName", a.getTrainer().getFullName());
+                m.put("trainerId", a.getTrainer().getId());
+            }
+            if (a.getBooking() != null) {
+                m.put("bookingId", a.getBooking().getId());
+                m.put("category", a.getBooking().getCategory());
+            }
+            return m;
+        }).toList();
+
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("success", true);
+        res.put("attendance", dtos);
+        return ResponseEntity.ok(res);
+    }
+
+    private Map<String, Object> classSummaryDto(FitnessClass c) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", c.getId());
+        m.put("className", c.getClassName());
+        m.put("category", c.getCategory());
+        m.put("description", c.getDescription());
+        m.put("classDate", c.getClassDate() == null ? null : c.getClassDate().toString());
+        m.put("classTime", c.getClassTime() == null ? null : c.getClassTime().toString());
+        m.put("durationMinutes", c.getDurationMinutes());
+        m.put("sessionType", c.getSessionType());
+        m.put("maxCapacity", c.getMaxCapacity());
+        m.put("currentEnrollment", c.getCurrentEnrollment());
+        m.put("price", c.getPrice());
+        m.put("meetingLinkOrLocation", c.getMeetingLinkOrLocation());
+        m.put("status", c.getStatus());
+        if (c.getTrainer() != null) {
+            m.put("trainerId", c.getTrainer().getId());
+            m.put("trainerName", c.getTrainer().getFullName());
+            m.put("trainerPhoto", c.getTrainer().getProfilePhotoPath());
+            m.put("trainerRating", c.getTrainer().getRating());
+        }
+        return m;
+    }
+
     private static String firstSpecialization(String raw) {
         if (raw == null || raw.isBlank()) return "General Fitness";
         String[] parts = raw.split(",");
@@ -563,7 +754,23 @@ public class MobileFitnessController {
 
     private User requireUser(HttpSession session) {
         Object u = session == null ? null : session.getAttribute("user");
-        return u instanceof User ? (User) u : null;
+        if (u instanceof User appUser) {
+            return appUser;
+        }
+        org.springframework.security.core.Authentication auth =
+                org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+            Optional<User> opt = userRepo.findByEmailIgnoreCase(auth.getName())
+                    .or(() -> userRepo.findByEmail(auth.getName()));
+            if (opt.isPresent()) {
+                User user = opt.get();
+                if (session != null) {
+                    session.setAttribute("user", user);
+                }
+                return user;
+            }
+        }
+        return null;
     }
 
     private ResponseEntity<Map<String, Object>> unauthorized() {

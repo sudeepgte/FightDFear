@@ -18,7 +18,6 @@ Future<void> showFundingMenuSheet(
   BuildContext context, {
   required bool isEntrepreneur,
   VoidCallback? onProfile,
-  bool showSubscribe = true,
   int? proposalId,
   List<Map<String, dynamic>>? proposals,
 }) {
@@ -120,16 +119,6 @@ Future<void> showFundingMenuSheet(
               }
             },
           ),
-        if (!isEntrepreneur && showSubscribe)
-          _FundingMenuItem(
-            icon: Icons.workspace_premium_outlined,
-            label: 'Subscribe',
-            color: _primary,
-            onTap: () async {
-              Navigator.pop(sheetCtx);
-              await _subscribeInvestor(context);
-            },
-          ),
       ];
 
       return SafeArea(
@@ -182,38 +171,6 @@ Future<void> showFundingMenuSheet(
       );
     },
   );
-}
-
-Future<void> _subscribeInvestor(BuildContext context) async {
-  final messenger = ScaffoldMessenger.of(context);
-  try {
-    final svc = InvestorAuthService(context.read<AuthState>().api);
-    final res = await svc.subscribe();
-    if (!context.mounted) return;
-    if (res['success'] == true) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            res['message']?.toString() ?? 'Subscription activated',
-          ),
-        ),
-      );
-    } else {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(res['error']?.toString() ?? 'Subscribe failed'),
-          backgroundColor: Colors.red.shade700,
-        ),
-      );
-    }
-  } catch (e) {
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('$e'),
-        backgroundColor: Colors.red.shade700,
-      ),
-    );
-  }
 }
 
 class _FundingMenuItem {

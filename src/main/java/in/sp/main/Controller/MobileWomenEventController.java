@@ -58,9 +58,9 @@ public class MobileWomenEventController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -95,7 +95,7 @@ public class MobileWomenEventController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> detail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> detail(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenEvent e = eventRepo.findById(id).orElse(null);
@@ -112,7 +112,7 @@ public class MobileWomenEventController {
     @PostMapping("/{id}/register")
     @Transactional
     public ResponseEntity<Map<String, Object>> register(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody(required = false) Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -153,7 +153,7 @@ public class MobileWomenEventController {
 
     @PostMapping("/registrations/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelRegistration(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelRegistration(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenEventRegistration reg = registrationRepo.findById(id).orElse(null);
@@ -179,7 +179,7 @@ public class MobileWomenEventController {
     @PostMapping("/registrations/{id}/rate")
     @Transactional
     public ResponseEntity<Map<String, Object>> rateRegistration(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -339,10 +339,10 @@ public class MobileWomenEventController {
 
     @GetMapping("/{id}/coins-quote")
     public ResponseEntity<Map<String, Object>> coinsQuote(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "0") int coins,
-            @RequestParam(required = false) Long ticketTypeId,
-            @RequestParam(defaultValue = "1") int quantity,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "coins", defaultValue = "0") int coins,
+            @RequestParam(value = "ticketTypeId", required = false) Long ticketTypeId,
+            @RequestParam(value = "quantity", defaultValue = "1") int quantity,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -357,7 +357,7 @@ public class MobileWomenEventController {
     }
 
     @PostMapping("/{id}/save")
-    public ResponseEntity<Map<String, Object>> saveEvent(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> saveEvent(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenEvent e = eventRepo.findById(id).orElse(null);

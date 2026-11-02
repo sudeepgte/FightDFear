@@ -31,6 +31,7 @@ class RegFieldDef {
     this.options = const [],
     this.required = false,
     this.hint,
+    this.helper,
     this.maxLines = 1,
     this.maxLength,
   });
@@ -42,6 +43,7 @@ class RegFieldDef {
   final List<String> options;
   final bool required;
   final String? hint;
+  final String? helper;
   final int maxLines;
   final int? maxLength;
 }
@@ -75,7 +77,7 @@ class RegValidators {
 
   static String? emailError(String v) {
     if (v.trim().isEmpty) return 'Email is required';
-    if (!isEmail(v)) return 'Enter a valid email address';
+    if (!isEmail(v)) return 'Enter an active, valid email address';
     return null;
   }
 
@@ -97,6 +99,124 @@ class RegValidators {
     if (confirm.isEmpty) return 'Confirm password is required';
     if (confirm != password) return 'Passwords do not match';
     return null;
+  }
+
+  static String? nameError(String v, {String label = 'Full name'}) {
+    final t = v.trim();
+    if (t.isEmpty) return '$label is required';
+    if (t.length < 2) return '$label must be at least 2 characters';
+    if (!RegExp(r"^[a-zA-Z\s.'-]+$").hasMatch(t)) {
+      return '$label must contain only letters and spaces';
+    }
+    return null;
+  }
+
+  static String? ifscError(String v) {
+    final t = v.trim().toUpperCase();
+    if (t.isEmpty) return 'IFSC code is required';
+    if (!RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$').hasMatch(t)) {
+      return 'Enter a valid 11-character IFSC code (e.g. HDFC0001234)';
+    }
+    return null;
+  }
+
+  static String? accountNumberError(String v) {
+    final t = v.trim();
+    if (t.isEmpty) return 'Bank account number is required';
+    if (!RegExp(r'^\d{9,18}$').hasMatch(t)) {
+      return 'Bank account number must be 9 to 18 digits';
+    }
+    return null;
+  }
+
+  static String? confirmAccountNumberError(String account, String confirm) {
+    final c = confirm.trim();
+    if (c.isEmpty) return 'Re-enter account number for confirmation';
+    if (c != account.trim()) return 'Account numbers do not match';
+    return null;
+  }
+
+  static String? upiIdError(String v, {bool required = false}) {
+    final t = v.trim();
+    if (t.isEmpty) {
+      if (required) return 'UPI ID is required';
+      return null;
+    }
+    if (!RegExp(r'^[\w.\-_]{2,256}@[a-zA-Z]{2,64}$').hasMatch(t)) {
+      return 'Enter a valid UPI ID (e.g. name@okhdfcbank)';
+    }
+    return null;
+  }
+
+  static String? pincodeError(String v) {
+    final t = v.trim();
+    if (t.isEmpty) return 'PIN code is required';
+    if (!RegExp(r'^[1-9]\d{5}$').hasMatch(t)) {
+      return 'PIN code must be a valid 6-digit postal code';
+    }
+    return null;
+  }
+
+  static String? experienceError(String v) {
+    final t = v.trim();
+    if (t.isEmpty) return null;
+    final n = int.tryParse(t);
+    if (n == null || n < 0 || n > 70) {
+      return 'Experience must be a valid number between 0 and 70';
+    }
+    return null;
+  }
+
+  static String? dobError(String v, {int minAge = 18}) {
+    final t = v.trim();
+    if (t.isEmpty) return 'Date of birth is required';
+    final parsed = DateTime.tryParse(t);
+    if (parsed == null) return 'Enter date in YYYY-MM-DD format';
+    final now = DateTime.now();
+    var age = now.year - parsed.year;
+    if (now.month < parsed.month || (now.month == parsed.month && now.day < parsed.day)) {
+      age--;
+    }
+    if (age < minAge) {
+      return 'You must be at least $minAge years old to register';
+    }
+    if (age > 110) {
+      return 'Enter a valid date of birth';
+    }
+    return null;
+  }
+
+  /// Returns contextual, user-friendly helper instructions for any field.
+  static String helperForField(String key, RegInputType type) {
+    final k = key.toLowerCase();
+    if (k.contains('email')) return 'Enter an active email address.';
+    if (k.contains('phone') || type == RegInputType.phone) return 'Enter your 10-digit mobile number.';
+    if (k.contains('confirmpassword')) return 'Re-enter your password to confirm.';
+    if (k.contains('password')) return 'Must be at least 6 characters with a number and special character (!@#\$%^&*).';
+    if (k.contains('name')) return 'Enter your full name as it appears on your official documents.';
+    if (k.contains('experience')) return 'Enter your total years of professional experience.';
+    if (k.contains('hospital') || k.contains('clinic')) return 'Enter the name of your clinic, hospital or workspace.';
+    if (k.contains('address')) return 'Enter your street address or premises details.';
+    if (k.contains('city')) return 'Select or enter your city or locality.';
+    if (k.contains('state')) return 'Select your State or Union Territory.';
+    if (k.contains('district')) return 'Select your administrative District.';
+    if (k.contains('pincode') || k.contains('zip')) return 'Enter your 6-digit postal PIN code.';
+    if (k.contains('fee') || k.contains('price') || k.contains('rate')) return 'Enter consultation/service fee in INR (₹).';
+    if (k.contains('bio') || k.contains('about')) return 'Provide a brief summary of your background and expertise.';
+    if (k.contains('qualification')) return 'Select or enter your highest degree or qualification.';
+    if (k.contains('specialization')) return 'Choose your primary field of specialization.';
+    if (k.contains('license') || k.contains('reg')) return 'Enter your official registration/license number.';
+    if (k.contains('company') || k.contains('business')) return 'Enter registered business or organization name.';
+    if (k.contains('website') || k.contains('url')) return 'Enter your website or portfolio link (e.g., https://...).';
+    if (k.contains('account') || k.contains('bank')) return 'Enter your bank account number.';
+    if (k.contains('ifsc')) return 'Enter your bank\'s 11-character IFSC code.';
+    if (k.contains('upi')) return 'Enter your UPI ID (e.g. name@upi) for instant payouts.';
+    if (k.contains('photo') || k.contains('image')) return 'Upload a clear profile photo in an accepted image format.';
+    if (type == RegInputType.file || type == RegInputType.multiFile) return 'Upload a clear document in JPG, PNG or PDF format (max 5 MB).';
+    if (type == RegInputType.dropdown) return 'Select an option from the list.';
+    if (type == RegInputType.chips) return 'Select one or more applicable options.';
+    if (type == RegInputType.number) return 'Enter a numeric value.';
+    return 'Enter required information.';
   }
 
   static String? requiredText(String v, String label) {
@@ -185,6 +305,7 @@ class ObscurePasswordField extends StatefulWidget {
     this.filled = false,
     this.prefixIcon,
     this.errorText,
+    this.helperText,
   });
 
   final TextEditingController controller;
@@ -194,6 +315,7 @@ class ObscurePasswordField extends StatefulWidget {
   final bool filled;
   final IconData? prefixIcon;
   final String? errorText;
+  final String? helperText;
 
   @override
   State<ObscurePasswordField> createState() => _ObscurePasswordFieldState();
@@ -217,6 +339,8 @@ class _ObscurePasswordFieldState extends State<ObscurePasswordField> {
           decoration: InputDecoration(
             labelText: widget.label,
             errorText: widget.errorText,
+            helperText: widget.helperText,
+            helperMaxLines: 2,
             filled: widget.filled,
             fillColor: widget.filled ? Colors.white : null,
             prefixIcon: widget.prefixIcon == null
@@ -307,6 +431,7 @@ class FileUploadTile extends StatelessWidget {
     this.onClear,
     this.onPreview,
     this.hint = 'JPG, PNG or PDF up to 5 MB',
+    this.helper,
     this.optional = true,
   });
 
@@ -317,6 +442,7 @@ class FileUploadTile extends StatelessWidget {
   final VoidCallback? onClear;
   final Future<void> Function()? onPreview;
   final String hint;
+  final String? helper;
   final bool optional;
 
   @override
@@ -393,6 +519,10 @@ class FileUploadTile extends StatelessWidget {
                   ),
                 ],
               ),
+            if (helper != null && helper!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(helper!, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.2)),
+            ],
           ],
         ),
       ),
@@ -824,6 +954,7 @@ class MultiFileUploadTile extends StatelessWidget {
     required this.onRemove,
     this.required = false,
     this.hint = 'JPG, PNG or PDF up to 5 MB',
+    this.helper,
   });
 
   final String label;
@@ -832,6 +963,7 @@ class MultiFileUploadTile extends StatelessWidget {
   final ValueChanged<int> onRemove;
   final bool required;
   final String hint;
+  final String? helper;
 
   @override
   Widget build(BuildContext context) {
@@ -904,6 +1036,10 @@ class MultiFileUploadTile extends StatelessWidget {
                   ),
                 );
               }),
+            if (helper != null && helper!.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(helper!, style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.2)),
+            ],
           ],
         ),
       ),

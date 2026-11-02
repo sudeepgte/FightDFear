@@ -255,6 +255,55 @@ class SellerCatalog {
       ],
       needsDrugLicense: true,
     ),
+    SellerCategory(
+      code: 'SKINCARE',
+      label: 'Skincare',
+      emoji: '🧴',
+      icon: Icons.face_retouching_natural_rounded,
+      products: ['Face Wash', 'Moisturizer', 'Sunscreen', 'Serums', 'Cleansers'],
+    ),
+    SellerCategory(
+      code: 'HAIRCARE',
+      label: 'Haircare',
+      emoji: '💇',
+      icon: Icons.content_cut_rounded,
+      products: ['Shampoo', 'Conditioner', 'Hair Oil', 'Hair Masks', 'Serums'],
+    ),
+    SellerCategory(
+      code: 'HYGIENE',
+      label: 'Hygiene',
+      emoji: '🧼',
+      icon: Icons.clean_hands_rounded,
+      products: ['Sanitary Pads', 'Intimate Wash', 'Hand Sanitizer', 'Wipes'],
+    ),
+    SellerCategory(
+      code: 'CLOTHING',
+      label: 'Clothing',
+      emoji: '👗',
+      icon: Icons.checkroom_rounded,
+      products: ['Sarees', 'Kurtis', 'Dresses', 'Leggings', 'Tops', 'Jeans'],
+    ),
+    SellerCategory(
+      code: 'ACCESSORIES',
+      label: 'Accessories',
+      emoji: '👜',
+      icon: Icons.shopping_bag_rounded,
+      products: ['Handbags', 'Watches', 'Sunglasses', 'Belts', 'Scarves'],
+    ),
+    SellerCategory(
+      code: 'WELLNESS',
+      label: 'Wellness',
+      emoji: '🌿',
+      icon: Icons.spa_rounded,
+      products: ['Essential Oils', 'Supplements', 'Herbal Tea', 'Diffusers'],
+    ),
+    SellerCategory(
+      code: 'OTHER',
+      label: 'Other',
+      emoji: '📦',
+      icon: Icons.category_rounded,
+      products: ['General Items', 'Crafts', 'Gifts', 'Misc'],
+    ),
   ];
 
   static SellerCategory? byCode(String code) {

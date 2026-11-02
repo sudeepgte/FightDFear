@@ -7,10 +7,13 @@ import 'package:provider/provider.dart';
 import '../../config/glow_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/glow_provider_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
 import '../../widgets/ux_feedback.dart';
+import 'glow_salon_dashboard_screen.dart';
 
 class GlowSalonProfileCompletionScreen extends StatefulWidget {
   const GlowSalonProfileCompletionScreen({super.key, this.onFinished});
@@ -40,6 +43,13 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
   final _hygiene = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _serviceName = TextEditingController();
   final _servicePrice = TextEditingController(text: '499');
 
@@ -87,7 +97,9 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
   void dispose() {
     for (final c in [
       _name, _contact, _phone, _whatsapp, _year, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _hygiene, _upi, _bank, _serviceName, _servicePrice,
+      _pincode, _mapLocation, _bio, _hygiene, _upi, _bank, _accountHolder,
+      _accountNumber, _confirmAccountNumber, _ifsc, _bankName, _branchName,
+      _serviceName, _servicePrice,
     ]) {
       c.dispose();
     }
@@ -170,6 +182,17 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
     _hygiene.text = p['hygieneNotes']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     final firstName = p['firstServiceName']?.toString() ?? '';
     _hasFirstService = firstName.isNotEmpty;
     if (firstName.isNotEmpty) _serviceName.text = firstName;
@@ -215,7 +238,15 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
         'bio': _bio.text.trim(),
         'hygieneNotes': _hygiene.text.trim(),
         'upiId': _upi.text.trim(),
-        'bankDetails': _bank.text.trim(),
+        ...BankDetailsSection.buildPayload(
+          accountHolder: _accountHolder.text,
+          accountNumber: _accountNumber.text,
+          ifsc: _ifsc.text,
+          bankName: _bankName.text,
+          branch: _branchName.text,
+          accountType: _accountType,
+          upiId: _upi.text,
+        ),
         if (!_hasFirstService && _serviceName.text.trim().isNotEmpty) ...{
           'firstServiceName': _serviceName.text.trim(),
           'firstServiceCategory': _serviceCategory,
@@ -231,10 +262,26 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
     if ((_salonType ?? '').isEmpty) return '1.2 Salon type is required';
     if (_contact.text.trim().isEmpty) return '1.3 Owner / manager is required';
     if (!RegExp(r'^\d{10}$').hasMatch(_phone.text.trim())) return '1.5 Official phone must be 10 digits';
+    final yrStr = _year.text.trim();
+    if (yrStr.isNotEmpty) {
+      final yr = int.tryParse(yrStr);
+      final currentYr = DateTime.now().year;
+      if (yr == null || yr < 1850 || yr > currentYr) return '1.7 Established year must be between 1850 and $currentYr';
+    }
     if (_address.text.trim().isEmpty) return '2.1 Landmark / address is required';
     if (_city.text.trim().isEmpty) return '2.3 City is required';
     if (_resolvedState.isEmpty) return '2.4 State is required';
     if (!RegExp(r'^\d{6}$').hasMatch(_pincode.text.trim())) return '2.5 Pincode must be 6 digits';
+    final bankErr = BankDetailsSection.validateBankDetails(
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+    );
+    if (bankErr != null) return '9. $bankErr';
     if (_categories.isEmpty) return '3.1 Select at least one category';
     if (_audience.isEmpty) return '4.1 Select who we serve';
     if (_days.isEmpty) return '6.1 Select open days';
@@ -245,6 +292,18 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
       return '8. Add at least one service';
     }
     return null;
+  }
+
+  void _finish() {
+    if (!mounted) return;
+    if (widget.onFinished != null) {
+      widget.onFinished!(context);
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const GlowSalonDashboardScreen()),
+        (_) => false,
+      );
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -270,6 +329,7 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
           _applyProfile(Map<String, dynamic>.from(res));
         },
       );
+      if (mounted) _finish();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -308,11 +368,7 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
       if (!mounted) return;
       await showVerificationSubmittedSheet(context);
       if (!mounted) return;
-      if (widget.onFinished != null) {
-        widget.onFinished!(context);
-      } else {
-        Navigator.of(context).pop(true);
-      }
+      _finish();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -320,18 +376,7 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
     }
   }
 
-  Future<void> _pickClock(void Function(TimeOfDay t) apply, TimeOfDay? current) async {
-    final picked = await showTimePicker(context: context, initialTime: current ?? const TimeOfDay(hour: 10, minute: 0));
-    if (picked != null) setState(() => apply(picked));
-  }
-  Future<void> _addBlockedDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked == null) return;
+  void _skip() => _finish();
     final key = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
     setState(() => _blockedDates.add(key));
   }
@@ -612,14 +657,18 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
                     ),
                   ],
                 ]),
-                _section('9', 'Payout', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  const Text(
-                    'UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
-                ]),
+                BankDetailsSection(
+                  accountHolderController: _accountHolder,
+                  accountNumberController: _accountNumber,
+                  confirmAccountNumberController: _confirmAccountNumber,
+                  ifscController: _ifsc,
+                  bankNameController: _bankName,
+                  branchNameController: _branchName,
+                  upiController: _upi,
+                  accountType: _accountType,
+                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                  sectionNumber: '9',
+                ),
                 _section('10', 'Documents (optional)', [
                   const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
                   const SizedBox(height: 10),
@@ -688,6 +737,8 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: ProfileFieldHelper.instructionForField(label: label, hint: hint, required: required),
+          helperMaxLines: 2,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -713,6 +764,8 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: ProfileFieldHelper.instructionForField(label: label, required: required),
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

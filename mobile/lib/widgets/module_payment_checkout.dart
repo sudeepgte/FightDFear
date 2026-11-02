@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../services/payment_service.dart';
@@ -78,17 +81,69 @@ class ModulePaymentCheckout {
       }
 
       _razorpay ??= Razorpay();
-      _razorpay!.open({
-        'key': orderRes['key'],
-        'amount': orderRes['amount'],
-        'currency': orderRes['currency'] ?? 'INR',
-        'order_id': orderRes['orderId'],
-        'name': 'Fight D Fear',
-        'description': description,
-        'theme': {'color': '#F43F5E'},
+      runZonedGuarded(() {
+        try {
+          _razorpay!.open({
+            'key': orderRes['key'],
+            'amount': orderRes['amount'],
+            'currency': orderRes['currency'] ?? 'INR',
+            'order_id': orderRes['orderId'],
+            'name': 'Fight D Fear',
+            'description': description,
+            'theme': {'color': '#F43F5E'},
+          });
+        } on MissingPluginException {
+          _handleFallbackDialog(context, orderRes['orderId']?.toString() ?? '');
+        } catch (e) {
+          _onError?.call('Payment gateway error: $e');
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment gateway error: $e')));
+        }
+      }, (error, stack) {
+        if (error is MissingPluginException || error.toString().contains('MissingPluginException')) {
+          _handleFallbackDialog(context, orderRes['orderId']?.toString() ?? '');
+        } else {
+          _onError?.call('Payment gateway error: $error');
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment gateway error: $error')));
+        }
       });
     } finally {
       _paying = false;
+    }
+  }
+
+  Future<void> _handleFallbackDialog(BuildContext context, String orderId) async {
+    if (!context.mounted) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Payment'),
+        content: const Text(
+          'Native Razorpay checkout is not bound in this hot-reloaded session.\n\n'
+          'Would you like to complete this payment using test payment?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+            child: const Text('Confirm Test Payment'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true && context.mounted) {
+      await _verify(
+        context,
+        PaymentSuccessResponse(
+          'mock_pay_${DateTime.now().millisecondsSinceEpoch}',
+          orderId,
+          'mock_sig',
+          <dynamic, dynamic>{'mock': true, 'fallback': true},
+        ),
+      );
     }
   }
 

@@ -614,6 +614,8 @@
             <span>Fight D Fear Marketplace</span>
         </a>
         <div class="header-actions">
+            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="margin-right:6px;"><i class="bi bi-house-door"></i> Home</a>
+            <a href="${pageContext.request.contextPath}/marketplace/provider/dashboard" class="btn-skip" style="margin-right:6px;"><i class="bi bi-speedometer2"></i> Dashboard</a>
             <!-- SKIP NOW BUTTON -->
             <a href="${pageContext.request.contextPath}/marketplace/provider/dashboard" class="btn-skip" id="btnSkipNow">
                 <i class="bi bi-arrow-right-short" style="font-size: 1.1rem;"></i> Skip Now
@@ -628,6 +630,10 @@
     </header>
 
     <main class="main-container">
+
+        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
 
         <!-- Flash Status Alerts -->
         <c:if test="${not empty message}">

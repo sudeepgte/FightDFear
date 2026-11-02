@@ -7,67 +7,83 @@
   <meta name="_csrf_header" content="${_csrf.headerName}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Video — Fight D Fear Admin</title>
+    <title>Upload Video — Fight D Fear</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
 
    <style>
     :root {
-        --maroon:        #1e1b4b;
-        --maroon-light:  #312e81;
-        --maroon-dark:   #0b0920;
-        --maroon-pale:   #f8fafc;
-        --maroon-border: rgba(30, 27, 75, 0.12);
-        --gradient-maroon: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
-        --shadow-sm: 0 10px 30px rgba(125,42,90,0.08);
-        --shadow-md: 0 20px 40px rgba(125,42,90,0.12);
+        --primary: #F43F5E;
+        --primary-hover: #E11D48;
+        --navy: #1E1B4B;
+        --navy-dark: #0F172A;
+        --text-gray: #64748B;
+        --bg-page: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --border-color: #E2E8F0;
+        --rose-soft: #FFE4E6;
+        --error: #DC2626;
+        --error-bg: #FEF2F2;
+        --gradient-primary: linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);
     }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-        background-color: var(--maroon-pale);
-        font-family: 'Poppins', sans-serif;
-        color: #1a1a2e;
+        background-color: var(--bg-page);
+        font-family: 'Poppins', -apple-system, sans-serif;
+        color: var(--navy-dark);
         display: flex;
-        justify-content: center;
+        flex-direction: column;
         align-items: center;
+        justify-content: center;
         min-height: 100vh;
-        margin: 0;
-        padding: 20px;
+        padding: 24px 16px;
     }
 
     .upload-container {
-        background: #ffffff;
-        padding: 40px;
+        background: var(--card-bg);
+        padding: 36px 30px;
         border-radius: 20px;
-        box-shadow: var(--shadow-md);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
         width: 100%;
-        max-width: 480px;
+        max-width: 500px;
         text-align: center;
-        animation: fadeInScale 0.4s ease-out;
-        border: 1px solid var(--maroon-border);
+        animation: fadeInScale 0.35s ease-out;
+        border: 1px solid var(--border-color);
     }
 
     @keyframes fadeInScale {
-        from { opacity: 0; transform: scale(0.95) translateY(10px); }
+        from { opacity: 0; transform: scale(0.96) translateY(8px); }
         to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    h2 {
-        font-size: 24px;
-        margin-bottom: 30px;
-        font-weight: 700;
-        color: var(--maroon-dark);
-        display: flex;
+    .header-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 18px;
+        background: var(--rose-soft);
+        color: var(--primary);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 10px;
+        font-size: 1.6rem;
+        margin-bottom: 12px;
     }
 
-    .alert {
-        border-radius: 12px;
-        font-size: 0.9rem;
-        margin-bottom: 20px;
+    h2 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.4rem;
+        margin-bottom: 6px;
+        font-weight: 800;
+        color: var(--navy-dark);
+    }
+
+    .sub-text {
+        font-size: 0.88rem;
+        color: var(--text-gray);
+        margin-bottom: 24px;
     }
 
     .form-group {
@@ -76,166 +92,194 @@
     }
 
     label {
-        font-size: 0.85rem;
-        font-weight: 600;
+        font-size: 0.78rem;
+        font-weight: 700;
         margin-bottom: 8px;
         display: block;
-        color: var(--maroon);
+        color: var(--text-gray);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.04em;
     }
 
     input[type="text"], 
     select, 
     input[type="file"] {
         width: 100%;
-        padding: 12px 16px;
-        border: 2px solid var(--maroon-border);
-        border-radius: 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
         background-color: #fff;
         font-size: 0.95rem;
-        color: #374151;
+        color: var(--navy-dark);
         transition: all 0.2s ease;
         outline: none;
     }
 
     input[type="text"]:focus, 
     select:focus {
-        border-color: var(--maroon);
-        box-shadow: 0 0 0 4px rgba(125, 42, 90, 0.1);
-        background-color: #fff;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
     }
 
     input[type="file"] {
-        padding: 8px;
-        background: #fdfdfd;
+        padding: 10px;
+        background: #F8FAFC;
         cursor: pointer;
     }
 
     input[type="file"]::file-selector-button {
-        background-color: var(--maroon);
+        background-color: var(--navy);
         color: white;
         border: none;
-        padding: 6px 14px;
-        border-radius: 6px;
+        padding: 8px 14px;
+        border-radius: 8px;
         font-weight: 600;
         font-size: 0.85rem;
-        margin-right: 10px;
+        margin-right: 12px;
         cursor: pointer;
         transition: background 0.2s;
     }
 
     input[type="file"]:hover::file-selector-button {
-        background-color: var(--maroon-light);
+        background-color: var(--primary);
     }
 
     .btn-submit {
-        background: var(--gradient-maroon);
+        background: var(--primary);
         color: white;
         font-size: 1rem;
-        padding: 12px;
+        padding: 14px;
         margin-top: 10px;
         border-radius: 12px;
         width: 100%;
         border: none;
         font-weight: 700;
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
         cursor: pointer;
-        box-shadow: 0 4px 12px rgba(125, 42, 90, 0.2);
-    }
-
-    .btn-submit:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(125, 42, 90, 0.3);
-        background: var(--maroon-light);
-    }
-
-    .radio-group {
-        display: flex;
-        gap: 20px;
-        margin-top: 10px;
-    }
-
-    .radio-option {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        cursor: pointer;
-        font-weight: 500;
-        color: #4b5563;
-    }
-
-    .radio-option input[type="radio"] {
-        width: 18px;
-        height: 18px;
-        accent-color: var(--maroon);
-        cursor: pointer;
-    }
-
-    .btn-submit:active {
-        transform: translateY(0);
-    }
-
-    .back-btn {
+        box-shadow: 0 4px 14px rgba(244, 63, 94, 0.25);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 8px;
-        text-decoration: none;
-        font-size: 0.9rem;
-        color: #6b7280;
-        background: #fff;
-        padding: 12px;
+    }
+
+    .btn-submit:hover {
+        background: var(--primary-hover);
+        transform: translateY(-1px);
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 16px;
+        margin-top: 6px;
+    }
+
+    .radio-option {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 11px 14px;
+        border: 1px solid var(--border-color);
         border-radius: 12px;
-        margin-top: 15px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--navy-dark);
+        background: #FFFFFF;
+        transition: all 0.2s ease;
+    }
+
+    .radio-option:has(input:checked) {
+        border-color: var(--primary);
+        background: var(--rose-soft);
+        color: var(--primary);
+    }
+
+    .radio-option input[type="radio"] {
+        accent-color: var(--primary);
+        cursor: pointer;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+        font-size: 0.88rem;
+        color: var(--text-gray);
+        background: #fff;
+        padding: 12px 18px;
+        border-radius: 12px;
+        margin-top: 18px;
         font-weight: 600;
         transition: all 0.2s;
-        border: 1px solid #e5e7eb;
+        border: 1px solid var(--border-color);
+        width: 100%;
     }
 
     .back-btn:hover {
-        background-color: #f9fafb;
-        color: var(--maroon);
-        border-color: var(--maroon-border);
+        background-color: #F1F5F9;
+        color: var(--navy-dark);
     }
 
-    /* Accessibility for keyboard users */
-    .btn-submit:focus-visible, 
-    .back-btn:focus-visible {
-        outline: 3px solid var(--maroon-light);
-        outline-offset: 2px;
+    .error-alert {
+        background: var(--error-bg);
+        border: 1px solid #FECACA;
+        color: var(--error);
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        margin-bottom: 18px;
+        text-align: left;
+        display: none;
     }
 
-    /* Small screens padding */
+    .file-hint {
+        font-size: 0.76rem;
+        color: var(--text-gray);
+        margin-top: 6px;
+        display: block;
+        text-align: left;
+    }
+
     @media (max-width: 480px) {
-        .upload-container {
-            padding: 30px 20px;
-        }
+        .upload-container { padding: 26px 18px; border-radius: 16px; }
+        h2 { font-size: 1.25rem; }
     }
 </style>
 </head>
 <body>
 
 <div class="upload-container">
-    <h2><i class="fas fa-cloud-upload-alt"></i> Upload Video</h2>
+    <div class="header-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+    <h2>Upload Video / Reel</h2>
+    <p class="sub-text">Share self-defense techniques, safety tips & community reels</p>
 
     <c:if test="${not empty message}">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i> ${message}
+        <div class="alert alert-info rounded-3 text-start small mb-3">
+            <i class="bi bi-info-circle-fill me-1"></i> ${message}
         </div>
     </c:if>
 
-    <form action="${pageContext.request.contextPath}/video/uploadingVideo${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+    <div id="jsErrorAlert" class="error-alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> <span id="jsErrorText"></span>
+    </div>
+
+    <form action="${pageContext.request.contextPath}/video/uploadingVideo${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" id="videoUploadForm" onsubmit="return validateVideoForm(event)">
         <c:if test="${not empty _csrf}">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
         </c:if>
+
         <div class="form-group">
-            <label for="title">Video Title</label>
-            <input type="text" name="title" id="title" placeholder="Enter a descriptive title" required>
+            <label for="title">Video Title *</label>
+            <input type="text" name="title" id="title" placeholder="Enter a descriptive video title" required minlength="3" maxlength="150">
         </div>
 
         <div class="form-group">
-            <label>Upload Type</label>
+            <label>Upload Format *</label>
             <div class="radio-group">
                 <label class="radio-option">
                     <input type="radio" name="isReel" value="false" checked>
@@ -249,8 +293,8 @@
         </div>
 
         <div class="form-group">
-            <label for="category">Category</label>
-            <select name="category" id="category">
+            <label for="category">Category *</label>
+            <select name="category" id="category" required>
                 <c:forEach var="category" items="${categories}">
                     <option value="${category}">${category}</option>
                 </c:forEach>
@@ -258,31 +302,93 @@
         </div>
 
         <div class="form-group">
-            <label for="videoFile">Select Video File</label>
-            <input type="file" name="videoFile" id="videoFile" accept="video/*" required>
+            <label for="videoFile">Select Video File *</label>
+            <input type="file" name="videoFile" id="videoFile" accept="video/mp4,video/quicktime,video/webm,video/x-matroska,video/avi" required>
+            <span class="file-hint"><i class="bi bi-file-earmark-play me-1"></i> Supported: MP4, MOV, WebM, MKV, AVI (Max 200MB)</span>
         </div>
 
         <button type="submit" class="btn-submit">
-            <i class="fas fa-upload me-2"></i> Start Upload
+            <i class="bi bi-upload"></i> Start Upload
         </button>
     </form>
 
     <c:choose>
         <c:when test="${not empty sessionScope.admin}">
             <a href="${pageContext.request.contextPath}/video/videoManagement" class="back-btn">
-                <i class="fas fa-arrow-left"></i> Back to Video Library
+                <i class="bi bi-arrow-left"></i> Back to Video Library
             </a>
         </c:when>
         <c:otherwise>
             <a href="${pageContext.request.contextPath}/video/allVideos" class="back-btn">
-                <i class="fas fa-arrow-left"></i> Back to Video Gallery
+                <i class="bi bi-arrow-left"></i> Back to Video Gallery
             </a>
         </c:otherwise>
     </c:choose>
 </div>
 
+<script>
+function showJsError(msg) {
+    var alertBox = document.getElementById('jsErrorAlert');
+    var textSpan = document.getElementById('jsErrorText');
+    textSpan.textContent = msg;
+    alertBox.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validateVideoForm(e) {
+    var alertBox = document.getElementById('jsErrorAlert');
+    alertBox.style.display = 'none';
+
+    var title = (document.getElementById('title').value || '').trim();
+    var fileInput = document.getElementById('videoFile');
+    var category = document.getElementById('category').value;
+
+    if (!title || title.length < 3) {
+        showJsError('Video Title is required and must be at least 3 characters.');
+        e.preventDefault();
+        return false;
+    }
+
+    if (/^\d+$/.test(title)) {
+        showJsError('Video Title cannot be numbers only. Please enter a meaningful title containing letters.');
+        e.preventDefault();
+        return false;
+    }
+
+    if (!category) {
+        showJsError('Please select a valid video category.');
+        e.preventDefault();
+        return false;
+    }
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showJsError('Please select a video file to upload.');
+        e.preventDefault();
+        return false;
+    }
+
+    var file = fileInput.files[0];
+    var fileName = file.name.toLowerCase();
+    var validExts = ['.mp4', '.mov', '.webm', '.mkv', '.avi'];
+    var isValidExt = validExts.some(function(ext) { return fileName.endsWith(ext); });
+
+    if (!isValidExt) {
+        showJsError('Unsupported file format. Allowed formats: MP4, MOV, WebM, MKV, AVI.');
+        e.preventDefault();
+        return false;
+    }
+
+    var maxBytes = 200 * 1024 * 1024; // 200MB
+    if (file.size > maxBytes) {
+        var sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+        showJsError('File size (' + sizeMB + 'MB) exceeds the maximum allowed limit of 200MB.');
+        e.preventDefault();
+        return false;
+    }
+
+    return true;
+}
+</script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>
-
-

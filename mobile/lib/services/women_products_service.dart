@@ -57,7 +57,7 @@ class WomenProductsService {
         'productId': productId,
       });
 
-  Future<Map<String, dynamic>> placeCodOrder({
+  Future<Map<String, dynamic>> placeOrder({
     required String shippingAddress,
     String paymentMethod = 'COD',
   }) =>
@@ -65,6 +65,12 @@ class WomenProductsService {
         'paymentMethod': paymentMethod,
         'shippingAddress': shippingAddress,
       });
+
+  Future<Map<String, dynamic>> placeCodOrder({
+    required String shippingAddress,
+    String paymentMethod = 'COD',
+  }) =>
+      placeOrder(shippingAddress: shippingAddress, paymentMethod: paymentMethod);
 
   Future<Map<String, dynamic>> rateOrder(int id, {required int rating, String review = ''}) =>
       _api.post('/api/women-products/orders/$id/rate', body: {

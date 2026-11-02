@@ -42,71 +42,103 @@ class WomenProductsSellerAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveWomenProductsSellerToken(res['token'].toString());
     }
     return res;
   }
 
+  Future<void> clearLocalSession() => _api.clearWomenProductsSellerToken();
+
   Future<Map<String, dynamic>> profile() =>
-      _api.get('/api/women-products/seller/profile');
+      _api.get('/api/women-products/seller/profile', womenProductsSellerAuth: true);
 
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) =>
       _api.put(
         '/api/women-products/seller/profile',
+        womenProductsSellerAuth: true,
         body: body,
         timeout: const Duration(seconds: 30),
       );
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/women-products/seller/submit-verification');
+      _api.post('/api/women-products/seller/submit-verification', womenProductsSellerAuth: true);
 
-  Future<Map<String, dynamic>> dashboard() => _api.get('/api/women-products/seller/me');
+  Future<Map<String, dynamic>> dashboard() =>
+      _api.get('/api/women-products/seller/me', womenProductsSellerAuth: true);
 
   Future<Map<String, dynamic>> addProduct(Map<String, dynamic> body) =>
-      _api.post('/api/women-products/seller/products', body: body);
+      _api.post('/api/women-products/seller/products', womenProductsSellerAuth: true, body: body);
 
   Future<Map<String, dynamic>> updateProduct(int id, Map<String, dynamic> body) =>
-      _api.put('/api/women-products/seller/products/$id', body: body);
+      _api.put('/api/women-products/seller/products/$id', womenProductsSellerAuth: true, body: body);
+
+  Future<Map<String, dynamic>> updateStock(int id, int stock) =>
+      _api.post('/api/women-products/seller/products/$id/stock',
+          womenProductsSellerAuth: true, body: {'stock': stock});
 
   Future<Map<String, dynamic>> deleteProduct(int id) =>
-      _api.delete('/api/women-products/seller/products/$id');
+      _api.delete('/api/women-products/seller/products/$id', womenProductsSellerAuth: true);
 
   Future<Map<String, dynamic>> uploadProductImage(int id, String filePath) async {
     final file = await http.MultipartFile.fromPath('image', filePath);
     return _api.postMultipart(
       '/api/women-products/seller/products/$id/image',
       files: [file],
-      auth: true,
+      womenProductsSellerAuth: true,
     );
   }
 
   Future<Map<String, dynamic>> updateOrderStatus(int id, String status) =>
-      _api.post('/api/women-products/seller/orders/$id/status', body: {'status': status});
+      _api.post('/api/women-products/seller/orders/$id/status',
+          womenProductsSellerAuth: true, body: {'status': status});
 
   Future<Map<String, dynamic>> trackOrder(int id) =>
-      _api.get('/api/women-products/seller/orders/$id/track');
+      _api.get('/api/women-products/seller/orders/$id/track', womenProductsSellerAuth: true);
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/women-products/seller/payout/request');
+      _api.post('/api/women-products/seller/payout/request', womenProductsSellerAuth: true);
 
   Future<Map<String, dynamic>> updateOrderNotes(int id, String coachNotes) =>
-      _api.post('/api/women-products/seller/orders/$id/notes', body: {'coachNotes': coachNotes});
+      _api.post('/api/women-products/seller/orders/$id/notes',
+          womenProductsSellerAuth: true, body: {'coachNotes': coachNotes});
+
+  Future<Map<String, dynamic>> notifications() =>
+      _api.get('/api/women-products/seller/notifications',
+          womenProductsSellerAuth: true);
+
+  Future<Map<String, dynamic>> markNotificationsRead() =>
+      _api.post('/api/women-products/seller/notifications/read-all',
+          womenProductsSellerAuth: true);
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
+    String? identityDocPath,
     String? galleryPath,
+    List<String>? galleryPaths,
   }) async {
     final files = <http.MultipartFile>[];
     if (profilePath != null && profilePath.isNotEmpty) {
       files.add(await http.MultipartFile.fromPath('profileImage', profilePath));
     }
+    if (identityDocPath != null && identityDocPath.isNotEmpty) {
+      files.add(await http.MultipartFile.fromPath('identityDoc', identityDocPath));
+    }
     if (galleryPath != null && galleryPath.isNotEmpty) {
       files.add(await http.MultipartFile.fromPath('galleryPhotos', galleryPath));
+    }
+    if (galleryPaths != null) {
+      for (final p in galleryPaths) {
+        if (p.isNotEmpty) {
+          files.add(await http.MultipartFile.fromPath('galleryPhotos', p));
+        }
+      }
     }
     return _api.postMultipart(
       '/api/women-products/seller/photos',
       files: files,
-      auth: true,
+      womenProductsSellerAuth: true,
     );
   }
+
+  Future<void> logout() => _api.clearWomenProductsSellerToken();
 }

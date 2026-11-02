@@ -504,9 +504,14 @@
 
     <div class="register-container">
         
-        <a href="${pageContext.request.contextPath}/investor/login" class="back-link-top">
-            <i class="bi bi-arrow-left"></i> Back to Login
-        </a>
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+            <a href="${pageContext.request.contextPath}/" class="back-link-top" style="margin: 0;">
+                <i class="bi bi-arrow-left"></i> Back to Home
+            </a>
+            <a href="${pageContext.request.contextPath}/investor/login" class="back-link-top" style="margin: 0;">
+                <i class="bi bi-box-arrow-in-right"></i> Back to Login
+            </a>
+        </div>
 
         <h2 class="header-title">
             Register as <span>Investor</span>

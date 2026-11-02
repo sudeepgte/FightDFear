@@ -48,6 +48,10 @@ public class WomenLawyerCareService {
     private ProviderReviewRepository reviewRepository;
     @Autowired
     private PushNotificationService pushNotificationService;
+    @Autowired
+    private ProviderNotificationService providerNotificationService;
+    @Autowired
+    private EmailService emailService;
 
     @Scheduled(fixedDelay = 300000)
     @SchedulerLock(name = "WomenLawyerCareService_sendConsultReminders", lockAtLeastFor = "4m", lockAtMostFor = "10m")
@@ -256,6 +260,52 @@ public class WomenLawyerCareService {
         }
         b.setStatus(ProviderBookingStatus.CANCELLED);
         b.setCancelReason(reason == null ? "" : reason.trim());
-        return bookingRepository.save(b);
+        ProviderBooking saved = bookingRepository.save(b);
+
+        String clientName = saved.getUser() != null && saved.getUser().getFullName() != null ? saved.getUser().getFullName() : "Client";
+        String lawyerName = saved.getProvider() != null && saved.getProvider().getFullName() != null ? saved.getProvider().getFullName() : "Lawyer";
+        String timeStr = saved.getRequestedTime() != null
+                ? saved.getRequestedTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
+                : "scheduled time";
+
+        if (client) {
+            // Client initiated cancellation -> notify lawyer
+            if (saved.getProvider() != null) {
+                String msg = clientName + " cancelled the consultation scheduled for " + timeStr
+                        + (reason != null && !reason.isBlank() ? ". Reason: " + reason.trim() : ".");
+                providerNotificationService.notifyProvider(
+                        saved.getProvider(),
+                        "BOOKING_CANCELLED_BY_CLIENT",
+                        "Appointment Cancelled by " + clientName,
+                        msg,
+                        saved.getId(),
+                        true
+                );
+            }
+        } else {
+            // Lawyer initiated cancellation -> notify client
+            if (saved.getUser() != null) {
+                pushNotificationService.notifyUser(
+                        saved.getUser().getId(),
+                        "Appointment Cancelled",
+                        "Adv. " + lawyerName + " cancelled the consultation for " + timeStr + ".",
+                        Map.of("type", "LAWYER_CANCELLED", "bookingId", String.valueOf(saved.getId()))
+                );
+                if (saved.getUser().getEmail() != null && !saved.getUser().getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                saved.getUser().getEmail(),
+                                "Consultation Cancelled - Adv. " + lawyerName,
+                                "Hello " + clientName + ",\n\nYour consultation with Adv. " + lawyerName
+                                        + " for " + timeStr + " has been cancelled."
+                                        + (reason != null && !reason.isBlank() ? "\nReason: " + reason.trim() : "")
+                                        + "\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
+
+        return saved;
     }
 }

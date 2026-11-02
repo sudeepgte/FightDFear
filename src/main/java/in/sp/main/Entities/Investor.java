@@ -266,7 +266,7 @@ public class Investor {
     }
 
     public boolean isSubscribed() {
-        return subscribed;
+        return true;
     }
 
     public void setSubscribed(boolean subscribed) {

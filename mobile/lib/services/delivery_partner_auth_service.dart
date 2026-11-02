@@ -40,45 +40,54 @@ class DeliveryPartnerAuthService {
       body: {'email': email.trim().toLowerCase(), 'password': password},
     );
     if (res['success'] == true && res['token'] != null) {
-      await _api.saveToken(res['token'].toString());
+      await _api.saveDeliveryPartnerToken(res['token'].toString());
     }
     return res;
   }
 
-  Future<Map<String, dynamic>> profile() => _api.get('/api/delivery/profile');
+  Future<Map<String, dynamic>> profile() =>
+      _api.get('/api/delivery/profile', deliveryPartnerAuth: true);
 
-  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) =>
-      _api.put('/api/delivery/profile', body: body, timeout: const Duration(seconds: 30));
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> body) => _api.put(
+      '/api/delivery/profile',
+      deliveryPartnerAuth: true,
+      body: body,
+      timeout: const Duration(seconds: 30));
 
   Future<Map<String, dynamic>> submitVerification() =>
-      _api.post('/api/delivery/submit-verification');
+      _api.post('/api/delivery/submit-verification', deliveryPartnerAuth: true);
 
-  Future<Map<String, dynamic>> dashboard() => _api.get('/api/delivery/me');
+  Future<Map<String, dynamic>> dashboard() =>
+      _api.get('/api/delivery/me', deliveryPartnerAuth: true);
 
   Future<Map<String, dynamic>> acceptOrder(int id) =>
-      _api.post('/api/delivery/orders/$id/accept');
+      _api.post('/api/delivery/orders/$id/accept', deliveryPartnerAuth: true);
 
   Future<Map<String, dynamic>> updateOrderStatus(int id, String status) =>
-      _api.post('/api/delivery/orders/$id/status', body: {'status': status});
+      _api.post('/api/delivery/orders/$id/status',
+          deliveryPartnerAuth: true, body: {'status': status});
 
   Future<Map<String, dynamic>> trackOrder(int id) =>
-      _api.get('/api/delivery/orders/$id/track');
+      _api.get('/api/delivery/orders/$id/track', deliveryPartnerAuth: true);
 
   Future<Map<String, dynamic>> pingLocation({
     required int orderId,
     required double lat,
     required double lng,
   }) =>
-      _api.post('/api/delivery/orders/$orderId/location', body: {
-        'lat': lat,
-        'lng': lng,
-      });
+      _api.post('/api/delivery/orders/$orderId/location',
+          deliveryPartnerAuth: true,
+          body: {
+            'lat': lat,
+            'lng': lng,
+          });
 
   Future<Map<String, dynamic>> requestPayout() =>
-      _api.post('/api/delivery/payout/request');
+      _api.post('/api/delivery/payout/request', deliveryPartnerAuth: true);
 
   Future<Map<String, dynamic>> updateOrderNotes(int id, String coachNotes) =>
-      _api.post('/api/delivery/orders/$id/notes', body: {'coachNotes': coachNotes});
+      _api.post('/api/delivery/orders/$id/notes',
+          deliveryPartnerAuth: true, body: {'coachNotes': coachNotes});
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
@@ -94,7 +103,9 @@ class DeliveryPartnerAuthService {
     return _api.postMultipart(
       '/api/delivery/photos',
       files: files,
-      auth: true,
+      deliveryPartnerAuth: true,
     );
   }
+
+  Future<void> logout() => _api.clearDeliveryPartnerToken();
 }

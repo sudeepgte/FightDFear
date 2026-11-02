@@ -559,7 +559,9 @@
 style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
         </a>
         <div class="header-actions">
-            <a href="${pageContext.request.contextPath}/salons/dashboard" class="btn-skip">Skip for now</a>
+            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="margin-right:6px;"><i class="bi bi-house-door"></i> Home</a>
+            <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn-skip" style="margin-right:6px;"><i class="bi bi-speedometer2"></i> Dashboard</a>
+            <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn-skip">Skip for now</a>
             <button type="button" class="btn-header-save" id="btnHeaderSave" onclick="handleProfileSave(event)">Save Profile</button>
         </div>
     </header>
@@ -584,6 +586,8 @@ style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight
                     <p>Manage your salon information and business details</p>
                 </div>
                 <div class="header-actions">
+                    <a href="${pageContext.request.contextPath}/" class="btn btn-outline-secondary btn-sm text-decoration-none me-1"><i class="bi bi-house-door"></i> Home</a>
+                    <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn btn-outline-secondary btn-sm text-decoration-none me-1"><i class="bi bi-arrow-left"></i> Dashboard</a>
                     <a href="${pageContext.request.contextPath}/salons/preview" target="_blank" class="btn-preview text-decoration-none"><i class="bi bi-eye"></i> Preview Salon Profile</a>
                     
                     <!-- Notifications Dropdown -->

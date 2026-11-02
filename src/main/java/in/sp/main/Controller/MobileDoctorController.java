@@ -59,18 +59,18 @@ public class MobileDoctorController {
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String specialization,
-            @RequestParam(required = false) Double minFee,
-            @RequestParam(required = false) Double maxFee,
-            @RequestParam(required = false) Boolean online,
-            @RequestParam(required = false) Boolean emergency,
-            @RequestParam(required = false) Boolean instant,
-            @RequestParam(required = false) String language,
-            @RequestParam(required = false) String sort,
-            @RequestParam(required = false, defaultValue = "0") int page,
-            @RequestParam(required = false, defaultValue = "50") int size,
+            @RequestParam(value = "q", required = false) String q,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "specialization", required = false) String specialization,
+            @RequestParam(value = "minFee", required = false) Double minFee,
+            @RequestParam(value = "maxFee", required = false) Double maxFee,
+            @RequestParam(value = "online", required = false) Boolean online,
+            @RequestParam(value = "emergency", required = false) Boolean emergency,
+            @RequestParam(value = "instant", required = false) Boolean instant,
+            @RequestParam(value = "language", required = false) String language,
+            @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "page", required = false, defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false, defaultValue = "50") int size,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
@@ -147,7 +147,7 @@ public class MobileDoctorController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> detail(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> detail(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         Doctor d = doctorRepo.findById(id).orElse(null);
@@ -163,7 +163,7 @@ public class MobileDoctorController {
     @PostMapping("/{id}/appointments")
     @Transactional
     public ResponseEntity<Map<String, Object>> book(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -215,7 +215,7 @@ public class MobileDoctorController {
 
     @PostMapping("/appointments/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelAppointment(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelAppointment(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         DoctorAppointment a = appointmentRepo.findById(id).orElse(null);
@@ -237,7 +237,7 @@ public class MobileDoctorController {
     @PostMapping("/appointments/{id}/reschedule")
     @Transactional
     public ResponseEntity<Map<String, Object>> rescheduleAppointment(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -260,7 +260,7 @@ public class MobileDoctorController {
     }
 
     @GetMapping("/appointments/{id}/receipt")
-    public ResponseEntity<Map<String, Object>> appointmentReceipt(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> appointmentReceipt(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         Doctor doctor = requireDoctor(session);
         if (user == null && doctor == null) return unauthorized();
@@ -338,7 +338,7 @@ public class MobileDoctorController {
     }
 
     @GetMapping("/appointments/{id}/prescription.pdf")
-    public ResponseEntity<byte[]> prescriptionPdf(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<byte[]> prescriptionPdf(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
         Doctor doctor = requireDoctor(session);
         if (user == null && doctor == null) {
@@ -359,7 +359,7 @@ public class MobileDoctorController {
     @PostMapping("/appointments/{id}/reports")
     @Transactional
     public ResponseEntity<Map<String, Object>> uploadReport(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
             HttpSession session) {
         User user = requireUser(session);
@@ -392,8 +392,8 @@ public class MobileDoctorController {
 
     @GetMapping("/appointments/{id}/join")
     public ResponseEntity<Map<String, Object>> joinAppointment(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "false") boolean audioOnly,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "audioOnly", defaultValue = "false") boolean audioOnly,
             HttpSession session) {
         User user = requireUser(session);
         Doctor doctor = requireDoctor(session);
@@ -444,7 +444,7 @@ public class MobileDoctorController {
     }
 
     @GetMapping("/{id}/reviews")
-    public ResponseEntity<Map<String, Object>> listReviews(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> listReviews(@PathVariable("id") Long id, HttpSession session) {
         if (requireUser(session) == null && requireDoctor(session) == null) return unauthorized();
         Doctor d = doctorRepo.findById(id).orElse(null);
         if (d == null || d.getVerificationStatus() != VerificationStatus.VERIFIED) return badRequest("Doctor not found");
@@ -457,7 +457,7 @@ public class MobileDoctorController {
     @PostMapping("/{id}/reviews")
     @Transactional
     public ResponseEntity<Map<String, Object>> addReview(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -503,8 +503,8 @@ public class MobileDoctorController {
 
     @GetMapping("/{id}/chat")
     public ResponseEntity<Map<String, Object>> chatHistory(
-            @PathVariable Long id,
-            @RequestParam(required = false) Long userId,
+            @PathVariable("id") Long id,
+            @RequestParam(value = "userId", required = false) Long userId,
             HttpSession session) {
         User user = requireUser(session);
         Doctor doctor = requireDoctor(session);
@@ -550,7 +550,7 @@ public class MobileDoctorController {
     @PostMapping("/{id}/chat")
     @Transactional
     public ResponseEntity<Map<String, Object>> sendChat(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -615,7 +615,7 @@ public class MobileDoctorController {
     @PostMapping("/{id}/chat-file")
     @Transactional
     public ResponseEntity<Map<String, Object>> chatFile(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
             @RequestParam(value = "userId", required = false) Long userId,
             HttpSession session) {

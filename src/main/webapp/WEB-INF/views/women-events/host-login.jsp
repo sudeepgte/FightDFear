@@ -249,6 +249,23 @@
             line-height: 1.6;
         }
         .next-steps-card ol strong { color: var(--navy); }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 640px) {
+            .app-header { padding: 12px 16px; }
+            .header-brand { font-size: 1.05rem; }
+            .main-container { margin: 20px auto; padding: 0 12px; }
+            .form-card { padding: 24px 16px; border-radius: 14px; }
+            .card-header h2 { font-size: 1.25rem; }
+            .card-header p { font-size: 0.85rem; }
+            .form-input { font-size: 0.9rem; padding: 10px 12px; }
+            .btn-submit { padding: 12px; font-size: 0.95rem; }
+        }
+        @media (max-width: 420px) {
+            .app-header { flex-wrap: wrap; gap: 8px; }
+            .main-container { padding: 0 8px; }
+            .form-card { padding: 20px 14px; }
+        }
     </style>
 </head>
 <body>
@@ -257,12 +274,23 @@
         <a href="${pageContext.request.contextPath}/" class="header-brand">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
         </a>
-        <div style="font-size: 0.88rem;">
-            New Host? <a href="${pageContext.request.contextPath}/women-events/host/register" style="color: var(--primary); font-weight: 700; text-decoration: none;">Register here</a>
+        <div style="display: flex; align-items: center; gap: 12px; font-size: 0.88rem;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+            <span>New Host? <a href="${pageContext.request.contextPath}/women-events/host/register" style="color: var(--primary); font-weight: 700; text-decoration: none;">Register here</a></span>
         </div>
     </header>
 
     <main class="main-container">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <a href="${pageContext.request.contextPath}/" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
+                <i class="bi bi-house-door"></i> Back to Home
+            </a>
+        </div>
         <div class="form-card">
             <div class="card-header">
                 <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--rose-soft); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 12px;">

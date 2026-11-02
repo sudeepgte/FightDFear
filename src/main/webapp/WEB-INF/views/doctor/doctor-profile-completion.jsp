@@ -712,17 +712,32 @@
 </head>
 <body>
     <header class="app-header">
-        <a class="header-brand" href="${pageContext.request.contextPath}/doctors/dashboard">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
-            Fight D Fear
-        </a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/doctors/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 6px;" title="Go Back">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <a class="header-brand" href="${pageContext.request.contextPath}/doctors/dashboard">
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
+                Fight D Fear
+            </a>
+        </div>
         <div class="header-actions">
+            <a class="btn-skip" href="${pageContext.request.contextPath}/" style="margin-right:6px;"><i class="bi bi-house-door"></i> Back to Home</a>
+            <a class="btn-skip" href="${pageContext.request.contextPath}/doctors/dashboard" style="margin-right:6px;"><i class="bi bi-speedometer2"></i> Dashboard</a>
             <a class="btn-skip" href="${pageContext.request.contextPath}/doctors/profile-completion/skip">Skip for now</a>
             <button type="button" class="btn-header-save" id="headerReviewBtn">Review profile</button>
         </div>
     </header>
 
     <main class="main-container">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/doctors/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
+                <i class="bi bi-house-door"></i> Back to Home
+            </a>
+        </div>
         <c:if test="${not empty error}">
             <div class="alert alert-error">${error}</div>
         </c:if>

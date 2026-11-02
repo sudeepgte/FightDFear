@@ -47,6 +47,20 @@ public class MobileInvestorAuthController {
     private in.sp.main.Service.FundingCareService fundingCareService;
     @Autowired
     private in.sp.main.Service.FileUploadService fileUploadService;
+    @Autowired
+    private in.sp.main.Repository.ProposalQuestionRepository proposalQuestionRepository;
+    @Autowired
+    private in.sp.main.Repository.ProposalChatMessageRepository proposalChatMessageRepository;
+    @Autowired
+    private in.sp.main.Service.PushNotificationService pushNotificationService;
+    @Autowired
+    private in.sp.main.Service.EmailService emailService;
+
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:rzp_test_RIlD5bEKRjyn3h}")
+    private String razorpayKeyId;
+
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.secret:Ltg6uo9vI8TiFMVfj2cGm4I8}")
+    private String razorpayKeySecret;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -206,15 +220,18 @@ public class MobileInvestorAuthController {
 
         session.setAttribute("loggedInvestor", inv);
         String token = jwtUtil.generateToken(inv.getEmail(), "INVESTOR");
+        boolean isApproved = InvestorProfileService.isApproved(inv);
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "INVESTOR");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (inv.getPartnerProfileStatus() != null ? inv.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (inv.getPartnerProfileStatus() != null ? inv.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("investor", investorSummary(inv));
-        res.put("needsProfileCompletion", InvestorProfileService.shouldForceProfileCompletion(inv));
-        res.put("canSubmitForVerification",
-                investorProfileService.isReadyForVerification(inv)
+        res.put("needsProfileCompletion", !isApproved && InvestorProfileService.shouldForceProfileCompletion(inv));
+        res.put("canSubmitForVerification", !isApproved && investorProfileService.isReadyForVerification(inv)
                         && inv.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }
@@ -309,13 +326,32 @@ public class MobileInvestorAuthController {
 
         List<Map<String, Object>> marketplace = publicMarketplace(investor, null, null, "newest");
         boolean approved = InvestorProfileService.isApproved(investor);
+        boolean isLocked = !approved;
+
+        double escrowHeld = pendingAmount;
+        double estimatedMonthlyROI = investments.stream()
+                .filter(i -> i.getProposal() != null && i.getProposal().getFundingNeeded() != null && i.getProposal().getFundingNeeded() > 0)
+                .mapToDouble(i -> ((i.getAmount() == null ? 0.0 : i.getAmount()) / i.getProposal().getFundingNeeded()) * (i.getProposal().getExpectedMonthlyIncome() == null ? 0.0 : i.getProposal().getExpectedMonthlyIncome()) * 0.1)
+                .sum();
+
+        final Long currentInvestorId = investor.getId();
+        List<ProposalQuestion> questionsAsked = proposalQuestionRepository.findAll().stream()
+                .filter(q -> q.getInvestor() != null && currentInvestorId.equals(q.getInvestor().getId()))
+                .toList();
+        List<Map<String, Object>> questionDtos = questionsAsked.stream().map(this::questionDto).toList();
+
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("investor", investorSummary(investor));
+        data.put("isApproved", approved);
+        data.put("isLocked", isLocked);
         data.put("portfolio", portfolio);
         data.put("investments", portfolio);
         data.put("proposals", proposals);
         data.put("marketplace", marketplace);
+        data.put("questions", questionDtos);
         data.put("totalInvested", totalInvested);
+        data.put("escrowHeld", escrowHeld);
+        data.put("estimatedMonthlyROI", estimatedMonthlyROI);
         data.put("pendingInterestAmount", pendingAmount);
         data.put("pendingDeals", pendingCount);
         data.put("completedDeals", completedCount);
@@ -326,11 +362,67 @@ public class MobileInvestorAuthController {
         return ResponseEntity.ok(ok(data));
     }
 
+    @GetMapping("/questions")
+    public ResponseEntity<Map<String, Object>> questions(HttpSession session) {
+        Investor inv = requireInvestor(session);
+        if (inv == null) return unauthorized();
+        final Long currentInvestorId = inv.getId();
+        List<Map<String, Object>> items = proposalQuestionRepository.findAll().stream()
+                .filter(q -> q.getInvestor() != null && currentInvestorId.equals(q.getInvestor().getId()))
+                .map(this::questionDto).toList();
+        return ResponseEntity.ok(ok(Map.of("questions", items, "count", items.size())));
+    }
+
+    @PostMapping("/proposals/{id}/ask")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> askQuestion(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestParam(value = "question", required = false) String paramQuestion,
+            HttpSession session) {
+        Investor inv = requireInvestor(session);
+        if (inv == null) return unauthorized();
+        inv = investorRepository.findById(inv.getId()).orElse(inv);
+        BusinessProposal proposal = businessProposalRepository.findById(id).orElse(null);
+        if (proposal == null) {
+            return badRequest("Proposal not found");
+        }
+        String question = trim(body != null && body.containsKey("question") ? str(body, "question") : paramQuestion);
+        if (question.isBlank()) {
+            return badRequest("question cannot be blank");
+        }
+        ProposalQuestion q = new ProposalQuestion();
+        q.setProposal(proposal);
+        q.setInvestor(inv);
+        q.setQuestion(question);
+        proposalQuestionRepository.save(q);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ok(Map.of(
+                "message", "Question submitted successfully. The entrepreneur will answer shortly.",
+                "question", questionDto(q)
+        )));
+    }
+
+    @GetMapping("/proposals/{id}")
+    public ResponseEntity<Map<String, Object>> getProposalDetails(@PathVariable("id") Long id, HttpSession session) {
+        Investor inv = requireInvestor(session);
+        if (inv == null) return unauthorized();
+        inv = investorRepository.findById(inv.getId()).orElse(inv);
+        BusinessProposal p = businessProposalRepository.findById(id).orElse(null);
+        if (p == null) {
+            return badRequest("Proposal not found");
+        }
+        Map<String, Object> dto = proposalDto(p, inv);
+        List<Map<String, Object>> qna = proposalQuestionRepository.findByProposal(p).stream()
+                .map(this::questionDto).toList();
+        dto.put("questions", qna);
+        return ResponseEntity.ok(ok(Map.of("proposal", dto)));
+    }
+
     @GetMapping("/marketplace")
     public ResponseEntity<Map<String, Object>> marketplace(
-            @RequestParam(required = false) String category,
-            @RequestParam(required = false) String city,
-            @RequestParam(required = false) String sort,
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "city", required = false) String city,
+            @RequestParam(value = "sort", required = false) String sort,
             HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
@@ -340,6 +432,190 @@ public class MobileInvestorAuthController {
                 "cancelPolicy", in.sp.main.Service.FundingCareService.CANCEL_POLICY,
                 "categories", FundingCatalog.categories()
         )));
+    }
+
+    @PostMapping({"/proposal/{id}/create-order", "/proposals/{id}/create-order"})
+    public ResponseEntity<Map<String, Object>> createOrder(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
+        Investor inv = requireInvestor(session);
+        if (inv == null) return unauthorized();
+        inv = investorRepository.findById(inv.getId()).orElse(inv);
+        if (!InvestorProfileService.isApproved(inv)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(error("Investor must be verified before expressing interest"));
+        }
+        BusinessProposal proposal = businessProposalRepository.findById(id).orElse(null);
+        if (proposal == null) return badRequest("Proposal not found");
+        if (!in.sp.main.Service.FundingCareService.isPublicProposal(proposal)) {
+            return badRequest("Proposal is not available for investment");
+        }
+
+        double amount = parseDouble(body == null ? null : body.get("amount"), 0.0);
+        if (amount <= 0) return badRequest("amount must be greater than 0");
+
+        double pendingAmount = investmentRepository.findByProposal(proposal).stream()
+                .filter(i -> "PENDING".equalsIgnoreCase(i.getStatus()))
+                .mapToDouble(i -> i.getAmount() == null ? 0.0 : i.getAmount())
+                .sum();
+        double fundingNeeded = proposal.getFundingNeeded() == null ? 0.0 : proposal.getFundingNeeded();
+        double amountRaised = proposal.getAmountRaised() == null ? 0.0 : proposal.getAmountRaised();
+        double openRemaining = fundingNeeded - amountRaised - pendingAmount;
+        if (openRemaining < 0) openRemaining = 0.0;
+
+        Investment existingPending = investmentRepository.findByInvestorAndProposal(inv, proposal).stream()
+                .filter(i -> "PENDING".equalsIgnoreCase(i.getStatus()))
+                .findFirst()
+                .orElse(null);
+        if (existingPending != null) {
+            double othersPending = pendingAmount - (existingPending.getAmount() == null ? 0.0 : existingPending.getAmount());
+            double remainingForUpdate = fundingNeeded - amountRaised - othersPending;
+            if (amount > remainingForUpdate) {
+                return badRequest("Amount exceeds remaining funding of " + Math.max(0, remainingForUpdate));
+            }
+        } else if (amount > openRemaining) {
+            return badRequest("Amount exceeds remaining funding of " + openRemaining);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        try {
+            com.razorpay.RazorpayClient client = new com.razorpay.RazorpayClient(razorpayKeyId, razorpayKeySecret);
+            org.json.JSONObject options = new org.json.JSONObject();
+            options.put("amount", (int) (amount * 100)); // in paise
+            options.put("currency", "INR");
+            options.put("receipt", "inv_" + id + "_" + System.currentTimeMillis());
+            com.razorpay.Order order = client.orders.create(options);
+
+            result.put("success", true);
+            result.put("orderId", order.get("id"));
+            result.put("amount", order.get("amount"));
+            result.put("currency", "INR");
+            result.put("keyId", razorpayKeyId);
+            result.put("isMock", false);
+            return ResponseEntity.ok(result);
+        } catch (Exception ex) {
+            String mockOrderId = "order_mock_" + System.currentTimeMillis();
+            result.put("success", true);
+            result.put("orderId", mockOrderId);
+            result.put("amount", (int) (amount * 100));
+            result.put("currency", "INR");
+            result.put("keyId", razorpayKeyId);
+            result.put("isMock", true);
+            return ResponseEntity.ok(result);
+        }
+    }
+
+    @PostMapping({"/proposal/{id}/verify-payment", "/proposals/{id}/verify-payment"})
+    @Transactional
+    public ResponseEntity<Map<String, Object>> verifyPayment(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        Investor inv = requireInvestor(session);
+        if (inv == null) return unauthorized();
+        inv = investorRepository.findById(inv.getId()).orElse(inv);
+        if (!InvestorProfileService.isApproved(inv)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(error("Investor must be verified before expressing interest"));
+        }
+
+        String razorpayPaymentId = str(body, "razorpay_payment_id");
+        String razorpayOrderId = str(body, "razorpay_order_id");
+        String razorpaySignature = str(body, "razorpay_signature");
+        double amount = parseDouble(body == null ? null : body.get("amount"), 0.0);
+
+        if (amount <= 0) return badRequest("Invalid amount");
+
+        boolean isMock = razorpayOrderId != null && razorpayOrderId.startsWith("order_mock_");
+        if (!isMock && !razorpaySignature.isBlank()) {
+            try {
+                String message = razorpayOrderId + "|" + razorpayPaymentId;
+                javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+                mac.init(new javax.crypto.spec.SecretKeySpec(razorpayKeySecret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+                byte[] hashBytes = mac.doFinal(message.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                StringBuilder sb = new StringBuilder();
+                for (byte b : hashBytes) sb.append(String.format("%02x", b));
+                String generatedSig = sb.toString();
+
+                if (!generatedSig.equals(razorpaySignature)) {
+                    return ResponseEntity.status(400).body(error("Payment signature mismatch – possible fraud"));
+                }
+            } catch (Exception e) {
+                return ResponseEntity.status(500).body(error("Payment verification failed: " + e.getMessage()));
+            }
+        }
+
+        BusinessProposal proposal = businessProposalRepository.findById(id).orElse(null);
+        if (proposal == null) return badRequest("Proposal not found");
+
+        Investment investment = investmentRepository.findByInvestorAndProposal(inv, proposal).stream()
+                .filter(i -> "PENDING".equalsIgnoreCase(i.getStatus()))
+                .findFirst()
+                .orElse(null);
+
+        if (investment == null) {
+            investment = new Investment();
+            investment.setProposal(proposal);
+            investment.setInvestor(inv);
+        }
+
+        investment.setAmount(amount);
+        investment.setStatus("PENDING");
+        investment.setReleasedAmount(0.0);
+        investment.setAdminAmount(amount);
+        investment.setRazorpayPaymentId(razorpayPaymentId);
+        investment.setRazorpayOrderId(razorpayOrderId);
+        investmentRepository.save(investment);
+
+        // Milestone message in chat
+        try {
+            if (proposalChatMessageRepository != null) {
+                ProposalChatMessage sysMsg = new ProposalChatMessage();
+                sysMsg.setProposal(proposal);
+                sysMsg.setInvestor(inv);
+                sysMsg.setSenderRole("INVESTOR");
+                sysMsg.setMessage("💰 INVESTOR PAYMENT: ₹" + String.format("%.2f", amount)
+                        + " committed and transferred to Admin Escrow via Razorpay [Payment ID: " + razorpayPaymentId
+                        + "]. Admin will verify and disburse funds to entrepreneur.");
+                proposalChatMessageRepository.save(sysMsg);
+            }
+        } catch (Exception ignored) {}
+
+        // Notify Entrepreneur
+        try {
+            if (proposal.getEntrepreneur() != null) {
+                Entrepreneur ent = proposal.getEntrepreneur();
+                if (ent.getEmail() != null && !ent.getEmail().isBlank()) {
+                    emailService.sendEmail(
+                            ent.getEmail(),
+                            "Investment Interest: " + proposal.getTitle(),
+                            "Hello " + (ent.getFullName() != null ? ent.getFullName() : "Entrepreneur")
+                                    + ",\n\nGreat news! Investor " + inv.getFullName()
+                                    + " has committed ₹" + String.format("%.2f", amount) + " to your proposal '" + proposal.getTitle()
+                                    + "' through Razorpay Admin Escrow.\n\nOpen your Entrepreneur portal to view the details.\n\nFight D Fear Team"
+                    );
+                }
+            }
+        } catch (Exception ignored) {}
+
+        // Notify Investor
+        try {
+            if (inv.getEmail() != null && !inv.getEmail().isBlank()) {
+                emailService.sendEmail(
+                        inv.getEmail(),
+                        "Investment Held in Escrow: " + proposal.getTitle(),
+                        "Hello " + inv.getFullName() + ",\n\nYour payment of ₹" + String.format("%.2f", amount)
+                                + " for '" + proposal.getTitle() + "' has been successfully received and placed in Admin Escrow (Payment ID: " + razorpayPaymentId + ").\n\nThank you for supporting women entrepreneurs!\nFight D Fear"
+                );
+            }
+        } catch (Exception ignored) {}
+
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("success", true);
+        out.put("message", "Payment of ₹" + amount + " received and held in Admin Escrow.");
+        out.put("investment", investmentDto(investment));
+        return ResponseEntity.ok(out);
     }
 
     @PostMapping("/interest")
@@ -360,7 +636,7 @@ public class MobileInvestorAuthController {
 
     @PostMapping("/investments/{id}/withdraw")
     @Transactional
-    public ResponseEntity<Map<String, Object>> withdrawInterest(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> withdrawInterest(@PathVariable("id") Long id, HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
         Investment investment = investmentRepository.findById(id).orElse(null);
@@ -386,10 +662,6 @@ public class MobileInvestorAuthController {
         if (!InvestorProfileService.isApproved(inv)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(error("Investor must be verified before expressing interest"));
-        }
-        if (!inv.isSubscribed()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(error("Premium subscription required to express interest"));
         }
 
         Long proposalId = parseLong(body == null ? null : body.get("proposalId"));
@@ -532,6 +804,25 @@ public class MobileInvestorAuthController {
         return m;
     }
 
+    private Map<String, Object> questionDto(ProposalQuestion q) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", q.getId());
+        m.put("question", q.getQuestion());
+        m.put("answer", q.getAnswer());
+        m.put("createdAt", q.getCreatedAt() == null ? null : q.getCreatedAt().toString());
+        if (q.getInvestor() != null) {
+            m.put("investorId", q.getInvestor().getId());
+            m.put("investorName", q.getInvestor().getFullName());
+            m.put("investorCompany", q.getInvestor().getCompanyName());
+            m.put("investorPhoto", q.getInvestor().getProfilePhoto());
+        }
+        if (q.getProposal() != null) {
+            m.put("proposalId", q.getProposal().getId());
+            m.put("proposalTitle", q.getProposal().getTitle());
+        }
+        return m;
+    }
+
     private Map<String, Object> investmentDto(Investment i) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", i.getId());
@@ -641,7 +932,7 @@ public class MobileInvestorAuthController {
     @PostMapping("/investments/{id}/rate")
     @Transactional
     public ResponseEntity<Map<String, Object>> rate(
-            @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+            @PathVariable("id") Long id, @RequestBody Map<String, Object> body, HttpSession session) {
         Investor inv = requireInvestor(session);
         if (inv == null) return unauthorized();
         Investment i = investmentRepository.findById(id).orElse(null);

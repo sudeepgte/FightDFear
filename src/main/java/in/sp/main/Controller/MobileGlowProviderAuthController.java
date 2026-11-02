@@ -9,6 +9,7 @@ import in.sp.main.Entities.Stylist;
 import in.sp.main.Repository.SalonRepository;
 import in.sp.main.Repository.ServiceRepository;
 import in.sp.main.Repository.StylistRepository;
+import in.sp.main.Repository.UserRepository;
 import in.sp.main.Service.PartnerLifecycleSupport;
 import in.sp.main.Service.PasswordService;
 import in.sp.main.Service.SalonProfileService;
@@ -42,6 +43,9 @@ public class MobileGlowProviderAuthController {
 
     @Autowired
     private StylistRepository stylistRepository;
+
+    @Autowired(required = false)
+    private UserRepository userRepository;
 
     @Autowired
     private ServiceRepository serviceRepository;
@@ -313,11 +317,19 @@ public class MobileGlowProviderAuthController {
         if (login.isBlank() || password.isBlank()) {
             return badRequest("Email and password are required");
         }
-        Optional<Salon> salonOpt = salonRepository.findByUsername(login);
+        Optional<Salon> salonOpt = salonRepository.findByUsernameIgnoreCase(login);
         if (salonOpt.isEmpty()) {
-            salonOpt = Optional.ofNullable(salonRepository.findByEmail(login));
+            salonOpt = Optional.ofNullable(salonRepository.findByEmailIgnoreCase(login));
         }
         if (salonOpt.isEmpty()) {
+            Optional<Stylist> stylistOpt = stylistRepository.findByEmail(login);
+            if (stylistOpt.isPresent()) {
+                return loginStylist(body, session);
+            }
+            if (userRepository != null && userRepository.findByEmail(login).isPresent()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(error("This is a Member/User account. Please sign in as Member on the home screen to access Beauty & Wellness bookings."));
+            }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(error("Glow Space account not found"));
         }
@@ -355,16 +367,18 @@ public class MobileGlowProviderAuthController {
 
         session.setAttribute("loggedSalon", salon);
         String token = jwtUtil.generateToken(salon.getUsername(), "SALON");
+        boolean isApproved = salon.isApproved() || salon.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "SALON");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (salon.getPartnerProfileStatus() != null ? salon.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (salon.getPartnerProfileStatus() != null ? salon.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("salon", salonSummary(salon));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(salon.getPartnerProfileStatus()));
-        res.put("canSubmitForVerification",
-                salonProfileService.isReadyForVerification(salon)
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(salon.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification", !isApproved && salonProfileService.isReadyForVerification(salon)
                         && salon.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }
@@ -416,16 +430,18 @@ public class MobileGlowProviderAuthController {
 
         session.setAttribute("loggedStylist", stylist);
         String token = jwtUtil.generateToken(stylist.getEmail(), "STYLIST");
+        boolean isApproved = stylist.isApproved() || stylist.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "STYLIST");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (stylist.getPartnerProfileStatus() != null ? stylist.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (stylist.getPartnerProfileStatus() != null ? stylist.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("stylist", stylistSummary(stylist));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(stylist.getPartnerProfileStatus()));
-        res.put("canSubmitForVerification",
-                stylistProfileService.isReadyForVerification(stylist)
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(stylist.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification", !isApproved && stylistProfileService.isReadyForVerification(stylist)
                         && stylist.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }

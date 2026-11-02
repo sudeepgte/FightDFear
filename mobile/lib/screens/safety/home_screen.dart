@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/auth_state.dart';
+import '../../services/background_location_service.dart';
 import '../../services/sos_service.dart';
 import '../../widgets/safety_map.dart';
 import 'contacts_screen.dart';
@@ -71,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _activeSosId = id;
           _autoCallPhone = active['autoCallPhone']?.toString();
           _mapsLink = active['mapsLink']?.toString();
+          BackgroundLocationService.instance.startSosTracking(id, context.read<AuthState>().api);
           await _refreshStatus();
           _startPolling();
         }
@@ -117,6 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final status = res['status']?.toString().toUpperCase();
         if (status == 'CANCELLED' || status == 'RESOLVED') {
           _stopPolling();
+          unawaited(BackgroundLocationService.instance.stopSosTracking());
           setState(() {
             _activeSosId = null;
             _status = null;
@@ -278,6 +281,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   'SOS activated · ${res['contactsNotified'] ?? 0} contacts notified');
         });
         if (id != null) {
+          unawaited(BackgroundLocationService.instance.startSosTracking(
+            id,
+            context.read<AuthState>().api,
+          ));
           await _refreshStatus();
           _startPolling();
           if (res['alreadyActive'] != true) {
@@ -413,6 +420,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final res = await _sos.cancel(id);
       if (!mounted) return;
       _stopPolling();
+      unawaited(BackgroundLocationService.instance.stopSosTracking());
       setState(() {
         _activeSosId = null;
         _status = null;

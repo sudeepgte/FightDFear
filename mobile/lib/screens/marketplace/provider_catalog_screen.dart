@@ -1405,7 +1405,7 @@ class _ProviderCatalogScreenState extends State<ProviderCatalogScreen>
     final status = (b['status']?.toString() ?? 'PENDING').toUpperCase();
     final canCancel = status == 'PENDING' || status == 'CONFIRMED' || status == 'PAID';
     final canChat = status == 'CONFIRMED' || status == 'PAID';
-    final canPay = status == 'CONFIRMED';
+    final canPay = (status == 'CONFIRMED' || status == 'PENDING') && (b['paymentStatus']?.toString().toUpperCase() != 'PAID');
     final amount = (b['totalAmount'] is num)
         ? (b['totalAmount'] as num).toDouble()
         : double.tryParse('${b['totalAmount'] ?? provider['consultationFee'] ?? 0}') ?? 0;

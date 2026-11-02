@@ -241,16 +241,18 @@ public class MobileEventHostAuthController {
 
         session.setAttribute("loggedHost", host);
         String token = jwtUtil.generateToken(host.getEmail(), "HOST");
+        boolean isApproved = host.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || host.getVerificationStatus() == VerificationStatus.VERIFIED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "HOST");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (host.getPartnerProfileStatus() != null ? host.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (host.getPartnerProfileStatus() != null ? host.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("host", hostSummary(host));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(host.getPartnerProfileStatus()));
-        res.put("canSubmitForVerification",
-                hostProfileService.isReadyForVerification(host)
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(host.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification", !isApproved && hostProfileService.isReadyForVerification(host)
                         && host.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }
@@ -442,7 +444,7 @@ public class MobileEventHostAuthController {
     @PutMapping("/events/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateEvent(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         EventHost host = requireHost(session);
@@ -541,7 +543,7 @@ public class MobileEventHostAuthController {
 
     @PostMapping("/events/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelEvent(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelEvent(@PathVariable("id") Long id, HttpSession session) {
         EventHost host = requireHost(session);
         if (host == null) return unauthorized();
         WomenEvent event = eventRepo.findById(id).orElse(null);
@@ -565,7 +567,7 @@ public class MobileEventHostAuthController {
 
     @PostMapping("/events/{id}/submit")
     @Transactional
-    public ResponseEntity<Map<String, Object>> submitEvent(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> submitEvent(@PathVariable("id") Long id, HttpSession session) {
         EventHost host = requireHost(session);
         if (host == null) return unauthorized();
         if (!EventHostProfileService.isApproved(host)) {
@@ -583,7 +585,7 @@ public class MobileEventHostAuthController {
     @PostMapping("/events/{id}/checkin")
     @Transactional
     public ResponseEntity<Map<String, Object>> checkIn(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         EventHost host = requireHost(session);
@@ -619,7 +621,7 @@ public class MobileEventHostAuthController {
     }
 
     @GetMapping("/events/{id}/registrations")
-    public ResponseEntity<Map<String, Object>> eventRegistrations(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> eventRegistrations(@PathVariable("id") Long id, HttpSession session) {
         EventHost host = requireHost(session);
         if (host == null) return unauthorized();
 
@@ -669,8 +671,8 @@ public class MobileEventHostAuthController {
     @PostMapping("/events/{eventId}/registrations/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long eventId,
-            @PathVariable Long id,
+            @PathVariable("eventId") Long eventId,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         EventHost host = requireHost(session);

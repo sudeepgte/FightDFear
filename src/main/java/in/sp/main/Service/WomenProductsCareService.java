@@ -35,6 +35,10 @@ public class WomenProductsCareService {
     private WomenProductRepository productRepository;
     @Autowired
     private PushNotificationService pushNotificationService;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private SellerNotificationService sellerNotificationService;
 
     public static String normStatus(String status) {
         return WomenProductOrderLifecycleService.canonical(status);
@@ -53,7 +57,49 @@ public class WomenProductsCareService {
         restoreStock(o);
         o.setStatus("CANCELLED");
         o.setTrackingNote("Cancelled by " + (by == null ? "user" : by));
-        return orderRepository.save(o);
+        WomenProductOrder saved = orderRepository.save(o);
+
+        // Cancellation notifications
+        try {
+            WomenProductSeller seller = saved.getSeller();
+            in.sp.main.Entities.User user = saved.getUser();
+            String productName = saved.getProduct() != null && saved.getProduct().getName() != null
+                    ? saved.getProduct().getName() : "Product";
+            boolean isUserCancel = "user".equalsIgnoreCase(by);
+
+            if (seller != null && sellerNotificationService != null) {
+                sellerNotificationService.notifySeller(
+                        seller,
+                        "ORDER_CANCELLED",
+                        "Order #" + saved.getId() + " Cancelled",
+                        (isUserCancel ? "Customer cancelled" : "Cancelled") + " order #" + saved.getId() + " for " + productName + ".",
+                        saved.getId(),
+                        isUserCancel
+                );
+            }
+
+            if (user != null && pushNotificationService != null) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Order Cancelled",
+                        "Your order #" + saved.getId() + " for " + productName + " was cancelled.",
+                        Map.of("type", "PRODUCT_ORDER_CANCELLED", "orderId", String.valueOf(saved.getId()))
+                );
+                if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        String clientName = user.getFullName() != null ? user.getFullName() : "Customer";
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Order Cancelled: #" + saved.getId(),
+                                "Hello " + clientName + ",\n\nYour order #" + saved.getId() + " for " + productName
+                                        + " has been cancelled.\n\nIf you have any questions, feel free to reach out to our support.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return saved;
     }
 
     public void restoreStock(WomenProductOrder order) {

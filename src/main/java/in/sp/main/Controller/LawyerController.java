@@ -67,6 +67,15 @@ public class LawyerController {
     @Autowired
     private OtpVerificationService otpVerificationService;
 
+    @Autowired
+    private in.sp.main.Service.ProviderNotificationService providerNotificationService;
+
+    @Autowired
+    private in.sp.main.Service.PushNotificationService pushNotificationService;
+
+    @Autowired
+    private in.sp.main.Service.EmailService emailService;
+
     private void validateDocumentUpload(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Please upload a document (PDF or image).");
@@ -91,12 +100,12 @@ public class LawyerController {
 
     @PostMapping("/register")
     public String lawyerRegister(
-            @RequestParam String fullName,
-            @RequestParam String phone,
-            @RequestParam String email,
-            @RequestParam String password,
-            @RequestParam String confirmPassword,
-            @RequestParam(required = false) String otp,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("phone") String phone,
+            @RequestParam("email") String email,
+            @RequestParam("password") String password,
+            @RequestParam("confirmPassword") String confirmPassword,
+            @RequestParam(value = "otp", required = false) String otp,
             RedirectAttributes redirectAttributes) {
         
         if (!password.equals(confirmPassword)) {
@@ -181,8 +190,8 @@ public class LawyerController {
     }
 
     @PostMapping("/login")
-    public String lawyerLogin(@RequestParam String email,
-                              @RequestParam String password,
+    public String lawyerLogin(@RequestParam("email") String email,
+                              @RequestParam("password") String password,
                               HttpSession session,
                               jakarta.servlet.http.HttpServletResponse response,
                               Model model) {
@@ -238,24 +247,24 @@ public class LawyerController {
     }
 
     @PostMapping("/profile/update")
-    public String updateLawyerProfile(@RequestParam String fullName,
-                                      @RequestParam String phone,
-                                      @RequestParam(required = false) String country,
-                                      @RequestParam(required = false) String designation,
-                                      @RequestParam(required = false) String barCouncilId,
-                                      @RequestParam(required = false) String address,
-                                      @RequestParam(required = false) String city,
-                                      @RequestParam(required = false) String state,
-                                      @RequestParam(required = false) String pincode,
-                                      @RequestParam(required = false) String practiceAreas,
-                                      @RequestParam(required = false) String audience,
-                                      @RequestParam(required = false) String openDays,
-                                      @RequestParam(required = false) String openTime,
-                                      @RequestParam(required = false) String closeTime,
-                                      @RequestParam(required = false) String bio,
-                                      @RequestParam(required = false) Double consultationFee,
-                                      @RequestParam(required = false) String serviceMode,
-                                      @RequestParam(required = false) Integer durationMinutes,
+    public String updateLawyerProfile(@RequestParam("fullName") String fullName,
+                                      @RequestParam("phone") String phone,
+                                      @RequestParam(value = "country", required = false) String country,
+                                      @RequestParam(value = "designation", required = false) String designation,
+                                      @RequestParam(value = "barCouncilId", required = false) String barCouncilId,
+                                      @RequestParam(value = "address", required = false) String address,
+                                      @RequestParam(value = "city", required = false) String city,
+                                      @RequestParam(value = "state", required = false) String state,
+                                      @RequestParam(value = "pincode", required = false) String pincode,
+                                      @RequestParam(value = "practiceAreas", required = false) String practiceAreas,
+                                      @RequestParam(value = "audience", required = false) String audience,
+                                      @RequestParam(value = "openDays", required = false) String openDays,
+                                      @RequestParam(value = "openTime", required = false) String openTime,
+                                      @RequestParam(value = "closeTime", required = false) String closeTime,
+                                      @RequestParam(value = "bio", required = false) String bio,
+                                      @RequestParam(value = "consultationFee", required = false) Double consultationFee,
+                                      @RequestParam(value = "serviceMode", required = false) String serviceMode,
+                                      @RequestParam(value = "durationMinutes", required = false) Integer durationMinutes,
                                       @RequestParam(value = "profilePhoto", required = false) MultipartFile profilePhoto,
                                       HttpSession session, RedirectAttributes ra) {
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
@@ -318,8 +327,8 @@ public class LawyerController {
 
     @PostMapping("/bookings/{id}/status")
     @ResponseBody
-    public Map<String, Object> updateBookingStatus(@PathVariable Long id,
-                                                   @RequestParam String status,
+    public Map<String, Object> updateBookingStatus(@PathVariable("id") Long id,
+                                                   @RequestParam("status") String status,
                                                    HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         ServiceProvider p = (ServiceProvider) session.getAttribute("loggedLawyer");
@@ -338,8 +347,12 @@ public class LawyerController {
 
         try {
             ProviderBookingStatus newStatus = ProviderBookingStatus.valueOf(status);
+            ProviderBookingStatus oldStatus = b.getStatus();
             b.setStatus(newStatus);
             bookingRepo.save(b);
+
+            sendBookingStatusNotification(b, oldStatus, newStatus, p);
+
             response.put("success", true);
             response.put("newStatus", newStatus.name());
         } catch (Exception e) {
@@ -347,6 +360,93 @@ public class LawyerController {
             response.put("message", "Invalid status");
         }
         return response;
+    }
+
+    private void sendBookingStatusNotification(ProviderBooking b, ProviderBookingStatus from, ProviderBookingStatus to, ServiceProvider p) {
+        if (b == null) return;
+        in.sp.main.Entities.User user = b.getUser();
+        String lawyerName = p != null && p.getFullName() != null && !p.getFullName().isBlank() ? p.getFullName() : "Lawyer";
+        String timeStr = b.getRequestedTime() != null
+                ? b.getRequestedTime().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a"))
+                : "scheduled time";
+
+        if (user != null) {
+            String clientName = user.getFullName() != null && !user.getFullName().isBlank() ? user.getFullName() : "Client";
+            if (to == ProviderBookingStatus.CONFIRMED) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Appointment Confirmed!",
+                        "Adv. " + lawyerName + " has confirmed your legal consultation for " + timeStr + ".",
+                        Map.of("type", "LAWYER_CONFIRMED", "bookingId", String.valueOf(b.getId()))
+                );
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Appointment Confirmed - Adv. " + lawyerName,
+                                "Hello " + clientName + ",\n\nGreat news! Adv. " + lawyerName
+                                        + " has confirmed your legal consultation scheduled for " + timeStr
+                                        + ".\n\nYou can now open the app to view consultation details or message your lawyer.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+                if (p != null) {
+                    providerNotificationService.notifyProvider(
+                            p,
+                            "BOOKING_CONFIRMED",
+                            "Consultation Confirmed",
+                            "You confirmed the appointment with " + clientName + " for " + timeStr + ".",
+                            b.getId(),
+                            false
+                    );
+                }
+            } else if (to == ProviderBookingStatus.CANCELLED) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Appointment Declined",
+                        "Adv. " + lawyerName + " was unable to confirm your consultation for " + timeStr + ".",
+                        Map.of("type", "LAWYER_CANCELLED", "bookingId", String.valueOf(b.getId()))
+                );
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Appointment Update - Adv. " + lawyerName,
+                                "Hello " + clientName + ",\n\nAdv. " + lawyerName
+                                        + " was unable to take your legal consultation for " + timeStr
+                                        + ".\n\nPlease visit the Legal directory to find alternative slots or connect with another verified lawyer.\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+                if (p != null) {
+                    providerNotificationService.notifyProvider(
+                            p,
+                            "BOOKING_CANCELLED",
+                            "Consultation Cancelled",
+                            "Consultation with " + clientName + " for " + timeStr + " was cancelled.",
+                            b.getId(),
+                            false
+                    );
+                }
+            } else if (to == ProviderBookingStatus.COMPLETED) {
+                pushNotificationService.notifyUser(
+                        user.getId(),
+                        "Consultation Completed",
+                        "Your consultation with Adv. " + lawyerName + " is complete. Tap to leave a rating and review.",
+                        Map.of("type", "LAWYER_COMPLETED", "bookingId", String.valueOf(b.getId()))
+                );
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        emailService.sendEmail(
+                                user.getEmail(),
+                                "Consultation Completed - Adv. " + lawyerName,
+                                "Hello " + clientName + ",\n\nYour consultation with Adv. " + lawyerName
+                                        + " has concluded.\n\nWe would love to hear your feedback. Open the app to leave a review!\n\nThank you,\nFight D Fear"
+                        );
+                    } catch (Exception ignored) {}
+                }
+            }
+        }
     }
 
     @GetMapping("/profile-completion")
@@ -361,36 +461,36 @@ public class LawyerController {
     }
 
     @PostMapping("/profile-completion/save")
-    public String saveProfileCompletion(@RequestParam String fullName,
-                                      @RequestParam String phone,
-                                      @RequestParam(required = false) String country,
-                                      @RequestParam(required = false) String designation,
-                                      @RequestParam(required = false) String whatsappNumber,
-                                      @RequestParam(required = false) String barCouncilId,
-                                      @RequestParam(required = false) String city,
-                                      @RequestParam(required = false) String state,
-                                      @RequestParam(required = false) String practiceAreas,
-                                      @RequestParam(required = false) String openDays,
-                                      @RequestParam(required = false) String openTime,
-                                      @RequestParam(required = false) String closeTime,
-                                      @RequestParam(required = false) String bio,
-                                      @RequestParam(required = false) String serviceMode,
-                                      @RequestParam(required = false) Integer durationMinutes,
-                                      @RequestParam(required = false) Integer experienceYears,
-                                      @RequestParam(required = false) String languages,
-                                      @RequestParam(required = false) String audience,
-                                      @RequestParam(required = false) String address,
-                                      @RequestParam(required = false) String pincode,
-                                      @RequestParam(required = false) String facilities,
-                                      @RequestParam(required = false) String consultationMode,
-                                      @RequestParam(required = false) Double consultationFee,
-                                      @RequestParam(required = false) String upiId,
-                                      @RequestParam(required = false) String bankAccountHolder,
-                                       @RequestParam(required = false) String bankName,
-                                       @RequestParam(required = false) String bankAccountNumber,
-                                       @RequestParam(required = false) String bankIfsc,
-                                       @RequestParam(required = false) String bankBranch,
-                                       @RequestParam(required = false) String bankDetails,
+    public String saveProfileCompletion(@RequestParam("fullName") String fullName,
+                                      @RequestParam("phone") String phone,
+                                      @RequestParam(value = "country", required = false) String country,
+                                      @RequestParam(value = "designation", required = false) String designation,
+                                      @RequestParam(value = "whatsappNumber", required = false) String whatsappNumber,
+                                      @RequestParam(value = "barCouncilId", required = false) String barCouncilId,
+                                      @RequestParam(value = "city", required = false) String city,
+                                      @RequestParam(value = "state", required = false) String state,
+                                      @RequestParam(value = "practiceAreas", required = false) String practiceAreas,
+                                      @RequestParam(value = "openDays", required = false) String openDays,
+                                      @RequestParam(value = "openTime", required = false) String openTime,
+                                      @RequestParam(value = "closeTime", required = false) String closeTime,
+                                      @RequestParam(value = "bio", required = false) String bio,
+                                      @RequestParam(value = "serviceMode", required = false) String serviceMode,
+                                      @RequestParam(value = "durationMinutes", required = false) Integer durationMinutes,
+                                      @RequestParam(value = "experienceYears", required = false) Integer experienceYears,
+                                      @RequestParam(value = "languages", required = false) String languages,
+                                      @RequestParam(value = "audience", required = false) String audience,
+                                      @RequestParam(value = "address", required = false) String address,
+                                      @RequestParam(value = "pincode", required = false) String pincode,
+                                      @RequestParam(value = "facilities", required = false) String facilities,
+                                      @RequestParam(value = "consultationMode", required = false) String consultationMode,
+                                      @RequestParam(value = "consultationFee", required = false) Double consultationFee,
+                                      @RequestParam(value = "upiId", required = false) String upiId,
+                                      @RequestParam(value = "bankAccountHolder", required = false) String bankAccountHolder,
+                                       @RequestParam(value = "bankName", required = false) String bankName,
+                                       @RequestParam(value = "bankAccountNumber", required = false) String bankAccountNumber,
+                                       @RequestParam(value = "bankIfsc", required = false) String bankIfsc,
+                                       @RequestParam(value = "bankBranch", required = false) String bankBranch,
+                                       @RequestParam(value = "bankDetails", required = false) String bankDetails,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile profilePhoto,
                                       @RequestParam(required = false) org.springframework.web.multipart.MultipartFile chamberPhoto,
                                       HttpSession session, RedirectAttributes ra) {

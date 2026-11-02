@@ -155,7 +155,7 @@ public class InvestorProfileService {
         m.put("profilePhoto", investor.getProfilePhoto());
         m.put("verificationStatus", investor.getVerificationStatus() == null
                 ? null : investor.getVerificationStatus().name());
-        m.put("subscribed", investor.isSubscribed());
+        m.put("subscribed", true);
         m.put("partnerProfileStatus", investor.getPartnerProfileStatus() == null
                 ? null : investor.getPartnerProfileStatus().name());
         m.put("partnerProfileStatusLabel", PartnerLifecycleSupport.statusLabel(investor.getPartnerProfileStatus()));

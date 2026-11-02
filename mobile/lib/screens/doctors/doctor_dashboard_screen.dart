@@ -911,6 +911,161 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     }
   }
 
+  bool get _isVerified {
+    final status = (_raw['doctorProfileStatus'] ?? _doctor['doctorProfileStatus'] ?? '').toString().toUpperCase();
+    final vStatus = (_doctor['verificationStatus'] ?? '').toString().toUpperCase();
+    return status == 'APPROVED' || vStatus == 'VERIFIED' || _doctor['approved'] == true;
+  }
+
+  String get _greeting {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  Widget _verificationBanner() {
+    final status = (_raw['doctorProfileStatus'] ?? _doctor['doctorProfileStatus'] ?? '').toString().toUpperCase();
+    final changesNote = (_raw['changesRequestedNote'] ?? _raw['rejectionReason'] ?? '').toString();
+
+    if (_isVerified) return const SizedBox.shrink();
+
+    if (status == 'CHANGES_REQUESTED' || status == 'REJECTED') {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF2F2),
+          borderRadius: BorderRadius.circular(16),
+          border: const Border(
+            left: BorderSide(color: Color(0xFFEF4444), width: 6),
+            top: BorderSide(color: Color(0xFFFECACA)),
+            right: BorderSide(color: Color(0xFFFECACA)),
+            bottom: BorderSide(color: Color(0xFFFECACA)),
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 24),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Changes Required Before Verification',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF991B1B),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (changesNote.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Note: $changesNote',
+                style: const TextStyle(fontSize: 13, color: Color(0xFF7F1D1D), fontWeight: FontWeight.w600),
+              ),
+            ],
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => DoctorProfileCompletionScreen(
+                      onFinished: (ctx) => Navigator.of(ctx).pop(),
+                    ),
+                  ),
+                );
+                _reload();
+              },
+              icon: const Icon(Icons.edit_note),
+              label: const Text('Update Profile Now'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // PENDING_ADMIN_APPROVAL or unverified
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(16),
+        border: const Border(
+          left: BorderSide(color: Color(0xFFF59E0B), width: 6),
+          top: BorderSide(color: Color(0xFFFDE68A)),
+          right: BorderSide(color: Color(0xFFFDE68A)),
+          bottom: BorderSide(color: Color(0xFFFDE68A)),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.hourglass_top_rounded, color: Color(0xFFD97706), size: 24),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Verification in Progress — Wait for Verification to Add Services',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Your profile and medical credentials have been submitted and are currently awaiting review by the admin team. Clinical services, appointments, chats, and schedule configuration will unlock once your account is verified.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF78350F), height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _lockedBanner(String feature) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFDE68A)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.lock_clock_outlined, size: 48, color: Color(0xFFD97706)),
+          const SizedBox(height: 12),
+          Text(
+            '$feature Locked',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF92400E)),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'This feature unlocks automatically once your doctor credentials have been approved by the Admin.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 13, color: Color(0xFF78350F), height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _profileCompletionBanner() {
     final status = (_raw['doctorProfileStatus'] ?? _doctor['doctorProfileStatus'] ?? 'PROFILE_INCOMPLETE')
         .toString();
@@ -994,10 +1149,11 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
 
   Widget _quickActions() {
     final items = [
-      (Icons.calendar_month_outlined, 'Schedule', () => setState(() { _navIndex = 1; _filter = 'TODAY'; })),
+      (Icons.calendar_month_outlined, 'Schedule', () => setState(() => _navIndex = 5)),
       (Icons.groups_outlined, 'Patients', () => setState(() => _navIndex = 2)),
       (Icons.chat_bubble_outline, 'Messages', () => setState(() => _navIndex = 3)),
-      (Icons.payments_outlined, 'Earnings', () => _showAnalyticsSheet()),
+      (Icons.payments_outlined, 'Earnings', () => setState(() => _navIndex = 6)),
+      (Icons.medical_services_outlined, 'Prescriptions', () => setState(() => _navIndex = 7)),
       (Icons.bar_chart_outlined, 'Reports', () => _showAnalyticsSheet()),
     ];
     return SizedBox(
@@ -1212,6 +1368,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
         children: [
           _profileCard(),
           const SizedBox(height: 12),
+          _verificationBanner(),
           _profileCompletionBanner(),
           const SizedBox(height: 14),
           Row(
@@ -1488,6 +1645,525 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
     );
   }
 
+  Widget _scheduleTab() {
+    if (!_isVerified) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _lockedBanner('Schedule & Slots'),
+        ],
+      );
+    }
+    final rawSlots = DoctorCatalog.parseAvailabilitySlots(_doctor['availabilitySlots']);
+    return RefreshIndicator(
+      onRefresh: _reload,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        children: [
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Consultation Hours & Availability Slots', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  const SizedBox(height: 4),
+                  const Text('Set up the regular time slots when patients can book clinic or video appointments.', style: TextStyle(color: ModuleTheme.textGray, fontSize: 13)),
+                  const Divider(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Active Slots (${rawSlots.length})', style: const TextStyle(fontWeight: FontWeight.w700)),
+                      TextButton.icon(
+                        onPressed: () => _openAddSlotDialog(rawSlots),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add Slot'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (rawSlots.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      alignment: Alignment.center,
+                      child: const Text('No availability slots configured.\nTap "Add Slot" to set your hours.', textAlign: TextAlign.center, style: TextStyle(color: ModuleTheme.textGray)),
+                    )
+                  else
+                    ...rawSlots.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final s = entry.value;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFE4E6),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                (s['day'] ?? '').length >= 3 ? (s['day'] ?? '').substring(0, 3).toUpperCase() : (s['day'] ?? ''),
+                                style: const TextStyle(color: ModuleTheme.primary, fontWeight: FontWeight.w800, fontSize: 12),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                '${s['start']} - ${s['end']}',
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                              onPressed: () => _deleteSlot(rawSlots, i),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Consultation Modes & Settings', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  _settingRow('Slot Duration', '${_doctor['slotDurationMinutes'] ?? 30} minutes'),
+                  _settingRow('Buffer Time', '${_doctor['bufferMinutes'] ?? 0} minutes'),
+                  _settingRow('Auto Confirm', _doctor['autoConfirm'] == true ? 'Enabled' : 'Disabled'),
+                  _settingRow('Emergency Consultation', _doctor['emergencyAvailable'] == true ? 'Active' : 'Inactive'),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => DoctorProfileCompletionScreen(
+                            onFinished: (ctx) => Navigator.of(ctx).pop(),
+                          ),
+                        ),
+                      );
+                      _reload();
+                    },
+                    icon: const Icon(Icons.tune),
+                    label: const Text('Edit Timing & Slot Parameters'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openAddSlotDialog(List<Map<String, String>> existingSlots) async {
+    const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    var selectedDay = 'MONDAY';
+    var start = const TimeOfDay(hour: 9, minute: 0);
+    var end = const TimeOfDay(hour: 17, minute: 0);
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Add Availability Slot'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DropdownButtonFormField<String>(
+                value: selectedDay,
+                decoration: const InputDecoration(labelText: 'Day of Week', border: OutlineInputBorder()),
+                items: days.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+                onChanged: (v) => setDialogState(() => selectedDay = v ?? selectedDay),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        final picked = await showTimePicker(context: ctx, initialTime: start);
+                        if (picked != null) setDialogState(() => start = picked);
+                      },
+                      child: Text('Start: ${_formatTimeOfDay(start)}'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        final picked = await showTimePicker(context: ctx, initialTime: end);
+                        if (picked != null) setDialogState(() => end = picked);
+                      },
+                      child: Text('End: ${_formatTimeOfDay(end)}'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Save Slot')),
+          ],
+        ),
+      ),
+    );
+
+    if (ok != true) return;
+    final updated = List<Map<String, String>>.from(existingSlots)
+      ..add({
+        'day': selectedDay,
+        'start': _formatTimeOfDay(start),
+        'end': _formatTimeOfDay(end),
+      });
+
+    final res = await _svc.updateProfile({'availabilitySlots': updated});
+    if (!mounted) return;
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Availability slot added')));
+      _reload();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['error']?.toString() ?? 'Failed')));
+    }
+  }
+
+  Future<void> _deleteSlot(List<Map<String, String>> existingSlots, int index) async {
+    final updated = List<Map<String, String>>.from(existingSlots)..removeAt(index);
+    final res = await _svc.updateProfile({'availabilitySlots': updated});
+    if (!mounted) return;
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Slot removed')));
+      _reload();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res['error']?.toString() ?? 'Failed')));
+    }
+  }
+
+  Widget _earningsTab() {
+    if (!_isVerified) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _lockedBanner('Earnings & Payouts'),
+        ],
+      );
+    }
+    final todayEarn = _money(_raw['todayEarnings']);
+    final monthEarn = _money(_raw['monthEarnings']);
+    final totalEarn = _money(_raw['totalEarnings']);
+    final completed = _raw['completedCount'] ?? 0;
+    final upi = _doctor['upiId']?.toString() ?? '';
+
+    return RefreshIndicator(
+      onRefresh: _reload,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFFF43F5E)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Total Net Earnings', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+                Text('₹$totalEarn', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Today's Earnings", style: TextStyle(color: Colors.white60, fontSize: 12)),
+                          const SizedBox(height: 2),
+                          Text('₹$todayEarn', style: const TextStyle(color: Color(0xFF86EFAC), fontSize: 18, fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('This Month', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                          const SizedBox(height: 2),
+                          Text('₹$monthEarn', style: const TextStyle(color: Color(0xFFFECDD3), fontSize: 18, fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Payout Request', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  const SizedBox(height: 6),
+                  const Text('Consultation earnings accumulate in your wallet and are transferred to your registered UPI ID.', style: TextStyle(color: ModuleTheme.textGray, fontSize: 13, height: 1.4)),
+                  const Divider(height: 24),
+                  _settingRow('Registered UPI', upi.isNotEmpty ? upi : 'Not configured (add in profile)'),
+                  _settingRow('Completed Consultations', '$completed visits'),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: upi.isEmpty
+                          ? () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please add your UPI ID in Complete Profile before requesting a payout.')),
+                              );
+                            }
+                          : () async {
+                              final res = await _svc.requestPayout();
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(res['message']?.toString() ?? res['error']?.toString() ?? 'Payout requested'),
+                                  backgroundColor: res['success'] == true ? const Color(0xFF16A34A) : Colors.red,
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.account_balance_wallet_outlined),
+                      label: const Text('Request Payout to UPI'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ModuleTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Fee Structure', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  _settingRow('Clinic Consultation Fee', '₹${_money(_doctor['consultationFee'])}'),
+                  _settingRow('Video Consultation Fee', '₹${_money(_doctor['videoFee'] ?? _doctor['consultationFee'])}'),
+                  _settingRow('Chat Consultation Fee', '₹${_money(_doctor['chatFee'] ?? 0)}'),
+                  _settingRow('Home Visit Fee', '₹${_money(_doctor['callFee'] ?? _doctor['consultationFee'])}'),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _prescriptionsTab() {
+    if (!_isVerified) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _lockedBanner('Prescriptions'),
+        ],
+      );
+    }
+    final rxAppts = _appointments.where((a) {
+      final hasRx = (a['prescriptionText']?.toString() ?? '').trim().isNotEmpty;
+      final status = (a['status']?.toString() ?? '').toUpperCase();
+      return hasRx || status == 'COMPLETED' || status == 'CONFIRMED';
+    }).toList();
+
+    return RefreshIndicator(
+      onRefresh: _reload,
+      child: rxAppts.isEmpty
+          ? ListView(
+              children: [
+                EmptyStateView(
+                  icon: Icons.description_outlined,
+                  title: 'No prescriptions yet',
+                  message: 'When you write prescriptions during or after consultations, they will be archived here.',
+                ),
+              ],
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+              itemCount: rxAppts.length,
+              itemBuilder: (_, i) {
+                final a = rxAppts[i];
+                final id = a['id'] is num ? (a['id'] as num).toInt() : int.tryParse('${a['id']}');
+                final patientName = a['clientName']?.toString() ?? 'Patient';
+                final hasRx = (a['prescriptionText']?.toString() ?? '').trim().isNotEmpty;
+                final rxText = a['prescriptionText']?.toString() ?? '';
+                final when = _parseTime(a['appointmentTime']);
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const CircleAvatar(
+                              backgroundColor: Color(0xFFFFE4E6),
+                              child: Icon(Icons.receipt_long_outlined, color: ModuleTheme.primary),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(patientName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                                  if (when != null)
+                                    Text(_formatDate(when), style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            _statusBadge(a['status']?.toString() ?? 'CONFIRMED'),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if (hasRx) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFBBF7D0)),
+                            ),
+                            child: Text(
+                              rxText,
+                              style: const TextStyle(color: Color(0xFF166534), fontSize: 13, height: 1.4),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                        ] else ...[
+                          const Text('No prescription issued yet for this visit.', style: TextStyle(color: ModuleTheme.textGray, fontSize: 13)),
+                          const SizedBox(height: 10),
+                        ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: id == null ? null : () => _savePrescription(id, rxText),
+                              icon: Icon(hasRx ? Icons.edit_outlined : Icons.add, size: 16),
+                              label: Text(hasRx ? 'Edit Rx' : 'Write Rx'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _settingRow(String k, String v) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(k, style: const TextStyle(color: Color(0xFF64748B), fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(v, style: const TextStyle(color: Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w700)),
+        ],
+      ),
+    );
+  }
+
+  String _formatTimeOfDay(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  Widget _drawerTile(int index, IconData icon, String title, {bool locked = false, String? badge}) {
+    final selected = _navIndex == index;
+    return ListTile(
+      leading: Icon(icon, color: selected ? ModuleTheme.primary : (locked ? Colors.grey : const Color(0xFF334155))),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: selected ? ModuleTheme.primary : (locked ? Colors.grey : const Color(0xFF0F172A)),
+          fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+        ),
+      ),
+      trailing: locked
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.lock, size: 12, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text('Locked', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            )
+          : (badge != null
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: ModuleTheme.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(badge, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                )
+              : null),
+      onTap: () {
+        Navigator.pop(context);
+        if (locked) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This section unlocks once your profile is verified by the admin.'),
+              backgroundColor: Color(0xFF0F172A),
+            ),
+          );
+          return;
+        }
+        setState(() => _navIndex = index);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<AuthState>();
@@ -1497,12 +2173,44 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
       _patientsTab(),
       _messagesTab(),
       _profileTab(),
+      _scheduleTab(),
+      _earningsTab(),
+      _prescriptionsTab(),
+    ];
+
+    final doctorName = _doctor['fullName']?.toString() ?? 'Doctor';
+    final displayName = doctorName.startsWith('Dr') ? doctorName : 'Dr. $doctorName';
+    final specialty = _doctor['specialization']?.toString() ?? 'Doctor Portal';
+    final pendingCount = _raw['pendingCount'] is num ? (_raw['pendingCount'] as num).toInt() : 0;
+    final pct = _num(_raw['profileCompletionPct'] ?? _doctor['profileCompletionPct']).clamp(0, 100).toInt();
+
+    final titles = [
+      'Doctor Dashboard',
+      'Appointments',
+      'Patients',
+      'Chats & Messages',
+      'My Profile',
+      'Schedule & Slots',
+      'Earnings & Fees',
+      'Prescriptions',
     ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: const Text('Doctor Dashboard'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _navIndex < titles.length ? titles[_navIndex] : 'Doctor Dashboard',
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+            ),
+            Text(
+              '$displayName · $_greeting',
+              style: const TextStyle(fontSize: 12, color: ModuleTheme.textGray, fontWeight: FontWeight.normal),
+            ),
+          ],
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF0F172A),
         actions: [
@@ -1523,6 +2231,63 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F172A),
+              ),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: const Color(0xFFFFE4E6),
+                child: Text(
+                  doctorName.isNotEmpty ? doctorName.characters.first.toUpperCase() : 'D',
+                  style: const TextStyle(color: ModuleTheme.primary, fontWeight: FontWeight.w800, fontSize: 24),
+                ),
+              ),
+              accountName: Text(displayName, style: const TextStyle(fontWeight: FontWeight.w800)),
+              accountEmail: Text(
+                '$specialty · ${_online ? "Online" : "Offline"}',
+                style: TextStyle(color: _online ? const Color(0xFF86EFAC) : Colors.white70),
+              ),
+            ),
+            _drawerTile(0, Icons.grid_view_outlined, 'Dashboard / Overview'),
+            _drawerTile(1, Icons.calendar_month_outlined, 'Appointments', locked: !_isVerified, badge: pendingCount > 0 ? '$pendingCount' : null),
+            _drawerTile(2, Icons.people_outline, 'Patients'),
+            _drawerTile(3, Icons.chat_bubble_outline, 'Chats & Messages', locked: !_isVerified),
+            _drawerTile(5, Icons.schedule_outlined, 'Schedule & Slots', locked: !_isVerified),
+            _drawerTile(6, Icons.wallet_outlined, 'Earnings & Fees', locked: !_isVerified),
+            _drawerTile(7, Icons.medical_services_outlined, 'Prescriptions', locked: !_isVerified),
+            _drawerTile(4, Icons.person_outline, 'My Profile'),
+            if (pct < 100 || !_isVerified)
+              ListTile(
+                leading: const Icon(Icons.person_pin_outlined, color: Color(0xFFEA580C)),
+                title: const Text('Complete Profile', style: TextStyle(color: Color(0xFFEA580C), fontWeight: FontWeight.w700)),
+                trailing: Text('$pct%', style: const TextStyle(color: Color(0xFFEA580C), fontWeight: FontWeight.w700)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => DoctorProfileCompletionScreen(
+                        onFinished: (ctx) => Navigator.of(ctx).pop(),
+                      ),
+                    ),
+                  ).then((_) => _reload());
+                },
+              ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700)),
+              onTap: () {
+                Navigator.pop(context);
+                _logout();
+              },
+            ),
+          ],
+        ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openInstantConsult,
         backgroundColor: ModuleTheme.primary,
@@ -1535,7 +2300,7 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> {
               ? ModuleTheme.errorView(_error!, _reload)
               : pages[_navIndex],
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _navIndex,
+        selectedIndex: _navIndex > 4 ? 0 : _navIndex,
         onDestinationSelected: (i) => setState(() => _navIndex = i),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),

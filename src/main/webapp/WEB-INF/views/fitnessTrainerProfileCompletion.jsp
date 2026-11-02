@@ -752,6 +752,9 @@
             <span class="portal-badge">Fitness Coach</span>
         </a>
         <div class="header-actions">
+            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="margin-right:6px;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip">
                 <i class="bi bi-arrow-left"></i> Studio Dashboard
             </a>
@@ -766,6 +769,10 @@
 
     <!-- Main Content -->
     <main class="main-container">
+
+        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
 
         <!-- Flash Messages -->
         <c:if test="${not empty error}">

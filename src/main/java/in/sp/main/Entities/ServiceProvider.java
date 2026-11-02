@@ -98,6 +98,8 @@ public class ServiceProvider {
     private String whatsappNumber;
     private String address;
     private String city;
+    @Column(length = 100)
+    private String district;
     private String state;
     private String pincode;
     @Column(length = 80)
@@ -332,6 +334,8 @@ public class ServiceProvider {
     public void setAddress(String address) { this.address = address; }
     public String getCity() { return city; }
     public void setCity(String city) { this.city = city; }
+    public String getDistrict() { return district; }
+    public void setDistrict(String district) { this.district = district; }
     public String getState() { return state; }
     public void setState(String state) { this.state = state; }
     public String getPincode() { return pincode; }

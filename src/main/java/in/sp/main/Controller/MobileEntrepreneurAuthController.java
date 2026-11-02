@@ -47,6 +47,10 @@ public class MobileEntrepreneurAuthController {
     private in.sp.main.Service.FundingCareService fundingCareService;
     @Autowired
     private in.sp.main.Service.FileUploadService fileUploadService;
+    @Autowired
+    private in.sp.main.Repository.ProposalQuestionRepository proposalQuestionRepository;
+    @Autowired
+    private in.sp.main.Repository.InvestorRepository investorRepository;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody Map<String, String> body) {
@@ -243,16 +247,18 @@ public class MobileEntrepreneurAuthController {
 
         session.setAttribute("loggedEntrepreneur", e);
         String token = jwtUtil.generateToken(e.getEmail(), "ENTREPRENEUR");
+        boolean isApproved = e.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || e.getVerificationStatus() == VerificationStatus.VERIFIED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "ENTREPRENEUR");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (e.getPartnerProfileStatus() != null ? e.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (e.getPartnerProfileStatus() != null ? e.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("entrepreneur", entrepreneurSummary(e));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(e.getPartnerProfileStatus()));
-        res.put("canSubmitForVerification",
-                entrepreneurProfileService.isReadyForVerification(e)
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(e.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification", !isApproved && entrepreneurProfileService.isReadyForVerification(e)
                         && e.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }
@@ -338,18 +344,44 @@ public class MobileEntrepreneurAuthController {
         List<Map<String, Object>> proposalDtos = proposals.stream().map(this::proposalDto).toList();
         List<Map<String, Object>> interestDtos = interests.stream().map(this::interestDto).toList();
 
-        boolean approved = e.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
+        double escrowHeld = interests.stream()
+                .filter(i -> "PENDING".equalsIgnoreCase(i.getStatus()))
+                .mapToDouble(i -> i.getAmount() == null ? 0.0 : i.getAmount())
+                .sum();
+        double escrowReleased = interests.stream()
+                .filter(i -> "COMPLETED".equalsIgnoreCase(i.getStatus()) || "RELEASED".equalsIgnoreCase(i.getStatus()))
+                .mapToDouble(i -> i.getReleasedAmount() != null ? i.getReleasedAmount() : (i.getAmount() == null ? 0.0 : i.getAmount()))
+                .sum();
+
+        List<ProposalQuestion> questionEntities = proposalQuestionRepository.findByProposal_Entrepreneur_Id(e.getId());
+        List<Map<String, Object>> questionDtos = questionEntities.stream().map(this::questionDto).toList();
+
+        List<Investor> approvedInvestorEntities = investorRepository.findAll().stream()
+                .filter(inv -> inv.getVerificationStatus() == VerificationStatus.VERIFIED || inv.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED)
+                .toList();
+        List<Map<String, Object>> approvedInvestorDtos = approvedInvestorEntities.stream().map(this::approvedInvestorDto).toList();
+
+        boolean approved = EntrepreneurProfileService.isApproved(e);
+        boolean isLocked = !approved;
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("entrepreneur", entrepreneurSummary(e));
+        data.put("isApproved", approved);
+        data.put("isLocked", isLocked);
         data.put("proposals", proposalDtos);
         data.put("interests", interestDtos);
+        data.put("questions", questionDtos);
+        data.put("approvedInvestors", approvedInvestorDtos);
+        data.put("escrowHeld", escrowHeld);
+        data.put("escrowReleased", escrowReleased);
         data.put("funding", Map.of(
                 "totalRequested", totalRequested,
                 "totalRaised", totalRaised,
                 "remaining", Math.max(0, totalRequested - totalRaised),
                 "pendingInterestCount", pendingInterestCount,
                 "pendingInterestAmount", pendingInterestAmount,
-                "interestedInvestors", pendingInterestCount
+                "interestedInvestors", pendingInterestCount,
+                "escrowHeld", escrowHeld,
+                "escrowReleased", escrowReleased
         ));
         data.put("canCreateProposal", approved);
         data.put("needsProfileCompletion",
@@ -358,6 +390,80 @@ public class MobileEntrepreneurAuthController {
         data.put("upiId", e.getUpiId() == null ? "" : e.getUpiId());
         data.put("cancelPolicy", in.sp.main.Service.FundingCareService.CANCEL_POLICY);
         return ResponseEntity.ok(ok(data));
+    }
+
+    @GetMapping("/questions")
+    public ResponseEntity<Map<String, Object>> questions(HttpSession session) {
+        Entrepreneur e = requireEntrepreneur(session);
+        if (e == null) return unauthorized();
+        List<Map<String, Object>> items = proposalQuestionRepository
+                .findByProposal_Entrepreneur_Id(e.getId())
+                .stream().map(this::questionDto).toList();
+        return ResponseEntity.ok(ok(Map.of("questions", items, "count", items.size())));
+    }
+
+    @PostMapping("/questions/{id}/answer")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> answerQuestion(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) Map<String, Object> body,
+            @RequestParam(value = "answer", required = false) String paramAnswer,
+            HttpSession session) {
+        Entrepreneur e = requireEntrepreneur(session);
+        if (e == null) return unauthorized();
+        ProposalQuestion q = proposalQuestionRepository.findById(id).orElse(null);
+        if (q == null || q.getProposal() == null || q.getProposal().getEntrepreneur() == null
+                || !q.getProposal().getEntrepreneur().getId().equals(e.getId())) {
+            return badRequest("Question not found");
+        }
+        String answer = trim(body != null && body.containsKey("answer") ? str(body, "answer") : paramAnswer);
+        if (answer.isBlank()) {
+            return badRequest("answer cannot be blank");
+        }
+        q.setAnswer(answer);
+        proposalQuestionRepository.save(q);
+        return ResponseEntity.ok(ok(Map.of(
+                "message", "Answer posted successfully",
+                "question", questionDto(q)
+        )));
+    }
+
+    @GetMapping("/investors/approved")
+    public ResponseEntity<Map<String, Object>> approvedInvestors(HttpSession session) {
+        Entrepreneur e = requireEntrepreneur(session);
+        if (e == null) return unauthorized();
+        List<Map<String, Object>> items = investorRepository.findAll().stream()
+                .filter(inv -> inv.getVerificationStatus() == VerificationStatus.VERIFIED || inv.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED)
+                .map(this::approvedInvestorDto).toList();
+        return ResponseEntity.ok(ok(Map.of("investors", items, "count", items.size())));
+    }
+
+    @PostMapping(value = "/pitch-deck", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadPitchDeck(
+            @RequestParam(value = "pitchDeckFile", required = false) org.springframework.web.multipart.MultipartFile pitchDeckFile,
+            @RequestParam(value = "file", required = false) org.springframework.web.multipart.MultipartFile file,
+            HttpSession session) {
+        Entrepreneur e = requireEntrepreneur(session);
+        if (e == null) return unauthorized();
+        e = entrepreneurRepository.findById(e.getId()).orElse(e);
+        org.springframework.web.multipart.MultipartFile target = pitchDeckFile != null ? pitchDeckFile : file;
+        if (target == null || target.isEmpty()) {
+            return badRequest("No pitch deck file provided");
+        }
+        try {
+            String path = fileUploadService.saveFile(target);
+            e.setDocumentsPath(path);
+            entrepreneurRepository.save(e);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Pitch deck uploaded");
+            res.put("pitchDeckPath", path);
+            res.putAll(entrepreneurProfileService.profilePayload(e));
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest(ex.getMessage() == null ? "Upload failed" : ex.getMessage());
+        }
     }
 
     @GetMapping("/interests")
@@ -420,7 +526,7 @@ public class MobileEntrepreneurAuthController {
     @PutMapping("/proposals/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateProposal(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
@@ -481,7 +587,7 @@ public class MobileEntrepreneurAuthController {
 
     @PostMapping("/proposals/{id}/cancel")
     @Transactional
-    public ResponseEntity<Map<String, Object>> cancelProposal(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> cancelProposal(@PathVariable("id") Long id, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized();
         BusinessProposal p = businessProposalRepository.findById(id).orElse(null);
@@ -623,6 +729,39 @@ public class MobileEntrepreneurAuthController {
         return m;
     }
 
+    private Map<String, Object> questionDto(ProposalQuestion q) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", q.getId());
+        m.put("question", q.getQuestion());
+        m.put("answer", q.getAnswer());
+        m.put("createdAt", q.getCreatedAt() == null ? null : q.getCreatedAt().toString());
+        if (q.getInvestor() != null) {
+            m.put("investorId", q.getInvestor().getId());
+            m.put("investorName", q.getInvestor().getFullName());
+            m.put("investorCompany", q.getInvestor().getCompanyName());
+            m.put("investorPhoto", q.getInvestor().getProfilePhoto());
+        }
+        if (q.getProposal() != null) {
+            m.put("proposalId", q.getProposal().getId());
+            m.put("proposalTitle", q.getProposal().getTitle());
+        }
+        return m;
+    }
+
+    private Map<String, Object> approvedInvestorDto(Investor inv) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", inv.getId());
+        m.put("fullName", inv.getFullName());
+        m.put("companyName", inv.getCompanyName());
+        m.put("designation", inv.getDesignation());
+        m.put("city", inv.getCity());
+        m.put("ticketMode", inv.getTicketMode());
+        m.put("typicalCheque", inv.getTypicalCheque());
+        m.put("rating", inv.getRating());
+        m.put("profilePhoto", inv.getProfilePhoto());
+        return m;
+    }
+
     private Map<String, Object> interestDto(Investment i) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", i.getId());
@@ -668,7 +807,7 @@ public class MobileEntrepreneurAuthController {
     @PostMapping("/investments/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+            @PathVariable("id") Long id, @RequestBody Map<String, Object> body, HttpSession session) {
         Entrepreneur e = requireEntrepreneur(session);
         if (e == null) return unauthorized();
         Investment i = investmentRepository.findById(id).orElse(null);

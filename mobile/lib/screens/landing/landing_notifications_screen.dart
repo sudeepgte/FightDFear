@@ -7,6 +7,8 @@ import '../creator/creator_hub_screen.dart';
 import '../safety/home_screen.dart';
 import '../auth/login_screen.dart';
 import '../events/women_events_screen.dart';
+import '../marketplace/provider_catalog_screen.dart';
+import '../products/women_products_screen.dart';
 
 class LandingNotificationsScreen extends StatefulWidget {
   const LandingNotificationsScreen({super.key, this.onOpenRoute});
@@ -60,10 +62,15 @@ class _LandingNotificationsScreenState extends State<LandingNotificationsScreen>
   IconData _iconFor(Map<String, dynamic> n) {
     final type = (n['type']?.toString() ?? '').toUpperCase();
     final source = (n['source']?.toString() ?? '').toUpperCase();
+    if (source == 'LAWYER' || source == 'LEGAL') return Icons.gavel_outlined;
+    if (source == 'PRODUCT' || source == 'E_COMMERCE') return Icons.shopping_bag_outlined;
+    if (source == 'DOCTOR' || source == 'HEALTH') return Icons.medical_services_outlined;
+    if (source == 'GLOW' || source == 'SALON') return Icons.spa_outlined;
     if (source == 'SYSTEM' || type == 'TIP') return Icons.lightbulb_outline;
     if (source == 'EVENT') return Icons.event_outlined;
     if (source == 'OFFER') return Icons.local_offer_outlined;
     if (type == 'ALERT' || type == 'WARNING') return Icons.warning_amber_rounded;
+    if (type == 'SUCCESS') return Icons.check_circle_outline;
     if (source == 'CREATOR') return Icons.groups_outlined;
     return Icons.campaign_outlined;
   }
@@ -93,6 +100,25 @@ class _LandingNotificationsScreenState extends State<LandingNotificationsScreen>
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreatorHubScreen()));
       case 'login':
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      case 'lawyer':
+      case 'legal':
+      case 'bookings':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const ProviderCatalogScreen(
+              title: 'Women Lawyers',
+              kind: CatalogKind.lawyers,
+            ),
+          ),
+        );
+      case 'products':
+      case 'orders':
+      case 'product_orders':
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const WomenProductsScreen(initialTab: 2),
+          ),
+        );
     }
   }
 

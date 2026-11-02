@@ -84,7 +84,7 @@ public class MobileJobBookingsController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<Map<String, Object>> updateStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -115,7 +115,7 @@ public class MobileJobBookingsController {
     @PostMapping("/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         User user = requireUser(session);
@@ -135,7 +135,7 @@ public class MobileJobBookingsController {
     @PostMapping("/{id}/cancel")
     @Transactional
     public ResponseEntity<Map<String, Object>> cancel(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody(required = false) Map<String, String> body,
             HttpSession session) {
         User user = requireUser(session);

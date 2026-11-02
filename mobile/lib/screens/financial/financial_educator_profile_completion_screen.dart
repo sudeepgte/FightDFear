@@ -7,9 +7,12 @@ import 'package:provider/provider.dart';
 import '../../config/financial_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/financial_educator_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
+import '../../widgets/registration_form_kit.dart';
 import '../../widgets/ux_feedback.dart';
 
 class FinancialEducatorProfileCompletionScreen extends StatefulWidget {
@@ -39,6 +42,13 @@ class _FinancialEducatorProfileCompletionScreenState
   final _bio = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _rate = TextEditingController(text: '500');
   final _credential = TextEditingController();
 
@@ -82,7 +92,9 @@ class _FinancialEducatorProfileCompletionScreenState
   void dispose() {
     for (final c in [
       _name, _phone, _whatsapp, _years, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _upi, _bank, _rate, _credential,
+      _pincode, _mapLocation, _bio, _upi, _bank, _accountHolder,
+      _accountNumber, _confirmAccountNumber, _ifsc, _bankName,
+      _branchName, _rate, _credential,
     ]) {
       c.dispose();
     }
@@ -162,6 +174,17 @@ class _FinancialEducatorProfileCompletionScreenState
     _bio.text = p['bio']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     if (p['typicalPrice'] != null) {
       _rate.text = '${p['typicalPrice']}';
     }
@@ -204,12 +227,22 @@ class _FinancialEducatorProfileCompletionScreenState
       'durationMinutes': _duration,
       'bufferMinutes': _buffer,
       'upiId': _upi.text.trim(),
-      'bankDetails': _bank.text.trim(),
+      ...BankDetailsSection.buildPayload(
+        accountHolder: _accountHolder.text,
+        accountNumber: _accountNumber.text,
+        ifsc: _ifsc.text,
+        bankName: _bankName.text,
+        branch: _branchName.text,
+        accountType: _accountType,
+        upiId: _upi.text,
+      ),
     };
   }
 
   String? _validate({bool forSubmit = false}) {
     if (_name.text.trim().isEmpty) return '1.1 Full name is required';
+    final expErr = RegValidators.experienceError(_years.text);
+    if (expErr != null) return '1.7 $expErr';
     if (_phone.text.trim().length != 10) return '1.5 Official phone must be 10 digits';
     if (_address.text.trim().isEmpty) return '2.1 Address is required';
     if (_city.text.trim().isEmpty) return '2.3 City is required';
@@ -217,6 +250,16 @@ class _FinancialEducatorProfileCompletionScreenState
     if (_state == 'Other' && _stateOther.text.trim().isEmpty) return '2.4 Enter state';
     if (_pincode.text.trim().length != 6) return '2.5 Pincode must be 6 digits';
     if (_credential.text.trim().isEmpty) return '1.8 NISM / SEBI / IRDAI / CFP number is required';
+    final bankErr = BankDetailsSection.validateBankDetails(
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+    );
+    if (bankErr != null) return '9. $bankErr';
     if (_categories.isEmpty) return '3.1 Select at least one expertise';
     if (_audience.isEmpty) return '4.1 Who I serve is required';
     if (_days.isEmpty) return '6.1 Open days are required';
@@ -552,14 +595,18 @@ class _FinancialEducatorProfileCompletionScreenState
                   ),
                   _field(_rate, '8.4', 'Typical fee (₹, 0 = free)', required: true, keyboardType: TextInputType.number),
                 ]),
-                _section('9', 'Finance / UPI', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  const Text(
-                    'UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
-                ]),
+                BankDetailsSection(
+                  accountHolderController: _accountHolder,
+                  accountNumberController: _accountNumber,
+                  confirmAccountNumberController: _confirmAccountNumber,
+                  ifscController: _ifsc,
+                  bankNameController: _bankName,
+                  branchNameController: _branchName,
+                  upiController: _upi,
+                  accountType: _accountType,
+                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                  sectionNumber: '9',
+                ),
                 _section('10', 'Documents (optional)', [
                   const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
                   const SizedBox(height: 10),
@@ -628,6 +675,8 @@ class _FinancialEducatorProfileCompletionScreenState
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: ProfileFieldHelper.instructionForField(label: label, hint: hint, required: required),
+          helperMaxLines: 2,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -653,6 +702,8 @@ class _FinancialEducatorProfileCompletionScreenState
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: ProfileFieldHelper.instructionForField(label: label, required: required),
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

@@ -467,6 +467,10 @@
 
     <main class="main-container">
 
+        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+
         <div class="info-banner">
             <h2>Coach registration</h2>
             <p>For Gym, Yoga, Zumba & Wellness coaches. Create your trainer account to set up session timings and accept bookings.</p>

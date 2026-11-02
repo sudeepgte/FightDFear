@@ -29,6 +29,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _password = TextEditingController();
   bool _obscure = true;
   String? _error;
+  bool _detectingServer = false;
+
+  String? _emailError;
+  String? _passwordError;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AuthState>().autoDetectWorkingServer();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -38,11 +52,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() => _error = null);
-    if (_email.text.trim().isEmpty || _password.text.isEmpty) {
-      setState(() => _error = 'Enter email and password');
+    setState(() {
+      _error = null;
+      _emailError = null;
+      _passwordError = null;
+    });
+
+    final email = _email.text.trim();
+    final pass = _password.text;
+
+    if (email.isEmpty) {
+      setState(() => _emailError = 'Email is required');
+    } else if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      setState(() => _emailError = 'Enter a valid email address');
+    }
+
+    if (pass.isEmpty) {
+      setState(() => _passwordError = 'Password is required');
+    }
+
+    if (_emailError != null || _passwordError != null) {
+      setState(() => _error = _emailError ?? _passwordError);
       return;
     }
+
     final auth = context.read<AuthState>();
     final ok = await auth.login(_email.text, _password.text);
     if (!mounted) return;
@@ -65,9 +98,12 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  InputDecoration _decoration(String label, {IconData? icon, Widget? suffix}) {
+  InputDecoration _decoration(String label, {IconData? icon, Widget? suffix, String? helperText, String? errorText}) {
     return InputDecoration(
       labelText: label,
+      helperText: helperText,
+      helperMaxLines: 2,
+      errorText: errorText,
       filled: true,
       fillColor: Colors.white,
       prefixIcon: icon == null ? null : Icon(icon, color: const Color(0xFFBE123C)),
@@ -203,25 +239,100 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: BoxDecoration(
                                 color: Colors.red.shade50,
                                 borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.red.shade200),
                               ),
-                              child: Text(_error!, style: TextStyle(color: Colors.red.shade800, fontSize: 13)),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Text(_error!, style: TextStyle(color: Colors.red.shade800, fontSize: 13, height: 1.3)),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 6,
+                                    children: [
+                                      TextButton.icon(
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          backgroundColor: Colors.white,
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                        onPressed: _detectingServer
+                                            ? null
+                                            : () async {
+                                                final messenger = ScaffoldMessenger.of(context);
+                                                setState(() => _detectingServer = true);
+                                                final auth = context.read<AuthState>();
+                                                final found = await auth.autoDetectWorkingServer();
+                                                if (!mounted) return;
+                                                setState(() => _detectingServer = false);
+                                                if (found != null) {
+                                                  setState(() => _error = null);
+                                                  messenger.showSnackBar(
+                                                    SnackBar(content: Text('Connected to: $found')),
+                                                  );
+                                                } else {
+                                                  messenger.showSnackBar(
+                                                    const SnackBar(content: Text('No active server detected. Please ensure Wi-Fi connection.')),
+                                                  );
+                                                }
+                                              },
+                                        icon: _detectingServer
+                                            ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2))
+                                            : const Icon(Icons.refresh_rounded, size: 14, color: Color(0xFFBE123C)),
+                                        label: Text(
+                                          _detectingServer ? 'Detecting...' : 'Auto-detect Server',
+                                          style: const TextStyle(fontSize: 12, color: Color(0xFFBE123C), fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        style: TextButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          backgroundColor: Colors.white,
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                        onPressed: () => ServerConfigDialog.show(context),
+                                        icon: const Icon(Icons.settings_outlined, size: 14, color: Color(0xFF64748B)),
+                                        label: const Text(
+                                          'Change IP',
+                                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           TextField(
+                            key: const ValueKey('login_email_input'),
                             controller: _email,
                             keyboardType: TextInputType.emailAddress,
                             autofillHints: const [AutofillHints.email],
                             textInputAction: TextInputAction.next,
-                            decoration: _decoration('Email', icon: Icons.email_outlined),
+                            onChanged: (_) {
+                              if (_emailError != null) setState(() => _emailError = null);
+                            },
+                            decoration: _decoration(
+                              'Email',
+                              icon: Icons.email_outlined,
+                              helperText: 'Enter an active email address.',
+                              errorText: _emailError,
+                            ),
                           ),
                           const SizedBox(height: 14),
                           TextField(
+                            key: const ValueKey('login_password_input'),
                             controller: _password,
                             obscureText: _obscure,
                             autofillHints: const [AutofillHints.password],
+                            onChanged: (_) {
+                              if (_passwordError != null) setState(() => _passwordError = null);
+                            },
                             onSubmitted: (_) => _submit(),
                             decoration: _decoration(
                               'Password',
                               icon: Icons.lock_outline,
+                              helperText: 'Enter your account password.',
+                              errorText: _passwordError,
                               suffix: IconButton(
                                 icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                                 onPressed: () => setState(() => _obscure = !_obscure),

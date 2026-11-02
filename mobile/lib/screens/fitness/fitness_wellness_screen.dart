@@ -35,9 +35,14 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
 
   bool _loading = true;
   bool _loadingBookings = false;
+  bool _loadingClasses = false;
   String? _error;
   List<Map<String, dynamic>> _trainers = [];
   List<Map<String, dynamic>> _bookings = [];
+  List<Map<String, dynamic>> _classes = [];
+  List<Map<String, dynamic>> _attendanceList = [];
+  Map<String, dynamic>? _progressSummary;
+  String _bookingsSubTab = 'SCHEDULED';
   String _category = 'all';
   String _sort = 'rating';
   bool _availableOnly = false;
@@ -67,12 +72,15 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
     );
     _searchCtrl = TextEditingController();
     _cityCtrl = TextEditingController();
-    _tabs = TabController(length: 2, vsync: this);
+    _tabs = TabController(length: 3, vsync: this);
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
-      if (_tabs.index == 1) _loadBookings();
+      if (_tabs.index == 1) _loadClasses();
+      if (_tabs.index == 2) _loadMyFitness();
     });
     _loadTrainers();
+    _loadClasses();
+    _loadMyFitness();
   }
 
   @override
@@ -106,7 +114,9 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _loadBookings() async {
+  Future<void> _loadBookings() => _loadMyFitness();
+
+  Future<void> _loadMyFitness() async {
     setState(() => _loadingBookings = true);
     try {
       final res = await _fitness.myBookings();
@@ -114,8 +124,28 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
       if (res['success'] == true) {
         _bookings = ModuleTheme.toList(res['bookings']);
       }
+      final progRes = await _fitness.myProgress();
+      if (progRes['success'] == true) {
+        _progressSummary = progRes;
+      }
+      final attRes = await _fitness.myAttendance();
+      if (attRes['success'] == true) {
+        _attendanceList = ModuleTheme.toList(attRes['attendance']);
+      }
     } catch (_) {}
     if (mounted) setState(() => _loadingBookings = false);
+  }
+
+  Future<void> _loadClasses() async {
+    setState(() => _loadingClasses = true);
+    try {
+      final res = await _fitness.classes();
+      if (!mounted) return;
+      if (res['success'] == true) {
+        _classes = ModuleTheme.toList(res['classes']);
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loadingClasses = false);
   }
 
   List<Map<String, dynamic>> get _filtered {
@@ -427,7 +457,8 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
           labelStyle: const TextStyle(fontWeight: FontWeight.w700),
           tabs: const [
             Tab(text: 'Browse Trainers'),
-            Tab(text: 'My Bookings'),
+            Tab(text: 'Group Classes'),
+            Tab(text: 'My Fitness'),
           ],
         ),
       ),
@@ -435,6 +466,7 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
         controller: _tabs,
         children: [
           _buildBrowse(filtered),
+          _buildClasses(),
           _buildBookings(),
         ],
       ),
@@ -640,204 +672,744 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
     return top.first.key;
   }
 
-  Widget _buildBookings() {
-    if (_loadingBookings) return ModuleTheme.loading();
-    if (_bookings.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: _loadBookings,
-        child: ListView(
-          children: [
-            EmptyStateView(
-              icon: Icons.event_note_outlined,
-              title: 'No bookings yet',
-              message: 'Book a verified trainer from Browse Trainers — your sessions will appear here.',
-              actionLabel: 'Browse Trainers',
-              onAction: () => _tabs.animateTo(0),
-            ),
-          ],
-        ),
-      );
-    }
-
+  Widget _buildClasses() {
+    if (_loadingClasses) return ModuleTheme.loading();
     return RefreshIndicator(
-      onRefresh: _loadBookings,
-      child: ListView.builder(
+      onRefresh: _loadClasses,
+      child: ListView(
         padding: const EdgeInsets.all(16),
-        itemCount: _bookings.length + 1,
-        itemBuilder: (_, i) {
-          if (i == 0) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFF1F2), Color(0xFFFFE4E6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFFECDD3)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF43F5E),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 26),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Workout Session Check-In', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF0F172A))),
-                        SizedBox(height: 2),
-                        Text('Scan coach QR token to start session', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                      ],
-                    ),
-                  ),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFF43F5E),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    ),
-                    onPressed: _openClientQrCheckInDialog,
-                    child: const Text('Check In', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
-                ],
-              ),
-            );
-          }
-          final b = _bookings[i - 1];
-          final nested = b['trainer'];
-          final trainer = nested is Map ? Map<String, dynamic>.from(nested) : <String, dynamic>{};
-          final needsPay = b['paymentRequired'] == true;
-          final canReview = b['canReview'] == true;
-          final canCancel = b['canCancel'] == true;
-          final bookingId = b['id'] is num ? (b['id'] as num).toInt() : int.tryParse('${b['id']}');
-          final amount = (b['amount'] is num)
-              ? (b['amount'] as num).toDouble()
-              : double.tryParse('${b['amount'] ?? b['paymentAmount']}') ?? 0;
-          final status = b['status']?.toString() ?? 'PENDING';
-          final photo = ModuleTheme.mediaUrl(
-            context.read<AuthState>().api.baseUrl,
-            trainer['profilePhotoPath']?.toString(),
-          );
-
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(14),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              gradient: const LinearGradient(
+                colors: [Color(0xFFEEF2FF), Color(0xFFE0E7FF)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: const Color(0xFFC7D2FE)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 22,
-                      backgroundColor: const Color(0xFFFCE7F3),
-                      backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
-                      child: photo.isEmpty
-                          ? Text(
-                              (trainer['fullName']?.toString().isNotEmpty == true)
-                                  ? trainer['fullName'].toString()[0].toUpperCase()
-                                  : 'T',
-                              style: const TextStyle(fontWeight: FontWeight.w800),
-                            )
-                          : null,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            trainer['fullName']?.toString() ?? 'Trainer',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: FitnessWellnessScreen.navy,
-                            ),
-                          ),
-                          Text(
-                            '${b['category'] ?? 'Session'} · ${b['sessionType'] ?? ''}',
-                            style: const TextStyle(fontSize: 12, color: FitnessWellnessScreen.textGray),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _StatusPill(status: status),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  '${b['bookingDate'] ?? '—'}  ·  ${b['bookingTime'] ?? ''}',
-                  style: const TextStyle(fontSize: 13, color: FitnessWellnessScreen.textGray),
-                ),
-                if (amount > 0) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    '₹${amount.toStringAsFixed(0)} · ${b['paymentStatus'] ?? ''}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, color: FitnessWellnessScreen.primary),
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4F46E5),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    if (needsPay && bookingId != null)
-                      Expanded(
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(backgroundColor: FitnessWellnessScreen.primary),
-                          onPressed: () => _payBooking(
-                            bookingId: bookingId,
-                            amount: amount,
-                            trainerName: trainer['fullName']?.toString() ?? 'Trainer',
-                          ),
-                          child: const Text('Pay now'),
-                        ),
-                      )
-                    else if (canReview)
-                      Expanded(
-                        child: FilledButton(
-                          style: FilledButton.styleFrom(backgroundColor: FitnessWellnessScreen.purple),
-                          onPressed: () => _reviewBooking(b),
-                          child: const Text('Rate session'),
-                        ),
-                      )
-                    else
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Status: $status')),
-                            );
-                          },
-                          child: const Text('Details'),
-                        ),
-                      ),
-                    if (canCancel && bookingId != null) ...[
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => _cancelBooking(bookingId),
-                          child: const Text('Cancel'),
-                        ),
-                      ),
+                  child: const Icon(Icons.groups_rounded, color: Colors.white, size: 24),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('Join Group Fitness Classes', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E1B4B))),
+                      SizedBox(height: 2),
+                      Text('Train with peers in HIIT, Yoga, Zumba, and self-defense conditioning.', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 16),
+          if (_classes.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32),
+              child: Center(
+                child: Text('No group classes scheduled at this time. Check back soon!'),
+              ),
+            )
+          else
+            ..._classes.map((c) {
+              final id = int.tryParse('${c['id']}');
+              final trainer = c['trainer'];
+              final trainerName = (trainer is Map) ? trainer['fullName']?.toString() : 'Verified Coach';
+              final maxCap = c['maxCapacity'] is num ? (c['maxCapacity'] as num).toInt() : 20;
+              final enrolled = c['currentEnrollment'] is num ? (c['currentEnrollment'] as num).toInt() : 0;
+              final spotsLeft = maxCap - enrolled;
+              final price = c['price'] is num ? (c['price'] as num).toDouble() : 0.0;
+              final isFull = spotsLeft <= 0;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            c['category']?.toString() ?? 'Fitness',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFFE11D48)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            c['sessionType']?.toString() ?? 'ONLINE',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: Color(0xFF475569)),
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          price == 0 ? 'FREE' : '₹${price.toStringAsFixed(0)}',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: FitnessWellnessScreen.primary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      c['className']?.toString() ?? 'Group Class',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: FitnessWellnessScreen.navy),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Coach: $trainerName', style: const TextStyle(fontSize: 13, color: FitnessWellnessScreen.textGray, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Text('${c['classDate']} at ${c['classTime']}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        const SizedBox(width: 14),
+                        const Icon(Icons.timer_outlined, size: 14, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Text('${c['durationMinutes']} mins', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                    if ((c['description']?.toString() ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(c['description']?.toString() ?? '', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    ],
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Text(
+                          isFull ? 'Class Full' : '$spotsLeft spots remaining',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: isFull ? Colors.red : const Color(0xFF16A34A),
+                          ),
+                        ),
+                        const Spacer(),
+                        FilledButton(
+                          onPressed: (isFull || id == null) ? null : () => _bookClassConfirmDialog(id, c),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: FitnessWellnessScreen.primary,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          ),
+                          child: const Text('Book Spot', style: TextStyle(fontWeight: FontWeight.w700)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  void _bookClassConfirmDialog(int classId, Map<String, dynamic> classData) {
+    final price = classData['price'] is num ? (classData['price'] as num).toDouble() : 0.0;
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: Text('Book Spot: ${classData['className']}'),
+        content: Text('Join this ${classData['sessionType']} group workout session on ${classData['classDate']} at ${classData['classTime']}.\n\nFee: ${price == 0 ? "FREE" : "₹$price"}\nPayment will be processed via your wallet balance.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: FitnessWellnessScreen.primary),
+            onPressed: () async {
+              final res = await _fitness.bookClass(classId);
+              Navigator.pop(dCtx);
+              if (res['success'] == true) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Class booked successfully! Spot confirmed.')),
+                );
+                _loadClasses();
+                _loadMyFitness();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(res['error']?.toString() ?? 'Booking failed')),
+                );
+              }
+            },
+            child: const Text('Confirm Booking'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openLogWeightDialog() {
+    final weightCtrl = TextEditingController();
+    final bodyFatCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Log Today\'s Weight & Metrics', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Record your post-workout body weight and milestones to track your progress streak.', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              const SizedBox(height: 14),
+              TextField(
+                controller: weightCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Body Weight (kg) *', hintText: 'e.g. 68.5', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: bodyFatCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Body Fat % (optional)', hintText: 'e.g. 19.5', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: notesCtrl,
+                maxLines: 2,
+                decoration: const InputDecoration(labelText: 'Workout Notes & Achievements', hintText: 'e.g. Completed 45 mins HIIT + 5k run', border: OutlineInputBorder()),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: FitnessWellnessScreen.primary),
+            onPressed: () async {
+              final weight = double.tryParse(weightCtrl.text.trim());
+              if (weight == null || weight < 20 || weight > 300) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please enter a valid weight between 20kg and 300kg')),
+                );
+                return;
+              }
+              final bodyFat = double.tryParse(bodyFatCtrl.text.trim());
+              final res = await _fitness.logMyProgress(
+                weightKg: weight,
+                bodyFatPct: bodyFat,
+                workoutNotes: notesCtrl.text.trim().isNotEmpty ? notesCtrl.text.trim() : null,
+              );
+              Navigator.pop(dCtx);
+              if (res['success'] == true) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Weight and fitness milestone logged successfully!')),
+                );
+                _loadMyFitness();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(res['error']?.toString() ?? 'Failed to log progress')),
+                );
+              }
+            },
+            child: const Text('Save Metrics'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookings() {
+    if (_loadingBookings) return ModuleTheme.loading();
+
+    final scheduled = _bookings.where((b) => b['status'] != 'COMPLETED' && b['status'] != 'CANCELLED').toList();
+    final completed = _bookings.where((b) => b['status'] == 'COMPLETED').toList();
+    final streak = _progressSummary?['currentStreakDays'] ?? 0;
+    final totalWorkouts = _progressSummary?['totalWorkoutsAttended'] ?? 0;
+    final latestWeight = _progressSummary?['latestWeight'];
+    final progressLogs = (_progressSummary?['progressLogs'] is List)
+        ? (_progressSummary!['progressLogs'] as List).cast<Map<String, dynamic>>()
+        : <Map<String, dynamic>>[];
+
+    return RefreshIndicator(
+      onRefresh: _loadMyFitness,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // 1. TOP METRICS CARD
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.local_fire_department, color: Color(0xFFEA580C), size: 20),
+                            const SizedBox(width: 4),
+                            Text('$streak Days', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        const Text('Streak', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                    Container(height: 32, width: 1, color: const Color(0xFFE2E8F0)),
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.check_circle_outline, color: Color(0xFF16A34A), size: 20),
+                            const SizedBox(width: 4),
+                            Text('$totalWorkouts', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        const Text('Workouts', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                    Container(height: 32, width: 1, color: const Color(0xFFE2E8F0)),
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.monitor_weight_outlined, color: FitnessWellnessScreen.primary, size: 20),
+                            const SizedBox(width: 4),
+                            Text(latestWeight != null ? '$latestWeight kg' : '—', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        const Text('Weight', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  onPressed: _openLogWeightDialog,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: FitnessWellnessScreen.primary,
+                    side: const BorderSide(color: Color(0xFFFECDD3)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size.fromHeight(38),
+                  ),
+                  icon: const Icon(Icons.add_circle_outline, size: 16),
+                  label: const Text('Log Today\'s Weight & Milestones', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 2. WORKOUT SESSION CHECK-IN CARD
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFF1F2), Color(0xFFFFE4E6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFFECDD3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF43F5E),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('Session Self Check-In', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF0F172A))),
+                      SizedBox(height: 2),
+                      Text('Scan trainer QR code or enter code to verify', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                    ],
+                  ),
+                ),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFF43F5E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  ),
+                  onPressed: _openClientQrCheckInDialog,
+                  child: const Text('Check In', style: TextStyle(fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 3. SUB-TABS FILTER CHIPS
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _subTabChip('SCHEDULED', 'Scheduled (${scheduled.length})'),
+                const SizedBox(width: 8),
+                _subTabChip('ATTENDANCE', 'Attendance (${_attendanceList.length})'),
+                const SizedBox(width: 8),
+                _subTabChip('COMPLETED', 'Completed (${completed.length})'),
+                const SizedBox(width: 8),
+                _subTabChip('PROGRESS', 'Milestones (${progressLogs.length})'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 4. ACTIVE SUB-TAB CONTENT
+          if (_bookingsSubTab == 'SCHEDULED')
+            if (scheduled.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: Text('No scheduled sessions at this time.')),
+              )
+            else
+              ...scheduled.map(_buildBookingCard)
+          else if (_bookingsSubTab == 'ATTENDANCE')
+            if (_attendanceList.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: Text('No attendance history recorded yet.')),
+              )
+            else
+              ..._attendanceList.map((a) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.verified_rounded, color: Color(0xFF16A34A), size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('${a['sessionDate'] ?? "Date"} · ${a['sessionTime'] ?? ""}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                            Text('Session #${a['id']} · Coach: ${a['trainerName'] ?? "Coach"}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                            if ((a['notes']?.toString() ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text('Notes: ${a['notes']}', style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0FDF4),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                        ),
+                        child: Text(
+                          a['status']?.toString() ?? 'PRESENT',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 11, color: Color(0xFF16A34A)),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              })
+          else if (_bookingsSubTab == 'COMPLETED')
+            if (completed.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: Text('No completed sessions yet.')),
+              )
+            else
+              ...completed.map(_buildBookingCard)
+          else if (_bookingsSubTab == 'PROGRESS')
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Milestone Badges Grid
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: streak >= 3 ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.local_fire_department, color: Color(0xFFEA580C), size: 28),
+                            const SizedBox(height: 4),
+                            const Text('Consistency', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                            Text(streak >= 3 ? '✓ Unlocked' : '3-Day Streak', style: TextStyle(fontSize: 11, color: streak >= 3 ? const Color(0xFF16A34A) : Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: totalWorkouts >= 1 ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.military_tech_rounded, color: Color(0xFFF59E0B), size: 28),
+                            const SizedBox(height: 4),
+                            const Text('First Workout', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                            Text(totalWorkouts >= 1 ? '✓ Completed' : 'Start Today', style: TextStyle(fontSize: 11, color: totalWorkouts >= 1 ? const Color(0xFF16A34A) : Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: progressLogs.length >= 5 ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(Icons.bolt_rounded, color: Color(0xFF3B82F6), size: 28),
+                            const SizedBox(height: 4),
+                            const Text('Dedicated', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                            Text(progressLogs.length >= 5 ? '✓ Unlocked' : '5 Logs Goal', style: TextStyle(fontSize: 11, color: progressLogs.length >= 5 ? const Color(0xFF16A34A) : Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Text('Logged Transformation History', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                const SizedBox(height: 10),
+                if (progressLogs.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: Text('No weigh-in logs recorded yet. Tap "Log Today\'s Weight" to record your first entry.')),
+                  )
+                else
+                  ...progressLogs.map((log) {
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFFFFF1F2),
+                          child: const Icon(Icons.monitor_weight_outlined, color: FitnessWellnessScreen.primary, size: 20),
+                        ),
+                        title: Text('${log['weightKg'] ?? "—"} kg', style: const TextStyle(fontWeight: FontWeight.w800)),
+                        subtitle: Text('${log['logDate'] ?? ""} · ${log['workoutNotes'] ?? "Weight check-in"}'),
+                        trailing: (log['bodyFatPct'] != null)
+                            ? Text('${log['bodyFatPct']}% Fat', style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B)))
+                            : null,
+                      ),
+                    );
+                  }),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _subTabChip(String key, String label) {
+    final active = _bookingsSubTab == key;
+    return ChoiceChip(
+      label: Text(label),
+      selected: active,
+      selectedColor: const Color(0xFFFFF1F2),
+      labelStyle: TextStyle(
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+        color: active ? FitnessWellnessScreen.primary : const Color(0xFF475569),
+      ),
+      onSelected: (v) {
+        if (v) setState(() => _bookingsSubTab = key);
+      },
+    );
+  }
+
+  Widget _buildBookingCard(Map<String, dynamic> b) {
+    final nested = b['trainer'];
+    final trainer = nested is Map ? Map<String, dynamic>.from(nested) : <String, dynamic>{};
+    final needsPay = b['paymentRequired'] == true;
+    final canReview = b['canReview'] == true;
+    final canCancel = b['canCancel'] == true;
+    final bookingId = b['id'] is num ? (b['id'] as num).toInt() : int.tryParse('${b['id']}');
+    final amount = (b['amount'] is num)
+        ? (b['amount'] as num).toDouble()
+        : double.tryParse('${b['amount'] ?? b['paymentAmount']}') ?? 0;
+    final status = b['status']?.toString() ?? 'PENDING';
+    final photo = ModuleTheme.mediaUrl(
+      context.read<AuthState>().api.baseUrl,
+      trainer['profilePhotoPath']?.toString(),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: const Color(0xFFFCE7F3),
+                backgroundImage: photo.isNotEmpty ? NetworkImage(photo) : null,
+                child: photo.isEmpty
+                    ? Text(
+                        (trainer['fullName']?.toString().isNotEmpty == true)
+                            ? trainer['fullName'].toString()[0].toUpperCase()
+                            : 'T',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      trainer['fullName']?.toString() ?? 'Trainer',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: FitnessWellnessScreen.navy,
+                      ),
+                    ),
+                    Text(
+                      '${b['category'] ?? 'Session'} · ${b['sessionType'] ?? ''}',
+                      style: const TextStyle(fontSize: 12, color: FitnessWellnessScreen.textGray),
+                    ),
+                  ],
+                ),
+              ),
+              _StatusPill(status: status),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '${b['bookingDate'] ?? '—'}  ·  ${b['bookingTime'] ?? ''}',
+            style: const TextStyle(fontSize: 13, color: FitnessWellnessScreen.textGray),
+          ),
+          if (amount > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              '₹${amount.toStringAsFixed(0)} · ${b['paymentStatus'] ?? ''}',
+              style: const TextStyle(fontWeight: FontWeight.w700, color: FitnessWellnessScreen.primary),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              if (needsPay && bookingId != null)
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: FitnessWellnessScreen.primary),
+                    onPressed: () => _payBooking(
+                      bookingId: bookingId,
+                      amount: amount,
+                      trainerName: trainer['fullName']?.toString() ?? 'Trainer',
+                    ),
+                    child: const Text('Pay now'),
+                  ),
+                )
+              else if (canReview)
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(backgroundColor: FitnessWellnessScreen.purple),
+                    onPressed: () => _reviewBooking(b),
+                    child: const Text('Rate session'),
+                  ),
+                )
+              else
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Status: $status')),
+                      );
+                    },
+                    child: const Text('Details'),
+                  ),
+                ),
+              if (canCancel && bookingId != null) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _cancelBooking(bookingId),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -41,6 +41,8 @@ public class MobileGlowSalonController {
     private SalonProfileService salonProfileService;
     @Autowired
     private FileUploadService fileUploadService;
+    @Autowired
+    private in.sp.main.Repository.SalonNotificationRepository salonNotificationRepo;
 
     @GetMapping("/me")
     @Transactional(readOnly = true)
@@ -99,7 +101,7 @@ public class MobileGlowSalonController {
     @PostMapping("/bookings/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateBookingStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Salon salon = requireSalon(session);
@@ -182,7 +184,7 @@ public class MobileGlowSalonController {
 
     @DeleteMapping("/services/{id}")
     @Transactional
-    public ResponseEntity<Map<String, Object>> deleteService(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> deleteService(@PathVariable("id") Long id, HttpSession session) {
         Salon salon = requireSalon(session);
         if (salon == null) return unauthorized();
         Service1 service = serviceRepo.findById(id).orElse(null);
@@ -226,7 +228,7 @@ public class MobileGlowSalonController {
     @PostMapping("/bookings/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateBookingNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         Salon salon = requireSalon(session);
@@ -291,6 +293,37 @@ public class MobileGlowSalonController {
         } catch (Exception ex) {
             return badRequest("Upload failed: " + ex.getMessage());
         }
+    }
+
+    @GetMapping("/notifications")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> getNotifications(HttpSession session) {
+        Salon salon = requireSalon(session);
+        if (salon == null) return unauthorized();
+        List<in.sp.main.Entities.SalonNotification> list = salonNotificationRepo.findBySalonIdOrderByTimestampDesc(salon.getId());
+        List<Map<String, Object>> dtos = new ArrayList<>();
+        boolean changed = false;
+        for (in.sp.main.Entities.SalonNotification n : list) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", n.getId());
+            m.put("title", n.getTitle());
+            m.put("message", n.getMessage());
+            m.put("read", n.isRead());
+            m.put("timestamp", n.getTimestamp() == null ? null : n.getTimestamp().toString());
+            dtos.add(m);
+            if (!n.isRead()) {
+                n.setRead(true);
+                changed = true;
+            }
+        }
+        if (changed) {
+            salonNotificationRepo.saveAll(list);
+        }
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "notifications", dtos,
+            "count", dtos.size()
+        ));
     }
 
     private Map<String, Object> salonDto(Salon s) {

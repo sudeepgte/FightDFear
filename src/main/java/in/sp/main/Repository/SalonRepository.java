@@ -20,10 +20,12 @@ public interface SalonRepository extends JpaRepository<Salon, Long> {
     List<Salon> findByIsEcoFriendlyTrue();
    // List<Salon> findByAverageRatingGreaterThanEqual(Double rating);
     Optional<Salon> findByUsername(String username);
+    Optional<Salon> findByUsernameIgnoreCase(String username);
 	List<Salon> findByAddressContainingIgnoreCase(String location);
 	List<Salon> findByNameContainingIgnoreCase(String name);
 	boolean existsByEmail(String email);
 	Salon findByEmail(String email);
+	Salon findByEmailIgnoreCase(String email);
 	void deleteSalonById(Long id);
 	
 	 @Modifying

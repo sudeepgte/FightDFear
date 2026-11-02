@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../services/auth_state.dart';
@@ -284,6 +288,218 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
     }
   }
 
+  Future<void> _handleTip(Map<String, dynamic> post) async {
+    final creator = post['creator'];
+    final creatorId = creator is Map ? creator['id'] : null;
+    final creatorName = creator is Map ? creator['name']?.toString() ?? 'Creator' : 'Creator';
+    if (creatorId is! num) return;
+    final ctrl = TextEditingController(text: '50');
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Send a tip to $creatorName'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Support this creator with a direct tip.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(labelText: 'Amount (Rs)', border: OutlineInputBorder()),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Send Tip')),
+        ],
+      ),
+    );
+    if (ok == true) {
+      final amount = double.tryParse(ctrl.text) ?? 0.0;
+      if (amount <= 0) return;
+      await _pay(
+        amount: amount,
+        description: 'Tip to $creatorName',
+        type: 'CREATOR_TIP',
+        extra: {'creatorId': creatorId.toInt(), 'targetId': creatorId.toInt()},
+      );
+    }
+  }
+
+  Future<void> _openStoryUpload() async {
+    final picker = ImagePicker();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Take a photo / video'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Choose from gallery'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null) return;
+    final XFile? file = await picker.pickImage(source: source);
+    if (file == null) return;
+    final captionCtrl = TextEditingController();
+    if (!mounted) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add to Your Story'),
+        content: TextField(
+          controller: captionCtrl,
+          decoration: const InputDecoration(hintText: 'Add a caption (optional)', border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Share Story')),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      final res = await _api.uploadStory(file: File(file.path), caption: captionCtrl.text.trim());
+      if (mounted) {
+        _snack(res['success'] == true ? 'Story shared!' : res['error']?.toString() ?? 'Upload failed');
+        _load();
+      }
+    }
+  }
+
+  Future<void> _openStoryViewer(Map<String, dynamic> group) async {
+    final items = ModuleTheme.toList(group['items']);
+    if (items.isEmpty) return;
+    final currentUserId = context.read<AuthState>().userId;
+    final groupUserId = group['userId'];
+    final isOwner = currentUserId != null && groupUserId != null && currentUserId == groupUserId;
+    final story = items.first;
+    final storyId = story['id'];
+    if (storyId is num) {
+      _api.viewStory(storyId.toInt());
+    }
+    final mediaPath = story['mediaPath']?.toString() ?? '';
+    final caption = story['caption']?.toString() ?? '';
+    final userName = group['userName']?.toString() ?? 'Story';
+    final userAvatar = group['profilePhoto']?.toString();
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          width: 340,
+          color: Colors.black,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                tileColor: Colors.black54,
+                leading: CircleAvatar(
+                  backgroundColor: CreatorHubScreen.primary,
+                  backgroundImage: userAvatar != null && userAvatar.isNotEmpty
+                      ? NetworkImage(_url(userAvatar))
+                      : null,
+                  child: userAvatar == null || userAvatar.isEmpty
+                      ? Text(userName.substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.white))
+                      : null,
+                ),
+                title: Text(userName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                trailing: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ),
+              if (mediaPath.isNotEmpty)
+                Container(
+                  constraints: const BoxConstraints(maxHeight: 400),
+                  child: ModuleTheme.networkImage(
+                    _url(mediaPath),
+                    fit: BoxFit.contain,
+                    error: Container(
+                      height: 200,
+                      color: Colors.grey.shade900,
+                      child: const Center(child: Icon(Icons.image, color: Colors.white54, size: 48)),
+                    ),
+                  ),
+                ),
+              if (caption.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Text(
+                    caption,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              if (isOwner && storyId is num)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () async {
+                          final vRes = await _api.storyViewers(storyId.toInt());
+                          final viewers = ModuleTheme.toList(vRes['viewers']);
+                          if (!ctx.mounted) return;
+                          showDialog<void>(
+                            context: ctx,
+                            builder: (vCtx) => AlertDialog(
+                              title: Text('Story Viewers (${viewers.length})'),
+                              content: SizedBox(
+                                width: double.maxFinite,
+                                child: viewers.isEmpty
+                                    ? const Text('No views yet')
+                                    : ListView(
+                                        shrinkWrap: true,
+                                        children: viewers.map((v) => ListTile(
+                                          leading: CircleAvatar(child: Text((v['name']?.toString() ?? 'U').substring(0, 1))),
+                                          title: Text(v['name']?.toString() ?? 'User'),
+                                        )).toList(),
+                                      ),
+                              ),
+                              actions: [TextButton(onPressed: () => Navigator.pop(vCtx), child: const Text('Close'))],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.visibility, color: Colors.white70, size: 18),
+                        label: const Text('Viewers', style: TextStyle(color: Colors.white70)),
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          await _api.deleteStory(storyId.toInt());
+                          if (ctx.mounted) Navigator.pop(ctx);
+                          _snack('Story deleted');
+                          _load();
+                        },
+                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 18),
+                        label: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _pay({
     required double amount,
     required String description,
@@ -431,40 +647,73 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
                           ),
                         ),
                       ),
-                      if (_stories.isNotEmpty)
+                      if (_stories.isNotEmpty || _canUpload)
                         SliverToBoxAdapter(
                           child: SizedBox(
                             height: 110,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.all(16),
-                              itemCount: _stories.length,
+                              itemCount: _stories.length + (_canUpload ? 1 : 0),
                               separatorBuilder: (_, __) => const SizedBox(width: 12),
                               itemBuilder: (_, i) {
-                                final g = _stories[i];
+                                if (_canUpload && i == 0) {
+                                  return GestureDetector(
+                                    onTap: _openStoryUpload,
+                                    child: Column(
+                                      children: [
+                                        Stack(
+                                          children: [
+                                            Container(
+                                              width: 64,
+                                              height: 64,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.grey.shade200,
+                                                border: Border.all(color: CreatorHubScreen.primary, width: 2),
+                                              ),
+                                              child: const Icon(Icons.person, color: Colors.grey, size: 36),
+                                            ),
+                                            Positioned(
+                                              right: 0,
+                                              bottom: 0,
+                                              child: Container(
+                                                padding: const EdgeInsets.all(3),
+                                                decoration: const BoxDecoration(
+                                                  color: CreatorHubScreen.primary,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(Icons.add, color: Colors.white, size: 14),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        const SizedBox(
+                                          width: 64,
+                                          child: Text(
+                                            'Your story',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+                                final g = _stories[_canUpload ? i - 1 : i];
                                 return GestureDetector(
-                                  onTap: () {
-                                    final items = ModuleTheme.toList(g['items']);
-                                    if (items.isEmpty) return;
-                                    showDialog<void>(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: Text(g['userName']?.toString() ?? 'Story'),
-                                        content: Text(items.first['caption']?.toString() ?? 'Story'),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
-                                        ],
-                                      ),
-                                    );
-                                  },
+                                  onTap: () => _openStoryViewer(g),
                                   child: Column(
                                     children: [
                                       Container(
                                         width: 64,
                                         height: 64,
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           shape: BoxShape.circle,
-                                          gradient: const LinearGradient(
+                                          gradient: LinearGradient(
                                             colors: [CreatorHubScreen.primary, CreatorHubScreen.purple],
                                           ),
                                         ),
@@ -599,6 +848,7 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
                                   await _api.view(id.toInt());
                                 }
                               },
+                              onTip: () => _handleTip(_posts[i]),
                             ),
                             childCount: _posts.length,
                           ),
@@ -649,6 +899,7 @@ class _PostCard extends StatefulWidget {
     required this.onBookmark,
     required this.onUnlock,
     required this.onView,
+    required this.onTip,
   });
 
   final Map<String, dynamic> post;
@@ -659,6 +910,7 @@ class _PostCard extends StatefulWidget {
   final VoidCallback onBookmark;
   final VoidCallback onUnlock;
   final VoidCallback onView;
+  final VoidCallback onTip;
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -777,6 +1029,33 @@ class _PostCardState extends State<_PostCard> {
                   const SizedBox(height: 4),
                   Text(post['hashtags'].toString(), style: const TextStyle(color: CreatorHubScreen.primary, fontSize: 12)),
                 ],
+                if (post['affiliateLink'] != null && post['affiliateLink'].toString().trim().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () async {
+                      final url = Uri.parse(post['affiliateLink'].toString().trim());
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade300),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.shopping_bag_outlined, size: 16, color: Colors.amber.shade900),
+                          const SizedBox(width: 6),
+                          Text('Shop Link', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.amber.shade900)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -794,6 +1073,11 @@ class _PostCardState extends State<_PostCard> {
                         post['bookmarked'] == true ? Icons.bookmark : Icons.bookmark_border,
                       ),
                       onPressed: widget.onBookmark,
+                    ),
+                    IconButton(
+                      tooltip: 'Send Tip',
+                      icon: const Icon(Icons.volunteer_activism_outlined, color: CreatorHubScreen.primary),
+                      onPressed: widget.onTip,
                     ),
                     const Spacer(),
                     Text('👁 ${post['viewCount'] ?? 0}', style: const TextStyle(fontSize: 12, color: ModuleTheme.textGray)),

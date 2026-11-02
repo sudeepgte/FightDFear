@@ -80,12 +80,31 @@ class ProfileService {
     String? fullName,
     String? phoneNumber,
     String? homeAddress,
+    String? city,
+    String? dob,
+    int? age,
+    String? gender,
+    String? whatsappNumber,
   }) =>
       _api.put('/api/me', body: {
         if (fullName != null) 'fullName': fullName,
         if (phoneNumber != null) 'phoneNumber': phoneNumber,
         if (homeAddress != null) 'homeAddress': homeAddress,
+        if (city != null) 'city': city,
+        if (dob != null) 'dob': dob,
+        if (age != null) 'age': age,
+        if (gender != null) 'gender': gender,
+        if (whatsappNumber != null) 'whatsappNumber': whatsappNumber,
       });
+
+  Future<Map<String, dynamic>> uploadPhoto(String filePath) async {
+    final filename = filePath.split(RegExp(r'[\\/]')).last;
+    final multipart = await http.MultipartFile.fromPath('file', filePath, filename: filename);
+    return _api.postMultipart(
+      '/api/me/photo',
+      files: [multipart],
+    );
+  }
 }
 
 class VideoService {
@@ -490,6 +509,32 @@ class FitnessService {
 
   Future<Map<String, dynamic>> myProgress() =>
       _api.get('/api/fitness/my-progress');
+
+  Future<Map<String, dynamic>> logMyProgress({
+    required double weightKg,
+    double? bodyFatPct,
+    String? workoutNotes,
+  }) =>
+      _api.post('/api/fitness/my-progress', body: {
+        'weightKg': weightKg,
+        if (bodyFatPct != null) 'bodyFatPct': bodyFatPct,
+        if (workoutNotes != null && workoutNotes.isNotEmpty) 'workoutNotes': workoutNotes,
+      });
+
+  Future<Map<String, dynamic>> myAttendance() =>
+      _api.get('/api/fitness/attendance/me');
+
+  Future<Map<String, dynamic>> classes({int? trainerId}) {
+    if (trainerId != null) {
+      return _api.get('/api/fitness/trainers/$trainerId/classes');
+    }
+    return _api.get('/api/fitness/classes');
+  }
+
+  Future<Map<String, dynamic>> bookClass(int classId, {String paymentMethod = 'WALLET'}) =>
+      _api.post('/api/fitness/classes/$classId/book', body: {
+        'paymentMethod': paymentMethod,
+      });
 
   Future<Map<String, dynamic>> checkInWithQr({
     required String token,

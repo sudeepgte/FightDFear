@@ -45,14 +45,39 @@ public class VideoController {
 
     // Uploads a video
     @RequestMapping(value = "/uploadingVideo", method = RequestMethod.POST)
-    public String uploadVideo(@RequestParam String title,
-                              @RequestParam Category category,
+    public String uploadVideo(@RequestParam("title") String title,
+                              @RequestParam("category") Category category,
                               @RequestParam(value = "isReel", defaultValue = "false") boolean isReel,
                               @RequestParam("videoFile") MultipartFile file,
                               HttpSession session,
                               RedirectAttributes redirectAttributes) {
-        if (file.isEmpty()) {
+        String cleanTitle = title == null ? "" : title.trim();
+        if (cleanTitle.length() < 3) {
+            redirectAttributes.addFlashAttribute("message", "Video Title must be at least 3 characters long.");
+            return "redirect:/video/uploadVideo";
+        }
+        if (cleanTitle.matches("^\\d+$")) {
+            redirectAttributes.addFlashAttribute("message", "Video Title cannot be numbers only. Please enter a descriptive title.");
+            return "redirect:/video/uploadVideo";
+        }
+
+        if (file == null || file.isEmpty()) {
             redirectAttributes.addFlashAttribute("message", "Please select a video file to upload.");
+            return "redirect:/video/uploadVideo";
+        }
+
+        String fileName = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().toLowerCase();
+        boolean validFormat = fileName.endsWith(".mp4") || fileName.endsWith(".mov")
+                || fileName.endsWith(".webm") || fileName.endsWith(".mkv") || fileName.endsWith(".avi")
+                || (file.getContentType() != null && file.getContentType().startsWith("video/"));
+        if (!validFormat) {
+            redirectAttributes.addFlashAttribute("message", "Unsupported video format. Allowed formats: MP4, MOV, WebM, MKV, AVI.");
+            return "redirect:/video/uploadVideo";
+        }
+
+        long maxBytes = 200 * 1024 * 1024L; // 200MB
+        if (file.getSize() > maxBytes) {
+            redirectAttributes.addFlashAttribute("message", "Video file size exceeds the 200MB maximum limit.");
             return "redirect:/video/uploadVideo";
         }
 
@@ -67,7 +92,7 @@ public class VideoController {
         try {
             String videoUrl = fileService.saveFile(file);
 
-            Video video = new Video(title, category, videoUrl, admin);
+            Video video = new Video(cleanTitle, category, videoUrl, admin);
             video.setReel(isReel);
             if (user != null) {
                 video.setUserUploader(user);
@@ -79,7 +104,7 @@ public class VideoController {
             if (admin != null) {
                 return "redirect:/video/videoManagement";
             } else {
-                return "redirect:" + (isReel ? "/video/allReels" : "/video/allVideos");
+                return "redirect:" + (isReel ? "/video/reels" : "/video/allVideos");
             }
 
         } catch (Exception e) {
@@ -90,7 +115,7 @@ public class VideoController {
 
     // Show video edit form
     @RequestMapping(value = "/edit/{id}", method = RequestMethod.GET)
-    public String editVideoForm(@PathVariable Long id, Model model, HttpSession session) {
+    public String editVideoForm(@PathVariable("id") Long id, Model model, HttpSession session) {
         Admin admin = (Admin) session.getAttribute("admin");
         User user = (User) session.getAttribute("user");
         if (admin == null && user == null) {
@@ -112,10 +137,10 @@ public class VideoController {
 
     // Update video
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
-    public String updateVideo(@PathVariable Long id,
+    public String updateVideo(@PathVariable("id") Long id,
                               @ModelAttribute Video updatedVideo,
-                              @RequestParam String title,
-                              @RequestParam Category category,
+                              @RequestParam("title") String title,
+                              @RequestParam("category") Category category,
                               @RequestParam(value = "videoFile", required = false) MultipartFile file,
                               HttpSession session) throws IOException {
         Admin admin = (Admin) session.getAttribute("admin");
@@ -142,7 +167,7 @@ public class VideoController {
 
     // Delete a video
     @RequestMapping(value = "/delete/{id}", method = {RequestMethod.POST, RequestMethod.DELETE})
-    public String deleteVideo(@PathVariable Long id, HttpSession session) {
+    public String deleteVideo(@PathVariable("id") Long id, HttpSession session) {
         Admin admin = (Admin) session.getAttribute("admin");
         User user = (User) session.getAttribute("user");
         if (admin == null && user == null) {
@@ -196,18 +221,13 @@ public class VideoController {
         return "videosPage";
     }
 
-    // Show All Reels for users and volunteers
+    // Show All Reels (consolidated into primary Reels page)
     @RequestMapping(value = "/allReels", method = RequestMethod.GET)
-    public String showReels(@RequestParam(value = "category", required = false) Category category,
-                            Model model,
-                            HttpSession session) {
-        List<Video> reels = (category != null) ? 
-            videoService.getVideosByCategoryAndType(category, true) : 
-            videoService.getVideosByType(true);
-        model.addAttribute("videos", reels);
-        model.addAttribute("categories", Category.values());
-        model.addAttribute("user", session.getAttribute("user"));
-        return "reelsPage";
+    public String showReels(@RequestParam(value = "category", required = false) Category category) {
+        if (category != null) {
+            return "redirect:/video/reels?category=" + category;
+        }
+        return "redirect:/video/reels";
     }
     @RequestMapping(value = "/allVideos1", method = RequestMethod.GET)
     public String showVideos1(@RequestParam(value = "category", required = false) Category category,

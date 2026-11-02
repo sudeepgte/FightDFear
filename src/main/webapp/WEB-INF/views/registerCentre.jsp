@@ -518,6 +518,10 @@
     <!-- Main Container -->
     <main class="main-container">
 
+        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back to Home
+        </a>
+
         <!-- Info Card Matching Mobile -->
         <div class="info-banner">
             <h2>Quick registration</h2>

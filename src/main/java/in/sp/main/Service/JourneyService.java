@@ -140,6 +140,18 @@ public class JourneyService {
         return journeyRepo.save(js);
     }
 
+    public JourneySession updateLocation(User user, double lat, double lng) {
+        JourneySession js = activeOrAlerted(user);
+        if (js == null) return null;
+        if (js.getStatus() != JourneyStatus.ACTIVE && js.getStatus() != JourneyStatus.ALERTED) {
+            return null;
+        }
+        js.setCurrentLat(lat);
+        js.setCurrentLng(lng);
+        js.setLastLocationUpdatedAt(new Date());
+        return journeyRepo.save(js);
+    }
+
     public int alertOverdueJourneys() {
         Date now = new Date();
         List<JourneySession> overdue = journeyRepo.findByStatusAndExpectedArrivalAtBefore(JourneyStatus.ACTIVE, now);
@@ -189,7 +201,9 @@ public class JourneyService {
         sb.append("Start from: ").append(js.getStartFromText() == null ? "-" : js.getStartFromText()).append("\n");
         sb.append("Destination: ").append(js.getDestinationText() == null ? "-" : js.getDestinationText()).append("\n");
         sb.append("Expected arrival: ").append(expected).append("\n");
-        if (js.getStartLat() != null && js.getStartLng() != null) {
+        if (js.getCurrentLat() != null && js.getCurrentLng() != null) {
+            sb.append("Latest tracked location (live GPS): ").append(js.getCurrentLat()).append(", ").append(js.getCurrentLng()).append("\n");
+        } else if (js.getStartLat() != null && js.getStartLng() != null) {
             sb.append("Last known start location (approx): ").append(js.getStartLat()).append(", ").append(js.getStartLng()).append("\n");
         }
         sb.append("\nPlease try contacting them immediately.\n");

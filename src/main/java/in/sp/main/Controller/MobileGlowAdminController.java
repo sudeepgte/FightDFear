@@ -39,7 +39,7 @@ public class MobileGlowAdminController {
     @GetMapping("/salons")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> listSalons(
-            @RequestParam(defaultValue = "pending") String status,
+            @RequestParam(value = "status", defaultValue = "pending") String status,
             HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         List<Map<String, Object>> items;
@@ -72,7 +72,7 @@ public class MobileGlowAdminController {
 
     @PostMapping("/salons/{id}/approve")
     @Transactional
-    public ResponseEntity<Map<String, Object>> approveSalon(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> approveSalon(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         Salon salon = salonRepository.findById(id).orElse(null);
         if (salon == null) return badRequest("Salon not found");
@@ -90,7 +90,7 @@ public class MobileGlowAdminController {
 
     @PostMapping("/salons/{id}/reject")
     @Transactional
-    public ResponseEntity<Map<String, Object>> rejectSalon(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> rejectSalon(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         Salon salon = salonRepository.findById(id).orElse(null);
         if (salon == null) return badRequest("Salon not found");
@@ -103,7 +103,7 @@ public class MobileGlowAdminController {
     @GetMapping("/stylists")
     @Transactional(readOnly = true)
     public ResponseEntity<Map<String, Object>> listStylists(
-            @RequestParam(defaultValue = "pending") String status,
+            @RequestParam(value = "status", defaultValue = "pending") String status,
             HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         List<Map<String, Object>> items;
@@ -136,7 +136,7 @@ public class MobileGlowAdminController {
 
     @PostMapping("/stylists/{id}/approve")
     @Transactional
-    public ResponseEntity<Map<String, Object>> approveStylist(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> approveStylist(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         Stylist stylist = stylistRepository.findById(id).orElse(null);
         if (stylist == null) return badRequest("Stylist not found");
@@ -154,7 +154,7 @@ public class MobileGlowAdminController {
 
     @PostMapping("/stylists/{id}/reject")
     @Transactional
-    public ResponseEntity<Map<String, Object>> rejectStylist(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> rejectStylist(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         Stylist stylist = stylistRepository.findById(id).orElse(null);
         if (stylist == null) return badRequest("Stylist not found");

@@ -1,4 +1,3 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,7 +9,7 @@ import '../../services/investor_auth_service.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
 import '../../widgets/profile_location_picker.dart';
-import '../../widgets/ux_feedback.dart';
+import 'investor_dashboard_screen.dart';
 
 class InvestorProfileCompletionScreen extends StatefulWidget {
   const InvestorProfileCompletionScreen({super.key, this.onFinished});
@@ -27,47 +26,69 @@ class InvestorProfileCompletionScreen extends StatefulWidget {
 
 class _InvestorProfileCompletionScreenState
     extends State<InvestorProfileCompletionScreen> {
-  final _name = TextEditingController();
-  final _phone = TextEditingController();
-  final _whatsapp = TextEditingController();
-  final _years = TextEditingController();
-  final _address = TextEditingController();
-  final _city = TextEditingController();
-  final _stateOther = TextEditingController();
-  final _pincode = TextEditingController();
-  final _mapLocation = TextEditingController();
-  final _bio = TextEditingController();
-  final _upi = TextEditingController();
-  final _bank = TextEditingController();
-  final _rate = TextEditingController(text: '500');
-  final _credential = TextEditingController();
-  final _companyName = TextEditingController();
+  final _scrollController = ScrollController();
 
-  String? _designation;
+  // Section 0: Professional Profile Headshot
+  String? _profilePhotoUrl;
+  String? _selectedProfilePhotoPath;
+
+  // Section 1: Business Profile & Credentials
+  final _fullNameController = TextEditingController();
+  final _designationController = TextEditingController();
+  final _companyNameController = TextEditingController();
+  final _credentialNumberController = TextEditingController(); // PAN / SEBI / AIF
+  final _phoneController = TextEditingController();
+  final _whatsappController = TextEditingController();
+
+  // Section 2: Address & Operations
   String? _state;
-  String? _sessionMode;
-  int _duration = 60;
-  int _buffer = 10;
-  TimeOfDay? _openTime;
-  TimeOfDay? _closeTime;
-  TimeOfDay? _breakStart;
-  TimeOfDay? _breakEnd;
-
-  final Set<String> _categories = {};
-  final Set<String> _audience = {};
-  final Set<String> _facilities = {};
-  final Set<String> _days = {};
-  final Set<String> _blockedDates = {};
-  bool _doorService = false;
+  final _stateOtherController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _pincodeController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _mapLinkController = TextEditingController();
   double? _lat;
   double? _lng;
+
+  // Section 3: Investment Thesis & Ticket Size
+  final _categoriesOfferedController = TextEditingController();
+  final _audienceController = TextEditingController();
+  String _ticketMode = 'Angel'; // Angel, Seed, Series, Grant
+  final _typicalPriceController = TextEditingController();
+
+  // Section 4: Pitch Meeting & Call Slots
+  final _openDaysController = TextEditingController(text: 'Mon-Fri');
+  TimeOfDay? _openTime = const TimeOfDay(hour: 9, minute: 0);
+  TimeOfDay? _closeTime = const TimeOfDay(hour: 18, minute: 0);
+
+  // Section 5: Profile Bio & Mentorship Focus
+  final _bioController = TextEditingController();
+
+  // Section 6: Payout & Settlement Account
+  String _payoutMode = 'UPI'; // 'UPI' or 'BANK'
+  final _upiIdController = TextEditingController();
+  final _bankAccountHolderController = TextEditingController();
+  final _bankNameController = TextEditingController();
+  final _bankAccountNumberController = TextEditingController();
+  final _confirmAccountNumberController = TextEditingController();
+  final _bankIfscController = TextEditingController();
+  final _bankBranchController = TextEditingController();
+
+  // Global Keys for section scrolling
+  final _section0Key = GlobalKey();
+  final _section1Key = GlobalKey();
+  final _section2Key = GlobalKey();
+  final _section3Key = GlobalKey();
+  final _section4Key = GlobalKey();
+  final _section5Key = GlobalKey();
+  final _section6Key = GlobalKey();
+
+  final Map<String, String> _errors = {};
 
   bool _loading = true;
   bool _saving = false;
   bool _submitting = false;
-  bool _uploadingPhoto = false;
-  bool _uploadingGallery = false;
-  String? _error;
+  String? _globalError;
   Map<String, dynamic> _profile = {};
 
   InvestorAuthService get _svc =>
@@ -81,639 +102,1481 @@ class _InvestorProfileCompletionScreenState
 
   @override
   void dispose() {
-    for (final c in [
-      _name, _phone, _whatsapp, _years, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _upi, _bank, _rate, _credential, _companyName,
-    ]) {
-      c.dispose();
-    }
+    _scrollController.dispose();
+    _fullNameController.dispose();
+    _designationController.dispose();
+    _companyNameController.dispose();
+    _credentialNumberController.dispose();
+    _phoneController.dispose();
+    _whatsappController.dispose();
+    _stateOtherController.dispose();
+    _cityController.dispose();
+    _pincodeController.dispose();
+    _addressController.dispose();
+    _mapLinkController.dispose();
+    _categoriesOfferedController.dispose();
+    _audienceController.dispose();
+    _typicalPriceController.dispose();
+    _openDaysController.dispose();
+    _bioController.dispose();
+    _upiIdController.dispose();
+    _bankAccountHolderController.dispose();
+    _bankNameController.dispose();
+    _bankAccountNumberController.dispose();
+    _confirmAccountNumberController.dispose();
+    _bankIfscController.dispose();
+    _bankBranchController.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     setState(() {
       _loading = true;
-      _error = null;
-    });
-    final res = await _svc.profile();
-    if (!mounted) return;
-    if (res['success'] == true) {
-      _applyProfile(Map<String, dynamic>.from(res));
-      setState(() => _loading = false);
-    } else {
-      setState(() {
-        _loading = false;
-        _error = res['error']?.toString() ?? 'Failed to load profile';
-      });
-    }
-  }
-
-  String _pickOrOther(String raw, List<String> options, TextEditingController other) {
-    final v = raw.trim();
-    if (v.isEmpty) {
-      other.clear();
-      return '';
-    }
-    if (options.contains(v)) {
-      other.clear();
-      return v;
-    }
-    other.text = v;
-    return 'Other';
-  }
-
-  void _applyProfile(Map<String, dynamic> p) {
-    _profile = p;
-    _name.text = p['fullName']?.toString() ?? '';
-    _companyName.text = p['companyName']?.toString() ?? '';
-    _phone.text = p['phone']?.toString() ?? '';
-    _whatsapp.text = p['whatsappNumber']?.toString() ?? '';
-    _years.text = (p['experienceYears'] ?? p['yearsExperience'])?.toString() ?? '';
-    _credential.text = p['credentialNumber']?.toString() ?? p['credentialNumber']?.toString() ?? '';
-    _designation = (p['designation']?.toString().isNotEmpty == true) ? p['designation'].toString() : null;
-    _address.text = p['address']?.toString() ?? '';
-    _city.text = p['city']?.toString() ?? '';
-    _state = _pickOrOther(p['state']?.toString() ?? '', FundingCatalog.indianStates, _stateOther);
-    if ((_state ?? '').isEmpty) _state = null;
-    _pincode.text = p['pincode']?.toString() ?? '';
-    _lat = p['latitude'] is num ? (p['latitude'] as num).toDouble() : double.tryParse('${p['latitude'] ?? ''}');
-    _lng = p['longitude'] is num ? (p['longitude'] as num).toDouble() : double.tryParse('${p['longitude'] ?? ''}');
-    if (_lat != null && _lng != null) {
-      _mapLocation.text = 'https://maps.google.com/?q=$_lat,$_lng';
-    }
-    _categories
-      ..clear()
-      ..addAll(FundingCatalog.splitCsv(p['expertise'] ?? p['categoriesOffered']));
-    _audience
-      ..clear()
-      ..addAll(FundingCatalog.splitCsv(p['audience']));
-    _facilities
-      ..clear()
-      ..addAll(FundingCatalog.splitCsv(p['facilities']));
-    _days
-      ..clear()
-      ..addAll(FundingCatalog.splitCsv(p['openDays']));
-    _blockedDates
-      ..clear()
-      ..addAll(FundingCatalog.splitCsv(p['blockedDates']));
-    _doorService = p['doorService'] == true;
-    _openTime = FundingCatalog.parseTime(p['openTime']?.toString());
-    _closeTime = FundingCatalog.parseTime(p['closeTime']?.toString());
-    _breakStart = FundingCatalog.parseTime(p['breakStart']?.toString());
-    _breakEnd = FundingCatalog.parseTime(p['breakEnd']?.toString());
-    _bio.text = p['bio']?.toString() ?? '';
-    _upi.text = p['upiId']?.toString() ?? '';
-    _bank.text = p['bankDetails']?.toString() ?? '';
-    if (p['typicalPrice'] != null) {
-      _rate.text = '${p['typicalPrice']}';
-    }
-    _duration = p['durationMinutes'] is num ? (p['durationMinutes'] as num).toInt() : 60;
-    _buffer = p['bufferMinutes'] is num ? (p['bufferMinutes'] as num).toInt() : 10;
-    _sessionMode = p['sessionMode']?.toString();
-    if ((_sessionMode ?? '').isEmpty) _sessionMode = FundingCatalog.ticketModes.first;
-  }
-
-  Map<String, dynamic> _profileBody() {
-    final state = _state == 'Other' ? _stateOther.text.trim() : (_state ?? '');
-    return {
-      'fullName': _name.text.trim(),
-      'phone': _phone.text.trim(),
-      'designation': _designation,
-      'whatsappNumber': _whatsapp.text.trim(),
-      'yearsExperience': _years.text.trim(),
-      'experienceYears': int.tryParse(_years.text.trim()),
-      'credentialNumber': _credential.text.trim(),
-      'companyName': _companyName.text.trim(),
-      'address': _address.text.trim(),
-      'city': _city.text.trim(),
-      'state': state,
-      'pincode': _pincode.text.trim(),
-      'latitude': _lat,
-      'longitude': _lng,
-      'categoriesOffered': _categories.toList(),
-      'expertise': _categories.toList(),
-      'audience': _audience.toList(),
-      'doorService': _doorService,
-      'facilities': _facilities.toList(),
-      'openDays': _days.toList(),
-      'openTime': _openTime == null ? null : FundingCatalog.formatTime(_openTime!),
-      'closeTime': _closeTime == null ? null : FundingCatalog.formatTime(_closeTime!),
-      'breakStart': _breakStart == null ? null : FundingCatalog.formatTime(_breakStart!),
-      'breakEnd': _breakEnd == null ? null : FundingCatalog.formatTime(_breakEnd!),
-      'blockedDates': _blockedDates.toList(),
-      'bio': _bio.text.trim(),
-      'typicalPrice': double.tryParse(_rate.text.trim()) ?? 0,
-      'sessionMode': _sessionMode,
-      'durationMinutes': _duration,
-      'bufferMinutes': _buffer,
-      'upiId': _upi.text.trim(),
-      'bankDetails': _bank.text.trim(),
-    };
-  }
-
-  String? _validate({bool forSubmit = false}) {
-    if (_name.text.trim().isEmpty) return '1.1 Full name is required';
-    if ((_designation ?? '').isEmpty) return '1.2 Role is required';
-    if (_phone.text.trim().length != 10) return '1.5 Official phone must be 10 digits';
-    if (_address.text.trim().isEmpty) return '2.1 Address is required';
-    if (_city.text.trim().isEmpty) return '2.3 City is required';
-    if ((_state ?? '').isEmpty) return '2.4 State is required';
-    if (_state == 'Other' && _stateOther.text.trim().isEmpty) return '2.4 Enter state';
-    if (_pincode.text.trim().length != 6) return '2.5 Pincode must be 6 digits';
-    if (_credential.text.trim().isEmpty) return '1.8 PAN / SEBI / AIF number is required';
-    if (_companyName.text.trim().isEmpty) return '1.3 Company name is required';
-    if (_categories.isEmpty) return '3.1 Select at least one sector';
-    if (_audience.isEmpty) return '4.1 Who I fund is required';
-    if (_days.isEmpty) return '6.1 Open days are required';
-    if (_openTime == null) return '6.2 Open time is required';
-    if (_closeTime == null) return '6.3 Close time is required';
-    if (_bio.text.trim().isEmpty) return '7.1 About is required';
-    if ((_sessionMode ?? '').isEmpty) return '8. Cheque type is required';
-    if (double.tryParse(_rate.text.trim()) == null) return '8. Typical cheque is required';
-    if (forSubmit && _profile['canSubmitForVerification'] == false) {
-      return _profile['nextStepGuidance']?.toString();
-    }
-    return null;
-  }
-
-  Future<void> _saveProfile() async {
-    final err = _validate();
-    if (err != null) {
-      setState(() => _error = err);
-      return;
-    }
-    setState(() {
-      _saving = true;
-      _error = null;
+      _globalError = null;
     });
     try {
-      await ActionFeedback.run(
-        context,
-        loadingLabel: 'Saving…',
-        doneLabel: 'Saved',
-        action: () async {
-          final res = await _svc.updateProfile(_profileBody());
-          if (res['success'] != true) {
-            throw Exception(res['error']?.toString() ?? 'Failed to save profile');
-          }
-          _applyProfile(Map<String, dynamic>.from(res));
-        },
-      );
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  Future<void> _submit() async {
-    final err = _validate(forSubmit: true);
-    if (err != null) {
-      setState(() => _error = err);
-      return;
-    }
-    setState(() {
-      _submitting = true;
-      _error = null;
-    });
-    try {
-      await ActionFeedback.run(
-        context,
-        loadingLabel: 'Submitting…',
-        doneLabel: 'Submitted',
-        action: () async {
-          final saveRes = await _svc.updateProfile(_profileBody());
-          if (saveRes['success'] == true) _applyProfile(Map<String, dynamic>.from(saveRes));
-          if (_profile['canSubmitForVerification'] != true) {
-            throw Exception('Complete all mandatory fields before submitting');
-          }
-          final res = await _svc.submitVerification();
-          if (res['success'] != true) {
-            throw Exception(res['error']?.toString() ?? 'Submit failed');
-          }
-          await _load();
-        },
-      );
-      if (!mounted) return;
-      await showVerificationSubmittedSheet(context);
-      if (!mounted) return;
-      if (widget.onFinished != null) {
-        widget.onFinished!(context);
-      } else {
-        Navigator.of(context).pop(true);
-      }
-    } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
-  }
-
-  Future<void> _pickClock(void Function(TimeOfDay t) apply, TimeOfDay? current) async {
-    final picked = await showTimePicker(context: context, initialTime: current ?? const TimeOfDay(hour: 9, minute: 0));
-    if (picked != null) setState(() => apply(picked));
-  }
-  Future<void> _addBlockedDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked == null) return;
-    final key = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
-    setState(() => _blockedDates.add(key));
-  }
-
-  Future<void> _uploadFile({required String kind}) async {
-    String? path;
-    try {
-      final img = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
-      path = img?.path;
-    } catch (_) {}
-    path ??= (await FilePicker.platform.pickFiles(type: FileType.image))?.files.single.path;
-    if (path == null || path.isEmpty) return;
-    setState(() {
-      if (kind == 'photo') _uploadingPhoto = true;
-      if (kind == 'gallery') _uploadingGallery = true;
-    });
-    try {
-      final res = await _svc.uploadPhotos(
-        profilePath: kind == 'photo' ? path : null,
-        galleryPath: kind == 'gallery' ? path : null,
-      );
+      final res = await _svc.profile();
       if (!mounted) return;
       if (res['success'] == true) {
-        await _load();
+        _applyProfile(Map<String, dynamic>.from(res));
+        setState(() => _loading = false);
       } else {
-        setState(() => _error = res['error']?.toString() ?? 'Upload failed');
+        setState(() {
+          _loading = false;
+          _globalError = res['error']?.toString() ?? 'Failed to load profile';
+        });
       }
-    } finally {
+    } catch (e) {
       if (mounted) {
         setState(() {
-          _uploadingPhoto = false;
-          _uploadingGallery = false;
+          _loading = false;
+          _globalError = '$e';
         });
       }
     }
   }
 
+  void _applyProfile(Map<String, dynamic> p) {
+    _profile = p;
+    _profilePhotoUrl = p['profilePhoto']?.toString() ?? p['profileImageUrl']?.toString();
+    _fullNameController.text = p['fullName']?.toString() ?? '';
+    _designationController.text = p['designation']?.toString() ?? '';
+    _companyNameController.text = p['companyName']?.toString() ?? '';
+    _credentialNumberController.text = p['credentialNumber']?.toString() ?? '';
+    _phoneController.text = p['phone']?.toString() ?? '';
+    _whatsappController.text = p['whatsappNumber']?.toString() ?? '';
 
-  void _skip() => ProfileCompletionActions.skip(context, widget.onFinished);
+    // Location
+    final st = p['state']?.toString() ?? '';
+    if (FundingCatalog.indianStates.contains(st)) {
+      _state = st;
+    } else if (st.isNotEmpty) {
+      _state = 'Other';
+      _stateOtherController.text = st;
+    }
+    _cityController.text = p['city']?.toString() ?? p['preferredLocations']?.toString() ?? '';
+    _pincodeController.text = p['pincode']?.toString() ?? '';
+    _addressController.text = p['address']?.toString() ?? '';
+    _lat = p['latitude'] is num ? (p['latitude'] as num).toDouble() : double.tryParse('${p['latitude'] ?? ''}');
+    _lng = p['longitude'] is num ? (p['longitude'] as num).toDouble() : double.tryParse('${p['longitude'] ?? ''}');
+
+    // Investment Thesis
+    final cats = p['categoriesOffered'] ?? p['preferredCategories'];
+    if (cats is List) {
+      _categoriesOfferedController.text = cats.join(', ');
+    } else {
+      _categoriesOfferedController.text = cats?.toString() ?? '';
+    }
+
+    final aud = p['audience'];
+    if (aud is List) {
+      _audienceController.text = aud.join(', ');
+    } else {
+      _audienceController.text = aud?.toString() ?? '';
+    }
+
+    final mode = p['ticketMode']?.toString() ?? p['sessionMode']?.toString() ?? 'Angel';
+    if (FundingCatalog.ticketModes.contains(mode)) {
+      _ticketMode = mode;
+    }
+
+    final typical = p['typicalPrice'] ?? p['typicalCheque'];
+    if (typical != null && typical != 0) {
+      _typicalPriceController.text = '$typical';
+    }
+
+    // Availability
+    final days = p['openDays'];
+    if (days is List) {
+      _openDaysController.text = days.join(', ');
+    } else if (days != null && days.toString().isNotEmpty) {
+      _openDaysController.text = days.toString();
+    }
+    _openTime = FundingCatalog.parseTime(p['openTime']?.toString()) ?? const TimeOfDay(hour: 9, minute: 0);
+    _closeTime = FundingCatalog.parseTime(p['closeTime']?.toString()) ?? const TimeOfDay(hour: 18, minute: 0);
+
+    // Bio
+    _bioController.text = p['bio']?.toString() ?? p['investmentInterests']?.toString() ?? '';
+
+    // Payout
+    final upi = p['upiId']?.toString() ?? '';
+    _upiIdController.text = upi;
+
+    final details = p['bankDetails']?.toString() ?? '';
+    if (details.contains('Account Holder:')) {
+      for (final part in details.split('|')) {
+        final pair = part.split(':');
+        if (pair.length == 2) {
+          final k = pair[0].trim().toLowerCase();
+          final v = pair[1].trim();
+          if (k.contains('holder') && _bankAccountHolderController.text.isEmpty) {
+            _bankAccountHolderController.text = v;
+          } else if (k.contains('bank') && _bankNameController.text.isEmpty) {
+            _bankNameController.text = v;
+          } else if (k.contains('a/c') && _bankAccountNumberController.text.isEmpty) {
+            _bankAccountNumberController.text = v;
+            _confirmAccountNumberController.text = v;
+          } else if (k.contains('ifsc') && _bankIfscController.text.isEmpty) {
+            _bankIfscController.text = v;
+          } else if (k.contains('branch') && _bankBranchController.text.isEmpty) {
+            _bankBranchController.text = v;
+          }
+        }
+      }
+      _payoutMode = 'BANK';
+    } else {
+      _payoutMode = upi.isNotEmpty ? 'UPI' : 'UPI';
+    }
+  }
+
+  // ── 17 Criteria Live Status Calculation ───────────────────────────────────
+
+  List<String> _calculateMissing() {
+    final missing = <String>[];
+    // 0. Profile photo
+    if ((_profilePhotoUrl ?? '').isEmpty && (_selectedProfilePhotoPath ?? '').isEmpty) {
+      missing.add('Professional profile headshot');
+    }
+    // 1. Full name
+    if (_fullNameController.text.trim().length < 2) {
+      missing.add('Full legal name');
+    }
+    // 2. Designation
+    if (_designationController.text.trim().isEmpty) {
+      missing.add('Role / Designation');
+    }
+    // 3. Company name
+    if (_companyNameController.text.trim().isEmpty) {
+      missing.add('Company / Fund name');
+    }
+    // 4. PAN / SEBI credential
+    if (_credentialNumberController.text.trim().isEmpty) {
+      missing.add('PAN / SEBI / AIF number');
+    }
+    // 5. Official phone
+    if (!RegExp(r'^[0-9]{10}$').hasMatch(_phoneController.text.trim())) {
+      missing.add('10-digit mobile phone');
+    }
+    // 6. Street address
+    if (_addressController.text.trim().isEmpty) {
+      missing.add('Street address');
+    }
+    // 7. City
+    if (_cityController.text.trim().isEmpty) {
+      missing.add('City');
+    }
+    // 8. State
+    final st = _state == 'Other' ? _stateOtherController.text.trim() : (_state ?? '');
+    if (st.isEmpty) {
+      missing.add('State');
+    }
+    // 9. Pincode
+    if (!RegExp(r'^[0-9]{6}$').hasMatch(_pincodeController.text.trim())) {
+      missing.add('6-digit pincode');
+    }
+    // 10. Target sectors
+    if (_categoriesOfferedController.text.trim().isEmpty) {
+      missing.add('Target sectors');
+    }
+    // 11. Target audience
+    if (_audienceController.text.trim().isEmpty) {
+      missing.add('Who I fund');
+    }
+    // 12. Open days
+    if (_openDaysController.text.trim().isEmpty) {
+      missing.add('Meeting days');
+    }
+    // 13. Open time
+    if (_openTime == null) {
+      missing.add('Meeting start time');
+    }
+    // 14. Close time
+    if (_closeTime == null) {
+      missing.add('Meeting close time');
+    }
+    // 15. Bio (min 15 chars)
+    if (_bioController.text.trim().length < 15) {
+      missing.add('Bio & Criteria (min 15 characters)');
+    }
+    // 16. Typical cheque (> 0)
+    final cheque = double.tryParse(_typicalPriceController.text.trim());
+    if (cheque == null || cheque < 1000) {
+      missing.add('Typical cheque size (min ₹1,000)');
+    }
+
+    return missing;
+  }
+
+  int get _completionPct {
+    final missing = _calculateMissing();
+    final completed = 17 - missing.length;
+    return ((completed * 100) / 17).round().clamp(0, 100);
+  }
+
+  // ── Validation for Form Submission ────────────────────────────────────────
+
+  bool _validateForm({bool forSubmit = false}) {
+    final errs = <String, String>{};
+    GlobalKey? firstInvalidSection;
+
+    if (forSubmit && (_profilePhotoUrl ?? '').isEmpty && (_selectedProfilePhotoPath ?? '').isEmpty) {
+      errs['photo'] = 'Profile photo is required';
+      firstInvalidSection ??= _section0Key;
+    }
+
+    if (_fullNameController.text.trim().isEmpty) {
+      errs['fullName'] = 'Full name is required';
+      firstInvalidSection ??= _section1Key;
+    }
+
+    if (_designationController.text.trim().isEmpty) {
+      errs['designation'] = 'Role / Designation is required';
+      firstInvalidSection ??= _section1Key;
+    }
+
+    if (_companyNameController.text.trim().isEmpty) {
+      errs['companyName'] = 'Company or fund name is required';
+      firstInvalidSection ??= _section1Key;
+    }
+
+    final cred = _credentialNumberController.text.trim();
+    if (cred.isEmpty) {
+      errs['credentialNumber'] = '10-digit PAN or SEBI Registration Number is required';
+      firstInvalidSection ??= _section1Key;
+    }
+
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      errs['phone'] = 'Mobile phone is required';
+      firstInvalidSection ??= _section1Key;
+    } else if (!RegExp(r'^[0-9]{10}$').hasMatch(phone)) {
+      errs['phone'] = 'Enter a valid 10-digit mobile number';
+      firstInvalidSection ??= _section1Key;
+    }
+
+    final whatsapp = _whatsappController.text.trim();
+    if (whatsapp.isNotEmpty && !RegExp(r'^[0-9]{10}$').hasMatch(whatsapp)) {
+      errs['whatsapp'] = 'WhatsApp number must be 10 digits';
+      firstInvalidSection ??= _section1Key;
+    }
+
+    final st = _state == 'Other' ? _stateOtherController.text.trim() : (_state ?? '');
+    if (st.isEmpty) {
+      errs['state'] = 'State is required';
+      firstInvalidSection ??= _section2Key;
+    }
+
+    if (_cityController.text.trim().isEmpty) {
+      errs['city'] = 'City is required';
+      firstInvalidSection ??= _section2Key;
+    }
+
+    final pincode = _pincodeController.text.trim();
+    if (pincode.isEmpty) {
+      errs['pincode'] = 'Pincode is required';
+      firstInvalidSection ??= _section2Key;
+    } else if (!RegExp(r'^[1-9][0-9]{5}$').hasMatch(pincode)) {
+      errs['pincode'] = 'Enter a valid 6-digit Indian pincode';
+      firstInvalidSection ??= _section2Key;
+    }
+
+    if (_addressController.text.trim().isEmpty) {
+      errs['address'] = 'Street address is required';
+      firstInvalidSection ??= _section2Key;
+    }
+
+    if (_categoriesOfferedController.text.trim().isEmpty) {
+      errs['categoriesOffered'] = 'Target sectors are required';
+      firstInvalidSection ??= _section3Key;
+    }
+
+    if (_audienceController.text.trim().isEmpty) {
+      errs['audience'] = 'Target audience is required';
+      firstInvalidSection ??= _section3Key;
+    }
+
+    final cheque = double.tryParse(_typicalPriceController.text.trim());
+    if (cheque == null || cheque < 1000) {
+      errs['typicalPrice'] = 'Cheque size must be at least ₹1,000';
+      firstInvalidSection ??= _section3Key;
+    }
+
+    if (_openDaysController.text.trim().isEmpty) {
+      errs['openDays'] = 'Available days are required (e.g. Mon-Fri)';
+      firstInvalidSection ??= _section4Key;
+    }
+
+    if (_openTime == null || _closeTime == null) {
+      errs['timeSlots'] = 'Meeting time slots are required';
+      firstInvalidSection ??= _section4Key;
+    }
+
+    final bio = _bioController.text.trim();
+    if (bio.isEmpty) {
+      errs['bio'] = 'Bio is required';
+      firstInvalidSection ??= _section5Key;
+    } else if (bio.length < 15) {
+      errs['bio'] = 'Bio must be at least 15 characters';
+      firstInvalidSection ??= _section5Key;
+    }
+
+    setState(() => _errors
+      ..clear()
+      ..addAll(errs));
+
+    if (errs.isNotEmpty && firstInvalidSection != null) {
+      final context = firstInvalidSection.currentContext;
+      if (context != null) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+      return false;
+    }
+    return true;
+  }
+
+  Map<String, dynamic> _buildPayload() {
+    final state = _state == 'Other' ? _stateOtherController.text.trim() : (_state ?? '');
+
+    final payload = <String, dynamic>{
+      'fullName': _fullNameController.text.trim(),
+      'designation': _designationController.text.trim(),
+      'companyName': _companyNameController.text.trim(),
+      'credentialNumber': _credentialNumberController.text.trim().toUpperCase(),
+      'phone': _phoneController.text.trim(),
+      'whatsappNumber': _whatsappController.text.trim(),
+      'state': state,
+      'city': _cityController.text.trim(),
+      'preferredLocations': _cityController.text.trim(),
+      'pincode': _pincodeController.text.trim(),
+      'address': _addressController.text.trim(),
+      'latitude': _lat,
+      'longitude': _lng,
+      'categoriesOffered': _categoriesOfferedController.text.trim(),
+      'preferredCategories': _categoriesOfferedController.text.trim(),
+      'audience': _audienceController.text.trim(),
+      'ticketMode': _ticketMode,
+      'sessionMode': _ticketMode,
+      'typicalPrice': double.tryParse(_typicalPriceController.text.trim()),
+      'typicalCheque': double.tryParse(_typicalPriceController.text.trim()),
+      'openDays': _openDaysController.text.trim(),
+      'openTime': _openTime != null ? FundingCatalog.formatTime(_openTime!) : '09:00',
+      'closeTime': _closeTime != null ? FundingCatalog.formatTime(_closeTime!) : '18:00',
+      'bio': _bioController.text.trim(),
+      'investmentInterests': _bioController.text.trim(),
+    };
+
+    if (_payoutMode == 'UPI') {
+      payload['upiId'] = _upiIdController.text.trim();
+    } else {
+      payload['bankAccountHolder'] = _bankAccountHolderController.text.trim();
+      payload['bankName'] = _bankNameController.text.trim();
+      payload['bankAccountNumber'] = _bankAccountNumberController.text.trim();
+      payload['bankIfsc'] = _bankIfscController.text.trim().toUpperCase();
+      payload['bankBranch'] = _bankBranchController.text.trim();
+    }
+
+    return payload;
+  }
+
+  Future<void> _saveDraft() async {
+    setState(() {
+      _saving = true;
+      _globalError = null;
+    });
+    try {
+      if (_selectedProfilePhotoPath != null) {
+        await _svc.uploadPhotos(profilePath: _selectedProfilePhotoPath);
+      }
+      final res = await _svc.updateProfile(_buildPayload());
+      if (res['success'] != true) {
+        throw Exception(res['error']?.toString() ?? 'Failed to save profile');
+      }
+      if (mounted) {
+        _applyProfile(Map<String, dynamic>.from(res));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Investor profile draft saved!'),
+            backgroundColor: Colors.teal,
+          ),
+        );
+        _finish();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _globalError = e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _finish() {
+    if (!mounted) return;
+    if (widget.onFinished != null) {
+      widget.onFinished!(context);
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const InvestorDashboardScreen()),
+        (_) => false,
+      );
+    }
+  }
+
+  void _skip() => _finish();
+
+  Future<void> _submitForVerification() async {
+    final valid = _validateForm(forSubmit: true);
+    if (!valid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete all 17 required items before submitting.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _submitting = true;
+      _globalError = null;
+    });
+    try {
+      if (_selectedProfilePhotoPath != null) {
+        await _svc.uploadPhotos(profilePath: _selectedProfilePhotoPath);
+      }
+      final updateRes = await _svc.updateProfile(_buildPayload());
+      if (updateRes['success'] != true) {
+        throw Exception(updateRes['error']?.toString() ?? 'Failed to update profile');
+      }
+      final submitRes = await _svc.submitVerification();
+      if (submitRes['success'] != true) {
+        throw Exception(submitRes['error']?.toString() ?? 'Verification submission failed');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Investor profile submitted for Admin Verification!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _finish();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _globalError = e.toString().replaceFirst('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  Future<void> _pickProfilePhoto() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (image != null) {
+      setState(() {
+        _selectedProfilePhotoPath = image.path;
+        _errors.remove('photo');
+      });
+    }
+  }
+
+  Future<void> _selectTime(bool isOpenTime) async {
+    final initial = isOpenTime ? _openTime : _closeTime;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial ?? const TimeOfDay(hour: 9, minute: 0),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isOpenTime) {
+          _openTime = picked;
+        } else {
+          _closeTime = picked;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final pct = (_profile['profileCompletionPct'] is num) ? (_profile['profileCompletionPct'] as num).toDouble() : 0.0;
-    final missing = FundingCatalog.splitCsv(_profile['missingItems']);
-    final guidance = _profile['nextStepGuidance']?.toString();
-    final canSubmit = _profile['canSubmitForVerification'] == true;
+    if (_loading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Complete Profile')),
+        body: ModuleTheme.loading(),
+      );
+    }
+
+    final missing = _calculateMissing();
+    final pct = _completionPct;
+    final status = _profile['partnerProfileStatusLabel']?.toString() ??
+        _profile['partnerProfileStatus']?.toString() ??
+        'Incomplete';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
+        title: const Text(
+          'Investor Profile',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: InvestorProfileCompletionScreen.navy,
-        title: const Text('Complete Investor Profile', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w700)),
-      actions: ProfileCompletionActions.appBar(
-        onSkip: _loading ? null : _skip,
-        onSave: (_loading || _saving) ? null : _saveProfile,
-        saving: _saving,
+        elevation: 0.5,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _skip,
+        ),
+        actions: ProfileCompletionActions.appBar(
+          onSkip: (_loading || _saving || _submitting) ? null : _skip,
+          onSave: (_loading || _saving || _submitting) ? null : _saveDraft,
+          saving: _saving,
+        ),
       ),
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
-              children: [
-                if (_error != null) ...[
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 8),
-                ],
-                ProfileCompletionCard(
-                  percent: pct,
-                  statusLabel: _profile['partnerProfileStatusLabel']?.toString() ?? 'Pending',
-                  hint: ProfileCompletionCard.hintFromMissing(missing, guidance: guidance),
-                  actionLabel: '',
-                  onAction: () {},
-                  showActionButton: false,
-                  trailing: missing.isEmpty
-                      ? null
-                      : Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: missing
-                              .map((m) => Chip(
-                                    label: Text(m, style: const TextStyle(fontSize: 12)),
-                                    backgroundColor: const Color(0xFFFFF7ED),
-                                  ))
-                              .toList(),
-                        ),
-                ),
-                const SizedBox(height: 12),
-                FilledButton(
-                  onPressed: (_submitting || !canSubmit) ? null : _submit,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: InvestorProfileCompletionScreen.primary,
-                    minimumSize: const Size.fromHeight(48),
-                  ),
-                  child: _submitting
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : Text(canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
-                ),
-                const SizedBox(height: 16),
-                _section('1', 'Investor identity', [
-                  _field(_name, '1.1', 'Full name', required: true),
-                  _field(_companyName, '1.3', 'Company name', required: true),
-                  _dropdown(
-                    number: '1.2',
-                    label: 'Designation',
-                    value: _designation,
-                    options: FundingCatalog.investorDesignations,
-                    required: true,
-                    onChanged: (v) => setState(() => _designation = v),
-                  ),
-                  _field(_phone, '1.5', 'Official phone', required: true, keyboardType: TextInputType.phone, maxLength: 10, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_whatsapp, '1.6', 'WhatsApp', keyboardType: TextInputType.phone, maxLength: 10, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_years, '1.7', 'Years of experience', keyboardType: TextInputType.number, maxLength: 2, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_credential, '1.8', 'PAN / SEBI / AIF number', required: true, hint: 'Enrolment / registration number'),
-                ]),
-                _section('2', 'Location', [
-                  _field(_address, '2.1', 'Address', required: true),
-                  _field(_city, '2.3', 'City', required: true),
-                  _dropdown(number: '2.4', label: 'State', value: _state, options: FundingCatalog.indianStates, required: true, onChanged: (v) => setState(() => _state = v)),
-                  if (_state == 'Other') _field(_stateOther, '2.4', 'Enter state', required: true),
-                  _field(_pincode, '2.5', 'Pincode', required: true, keyboardType: TextInputType.number, maxLength: 6, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_mapLocation, '2.6', 'Google Maps location', hint: 'Paste Maps link (optional)'),
-                  const SizedBox(height: 8),
-                  ProfileLocationPicker(
-                    lat: _lat,
-                    lng: _lng,
-                    mapLinkController: _mapLocation,
-                    pinLabel: '2.7 Pin office on map',
-                    onPinned: (lat, lng) => setState(() {
-                      _lat = lat;
-                      _lng = lng;
-                    }),
-                    onError: (msg) => setState(() => _error = msg),
-                  ),
-                ]),
-                _section('3', 'Expertise', [
-                  const Text('3.1 Sectors *', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: FundingCatalog.categories.map((c) {
-                      final on = _categories.contains(c);
-                      return FilterChip(
-                        label: Text(c),
-                        selected: on,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _categories.add(c);
-                          } else {
-                            _categories.remove(c);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                ]),
-                _section('4', 'Who I fund', [
-                  const Text('4.1 Audience *', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  _chips(FundingCatalog.investorAudiences, _audience),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('4.2 In-person meetings'),
-                    value: _doorService,
-                    onChanged: (v) => setState(() => _doorService = v),
-                  ),
-                ]),
-                _section('5', 'Facilities', [
-                  const Text('5.1 Studio / session amenities', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  _chips(FundingCatalog.investorFacilities, _facilities),
-                ]),
-                _section('6', 'Hours & calendar', [
-                  const Text('6.1 Open days *', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: FundingCatalog.days.map((d) {
-                      final on = _days.contains(d);
-                      return FilterChip(
-                        label: Text(d.substring(0, 3)),
-                        selected: on,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _days.add(d);
-                          } else {
-                            _days.remove(d);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 10),
-                  _timeTile('6.2 Open time *', _openTime, (t) => _openTime = t),
-                  _timeTile('6.3 Close time *', _closeTime, (t) => _closeTime = t),
-                  _timeTile('6.4 Break start', _breakStart, (t) => _breakStart = t),
-                  _timeTile('6.5 Break end', _breakEnd, (t) => _breakEnd = t),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(onPressed: _addBlockedDate, icon: const Icon(Icons.event_busy), label: const Text('6.6 Add leave / blocked date')),
-                  if (_blockedDates.isNotEmpty)
-                    Wrap(
-                      spacing: 6,
-                      children: _blockedDates
-                          .map((d) => InputChip(label: Text(d), onDeleted: () => setState(() => _blockedDates.remove(d))))
-                          .toList(),
-                    ),
-                ]),
-                _section('7', 'About you', [
-                  _field(_bio, '7.1', 'About', required: true, maxLines: 4),
-                ]),
-                _section('8', 'Ticket', [
-                  _dropdown(
-                    number: '8.1',
-                    label: 'Cheque type',
-                    value: _sessionMode,
-                    options: FundingCatalog.ticketModes,
-                    required: true,
-                    onChanged: (v) => setState(() => _sessionMode = v),
-                  ),
-                  _dropdown(
-                    number: '8.2',
-                    label: 'Duration (minutes)',
-                    value: '$_duration',
-                    options: FundingCatalog.durations.map((e) => '$e').toList(),
-                    required: true,
-                    onChanged: (v) => setState(() => _duration = int.tryParse(v ?? '60') ?? 60),
-                  ),
-                  _dropdown(
-                    number: '8.3',
-                    label: 'Buffer (minutes)',
-                    value: '$_buffer',
-                    options: FundingCatalog.buffers.map((e) => '$e').toList(),
-                    onChanged: (v) => setState(() => _buffer = int.tryParse(v ?? '10') ?? 10),
-                  ),
-                  _field(_rate, '8.4', 'Typical cheque (₹)', required: true, keyboardType: TextInputType.number),
-                ]),
-                _section('9', 'Finance / UPI', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  const Text(
-                    'UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
-                ]),
-                _section('10', 'Documents (optional)', [
-                  const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                  const SizedBox(height: 10),
-                  _uploadTile('10.1 Profile photo', _profile['profileImageUrl']?.toString(), _uploadingPhoto, () => _uploadFile(kind: 'photo')),
-                ]),
-                _section('11', 'Office photos (optional)', [
-                  const Text('Photos help learners choose you.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                  const SizedBox(height: 10),
-                  _uploadTile(
-                    '11.1 Gallery photo',
-                    (_profile['galleryPhotos'] is List && (_profile['galleryPhotos'] as List).isNotEmpty)
-                        ? (_profile['galleryPhotos'] as List).last.toString()
-                        : null,
-                    _uploadingGallery,
-                    () => _uploadFile(kind: 'gallery'),
-                  ),
-                ]),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: _saving ? null : _saveProfile,
-                  child: _saving
-                      ? const CircularProgressIndicator(strokeWidth: 2, color: Colors.white)
-                      : const Text('Save Profile'),
-                ),
-              ],
-            ),
-    );
-  }
-
-  Widget _section(String number, String title, List<Widget> children) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SafeArea(
+        child: ListView(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
-            Text('$number. $title', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-            const SizedBox(height: 12),
-            ...children,
+            if (_globalError != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE4E6),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFDA4AF)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Color(0xFFBE123C)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _globalError!,
+                        style: const TextStyle(
+                            color: Color(0xFFBE123C), fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            // ── TOP PROGRESS CARD ───────────────────────────────────────────
+            _buildProgressCard(pct, status, missing),
+            const SizedBox(height: 16),
+
+            // ── SECTION 0: HEADSHOT ─────────────────────────────────────────
+            Container(key: _section0Key, child: _buildSection0()),
+            const SizedBox(height: 16),
+
+            // ── SECTION 1: BUSINESS PROFILE & CREDENTIALS ───────────────────
+            Container(key: _section1Key, child: _buildSection1()),
+            const SizedBox(height: 16),
+
+            // ── SECTION 2: ADDRESS & OPERATIONS ─────────────────────────────
+            Container(key: _section2Key, child: _buildSection2()),
+            const SizedBox(height: 16),
+
+            // ── SECTION 3: INVESTMENT THESIS & TICKET SIZE ──────────────────
+            Container(key: _section3Key, child: _buildSection3()),
+            const SizedBox(height: 16),
+
+            // ── SECTION 4: PITCH MEETING & CALL SLOTS ───────────────────────
+            Container(key: _section4Key, child: _buildSection4()),
+            const SizedBox(height: 16),
+
+            // ── SECTION 5: PROFILE BIO & MENTORSHIP FOCUS ───────────────────
+            Container(key: _section5Key, child: _buildSection5()),
+            const SizedBox(height: 16),
+
+            // ── SECTION 6: PAYOUT & SETTLEMENT ACCOUNT ──────────────────────
+            Container(key: _section6Key, child: _buildSection6()),
+            const SizedBox(height: 24),
+
+            // ── ACTION BUTTONS ──────────────────────────────────────────────
+            _buildActionButtons(pct == 100),
+            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
 
-  Widget _field(
-    TextEditingController controller,
-    String number,
-    String label, {
-    TextInputType? keyboardType,
+  // ── Progress Card ─────────────────────────────────────────────────────────
+
+  Widget _buildProgressCard(int pct, String status, List<String> missing) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x08000000), blurRadius: 10, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '$pct% Completed (${17 - missing.length} / 17 items)',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: InvestorProfileCompletionScreen.navy,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: pct == 100 ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: pct == 100 ? const Color(0xFF166534) : const Color(0xFFB45309),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: pct / 100.0,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFF1F5F9),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                pct == 100 ? const Color(0xFF10B981) : InvestorProfileCompletionScreen.primary,
+              ),
+            ),
+          ),
+          if (missing.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Required for Admin Verification:',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: missing.map((item) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.circle, size: 6, color: Color(0xFFF43F5E)),
+                      const SizedBox(width: 5),
+                      Text(item, style: const TextStyle(fontSize: 11, color: Color(0xFF334155))),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── SECTION 0: HEADSHOT ───────────────────────────────────────────────────
+
+  Widget _buildSection0() {
+    return _buildCard(
+      title: '0. Professional Profile Headshot',
+      subtitle: 'Verified investor photo for compliance and network trust',
+      icon: Icons.camera_alt_outlined,
+      children: [
+        Center(
+          child: Column(
+            children: [
+              GestureDetector(
+                onTap: _pickProfilePhoto,
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 46,
+                      backgroundColor: const Color(0xFFF1F5F9),
+                      backgroundImage: _selectedProfilePhotoPath != null
+                          ? null
+                          : (_profilePhotoUrl != null && _profilePhotoUrl!.isNotEmpty
+                              ? NetworkImage(_profilePhotoUrl!)
+                              : null) as ImageProvider?,
+                      child: (_selectedProfilePhotoPath == null &&
+                              (_profilePhotoUrl == null || _profilePhotoUrl!.isEmpty))
+                          ? const Icon(Icons.person, size: 42, color: Color(0xFF94A3B8))
+                          : null,
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: InvestorProfileCompletionScreen.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Professional Portrait *',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+              ),
+              if (_errors.containsKey('photo'))
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    _errors['photo']!,
+                    style: const TextStyle(fontSize: 11, color: Colors.red),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── SECTION 1: BUSINESS PROFILE & CREDENTIALS ─────────────────────────────
+
+  Widget _buildSection1() {
+    return _buildCard(
+      title: '1. Business Profile & Credentials',
+      subtitle: 'Investor identity and accreditation credentials',
+      icon: Icons.badge_outlined,
+      children: [
+        _buildTextField(
+          label: 'Full Name *',
+          controller: _fullNameController,
+          placeholder: 'Your full legal name',
+          errorText: _errors['fullName'],
+          helperText: 'Your name as per SEBI / PAN documentation',
+          onChanged: (_) => setState(() => _errors.remove('fullName')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'Role / Designation *',
+          controller: _designationController,
+          placeholder: 'e.g. Managing Partner / Angel Investor',
+          errorText: _errors['designation'],
+          helperText: 'Your current investment position or title',
+          onChanged: (_) => setState(() => _errors.remove('designation')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'Company / Fund Name *',
+          controller: _companyNameController,
+          placeholder: 'e.g. Apex Capital Ventures',
+          errorText: _errors['companyName'],
+          helperText: 'Investment firm, syndicate or family office name',
+          onChanged: (_) => setState(() => _errors.remove('companyName')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'PAN / SEBI / AIF ID *',
+          controller: _credentialNumberController,
+          placeholder: '10-digit PAN or SEBI Registration Number',
+          textCapitalization: TextCapitalization.characters,
+          errorText: _errors['credentialNumber'],
+          helperText: 'Accreditation reference for compliance verification',
+          onChanged: (_) => setState(() => _errors.remove('credentialNumber')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'Mobile Phone *',
+          controller: _phoneController,
+          placeholder: '10-digit mobile number',
+          keyboardType: TextInputType.phone,
+          maxLength: 10,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          errorText: _errors['phone'],
+          helperText: '10 digits for OTP and deal communications',
+          onChanged: (_) => setState(() => _errors.remove('phone')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'WhatsApp Number (Optional)',
+          controller: _whatsappController,
+          placeholder: '10-digit WhatsApp number',
+          keyboardType: TextInputType.phone,
+          maxLength: 10,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          errorText: _errors['whatsapp'],
+          helperText: 'Instant notifications and entrepreneur chats',
+          onChanged: (_) => setState(() => _errors.remove('whatsapp')),
+        ),
+      ],
+    );
+  }
+
+  // ── SECTION 2: ADDRESS & OPERATIONS ───────────────────────────────────────
+
+  Widget _buildSection2() {
+    return _buildCard(
+      title: '2. Address & Operations',
+      subtitle: 'Office location and operating region',
+      icon: Icons.location_on_outlined,
+      children: [
+        const Text(
+          'Country',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFCBD5E1)),
+          ),
+          child: const Text('India', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        ),
+        const SizedBox(height: 12),
+
+        _buildDropdown(
+          label: 'State *',
+          value: _state,
+          items: FundingCatalog.indianStates,
+          errorText: _errors['state'],
+          helperText: 'State where your investment office is registered',
+          onChanged: (val) {
+            setState(() {
+              _state = val;
+              _errors.remove('state');
+            });
+          },
+        ),
+        if (_state == 'Other') ...[
+          const SizedBox(height: 8),
+          _buildTextField(
+            label: 'Enter State *',
+            controller: _stateOtherController,
+            placeholder: 'e.g. Specific Territory',
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'City *',
+          controller: _cityController,
+          placeholder: 'e.g. Mumbai, Bengaluru, Delhi',
+          errorText: _errors['city'],
+          helperText: 'Primary operating city',
+          onChanged: (_) => setState(() => _errors.remove('city')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'Pincode *',
+          controller: _pincodeController,
+          placeholder: '6-digit Pincode',
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          errorText: _errors['pincode'],
+          helperText: '6-digit Indian Postal Code',
+          onChanged: (_) => setState(() => _errors.remove('pincode')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'Street Address *',
+          controller: _addressController,
+          placeholder: 'Office/Suite No, Building Name, Street, Landmark',
+          errorText: _errors['address'],
+          helperText: 'Full physical office or correspondence address',
+          onChanged: (_) => setState(() => _errors.remove('address')),
+        ),
+        const SizedBox(height: 12),
+
+        ProfileLocationPicker(
+          lat: _lat,
+          lng: _lng,
+          mapLinkController: _mapLinkController,
+          onPinned: (lat, lng) {
+            setState(() {
+              _lat = lat;
+              _lng = lng;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  // ── SECTION 3: INVESTMENT THESIS & TICKET SIZE ────────────────────────────
+
+  Widget _buildSection3() {
+    return _buildCard(
+      title: '3. Investment Thesis & Ticket Size',
+      subtitle: 'Cheque size, sectors and funding stages',
+      icon: Icons.monetization_on_outlined,
+      children: [
+        _buildTextField(
+          label: 'Target Sectors *',
+          controller: _categoriesOfferedController,
+          placeholder: 'e.g. Tech, Retail, Apparel, Handicrafts, Healthcare',
+          errorText: _errors['categoriesOffered'],
+          helperText: 'Industries and venture categories you actively fund',
+          onChanged: (_) => setState(() => _errors.remove('categoriesOffered')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'Target Audience / Who I Fund *',
+          controller: _audienceController,
+          placeholder: 'e.g. Women Founders, Early-stage D2C, Tech Startups',
+          errorText: _errors['audience'],
+          helperText: 'Founder personas, demographics, or business models',
+          onChanged: (_) => setState(() => _errors.remove('audience')),
+        ),
+        const SizedBox(height: 12),
+
+        _buildDropdown(
+          label: 'Investment Stage *',
+          value: _ticketMode,
+          items: FundingCatalog.ticketModes,
+          helperText: 'Preferred investment vehicle or stage',
+          onChanged: (val) {
+            if (val != null) setState(() => _ticketMode = val);
+          },
+        ),
+        const SizedBox(height: 12),
+
+        _buildTextField(
+          label: 'Typical Cheque / Budget (₹) *',
+          controller: _typicalPriceController,
+          placeholder: 'e.g. 50000',
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          errorText: _errors['typicalPrice'],
+          helperText: 'Average or starting investment ticket (Minimum ₹1,000)',
+          onChanged: (_) => setState(() => _errors.remove('typicalPrice')),
+        ),
+      ],
+    );
+  }
+
+  // ── SECTION 4: PITCH MEETING & CALL SLOTS ─────────────────────────────────
+
+  Widget _buildSection4() {
+    return _buildCard(
+      title: '4. Pitch Meeting & Call Slots',
+      subtitle: 'Calendar availability for entrepreneur pitch discussions',
+      icon: Icons.calendar_today_outlined,
+      children: [
+        _buildTextField(
+          label: 'Available Days *',
+          controller: _openDaysController,
+          placeholder: 'e.g. Mon-Fri or Monday, Wednesday, Friday',
+          errorText: _errors['openDays'],
+          helperText: 'Days open for 1-on-1 pitch presentations',
+          onChanged: (_) => setState(() => _errors.remove('openDays')),
+        ),
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Start Time *',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                  const SizedBox(height: 5),
+                  InkWell(
+                    onTap: () => _selectTime(true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time, size: 18, color: Color(0xFF64748B)),
+                          const SizedBox(width: 8),
+                          Text(_openTime != null ? _openTime!.format(context) : '09:00 AM'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('End Time *',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                  const SizedBox(height: 5),
+                  InkWell(
+                    onTap: () => _selectTime(false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.access_time, size: 18, color: Color(0xFF64748B)),
+                          const SizedBox(width: 8),
+                          Text(_closeTime != null ? _closeTime!.format(context) : '06:00 PM'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ── SECTION 5: PROFILE BIO & MENTORSHIP FOCUS ─────────────────────────────
+
+  Widget _buildSection5() {
+    return _buildCard(
+      title: '5. Profile Bio & Mentorship Focus',
+      subtitle: 'Investment criteria, background and value-add',
+      icon: Icons.edit_note_outlined,
+      children: [
+        _buildTextField(
+          label: 'Bio & Investment Criteria *',
+          controller: _bioController,
+          placeholder:
+              'Briefly introduce your investment criteria, background, support, and mentorship expertise...',
+          maxLines: 4,
+          errorText: _errors['bio'],
+          helperText: 'Introduction visible to entrepreneurs (Minimum 15 characters)',
+          onChanged: (_) => setState(() => _errors.remove('bio')),
+        ),
+      ],
+    );
+  }
+
+  // ── SECTION 6: PAYOUT & SETTLEMENT ACCOUNT ────────────────────────────────
+
+  Widget _buildSection6() {
+    return _buildCard(
+      title: '6. Payout & Settlement Account',
+      subtitle: 'Receiving returns, escrow refunds and settlements',
+      icon: Icons.account_balance_outlined,
+      children: [
+        const Text(
+          'Select Settlement Method',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: ChoiceChip(
+                label: const Center(child: Text('UPI ID')),
+                selected: _payoutMode == 'UPI',
+                selectedColor: const Color(0xFFFFE4E6),
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _payoutMode == 'UPI'
+                      ? InvestorProfileCompletionScreen.primary
+                      : const Color(0xFF475569),
+                ),
+                onSelected: (val) {
+                  if (val) setState(() => _payoutMode = 'UPI');
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ChoiceChip(
+                label: const Center(child: Text('Bank Account')),
+                selected: _payoutMode == 'BANK',
+                selectedColor: const Color(0xFFFFE4E6),
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _payoutMode == 'BANK'
+                      ? InvestorProfileCompletionScreen.primary
+                      : const Color(0xFF475569),
+                ),
+                onSelected: (val) {
+                  if (val) setState(() => _payoutMode = 'BANK');
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+
+        if (_payoutMode == 'UPI') ...[
+          _buildTextField(
+            label: 'UPI ID',
+            controller: _upiIdController,
+            placeholder: 'e.g. username@okhdfcbank',
+            helperText: 'Virtual Payment Address for returns/refund settlements',
+          ),
+        ] else ...[
+          _buildTextField(
+            label: 'Account Holder Name',
+            controller: _bankAccountHolderController,
+            placeholder: 'Name as per bank records',
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            label: 'Bank Name',
+            controller: _bankNameController,
+            placeholder: 'e.g. HDFC Bank, ICICI Bank, SBI',
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            label: 'Bank Account Number',
+            controller: _bankAccountNumberController,
+            placeholder: 'Enter bank account number (9 to 18 digits)',
+            obscureText: true,
+            keyboardType: TextInputType.number,
+            maxLength: 18,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(18)],
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            label: 'Confirm Account Number',
+            controller: _confirmAccountNumberController,
+            placeholder: 'Re-enter bank account number',
+            keyboardType: TextInputType.number,
+            maxLength: 18,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(18)],
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            label: 'IFSC Code',
+            controller: _bankIfscController,
+            placeholder: 'e.g. HDFC0001234',
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 11,
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            label: 'Branch Name',
+            controller: _bankBranchController,
+            placeholder: 'e.g. Nariman Point Branch',
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ── Action Buttons ────────────────────────────────────────────────────────
+
+  Widget _buildActionButtons(bool isComplete) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: (_saving || _submitting) ? null : _submitForVerification,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isComplete
+                  ? const Color(0xFF10B981)
+                  : InvestorProfileCompletionScreen.primary,
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: _submitting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.send_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        isComplete ? 'Submit for Admin Verification' : 'Verify & Submit Profile',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: OutlinedButton(
+            onPressed: (_saving || _submitting) ? null : _saveDraft,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: InvestorProfileCompletionScreen.navy,
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: _saving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.save_outlined, size: 18),
+                      SizedBox(width: 6),
+                      Text('Save Draft', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── UI Helpers ────────────────────────────────────────────────────────────
+
+  Widget _buildCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(color: Color(0x06000000), blurRadius: 8, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFE4E6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: InvestorProfileCompletionScreen.primary, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: InvestorProfileCompletionScreen.navy,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24, thickness: 1, color: Color(0xFFF1F5F9)),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    String? placeholder,
+    String? helperText,
+    String? errorText,
+    TextInputType keyboardType = TextInputType.text,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    bool obscureText = false,
     int maxLines = 1,
-    String? hint,
-    bool required = false,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
+    void Function(String)? onChanged,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        maxLength: maxLength,
-        inputFormatters: inputFormatters,
-        decoration: InputDecoration(
-          labelText: '$number $label${required ? ' *' : ''}',
-          hintText: hint,
-          counterText: maxLength != null ? '' : null,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.white,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
         ),
-      ),
+        const SizedBox(height: 5),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          obscureText: obscureText,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
+            counterText: '',
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            filled: true,
+            fillColor: Colors.white,
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: errorText != null ? const Color(0xFFE11D48) : const Color(0xFFCBD5E1),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: InvestorProfileCompletionScreen.primary,
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+        if (errorText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorText,
+            style: const TextStyle(fontSize: 11, color: Color(0xFFE11D48), fontWeight: FontWeight.w500),
+          ),
+        ] else if (helperText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            helperText,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _dropdown({
-    required String number,
+  Widget _buildDropdown({
     required String label,
     required String? value,
-    required List<String> options,
-    required ValueChanged<String?> onChanged,
-    bool required = false,
+    required List<String> items,
+    required void Function(String?) onChanged,
+    String? helperText,
+    String? errorText,
   }) {
-    final items = [...options];
-    if (value != null && value.isNotEmpty && !items.contains(value)) items.add(value);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: DropdownButtonFormField<String>(
-        initialValue: value != null && items.contains(value) ? value : null,
-        decoration: InputDecoration(
-          labelText: '$number $label${required ? ' *' : ''}',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          filled: true,
-          fillColor: Colors.white,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
         ),
-        items: items.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-        onChanged: onChanged,
-      ),
-    );
-  }
-
-  Widget _chips(List<String> options, Set<String> selected) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: options.map((item) {
-        final on = selected.contains(item);
-        return FilterChip(
-          label: Text(item),
-          selected: on,
-          onSelected: (v) => setState(() {
-            if (v) {
-              selected.add(item);
-            } else {
-              selected.remove(item);
-            }
-          }),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _timeTile(String label, TimeOfDay? value, void Function(TimeOfDay t) apply) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(label),
-        subtitle: Text(value == null ? 'Tap to pick' : FundingCatalog.formatTime(value)),
-        trailing: const Icon(Icons.schedule),
-        onTap: () => _pickClock(apply, value),
-      ),
-    );
-  }
-
-  Widget _uploadTile(String title, String? path, bool loading, VoidCallback onTap) {
-    final uploaded = path != null && path.trim().isNotEmpty;
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: loading
-          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-          : Icon(uploaded ? Icons.check_circle : Icons.upload_file, color: ModuleTheme.primary),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-      subtitle: Text(uploaded ? 'Uploaded' : 'JPG or PNG · optional'),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: loading ? null : onTap,
+        const SizedBox(height: 5),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: errorText != null ? const Color(0xFFE11D48) : const Color(0xFFCBD5E1),
+            ),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              value: items.contains(value) ? value : null,
+              hint: const Text('Select an option', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+              items: items.map((item) {
+                return DropdownMenuItem<String>(
+                  value: item,
+                  child: Text(item, style: const TextStyle(fontSize: 13)),
+                );
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+        if (errorText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            errorText,
+            style: const TextStyle(fontSize: 11, color: Color(0xFFE11D48), fontWeight: FontWeight.w500),
+          ),
+        ] else if (helperText != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            helperText,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+          ),
+        ],
+      ],
     );
   }
 }

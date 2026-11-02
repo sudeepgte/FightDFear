@@ -32,6 +32,21 @@ class SosService {
   Future<Map<String, dynamic>> cancel(int sosId) =>
       _api.post('/api/sos/cancel/$sosId', body: <String, dynamic>{}, timeout: _sosTimeout);
 
+  Future<Map<String, dynamic>> updateLocation({
+    required int sosId,
+    required double latitude,
+    required double longitude,
+  }) {
+    return _api.post(
+      '/api/sos/location/$sosId',
+      body: {
+        'latitude': latitude,
+        'longitude': longitude,
+      },
+      timeout: const Duration(seconds: 10),
+    );
+  }
+
   Future<Map<String, dynamic>> history() =>
       _api.get('/api/sos/history', timeout: _sosTimeout);
 }

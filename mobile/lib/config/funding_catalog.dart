@@ -16,6 +16,19 @@ class FundingCatalog {
     'Services',
   ];
 
+  static const entrepreneurBusinessCategories = [
+    'Tea Shop',
+    'Food & Catering',
+    'Apparel & Fashion',
+    'Beauty & Wellness',
+    'Handicrafts & Arts',
+    'Education & Tutoring',
+    'Tech & Digital Services',
+    'Retail & E-commerce',
+    'Agriculture & Dairy',
+    'Other',
+  ];
+
   static const cancelPolicy =
       'Pending interest can be withdrawn anytime. Meetings are free to cancel until 2 hours before. Released funds are not refunded.';
 

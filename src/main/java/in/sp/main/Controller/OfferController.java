@@ -49,7 +49,7 @@ public class OfferController {
 
     // ✅ Salon adds an offer
     @GetMapping("/addOffer")
-    public String addOfferPage(@RequestParam Long salonId, HttpSession session, Model model) {
+    public String addOfferPage(@RequestParam("salonId") Long salonId, HttpSession session, Model model) {
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
         if (loggedSalon == null || !loggedSalon.getId().equals(salonId)) {
             return "redirect:/salons/login";
@@ -66,7 +66,7 @@ public class OfferController {
     // ✅ Save Offer
     @PostMapping("/saveOffer")
     public String saveOffer(@ModelAttribute Offer offer, 
-                            @RequestParam Long salonId,
+                            @RequestParam("salonId") Long salonId,
                             @RequestParam(value = "serviceIds", required = false) List<Long> serviceIds,
                             @RequestParam(value = "startTimeStr", required = false) String startTimeStr,
                             @RequestParam(value = "endTimeStr", required = false) String endTimeStr,
@@ -182,7 +182,7 @@ public class OfferController {
 
     // ✅ Salon views all offers
     @GetMapping("/viewOffers")
-    public String viewOffers(@RequestParam Long salonId, HttpSession session, Model model) {
+    public String viewOffers(@RequestParam("salonId") Long salonId, HttpSession session, Model model) {
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
         if (loggedSalon == null || !loggedSalon.getId().equals(salonId)) return "redirect:/salons/login";
         
@@ -278,9 +278,9 @@ public class OfferController {
 
     // ✅ Save Offer Booking
     @PostMapping("/saveOfferBooking")
-    public String saveOfferBooking(@RequestParam Long offerId, 
-                                   @RequestParam String customerName,
-                                   @RequestParam String customerPhone,
+    public String saveOfferBooking(@RequestParam("offerId") Long offerId, 
+                                   @RequestParam("customerName") String customerName,
+                                   @RequestParam("customerPhone") String customerPhone,
                                    HttpSession session,
                                    Model model) {
         User user = (User) session.getAttribute("user");

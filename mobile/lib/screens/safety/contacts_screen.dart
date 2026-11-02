@@ -228,25 +228,65 @@ class _ContactsScreenState extends State<ContactsScreen> {
     return result;
   }
 
+  bool _submitting = false;
+
+  Future<void> _silentRefresh() async {
+    try {
+      final res = await context.read<AuthState>().api.get('/api/me/trusted-contacts');
+      if (!mounted) return;
+      if (res['success'] == true && res['contacts'] is List) {
+        final list = (res['contacts'] as List);
+        setState(() {
+          _contacts = list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          _error = null;
+        });
+      }
+    } catch (_) {}
+  }
+
   Future<void> _add() async {
+    if (_submitting) return;
     final data = await _promptContact();
     if (data == null || !mounted) return;
 
-    final res = await context.read<AuthState>().api.post('/api/me/trusted-contacts', body: data);
-    if (!mounted) return;
-    if (res['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contact added — SOS can call, SMS, WhatsApp & email them')),
-      );
-      await _load();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['error']?.toString() ?? 'Could not add contact')),
-      );
+    setState(() => _submitting = true);
+    try {
+      final res = await context.read<AuthState>().api.post('/api/me/trusted-contacts', body: data);
+      if (!mounted) return;
+
+      final bool isSuccess = res['success'] == true ||
+          res['contact'] != null ||
+          (res['_status'] != null && (res['_status'] == 200 || res['_status'] == 201));
+
+      if (isSuccess) {
+        if (res['contact'] is Map) {
+          final newContact = Map<String, dynamic>.from(res['contact'] as Map);
+          _contacts.removeWhere((c) => c['id'] == newContact['id']);
+          _contacts.add(newContact);
+          _error = null;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Contact added successfully')),
+        );
+        _silentRefresh();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['error']?.toString() ?? 'Could not add contact')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not add contact: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
   Future<void> _edit(Map<String, dynamic> c) async {
+    if (_submitting) return;
     final id = c['id'];
     final contactId = id is int ? id : int.tryParse('$id');
     if (contactId == null) return;
@@ -254,20 +294,44 @@ class _ContactsScreenState extends State<ContactsScreen> {
     final data = await _promptContact(title: 'Edit trusted contact', initial: c);
     if (data == null || !mounted) return;
 
-    final res = await context.read<AuthState>().api.put(
-          '/api/me/trusted-contacts/$contactId',
-          body: data,
+    setState(() => _submitting = true);
+    try {
+      final res = await context.read<AuthState>().api.put(
+            '/api/me/trusted-contacts/$contactId',
+            body: data,
+          );
+      if (!mounted) return;
+
+      final bool isSuccess = res['success'] == true ||
+          res['contact'] != null ||
+          (res['_status'] != null && (res['_status'] == 200 || res['_status'] == 204));
+
+      if (isSuccess) {
+        if (res['contact'] is Map) {
+          final updated = Map<String, dynamic>.from(res['contact'] as Map);
+          final idx = _contacts.indexWhere((item) => item['id'] == contactId);
+          if (idx >= 0) {
+            _contacts[idx] = updated;
+          }
+          _error = null;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Contact updated successfully')),
         );
-    if (!mounted) return;
-    if (res['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contact updated')),
-      );
-      await _load();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['error']?.toString() ?? 'Could not update contact')),
-      );
+        _silentRefresh();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['error']?.toString() ?? 'Could not update contact')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update contact: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 

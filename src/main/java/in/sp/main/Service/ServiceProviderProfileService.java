@@ -57,7 +57,8 @@ public class ServiceProviderProfileService {
         }
         if (PartnerLifecycleSupport.blank(provider.getBarCouncilId())) missing.add("1.8 Bar council ID");
         if (PartnerLifecycleSupport.blank(provider.getAddress())) missing.add("2.1 Chamber address");
-        if (PartnerLifecycleSupport.blank(provider.getCity())) missing.add("2.3 City");
+        String cityVal = provider.getCity() != null && !provider.getCity().isBlank() ? provider.getCity() : provider.getDistrict();
+        if (PartnerLifecycleSupport.blank(cityVal)) missing.add("2.3 City");
         if (PartnerLifecycleSupport.blank(provider.getState())) missing.add("2.4 State");
         if (PartnerLifecycleSupport.blank(provider.getPincode()) || !provider.getPincode().trim().matches("\\d{6}")) {
             missing.add("2.5 Pincode");
@@ -202,8 +203,11 @@ public class ServiceProviderProfileService {
         if (p == null || body == null) return p;
         if (body.get("designation") != null) p.setDesignation(blankToNull(str(body.get("designation"))));
         if (body.get("whatsappNumber") != null) p.setWhatsappNumber(blankToNull(str(body.get("whatsappNumber"))));
+        if (body.get("country") != null) p.setCountry(blankToNull(str(body.get("country"))));
+        if (body.get("district") != null) p.setDistrict(blankToNull(str(body.get("district"))));
         if (body.get("address") != null) p.setAddress(blankToNull(str(body.get("address"))));
         if (body.get("city") != null) p.setCity(blankToNull(str(body.get("city"))));
+        if (p.getCity() == null && p.getDistrict() != null) p.setCity(p.getDistrict());
         if (body.get("state") != null) p.setState(blankToNull(str(body.get("state"))));
         if (body.get("pincode") != null) p.setPincode(blankToNull(str(body.get("pincode"))));
         if (body.get("latitude") != null && !str(body.get("latitude")).isBlank()) {
@@ -257,8 +261,10 @@ public class ServiceProviderProfileService {
         m.put("isLawyer", provider.getCategory() == ProviderCategory.WOMEN_LAWYER);
         m.put("designation", provider.getDesignation());
         m.put("whatsappNumber", provider.getWhatsappNumber());
+        m.put("country", provider.getCountry() != null ? provider.getCountry() : "India");
+        m.put("district", provider.getDistrict() != null ? provider.getDistrict() : provider.getCity());
         m.put("address", provider.getAddress());
-        m.put("city", provider.getCity());
+        m.put("city", provider.getCity() != null ? provider.getCity() : provider.getDistrict());
         m.put("state", provider.getState());
         m.put("pincode", provider.getPincode());
         m.put("latitude", provider.getLatitude());

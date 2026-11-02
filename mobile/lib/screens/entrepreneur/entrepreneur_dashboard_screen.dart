@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -34,6 +35,12 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
   List<Map<String, dynamic>> _proposals = [];
   List<Map<String, dynamic>> _interests = [];
   Map<String, dynamic> _funding = {};
+  List<Map<String, dynamic>> _questions = [];
+  List<Map<String, dynamic>> _approvedInvestors = [];
+  double _escrowHeld = 0.0;
+  double _escrowReleased = 0.0;
+  bool _answeringQuestion = false;
+  final Map<int, TextEditingController> _answerControllers = {};
   bool _canCreate = false;
   bool _creating = false;
   bool _cancelling = false;
@@ -151,6 +158,48 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
       .where((p) => (p['status']?.toString() ?? '').toUpperCase() != 'CANCELLED')
       .length;
 
+  double get _payoutBalance => (_entrepreneur['payoutBalance'] is num)
+      ? (_entrepreneur['payoutBalance'] as num).toDouble()
+      : 0.0;
+
+  Future<void> _postAnswer(int questionId) async {
+    final controller = _answerControllers[questionId];
+    final answer = controller?.text.trim() ?? '';
+    if (answer.isEmpty) {
+      _toast('Please enter an answer', error: true);
+      return;
+    }
+    setState(() => _answeringQuestion = true);
+    try {
+      final res = await _svc.answerQuestion(questionId, answer);
+      if (res['success'] == true) {
+        _toast('Answer posted successfully!');
+        controller?.clear();
+        await _load();
+      } else {
+        _toast(res['error']?.toString() ?? 'Failed to post answer', error: true);
+      }
+    } catch (e) {
+      _toast('$e', error: true);
+    } finally {
+      if (mounted) setState(() => _answeringQuestion = false);
+    }
+  }
+
+  Future<void> _requestPayout() async {
+    try {
+      final res = await _svc.requestPayout();
+      if (res['success'] == true) {
+        _toast('Payout request submitted successfully!');
+        await _load();
+      } else {
+        _toast(res['error']?.toString() ?? 'Payout request failed', error: true);
+      }
+    } catch (e) {
+      _toast('$e', error: true);
+    }
+  }
+
   // ── Data ──────────────────────────────────────────────────────────────────
 
   Future<void> _load() async {
@@ -167,6 +216,10 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
         _proposals = ModuleTheme.toList(res['proposals']);
         _interests = ModuleTheme.toList(res['interests']);
         _funding = Map<String, dynamic>.from(res['funding'] ?? {});
+        _questions = ModuleTheme.toList(res['questions']);
+        _approvedInvestors = ModuleTheme.toList(res['approvedInvestors']);
+        _escrowHeld = (res['escrowHeld'] is num) ? (res['escrowHeld'] as num).toDouble() : 0.0;
+        _escrowReleased = (res['escrowReleased'] is num) ? (res['escrowReleased'] as num).toDouble() : 0.0;
         final canCreateRaw = res['canCreateProposal'];
         _canCreate = canCreateRaw == true ||
             _partnerStatus == 'APPROVED' ||
@@ -258,19 +311,27 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
 
     final isEdit = existing != null;
     final title = TextEditingController(text: existing?['title']?.toString() ?? '');
-    final desc = TextEditingController(text: existing?['description']?.toString() ?? '');
+    final location = TextEditingController(
+      text: existing?['location']?.toString() ?? _entrepreneur['businessLocation']?.toString() ?? '',
+    );
     final funding = TextEditingController(
       text: existing?['fundingNeeded']?.toString() ?? '100000',
     );
     final income = TextEditingController(
       text: existing?['expectedMonthlyIncome']?.toString() ?? '0',
     );
+    final desc = TextEditingController(text: existing?['description']?.toString() ?? '');
 
     final existingCat = FundingCatalog.normalize(existing?['category']?.toString()) ??
         FundingCatalog.normalize(_entrepreneur['businessCategory']?.toString());
     String category = (existingCat != null && FundingCatalog.categories.contains(existingCat))
         ? existingCat
         : FundingCatalog.categories.first;
+
+    String? selectedDocPath;
+    String? selectedDocName;
+    String? selectedVideoPath;
+    String? selectedVideoName;
 
     String? formError;
     bool submitting = false;
@@ -281,22 +342,65 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
         barrierDismissible: false,
         builder: (ctx) => StatefulBuilder(
           builder: (ctx, setLocal) {
+            Future<void> pickDocument() async {
+              try {
+                final result = await FilePicker.platform.pickFiles(
+                  type: FileType.custom,
+                  allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+                );
+                if (result != null && result.files.single.path != null) {
+                  setLocal(() {
+                    selectedDocPath = result.files.single.path;
+                    selectedDocName = result.files.single.name;
+                  });
+                }
+              } catch (e) {
+                setLocal(() => formError = 'Could not pick document file');
+              }
+            }
+
+            Future<void> pickVideo() async {
+              try {
+                final result = await FilePicker.platform.pickFiles(
+                  type: FileType.video,
+                );
+                if (result != null && result.files.single.path != null) {
+                  setLocal(() {
+                    selectedVideoPath = result.files.single.path;
+                    selectedVideoName = result.files.single.name;
+                  });
+                }
+              } catch (e) {
+                setLocal(() => formError = 'Could not pick video file');
+              }
+            }
+
             Future<void> submit() async {
               if (submitting) return;
               final t = title.text.trim();
+              final locVal = location.text.trim();
               final fundingVal = double.tryParse(funding.text.trim());
               final incomeVal = double.tryParse(income.text.trim().isEmpty ? '0' : income.text.trim());
+              final d = desc.text.trim();
 
               if (t.isEmpty) {
-                setLocal(() => formError = 'Title is required');
+                setLocal(() => formError = 'Proposal title is required');
+                return;
+              }
+              if (locVal.isEmpty) {
+                setLocal(() => formError = 'Business location is required');
                 return;
               }
               if (fundingVal == null || fundingVal <= 0) {
-                setLocal(() => formError = 'Funding needed must be greater than 0');
+                setLocal(() => formError = 'Investment needed must be greater than 0');
                 return;
               }
               if (incomeVal == null || incomeVal < 0) {
                 setLocal(() => formError = 'Expected monthly income must be 0 or greater');
+                return;
+              }
+              if (d.isEmpty) {
+                setLocal(() => formError = 'Business description is required');
                 return;
               }
 
@@ -308,10 +412,10 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
               final body = {
                 'title': t,
                 'category': category,
-                'description': desc.text.trim(),
-                'location': existing?['location'] ?? _entrepreneur['businessLocation'],
+                'location': locVal,
                 'fundingNeeded': fundingVal,
                 'expectedMonthlyIncome': incomeVal,
+                'description': d,
               };
 
               Map<String, dynamic> res;
@@ -326,8 +430,23 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                     return;
                   }
                   res = await _svc.updateProposal(id, body);
+                  if (res['success'] == true && (selectedDocPath != null || selectedVideoPath != null)) {
+                    await _svc.uploadProposalFiles(
+                      proposalId: id,
+                      docPath: selectedDocPath,
+                      videoPath: selectedVideoPath,
+                    );
+                  }
                 } else {
                   res = await _svc.createProposal(body);
+                  final newId = res['proposal'] != null ? int.tryParse(res['proposal']['id']?.toString() ?? '') : null;
+                  if (res['success'] == true && newId != null && (selectedDocPath != null || selectedVideoPath != null)) {
+                    await _svc.uploadProposalFiles(
+                      proposalId: newId,
+                      docPath: selectedDocPath,
+                      videoPath: selectedVideoPath,
+                    );
+                  }
                 }
               } catch (e) {
                 if (!ctx.mounted) return;
@@ -355,24 +474,26 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
             }
 
             return AlertDialog(
-              title: Text(isEdit ? 'Edit Funding Proposal' : 'New Funding Proposal'),
+              title: Text(isEdit ? 'Edit Business Proposal' : 'Create New Business Proposal'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TextField(
                       controller: title,
                       enabled: !submitting,
                       decoration: const InputDecoration(
-                        labelText: 'Proposal title *',
+                        labelText: 'Proposal Title *',
+                        hintText: 'e.g. Expansion of Tailoring Shop',
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       initialValue: category,
                       decoration: const InputDecoration(
-                        labelText: 'Category',
+                        labelText: 'Category *',
                         border: OutlineInputBorder(),
                       ),
                       items: FundingCatalog.categories
@@ -382,38 +503,80 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                           ? null
                           : (v) => setLocal(() => category = v ?? category),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     TextField(
-                      controller: desc,
+                      controller: location,
                       enabled: !submitting,
-                      maxLines: 3,
                       decoration: const InputDecoration(
-                        labelText: 'Description',
+                        labelText: 'Business Location *',
+                        hintText: 'City or State',
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: funding,
                       enabled: !submitting,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: 'Funding needed (Rs) *',
+                        labelText: 'Investment Needed (₹) *',
+                        hintText: 'Total funding requested',
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: income,
                       enabled: !submitting,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: 'Expected monthly income (Rs)',
+                        labelText: 'Expected Monthly Income (₹) *',
+                        hintText: 'Expected profit/income',
                         border: OutlineInputBorder(),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: desc,
+                      enabled: !submitting,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Business Description *',
+                        hintText: 'Detailed business model, growth plan, and usage of funds...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Media Attachments',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: submitting ? null : pickDocument,
+                      icon: const Icon(Icons.attach_file, size: 18),
+                      label: Text(
+                        selectedDocName != null
+                            ? 'Photos / Doc: $selectedDocName'
+                            : 'Upload Business Photos / Docs',
+                        style: const TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    OutlinedButton.icon(
+                      onPressed: submitting ? null : pickVideo,
+                      icon: const Icon(Icons.videocam_outlined, size: 18),
+                      label: Text(
+                        selectedVideoName != null
+                            ? 'Video: $selectedVideoName'
+                            : 'Video Pitch (Optional)',
+                        style: const TextStyle(fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     if (formError != null) ...[
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       Text(formError!, style: TextStyle(color: Colors.red.shade700, fontSize: 13)),
                     ],
                   ],
@@ -433,7 +596,7 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : Text(isEdit ? 'Save' : 'Submit'),
+                      : Text(isEdit ? 'Save' : 'Submit Proposal'),
                 ),
               ],
             );
@@ -447,9 +610,10 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
       }
     } finally {
       title.dispose();
-      desc.dispose();
+      location.dispose();
       funding.dispose();
       income.dispose();
+      desc.dispose();
       if (mounted) setState(() => _creating = false);
     }
   }
@@ -683,6 +847,18 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
           _metricsGrid(),
           const SizedBox(height: 14),
           _fundingProgressCard(),
+          const SizedBox(height: 16),
+          _section('Escrow & Payout Summary'),
+          const SizedBox(height: 10),
+          _escrowPayoutsCard(),
+          const SizedBox(height: 16),
+          _section('Investor Q&A Board (${_questions.length})'),
+          const SizedBox(height: 10),
+          _investorQnaCard(),
+          const SizedBox(height: 16),
+          _section('Approved Investors Directory (${_approvedInvestors.length})'),
+          const SizedBox(height: 10),
+          _approvedInvestorsCard(),
           const SizedBox(height: 16),
           _section('Quick Actions'),
           const SizedBox(height: 10),
@@ -1110,6 +1286,386 @@ class _EntrepreneurDashboardScreenState extends State<EntrepreneurDashboardScree
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _escrowPayoutsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDeco(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Escrow & Payout Summary',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: EntrepreneurDashboardScreen.navy,
+                ),
+              ),
+              if (_payoutBalance > 0)
+                ElevatedButton.icon(
+                  onPressed: _requestPayout,
+                  icon: const Icon(Icons.send, size: 14),
+                  label: const Text(
+                    'Request Payout',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF10B981),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Escrow Held',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFFB45309),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _money(_escrowHeld),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF78350F),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Escrow Released',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF166534),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _money(_escrowReleased),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF14532D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Payout Balance',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF475569),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _money(_payoutBalance),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _investorQnaCard() {
+    if (_questions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: _cardDeco(),
+        child: Row(
+          children: const [
+            Icon(Icons.question_answer_outlined, color: Color(0xFF94A3B8), size: 28),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'No investor questions yet. Questions asked by interested investors on your proposals will appear here.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: _questions.map((q) {
+        final qId = q['id'] is int ? q['id'] as int : int.tryParse('${q['id']}') ?? 0;
+        final questionText = q['question']?.toString() ?? '';
+        final answerText = q['answer']?.toString() ?? '';
+        final investorName = q['investorName']?.toString() ?? 'Interested Investor';
+        final investorCompany = q['investorCompany']?.toString() ?? '';
+        final proposalTitle = q['proposalTitle']?.toString() ?? 'Proposal';
+        final hasAnswer = answerText.isNotEmpty;
+
+        final controller = _answerControllers.putIfAbsent(qId, () => TextEditingController());
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: _cardDeco(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: const Color(0xFFFCE7F3),
+                    child: const Icon(
+                      Icons.person,
+                      size: 18,
+                      color: EntrepreneurDashboardScreen.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          investorName + (investorCompany.isNotEmpty ? ' ($investorCompany)' : ''),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        Text(
+                          'On: $proposalTitle',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: hasAnswer ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      hasAnswer ? 'Answered' : 'Pending Answer',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: hasAnswer ? const Color(0xFF166534) : const Color(0xFFB45309),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Q: $questionText',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              if (hasAnswer) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.reply, size: 16, color: Color(0xFF10B981)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          answerText,
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF334155)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        decoration: InputDecoration(
+                          hintText: 'Type your answer to this investor...',
+                          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _answeringQuestion ? null : () => _postAnswer(qId),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: EntrepreneurDashboardScreen.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text(
+                        'Reply',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _approvedInvestorsCard() {
+    if (_approvedInvestors.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: _cardDeco(),
+        child: const Text(
+          'No approved investors currently listed. Verified investors will appear here.',
+          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 120,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _approvedInvestors.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (_, i) {
+          final inv = _approvedInvestors[i];
+          final name = inv['fullName']?.toString() ?? 'Investor';
+          final company = inv['companyName']?.toString() ?? 'Fund';
+          final ticket = inv['ticketMode']?.toString() ?? 'Angel';
+          final cheque = inv['typicalCheque'];
+          final chequeStr = cheque is num && cheque > 0 ? _money(cheque) : 'Flexible';
+
+          return Container(
+            width: 170,
+            padding: const EdgeInsets.all(12),
+            decoration: _cardDeco(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: const Color(0xFFE0E7FF),
+                      child: const Icon(Icons.person, size: 18, color: Color(0xFF4338CA)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  company,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '$ticket · $chequeStr',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

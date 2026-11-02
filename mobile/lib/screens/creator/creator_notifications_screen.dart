@@ -47,7 +47,25 @@ class _CreatorNotificationsScreenState extends State<CreatorNotificationsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          if (_items.isNotEmpty)
+            TextButton.icon(
+              onPressed: () async {
+                final res = await _api.markAllNotificationsRead();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Marked ${res['markedCount'] ?? 0} notifications as read')),
+                  );
+                  _load();
+                }
+              },
+              icon: const Icon(Icons.done_all, size: 18),
+              label: const Text('Mark all read'),
+            ),
+        ],
+      ),
       body: _loading
           ? ModuleTheme.loading()
           : RefreshIndicator(

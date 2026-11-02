@@ -44,14 +44,14 @@ public class TrustedContactController {
     @PostMapping("/users/{userId}/trusted-contacts")
     public String addTrustedContact(
             @PathVariable Long userId,
-            @RequestParam String name,
-            @RequestParam String phone,
-            @RequestParam(required = false) String email,
-            @RequestParam String relation,
-            @RequestParam(required = false, defaultValue = "false") boolean isPrimary,
-            @RequestParam(required = false, defaultValue = "true") boolean canReceiveSMS,
-            @RequestParam(required = false, defaultValue = "true") boolean canReceiveEmail,
-            @RequestParam(required = false, defaultValue = "true") boolean canReceiveCall,
+            @RequestParam("name") String name,
+            @RequestParam("phone") String phone,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam("relation") String relation,
+            @RequestParam(value = "isPrimary", required = false, defaultValue = "false") boolean isPrimary,
+            @RequestParam(value = "canReceiveSMS", required = false, defaultValue = "true") boolean canReceiveSMS,
+            @RequestParam(value = "canReceiveEmail", required = false, defaultValue = "true") boolean canReceiveEmail,
+            @RequestParam(value = "canReceiveCall", required = false, defaultValue = "true") boolean canReceiveCall,
             HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";
 
@@ -122,14 +122,14 @@ public class TrustedContactController {
     public String updateTrustedContact(
             @PathVariable Long userId,
             @PathVariable Long contactId,
-            @RequestParam String name,
-            @RequestParam String phone,
-            @RequestParam(required = false) String email,
-            @RequestParam String relation,
-            @RequestParam(required = false, defaultValue = "false") boolean isPrimary,
-            @RequestParam(required = false, defaultValue = "true") boolean canReceiveSMS,
-            @RequestParam(required = false, defaultValue = "true") boolean canReceiveEmail,
-            @RequestParam(required = false, defaultValue = "true") boolean canReceiveCall,
+            @RequestParam("name") String name,
+            @RequestParam("phone") String phone,
+            @RequestParam(value = "email", required = false) String email,
+            @RequestParam("relation") String relation,
+            @RequestParam(value = "isPrimary", required = false, defaultValue = "false") boolean isPrimary,
+            @RequestParam(value = "canReceiveSMS", required = false, defaultValue = "true") boolean canReceiveSMS,
+            @RequestParam(value = "canReceiveEmail", required = false, defaultValue = "true") boolean canReceiveEmail,
+            @RequestParam(value = "canReceiveCall", required = false, defaultValue = "true") boolean canReceiveCall,
             HttpSession session) {
         if (!owns(session, userId)) return "redirect:/login";
         TrustedContact contact = trustedContactService.getTrustedContactById(contactId);

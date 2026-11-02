@@ -19,6 +19,7 @@ class FitnessCatalog {
     'Weight Loss Programs',
     'Weight Gain Programs',
     'Personal Training',
+    'Self-Defense Fitness',
     'Prenatal & Postnatal Fitness',
     'Meditation & Mindfulness',
     'Nutrition & Diet Consultation',
@@ -53,6 +54,7 @@ class FitnessCatalog {
       'Pending unpaid bookings can be cancelled anytime. Paid sessions can be cancelled until 2 hours before start. Completed sessions cannot be cancelled.';
 
   static const designations = [
+    'Certified Personal Trainer (CPT)',
     'Personal Trainer',
     'Yoga Instructor',
     'Zumba Instructor',
@@ -66,6 +68,7 @@ class FitnessCatalog {
   ];
 
   static const audiences = [
+    'Women Only',
     'Women',
     'Beginners',
     'Seniors',
@@ -90,7 +93,7 @@ class FitnessCatalog {
     'Wi-Fi',
   ];
 
-  static const sessionModes = ['Offline', 'Online', 'Hybrid'];
+  static const sessionModes = ['ONLINE', 'STUDIO', 'HYBRID', 'HOME', 'Offline', 'Online', 'Hybrid'];
 
   static const days = [
     'MONDAY',

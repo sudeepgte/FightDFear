@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/martial_arts_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/centre_auth_service.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../../widgets/ux_feedback.dart';
-import 'martial_arts_centre_profile_completion_screen.dart';
 import 'martial_arts_centre_login_screen.dart';
+import 'martial_arts_centre_pending_approval_screen.dart';
+import 'martial_arts_centre_profile_completion_screen.dart';
 
 class MartialArtsCentreDashboardScreen extends StatefulWidget {
   const MartialArtsCentreDashboardScreen({
@@ -40,7 +43,7 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
   void initState() {
     super.initState();
     _auth = CentreAuthService(context.read<AuthState>().api);
-    _tabs = TabController(length: 7, vsync: this);
+    _tabs = TabController(length: 10, vsync: this);
     _tabs.addListener(() {
       if (!_tabs.indexIsChanging) setState(() {});
     });
@@ -107,11 +110,514 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
 
   String get _managerName => _centre?['managerName']?.toString() ?? 'Centre Manager';
 
+  bool get _isApproved {
+    final status = (_centre?['centreProfileStatus'] ?? '').toString().toUpperCase();
+    return _centre?['approved'] == true || status == 'APPROVED';
+  }
+
+  Future<void> _pickTime(BuildContext ctx, TextEditingController ctrl) async {
+    final now = TimeOfDay.now();
+    final picked = await showTimePicker(context: ctx, initialTime: now);
+    if (picked != null && ctx.mounted) {
+      ctrl.text = picked.format(ctx);
+    }
+  }
+
+  Future<void> _showBatchForm([Map<String, dynamic>? existing]) async {
+    if (!_isApproved) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Features locked until admin approves your centre profile verification.'),
+          backgroundColor: Color(0xFFD97706),
+        ),
+      );
+      return;
+    }
+
+    final isEdit = existing != null;
+    final nameCtrl = TextEditingController(
+      text: existing?['name']?.toString() ?? 'Karate & Self-Defence Batch',
+    );
+    final instructorCtrl = TextEditingController(
+      text: existing?['instructor']?.toString() ?? _managerName,
+    );
+    final rawTimeSlot = existing?['timeSlot']?.toString().trim();
+    final timeSlot = (rawTimeSlot != null && rawTimeSlot.isNotEmpty)
+        ? rawTimeSlot
+        : '06:00 PM-07:00 PM';
+    final slotParts = timeSlot.split('-');
+    final startTimeCtrl = TextEditingController(
+      text: slotParts.isNotEmpty ? slotParts.first.trim() : '06:00 PM',
+    );
+    final endTimeCtrl = TextEditingController(
+      text: slotParts.length > 1 ? slotParts.last.trim() : '07:00 PM',
+    );
+    final feeCtrl = TextEditingController(text: '${existing?['fee'] ?? 1500}');
+    final capacityCtrl = TextEditingController(text: '${existing?['capacity'] ?? 20}');
+    final notesCtrl = TextEditingController(text: existing?['notes']?.toString() ?? '');
+    final startDateCtrl = TextEditingController(text: existing?['startDate']?.toString() ?? '');
+    final endDateCtrl = TextEditingController(text: existing?['endDate']?.toString() ?? '');
+    final batchCode = existing?['batchCode']?.toString() ??
+        'BAT-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    String program = existing?['style']?.toString() ?? 'Karate';
+    if (!RegOptions.martialArtsPrograms.contains(program)) {
+      program = RegOptions.martialArtsPrograms.first;
+    }
+    String batchType = existing?['batchType']?.toString() ?? 'Offline';
+    String status = existing?['status']?.toString() ?? 'Active';
+    final rawTrial = existing?['trialType']?.toString().trim();
+    String trialType = (rawTrial != null && rawTrial.isNotEmpty) ? rawTrial : 'None';
+    final rawBuffer = existing?['bufferMinutes'];
+    int bufferMinutes = rawBuffer is num
+        ? rawBuffer.toInt()
+        : int.tryParse('$rawBuffer') ?? 0;
+    final admissionCtrl = TextEditingController(text: '${existing?['admissionFee'] ?? 0}');
+    final selectedDays = <String>{
+      ...(existing?['availableDays']?.toString() ?? 'Mon,Wed,Fri')
+          .split(RegExp(r'[,/ ]+'))
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .map((e) {
+            final u = e.toUpperCase();
+            if (u.startsWith('MON')) return 'Mon';
+            if (u.startsWith('TUE')) return 'Tue';
+            if (u.startsWith('WED')) return 'Wed';
+            if (u.startsWith('THU')) return 'Thu';
+            if (u.startsWith('FRI')) return 'Fri';
+            if (u.startsWith('SAT')) return 'Sat';
+            if (u.startsWith('SUN')) return 'Sun';
+            return e;
+          }),
+    };
+    final id = existing?['id'];
+    String? formError;
+    bool isSaving = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          void submit() async {
+            setLocal(() => formError = null);
+            final name = nameCtrl.text.trim();
+            if (name.isEmpty) {
+              setLocal(() => formError = 'Please enter a batch name.');
+              return;
+            }
+            if (selectedDays.isEmpty) {
+              setLocal(() => formError = 'Please select at least one training day.');
+              return;
+            }
+            final start = startTimeCtrl.text.trim();
+            final end = endTimeCtrl.text.trim();
+            if (start.isEmpty || end.isEmpty) {
+              setLocal(() => formError = 'Start time and end time are required.');
+              return;
+            }
+            final capacity = int.tryParse(capacityCtrl.text.trim()) ?? 0;
+            if (capacity < 5 || capacity > 100) {
+              setLocal(() => formError = 'Maximum capacity must be between 5 and 100 trainees.');
+              return;
+            }
+            final fee = double.tryParse(feeCtrl.text.trim()) ?? -1;
+            if (fee < 0) {
+              setLocal(() => formError = 'Monthly fee must be ₹0 or greater.');
+              return;
+            }
+            final admissionFee = double.tryParse(admissionCtrl.text.trim()) ?? 0;
+            if (admissionFee < 0) {
+              setLocal(() => formError = 'Admission fee must be ₹0 or greater.');
+              return;
+            }
+
+            setLocal(() => isSaving = true);
+
+            final body = <String, dynamic>{
+              if (id != null) 'id': id,
+              'name': name,
+              'style': program,
+              'instructor': instructorCtrl.text.trim(),
+              'availableDays': selectedDays.join(','),
+              'timeSlot': '$start-$end',
+              'fee': fee,
+              'capacity': capacity,
+              'batchType': batchType,
+              'status': status,
+              'batchCode': batchCode,
+              'startDate': startDateCtrl.text.trim(),
+              'endDate': endDateCtrl.text.trim(),
+              'notes': notesCtrl.text.trim(),
+              'currentEnrollment': existing?['currentEnrollment'] ?? 0,
+              'admissionFee': admissionFee,
+              'bufferMinutes': bufferMinutes,
+              'trialType': trialType,
+            };
+
+            try {
+              final res = await _auth.saveBatch(body);
+              if (!ctx.mounted) return;
+              if (res['success'] == true) {
+                Navigator.pop(ctx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(res['message']?.toString() ??
+                          (isEdit ? 'Batch updated successfully.' : 'Batch created successfully.')),
+                      backgroundColor: const Color(0xFF16A34A),
+                    ),
+                  );
+                  await _load();
+                  if (_tabs.index != 1) {
+                    _tabs.animateTo(1);
+                  }
+                }
+              } else {
+                final err = res['message']?.toString() ?? res['error']?.toString() ?? 'Failed to save batch';
+                setLocal(() {
+                  formError = err;
+                  isSaving = false;
+                });
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(err), backgroundColor: Colors.red),
+                  );
+                }
+              }
+            } catch (e) {
+              if (!ctx.mounted) return;
+              setLocal(() {
+                formError = 'Error: $e';
+                isSaving = false;
+              });
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 16,
+              right: 16,
+              top: 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isEdit ? 'Edit batch' : 'Create batch',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Batch name *',
+                      border: OutlineInputBorder(),
+                      hintText: 'e.g. Karate & Self-Defence Batch',
+                    ),
+                    onChanged: (_) => setLocal(() {}),
+                  ),
+                  const SizedBox(height: 8),
+                  InputDecorator(
+                    decoration: const InputDecoration(labelText: 'Batch code', border: OutlineInputBorder()),
+                    child: Text(batchCode, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: program,
+                    decoration: const InputDecoration(labelText: 'Program *', border: OutlineInputBorder()),
+                    items: RegOptions.martialArtsPrograms.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
+                    onChanged: (v) => setLocal(() => program = v ?? program),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: instructorCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Instructor',
+                      hintText: 'Select / type trainer name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('Days *', style: TextStyle(fontWeight: FontWeight.w600)),
+                  Wrap(
+                    spacing: 6,
+                    children: const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) {
+                      final on = selectedDays.contains(d);
+                      return FilterChip(
+                        label: Text(d),
+                        selected: on,
+                        onSelected: (v) => setLocal(() {
+                          if (v) {
+                            selectedDays.add(d);
+                          } else {
+                            selectedDays.remove(d);
+                          }
+                        }),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: startTimeCtrl,
+                          readOnly: true,
+                          onTap: () async {
+                            await _pickTime(ctx, startTimeCtrl);
+                            setLocal(() {});
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Start time *',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.schedule),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: endTimeCtrl,
+                          readOnly: true,
+                          onTap: () async {
+                            await _pickTime(ctx, endTimeCtrl);
+                            setLocal(() {});
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'End time *',
+                            border: OutlineInputBorder(),
+                            suffixIcon: Icon(Icons.schedule),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: startDateCtrl,
+                          readOnly: true,
+                          onTap: () async {
+                            final d = await showDatePicker(
+                              context: ctx,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                            );
+                            if (d != null) {
+                              startDateCtrl.text =
+                                  '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                              setLocal(() {});
+                            }
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Start date',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: endDateCtrl,
+                          readOnly: true,
+                          onTap: () async {
+                            final d = await showDatePicker(
+                              context: ctx,
+                              initialDate: DateTime.now().add(const Duration(days: 30)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+                            );
+                            if (d != null) {
+                              endDateCtrl.text =
+                                  '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                              setLocal(() {});
+                            }
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'End date',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: feeCtrl,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setLocal(() {}),
+                    decoration: const InputDecoration(labelText: 'Fee (₹) *', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: capacityCtrl,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setLocal(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Maximum capacity (5–100) *',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const InputDecorator(
+                    decoration: InputDecoration(labelText: 'Current enrollment', border: OutlineInputBorder()),
+                    child: Text('0 (read-only)'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: admissionCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Admission fee (₹)', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<int>(
+                    initialValue: bufferMinutes,
+                    decoration: const InputDecoration(labelText: 'Buffer minutes', border: OutlineInputBorder()),
+                    items: const [0, 5, 10, 15]
+                        .map((m) => DropdownMenuItem(value: m, child: Text('$m min')))
+                        .toList(),
+                    onChanged: (v) => setLocal(() => bufferMinutes = v ?? 0),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: trialType,
+                    decoration: const InputDecoration(labelText: 'Trial class', border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(value: 'None', child: Text('None')),
+                      DropdownMenuItem(value: 'Free 1 class', child: Text('Free 1 class')),
+                      DropdownMenuItem(value: 'Paid trial', child: Text('Paid trial')),
+                    ],
+                    onChanged: (v) => setLocal(() => trialType = v ?? trialType),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: batchType,
+                    decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(value: 'Offline', child: Text('Offline')),
+                      DropdownMenuItem(value: 'Online', child: Text('Online')),
+                      DropdownMenuItem(value: 'Hybrid', child: Text('Hybrid')),
+                    ],
+                    onChanged: (v) => setLocal(() => batchType = v ?? batchType),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    initialValue: status,
+                    decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
+                    items: const [
+                      DropdownMenuItem(value: 'Active', child: Text('Active')),
+                      DropdownMenuItem(value: 'Upcoming', child: Text('Upcoming')),
+                      DropdownMenuItem(value: 'Full', child: Text('Full')),
+                      DropdownMenuItem(value: 'Closed', child: Text('Closed')),
+                    ],
+                    onChanged: (v) => setLocal(() => status = v ?? status),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: notesCtrl,
+                    maxLines: 2,
+                    decoration: const InputDecoration(labelText: 'Description / notes', border: OutlineInputBorder()),
+                  ),
+                  if (formError != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFFCA5A5)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: Colors.red, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              formError!,
+                              style: const TextStyle(color: Colors.red, fontSize: 13, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: isSaving ? null : submit,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: MartialArtsCentreDashboardScreen.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(
+                            isEdit ? 'Update Batch' : 'Save Batch',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                          ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   String _greeting() {
     final h = DateTime.now().hour;
     if (h < 12) return 'Good morning';
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
+  }
+
+  Widget _drawerTile(int index, IconData icon, String title) {
+    final isSelected = _tabs.index == index;
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isSelected ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF64748B),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+          fontSize: 14,
+          color: isSelected ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF1E293B),
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: const Color(0xFFFFF1F2),
+      onTap: () {
+        Navigator.pop(context);
+        _tabs.animateTo(index);
+        setState(() {});
+      },
+    );
   }
 
   @override
@@ -124,9 +630,77 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
       return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
     }();
     final baseUrl = context.read<AuthState>().api.baseUrl;
+    final isApproved = _isApproved;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
+      drawer: Drawer(
+        backgroundColor: Colors.white,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(
+                color: MartialArtsCentreDashboardScreen.navy,
+              ),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: MartialArtsCentreDashboardScreen.primary,
+                child: Icon(Icons.sports_martial_arts, color: Colors.white, size: 36),
+              ),
+              accountName: Text(
+                _centre?['name']?.toString() ?? 'Self-Defence Centre',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+              accountEmail: Text(
+                isApproved ? 'Verified & Approved' : 'Pending Verification Review',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: isApproved ? const Color(0xFF4ADE80) : const Color(0xFFFBBF24),
+                ),
+              ),
+            ),
+            _drawerTile(0, Icons.dashboard_outlined, 'Overview'),
+            _drawerTile(1, Icons.fitness_center_outlined, 'Programs & Batches'),
+            _drawerTile(2, Icons.groups_outlined, 'Students / Trainees'),
+            _drawerTile(3, Icons.fact_check_outlined, 'Attendance Tracking'),
+            _drawerTile(4, Icons.military_tech_outlined, 'Belt Grading & Skills'),
+            _drawerTile(5, Icons.badge_outlined, 'Instructor Staff'),
+            _drawerTile(6, Icons.videocam_outlined, 'Live Classes'),
+            _drawerTile(7, Icons.history_outlined, 'Past Sessions'),
+            _drawerTile(8, Icons.account_balance_wallet_outlined, 'Finance & Payouts'),
+            _drawerTile(9, Icons.settings_outlined, 'Centre Settings'),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.edit_note_outlined, color: Color(0xFF475569)),
+              title: const Text('Edit Full Profile', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+              onTap: () {
+                Navigator.pop(context);
+                _openProfileCompletion();
+              },
+            ),
+            if (!isApproved)
+              ListTile(
+                leading: const Icon(Icons.verified_outlined, color: Color(0xFFD97706)),
+                title: const Text('Check Verification Status', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => MartialArtsCentrePendingApprovalScreen(initialProfile: _centre)),
+                  );
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
+              title: const Text('Sign Out', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Color(0xFFEF4444))),
+              onTap: () {
+                Navigator.pop(context);
+                _logout();
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -162,15 +736,19 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: MartialArtsCentreDashboardScreen.primary,
+        backgroundColor: isApproved ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF64748B),
         elevation: 6,
-        onPressed: () {
-          _tabs.animateTo(1);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create a batch from the Batches tab')),
-          );
-        },
-        child: const Icon(Icons.add, size: 28),
+        onPressed: isApproved
+            ? () => _showBatchForm()
+            : () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Features locked until admin approves your centre profile verification.'),
+                    backgroundColor: Color(0xFFD97706),
+                  ),
+                );
+              },
+        child: Icon(isApproved ? Icons.add : Icons.lock_outline, size: 28),
       ),
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
@@ -186,9 +764,9 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
               _navItem(1, Icons.groups_outlined, Icons.groups, 'Students', 2),
               _navItem(2, Icons.fitness_center_outlined, Icons.fitness_center, 'Batches', 1),
               const SizedBox(width: 56),
-              _navItem(4, Icons.videocam_outlined, Icons.videocam, 'Live', 4),
-              _navItem(3, Icons.payments_outlined, Icons.payments, 'Finance', 5),
-              _navItem(5, Icons.person_outline, Icons.person, 'Profile', 6),
+              _navItem(4, Icons.military_tech_outlined, Icons.military_tech, 'Grading', 4),
+              _navItem(3, Icons.payments_outlined, Icons.payments, 'Finance', 8),
+              _navItem(5, Icons.person_outline, Icons.person, 'Profile', 9),
             ],
           ),
         ),
@@ -209,8 +787,94 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: _CentreProfileCard(centre: _centre, meta: _meta, baseUrl: baseUrl),
+                      child: _CentreProfileCard(
+                        centre: _centre,
+                        meta: _meta,
+                        baseUrl: baseUrl,
+                        onEditLocation: _openProfileCompletion,
+                      ),
                     ),
+                    if (!isApproved) ...[
+                      Container(
+                        margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFFBEB), Color(0xFFFEF3C7)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFFDE68A), width: 1.5),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD97706),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.hourglass_top_rounded, color: Colors.white, size: 18),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Text(
+                                          'Profile Submitted — Wait for Admin Verification',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF78350F),
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEE2E2),
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: const Color(0xFFFCA5A5)),
+                                        ),
+                                        child: const Text(
+                                          'LOCKED',
+                                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF991B1B)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  const Text(
+                                    'Review usually takes 12–24 hours. Batch creation is restricted until verification.',
+                                    style: TextStyle(fontSize: 11, color: Color(0xFF92400E)),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => MartialArtsCentrePendingApprovalScreen(initialProfile: _centre),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'View Verification Status →',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFFB45309)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     Material(
                       color: Colors.white,
                       child: TabBar(
@@ -227,9 +891,12 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                           Tab(text: 'Batches'),
                           Tab(text: 'Students'),
                           Tab(text: 'Attendance'),
+                          Tab(text: 'Grading'),
+                          Tab(text: 'Instructors'),
                           Tab(text: 'Live'),
+                          Tab(text: 'Past Sessions'),
                           Tab(text: 'Finance'),
-                          Tab(text: 'More'),
+                          Tab(text: 'Settings'),
                         ],
                       ),
                     ),
@@ -243,16 +910,29 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
                             enrollments: _list('enrollments'),
                             batches: _list('batches'),
                             onGoBatches: () => _tabs.animateTo(1),
+                            onAddBatch: isApproved ? () => _showBatchForm() : null,
                             onGoStudents: () => _tabs.animateTo(2),
                             onGoAttendance: () => _tabs.animateTo(3),
-                            onGoLive: () => _tabs.animateTo(4),
-                            onGoSettings: () => _tabs.animateTo(6),
+                            onGoGrading: () => _tabs.animateTo(4),
+                            onGoInstructors: () => _tabs.animateTo(5),
+                            onGoLive: () => _tabs.animateTo(6),
+                            onGoSettings: () => _tabs.animateTo(9),
                             onCompleteProfile: _openProfileCompletion,
                           ),
-                          _BatchesTab(auth: _auth, batches: _list('batches'), onChanged: _load),
+                          _BatchesTab(
+                            auth: _auth,
+                            batches: _list('batches'),
+                            isApproved: isApproved,
+                            onChanged: _load,
+                            onCreateBatch: () => _showBatchForm(),
+                            onEditBatch: (b) => _showBatchForm(b),
+                          ),
                           _StudentsTab(auth: _auth, students: _list('enrollments'), onChanged: _load),
                           _AttendanceTab(auth: _auth, batches: _list('batches')),
+                          _GradingTab(auth: _auth, enrollments: _list('enrollments'), batches: _list('batches')),
+                          _InstructorsTab(auth: _auth),
                           _LiveClassesTab(auth: _auth, classes: _list('onlineClasses'), batches: _list('batches'), onChanged: _load),
+                          _PastSessionsTab(classes: _list('onlineClasses')),
                           _FinanceTab(auth: _auth, meta: _meta, centre: _centre, onChanged: _load),
                           _SettingsTab(auth: _auth, centre: _centre, onSaved: _load),
                         ],
@@ -265,25 +945,18 @@ class _MartialArtsCentreDashboardScreenState extends State<MartialArtsCentreDash
 
   Widget _navItem(int visualIndex, IconData icon, IconData activeIcon, String label, int tabIndex, {String? badge}) {
     final isSelected = switch (visualIndex) {
-      0 => _tabs.index == 0 || _tabs.index == 3,
+      0 => _tabs.index == 0,
       1 => _tabs.index == 2,
       2 => _tabs.index == 1,
       4 => _tabs.index == 4,
-      3 => _tabs.index == 5,
-      5 => _tabs.index == 6,
+      3 => _tabs.index == 8,
+      5 => _tabs.index == 9,
       _ => false,
     };
     return Expanded(
       child: InkWell(
         onTap: () {
-          if (visualIndex == 3) {
-            _tabs.animateTo(2);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Open a student to start messaging')),
-            );
-          } else {
-            _tabs.animateTo(tabIndex);
-          }
+          _tabs.animateTo(tabIndex);
           setState(() {});
         },
         child: Column(
@@ -380,18 +1053,270 @@ List<Map<String, dynamic>> _asMaps(dynamic raw) {
 }
 
 class _CentreProfileCard extends StatelessWidget {
-  const _CentreProfileCard({this.centre, this.meta, required this.baseUrl});
+  const _CentreProfileCard({
+    this.centre,
+    this.meta,
+    required this.baseUrl,
+    this.onEditLocation,
+  });
   final Map<String, dynamic>? centre;
   final Map<String, dynamic>? meta;
   final String baseUrl;
+  final VoidCallback? onEditLocation;
 
   Future<void> _openMaps(BuildContext context) async {
-    final url = centre?['mapsUrl']?.toString();
-    if (url == null || url.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Location not set yet')));
-      return;
-    }
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    final name = centre?['name']?.toString() ?? 'Self-Defence Centre';
+    final manager = centre?['managerName']?.toString() ?? 'Centre Manager';
+    final phone = centre?['phoneNumber']?.toString() ?? '';
+    final loc = centre?['locationLabel']?.toString() ?? centre?['location']?.toString() ?? '';
+    final lat = centre?['centreLat'];
+    final lng = centre?['centreLng'];
+    final mapsUrl = centre?['mapsUrl']?.toString() ?? centre?['googleMapLocation']?.toString() ?? '';
+
+    final query = loc.isNotEmpty ? loc : name;
+    final encoded = Uri.encodeComponent(query);
+
+    final geoUri = (lat != null && lng != null)
+        ? Uri.parse('geo:$lat,$lng?q=$lat,$lng($encoded)')
+        : Uri.parse('geo:0,0?q=$encoded');
+
+    final webUrl = mapsUrl.isNotEmpty
+        ? mapsUrl
+        : (lat != null && lng != null
+            ? 'https://www.google.com/maps/search/?api=1&query=$lat,$lng'
+            : 'https://www.google.com/maps/search/?api=1&query=$encoded');
+    final webUri = Uri.parse(webUrl);
+
+    final dirUrl = (lat != null && lng != null)
+        ? 'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng'
+        : 'https://www.google.com/maps/dir/?api=1&destination=$encoded';
+    final dirUri = Uri.parse(dirUrl);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFFF1F2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.location_on,
+                        color: MartialArtsCentreDashboardScreen.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+                          ),
+                          const Text(
+                            'Centre Location & Navigation',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.pin_drop_rounded, size: 20, color: MartialArtsCentreDashboardScreen.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              loc.isNotEmpty ? loc : 'Address not specified yet',
+                              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Color(0xFF1E293B)),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (lat != null && lng != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          'Coordinates: $lat, $lng',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                      if (manager.isNotEmpty || phone.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          'Manager: $manager ${phone.isNotEmpty ? "($phone)" : ""}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    bool launched = false;
+                    try {
+                      if (await canLaunchUrl(geoUri)) {
+                        launched = await launchUrl(geoUri, mode: LaunchMode.externalApplication);
+                      }
+                    } catch (_) {}
+
+                    if (!launched) {
+                      try {
+                        launched = await launchUrl(webUri, mode: LaunchMode.externalApplication);
+                      } catch (_) {}
+                    }
+
+                    if (!launched) {
+                      try {
+                        launched = await launchUrl(webUri, mode: LaunchMode.inAppBrowserView);
+                      } catch (_) {}
+                    }
+
+                    if (!launched) {
+                      try {
+                        launched = await launchUrl(webUri, mode: LaunchMode.platformDefault);
+                      } catch (_) {}
+                    }
+
+                    if (!launched && context.mounted) {
+                      await Clipboard.setData(ClipboardData(text: query));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Could not open Maps app. Address copied to clipboard!'),
+                          backgroundColor: Color(0xFFD97706),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.map_rounded),
+                  label: const Text('Open in Google Maps'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: MartialArtsCentreDashboardScreen.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          bool launched = false;
+                          try {
+                            launched = await launchUrl(dirUri, mode: LaunchMode.externalApplication);
+                          } catch (_) {}
+                          if (!launched) {
+                            try {
+                              launched = await launchUrl(dirUri, mode: LaunchMode.inAppBrowserView);
+                            } catch (_) {}
+                          }
+                          if (!launched && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Directions link opened')),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.directions, size: 18),
+                        label: const Text('Directions'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final textToCopy = loc.isNotEmpty ? loc : name;
+                          await Clipboard.setData(ClipboardData(text: textToCopy));
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Address copied to clipboard!'),
+                                backgroundColor: Color(0xFF16A34A),
+                              ),
+                            );
+                          }
+                          Navigator.pop(ctx);
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        label: const Text('Copy Address'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (onEditLocation != null) ...[
+                  const SizedBox(height: 6),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      onEditLocation!();
+                    },
+                    icon: const Icon(Icons.edit_location_alt_outlined, size: 18),
+                    label: const Text('Edit location or update map coordinates'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -405,8 +1330,9 @@ class _CentreProfileCard extends StatelessWidget {
     final photoUrl = photo.isEmpty
         ? ''
         : (photo.startsWith('http') ? photo : '$baseUrl${photo.startsWith('/') ? '' : '/'}$photo');
-    final rating = meta?['rating'] ?? 4.8;
-    final reviews = _metaNum(meta?['reviewCount'] ?? 128).toInt();
+    final ratingNum = meta?['rating'] ?? centre?['rating'] ?? 0;
+    final rating = ratingNum is num ? ratingNum.toDouble() : (double.tryParse(ratingNum.toString()) ?? 0.0);
+    final reviews = _metaNum(meta?['reviewCount'] ?? centre?['reviewCount'] ?? 0).toInt();
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -445,24 +1371,53 @@ class _CentreProfileCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: MartialArtsCentreDashboardScreen.navy)),
                 const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 14, color: Color(0xFF94A3B8)),
-                    const SizedBox(width: 2),
-                    Flexible(
-                      child: Text(
-                        locationLabel.isEmpty ? 'Add location' : locationLabel,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                InkWell(
+                  onTap: () => _openMaps(context),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on, size: 15, color: MartialArtsCentreDashboardScreen.primary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            locationLabel.isEmpty ? 'Add location' : locationLabel,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF334155),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFFFCDD2)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.map_outlined, size: 12, color: MartialArtsCentreDashboardScreen.primary),
+                              SizedBox(width: 3),
+                              Text(
+                                'View on Map',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: MartialArtsCentreDashboardScreen.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () => _openMaps(context),
-                      child: const Text('View on Map',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: MartialArtsCentreDashboardScreen.primary)),
-                    ),
-                  ],
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text('Manager: $manager', style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
@@ -473,9 +1428,14 @@ class _CentreProfileCard extends StatelessWidget {
                   children: [
                     const Icon(Icons.star, size: 16, color: Color(0xFFFBBF24)),
                     const SizedBox(width: 4),
-                    Text('$rating', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                    Text(' ($reviews reviews)',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: MartialArtsCentreDashboardScreen.primary)),
+                    Text(
+                      rating > 0 ? rating.toStringAsFixed(1) : 'New',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
+                    Text(
+                      reviews > 0 ? ' ($reviews reviews)' : ' (0 reviews)',
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: MartialArtsCentreDashboardScreen.primary),
+                    ),
                   ],
                 ),
               ],
@@ -521,8 +1481,11 @@ class _OverviewTab extends StatelessWidget {
     this.enrollments = const [],
     this.batches = const [],
     required this.onGoBatches,
+    this.onAddBatch,
     required this.onGoStudents,
     required this.onGoAttendance,
+    this.onGoGrading,
+    this.onGoInstructors,
     required this.onGoLive,
     required this.onGoSettings,
     required this.onCompleteProfile,
@@ -532,8 +1495,11 @@ class _OverviewTab extends StatelessWidget {
   final List<Map<String, dynamic>> enrollments;
   final List<Map<String, dynamic>> batches;
   final VoidCallback onGoBatches;
+  final VoidCallback? onAddBatch;
   final VoidCallback onGoStudents;
   final VoidCallback onGoAttendance;
+  final VoidCallback? onGoGrading;
+  final VoidCallback? onGoInstructors;
   final VoidCallback onGoLive;
   final VoidCallback onGoSettings;
   final VoidCallback onCompleteProfile;
@@ -599,6 +1565,9 @@ class _OverviewTab extends StatelessWidget {
               label: 'Active Batches',
               trend: '+${_metaNum(meta?['activeBatches']).toInt().clamp(0, 5)} this month',
               trendPositive: true,
+              onTap: onGoBatches,
+              linkLabel: '+ Create batch',
+              onLink: onAddBatch ?? onGoBatches,
             ),
             _MetricTile(
               icon: Icons.sports_martial_arts_outlined,
@@ -640,9 +1609,11 @@ class _OverviewTab extends StatelessWidget {
               icon: Icons.star_outline,
               iconBg: const Color(0xFFFEF3C7),
               iconColor: const Color(0xFFD97706),
-              value: '${meta?['rating'] ?? 4.8}',
+              value: (meta?['rating'] != null && (meta!['rating'] is num) && (meta!['rating'] as num) > 0)
+                  ? (meta!['rating'] as num).toDouble().toStringAsFixed(1)
+                  : 'New',
               label: 'Centre Rating',
-              linkLabel: '${_metaNum(meta?['reviewCount'] ?? 128).toInt()} reviews',
+              linkLabel: '${_metaNum(meta?['reviewCount'] ?? 0).toInt()} reviews',
               onLink: () {},
             ),
             _MetricTile(
@@ -678,7 +1649,7 @@ class _OverviewTab extends StatelessWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              _CircleAction('Create Batch', Icons.add, MartialArtsCentreDashboardScreen.primary, onGoBatches),
+              _CircleAction('Create Batch', Icons.add, MartialArtsCentreDashboardScreen.primary, onAddBatch ?? onGoBatches),
               _CircleAction('Add Trainer', Icons.person_add_alt_1, const Color(0xFF9333EA), onGoSettings),
               _CircleAction('Add Student', Icons.group_add, const Color(0xFF2563EB), onGoStudents),
               _CircleAction('Schedule Class', Icons.event, const Color(0xFF16A34A), onGoLive),
@@ -1071,6 +2042,7 @@ class _MetricTile extends StatelessWidget {
     this.trendPositive = false,
     this.linkLabel,
     this.onLink,
+    this.onTap,
   });
 
   final IconData icon;
@@ -1082,49 +2054,54 @@ class _MetricTile extends StatelessWidget {
   final bool trendPositive;
   final String? linkLabel;
   final VoidCallback? onLink;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-            child: Icon(icon, size: 16, color: iconColor),
-          ),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: MartialArtsCentreDashboardScreen.navy)),
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-          const SizedBox(height: 2),
-          if (trend != null)
-            Text(trend!,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: trendPositive ? const Color(0xFF16A34A) : const Color(0xFF64748B),
-                )),
-          if (linkLabel != null)
-            GestureDetector(
-              onTap: onLink,
-              child: Text(linkLabel!,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: MartialArtsCentreDashboardScreen.primary,
-                  )),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+              child: Icon(icon, size: 16, color: iconColor),
             ),
-        ],
+            const Spacer(),
+            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: MartialArtsCentreDashboardScreen.navy)),
+            Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+            const SizedBox(height: 2),
+            if (trend != null)
+              Text(trend!,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: trendPositive ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                  )),
+            if (linkLabel != null)
+              GestureDetector(
+                onTap: onLink,
+                child: Text(linkLabel!,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: MartialArtsCentreDashboardScreen.primary,
+                    )),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1252,386 +2229,25 @@ class _DonutPainter extends CustomPainter {
       oldDelegate.percent != percent || oldDelegate.color != color;
 }
 
-class _BatchesTab extends StatefulWidget {
-  const _BatchesTab({required this.auth, required this.batches, required this.onChanged});
+class _BatchesTab extends StatelessWidget {
+  const _BatchesTab({
+    required this.auth,
+    required this.batches,
+    this.isApproved = true,
+    required this.onChanged,
+    required this.onCreateBatch,
+    required this.onEditBatch,
+  });
   final CentreAuthService auth;
   final List<Map<String, dynamic>> batches;
+  final bool isApproved;
   final VoidCallback onChanged;
-
-  @override
-  State<_BatchesTab> createState() => _BatchesTabState();
-}
-
-class _BatchesTabState extends State<_BatchesTab> {
-  static const _dayChips = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  static const _programs = RegOptions.martialArtsPrograms;
-
-  Future<void> _pickTime(TextEditingController ctrl) async {
-    final now = TimeOfDay.now();
-    final picked = await showTimePicker(context: context, initialTime: now);
-    if (picked != null) {
-      ctrl.text = picked.format(context);
-    }
-  }
-
-  Future<void> _showBatchForm([Map<String, dynamic>? existing]) async {
-    final nameCtrl = TextEditingController(text: existing?['name']?.toString() ?? '');
-    final instructorCtrl = TextEditingController(text: existing?['instructor']?.toString() ?? '');
-    final startTimeCtrl = TextEditingController(
-      text: (existing?['timeSlot']?.toString() ?? '6:00 PM').split('-').first.trim(),
-    );
-    final endTimeCtrl = TextEditingController(
-      text: (existing?['timeSlot']?.toString() ?? '6:00 PM-7:00 PM').contains('-')
-          ? existing!['timeSlot'].toString().split('-').last.trim()
-          : '7:00 PM',
-    );
-    final feeCtrl = TextEditingController(text: '${existing?['fee'] ?? 0}');
-    final capacityCtrl = TextEditingController(text: '${existing?['capacity'] ?? 20}');
-    final notesCtrl = TextEditingController(text: existing?['notes']?.toString() ?? '');
-    final startDateCtrl = TextEditingController(text: existing?['startDate']?.toString() ?? '');
-    final endDateCtrl = TextEditingController(text: existing?['endDate']?.toString() ?? '');
-    final batchCode = existing?['batchCode']?.toString() ??
-        'BAT-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-    String program = existing?['style']?.toString() ?? _programs.first;
-    if (!_programs.contains(program)) program = 'Other';
-    String batchType = existing?['batchType']?.toString() ?? 'Offline';
-    String status = existing?['status']?.toString() ?? 'Active';
-    String trialType = existing?['trialType']?.toString().isNotEmpty == true
-        ? existing!['trialType'].toString()
-        : 'None';
-    int bufferMinutes = existing?['bufferMinutes'] is num
-        ? (existing!['bufferMinutes'] as num).toInt()
-        : int.tryParse('${existing?['bufferMinutes'] ?? 0}') ?? 0;
-    final admissionCtrl = TextEditingController(text: '${existing?['admissionFee'] ?? 0}');
-    final selectedDays = <String>{
-      ...(existing?['availableDays']?.toString() ?? 'Mon,Tue,Wed,Thu,Fri')
-          .split(RegExp(r'[,/ ]+'))
-          .map((e) => e.trim())
-          .where((e) => e.isNotEmpty)
-          .map((e) {
-            final u = e.toUpperCase();
-            if (u.startsWith('MON')) return 'Mon';
-            if (u.startsWith('TUE')) return 'Tue';
-            if (u.startsWith('WED')) return 'Wed';
-            if (u.startsWith('THU')) return 'Thu';
-            if (u.startsWith('FRI')) return 'Fri';
-            if (u.startsWith('SAT')) return 'Sat';
-            if (u.startsWith('SUN')) return 'Sun';
-            return e;
-          }),
-    };
-    final id = existing?['id'];
-    String? formError;
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) {
-          final canSave = nameCtrl.text.trim().isNotEmpty &&
-              selectedDays.isNotEmpty &&
-              startTimeCtrl.text.trim().isNotEmpty &&
-              endTimeCtrl.text.trim().isNotEmpty &&
-              (int.tryParse(capacityCtrl.text.trim()) ?? 0) >= 5 &&
-              (int.tryParse(capacityCtrl.text.trim()) ?? 0) <= 100 &&
-              (double.tryParse(feeCtrl.text.trim()) ?? -1) >= 0;
-
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom,
-              left: 16,
-              right: 16,
-              top: 16,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    existing == null ? 'Create batch' : 'Edit batch',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Batch name *', border: OutlineInputBorder()),
-                    onChanged: (_) => setLocal(() {}),
-                  ),
-                  const SizedBox(height: 8),
-                  InputDecorator(
-                    decoration: const InputDecoration(labelText: 'Batch code', border: OutlineInputBorder()),
-                    child: Text(batchCode, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: program,
-                    decoration: const InputDecoration(labelText: 'Program *', border: OutlineInputBorder()),
-                    items: _programs.map((p) => DropdownMenuItem(value: p, child: Text(p))).toList(),
-                    onChanged: (v) => setLocal(() => program = v ?? program),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: instructorCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Instructor',
-                      hintText: 'Select / type trainer name',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text('Days *', style: TextStyle(fontWeight: FontWeight.w600)),
-                  Wrap(
-                    spacing: 6,
-                    children: _dayChips.map((d) {
-                      final on = selectedDays.contains(d);
-                      return FilterChip(
-                        label: Text(d),
-                        selected: on,
-                        onSelected: (v) => setLocal(() {
-                          if (v) {
-                            selectedDays.add(d);
-                          } else {
-                            selectedDays.remove(d);
-                          }
-                        }),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: startTimeCtrl,
-                          readOnly: true,
-                          onTap: () async {
-                            await _pickTime(startTimeCtrl);
-                            setLocal(() {});
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Start time *',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.schedule),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: endTimeCtrl,
-                          readOnly: true,
-                          onTap: () async {
-                            await _pickTime(endTimeCtrl);
-                            setLocal(() {});
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'End time *',
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.schedule),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: startDateCtrl,
-                          readOnly: true,
-                          onTap: () async {
-                            final d = await showDatePicker(
-                              context: ctx,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                              lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-                            );
-                            if (d != null) {
-                              startDateCtrl.text =
-                                  '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-                              setLocal(() {});
-                            }
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'Start date',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: endDateCtrl,
-                          readOnly: true,
-                          onTap: () async {
-                            final d = await showDatePicker(
-                              context: ctx,
-                              initialDate: DateTime.now().add(const Duration(days: 30)),
-                              firstDate: DateTime.now(),
-                              lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
-                            );
-                            if (d != null) {
-                              endDateCtrl.text =
-                                  '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-                              setLocal(() {});
-                            }
-                          },
-                          decoration: const InputDecoration(
-                            labelText: 'End date',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: feeCtrl,
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => setLocal(() {}),
-                    decoration: const InputDecoration(labelText: 'Fee (₹) *', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: capacityCtrl,
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => setLocal(() {}),
-                    decoration: const InputDecoration(
-                      labelText: 'Maximum capacity (5–100) *',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const InputDecorator(
-                    decoration: InputDecoration(labelText: 'Current enrollment', border: OutlineInputBorder()),
-                    child: Text('0 (read-only)'),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: admissionCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: 'Admission fee (₹)', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<int>(
-                    value: bufferMinutes,
-                    decoration: const InputDecoration(labelText: 'Buffer minutes', border: OutlineInputBorder()),
-                    items: const [0, 5, 10, 15]
-                        .map((m) => DropdownMenuItem(value: m, child: Text('$m min')))
-                        .toList(),
-                    onChanged: (v) => setLocal(() => bufferMinutes = v ?? 0),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: trialType,
-                    decoration: const InputDecoration(labelText: 'Trial class', border: OutlineInputBorder()),
-                    items: const [
-                      DropdownMenuItem(value: 'None', child: Text('None')),
-                      DropdownMenuItem(value: 'Free 1 class', child: Text('Free 1 class')),
-                      DropdownMenuItem(value: 'Paid trial', child: Text('Paid trial')),
-                    ],
-                    onChanged: (v) => setLocal(() => trialType = v ?? trialType),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: batchType,
-                    decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
-                    items: const [
-                      DropdownMenuItem(value: 'Offline', child: Text('Offline')),
-                      DropdownMenuItem(value: 'Online', child: Text('Online')),
-                      DropdownMenuItem(value: 'Hybrid', child: Text('Hybrid')),
-                    ],
-                    onChanged: (v) => setLocal(() => batchType = v ?? batchType),
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
-                    value: status,
-                    decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder()),
-                    items: const [
-                      DropdownMenuItem(value: 'Active', child: Text('Active')),
-                      DropdownMenuItem(value: 'Upcoming', child: Text('Upcoming')),
-                      DropdownMenuItem(value: 'Full', child: Text('Full')),
-                      DropdownMenuItem(value: 'Closed', child: Text('Closed')),
-                    ],
-                    onChanged: (v) => setLocal(() => status = v ?? status),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: notesCtrl,
-                    maxLines: 2,
-                    decoration: const InputDecoration(labelText: 'Description / notes', border: OutlineInputBorder()),
-                  ),
-                  if (formError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(formError!, style: const TextStyle(color: Colors.red)),
-                  ],
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: !canSave
-                        ? null
-                        : () async {
-                            final capacity = int.tryParse(capacityCtrl.text.trim()) ?? 0;
-                            final fee = double.tryParse(feeCtrl.text.trim()) ?? -1;
-                            if (capacity < 5 || capacity > 100) {
-                              setLocal(() => formError = 'Capacity must be between 5 and 100.');
-                              return;
-                            }
-                            if (fee < 0) {
-                              setLocal(() => formError = 'Fee must be 0 or greater.');
-                              return;
-                            }
-                            final body = <String, dynamic>{
-                              if (id != null) 'id': id,
-                              'name': nameCtrl.text.trim(),
-                              'style': program,
-                              'instructor': instructorCtrl.text.trim(),
-                              'availableDays': selectedDays.join(','),
-                              'timeSlot': '${startTimeCtrl.text.trim()}-${endTimeCtrl.text.trim()}',
-                              'fee': fee,
-                              'capacity': capacity,
-                              'batchType': batchType,
-                              'status': status,
-                              'batchCode': batchCode,
-                              'startDate': startDateCtrl.text.trim(),
-                              'endDate': endDateCtrl.text.trim(),
-                              'notes': notesCtrl.text.trim(),
-                              'currentEnrollment': existing?['currentEnrollment'] ?? 0,
-                              'admissionFee': double.tryParse(admissionCtrl.text.trim()) ?? 0,
-                              'bufferMinutes': bufferMinutes,
-                              'trialType': trialType,
-                            };
-                            final res = await widget.auth.saveBatch(body);
-                            if (!ctx.mounted) return;
-                            Navigator.pop(ctx);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  res['success'] == true
-                                      ? 'Batch created successfully.'
-                                      : (res['message']?.toString() ?? 'Failed'),
-                                ),
-                              ),
-                            );
-                            if (res['success'] == true) widget.onChanged();
-                          },
-                    style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
-                    child: const Text('Save batch'),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
+  final VoidCallback onCreateBatch;
+  final void Function(Map<String, dynamic>) onEditBatch;
 
   @override
   Widget build(BuildContext context) {
-    final batches = widget.batches.where((b) => b['isBatch'] != false).toList();
+    final activeBatches = batches.where((b) => b['isBatch'] != false).toList();
     return Column(
       children: [
         Padding(
@@ -1639,38 +2255,88 @@ class _BatchesTabState extends State<_BatchesTab> {
           child: SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: () => _showBatchForm(),
-              icon: const Icon(Icons.add),
-              label: const Text('Create batch'),
-              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: isApproved
+                  ? onCreateBatch
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Batch creation is locked until Admin approves your centre profile verification.'),
+                          backgroundColor: Color(0xFFD97706),
+                        ),
+                      );
+                    },
+              icon: Icon(isApproved ? Icons.add : Icons.lock_outline, size: 18),
+              label: Text(isApproved ? 'Create batch' : 'Add Batch (Approval Required)'),
+              style: FilledButton.styleFrom(
+                backgroundColor: isApproved
+                    ? MartialArtsCentreDashboardScreen.primary
+                    : const Color(0xFF64748B),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
           ),
         ),
         Expanded(
-          child: batches.isEmpty
-              ? const Center(child: Text('No batches yet'))
+          child: activeBatches.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.fitness_center_outlined, size: 48, color: Color(0xFF94A3B8)),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'No batches yet',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF475569)),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Create training batches to schedule classes and enroll trainees.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                      ),
+                      const SizedBox(height: 16),
+                      if (isApproved)
+                        FilledButton.icon(
+                          onPressed: onCreateBatch,
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('Create your first batch'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: MartialArtsCentreDashboardScreen.primary,
+                          ),
+                        ),
+                    ],
+                  ),
+                )
               : ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: batches.length,
+                  itemCount: activeBatches.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (_, i) {
-                    final b = batches[i];
+                    final b = activeBatches[i];
                     final bid = b['id'] is int ? b['id'] as int : int.tryParse('${b['id']}');
                     return Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       child: ListTile(
-                        title: Text(b['name']?.toString() ?? 'Batch'),
-                        subtitle: Text('${b['style'] ?? ''} · ${b['status'] ?? ''} · ₹${b['fee'] ?? 0}'),
+                        title: Text(
+                          b['name']?.toString() ?? 'Batch',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        subtitle: Text(
+                          '${b['style'] ?? 'Martial Arts'} · ${b['timeSlot'] ?? ''} · ${b['status'] ?? 'Active'} · ₹${b['fee'] ?? 0}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
                         trailing: PopupMenuButton<String>(
                           onSelected: (v) async {
                             if (v == 'edit') {
-                              await _showBatchForm(b);
+                              onEditBatch(b);
                             } else if (v == 'delete' && bid != null) {
-                              final res = await widget.auth.deleteBatch(bid);
+                              final res = await auth.deleteBatch(bid);
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(res['message']?.toString() ?? 'Done')),
                                 );
-                                if (res['success'] == true) widget.onChanged();
+                                if (res['success'] == true) onChanged();
                               }
                             }
                           },
@@ -1701,6 +2367,78 @@ class _StudentsTab extends StatefulWidget {
 
 class _StudentsTabState extends State<_StudentsTab> {
   final _search = TextEditingController();
+  String _statusFilter = 'ALL';
+
+  Future<void> _showRenewalDialog(int eid, Map<String, dynamic> s) async {
+    String renewalStatus = (s['renewalStatus'] ?? 'ACTIVE').toString();
+    DateTime nextDate = DateTime.now().add(const Duration(days: 30));
+    final dateStr = s['nextRenewalDate']?.toString();
+    if (dateStr != null && dateStr.isNotEmpty) {
+      final parsed = DateTime.tryParse(dateStr);
+      if (parsed != null) nextDate = parsed;
+    }
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Update Trainee Renewal', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(s['traineeName']?.toString() ?? 'Trainee', style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: renewalStatus,
+                decoration: const InputDecoration(labelText: 'Renewal Status', border: OutlineInputBorder()),
+                items: ['ACTIVE', 'EXPIRING_SOON', 'EXPIRED', 'RENEWED']
+                    .map((st) => DropdownMenuItem(value: st, child: Text(st)))
+                    .toList(),
+                onChanged: (v) => setDlg(() => renewalStatus = v ?? renewalStatus),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Next Renewal Due Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                subtitle: Text('${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}'),
+                trailing: const Icon(Icons.calendar_today, size: 20),
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: ctx,
+                    initialDate: nextDate,
+                    firstDate: DateTime.now().subtract(const Duration(days: 30)),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (d != null) setDlg(() => nextDate = d);
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final res = await widget.auth.updateRenewal(
+                  eid,
+                  renewalStatus: renewalStatus,
+                  nextRenewalDate: '${nextDate.year}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.day.toString().padLeft(2, '0')}',
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? 'Renewal updated')),
+                  );
+                  widget.onChanged();
+                }
+              },
+              child: const Text('Save Renewal'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Future<void> _openStudentFile(int id, Map<String, dynamic> s) async {
     final res = await widget.auth.studentFile(id);
@@ -1772,15 +2510,18 @@ class _StudentsTabState extends State<_StudentsTab> {
   Widget build(BuildContext context) {
     final q = _search.text.trim().toLowerCase();
     final students = widget.students.where((s) {
+      final status = (s['enrollmentStatus'] ?? s['status'] ?? 'PENDING').toString().toUpperCase();
+      if (_statusFilter != 'ALL') {
+        if (_statusFilter == 'ACTIVE' && status != 'APPROVED' && status != 'ACTIVE' && status != 'IN_PROGRESS') return false;
+        if (_statusFilter == 'PENDING' && status != 'PENDING') return false;
+        if (_statusFilter == 'REJECTED' && status != 'REJECTED') return false;
+      }
       if (q.isEmpty) return true;
       final name = (s['traineeName']?.toString() ?? '').toLowerCase();
       final batch = (s['batchName']?.toString() ?? '').toLowerCase();
       return name.contains(q) || batch.contains(q);
     }).toList();
 
-    if (widget.students.isEmpty) {
-      return const Center(child: Text('No students yet'));
-    }
     return Column(
       children: [
         Padding(
@@ -1797,9 +2538,29 @@ class _StudentsTabState extends State<_StudentsTab> {
             ),
           ),
         ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: ['ALL', 'PENDING', 'ACTIVE', 'REJECTED'].map((f) {
+              final isSel = _statusFilter == f;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(f),
+                  selected: isSel,
+                  onSelected: (val) {
+                    if (val) setState(() => _statusFilter = f);
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
         Expanded(
           child: students.isEmpty
-              ? const Center(child: Text('No matches'))
+              ? const Center(child: Text('No students matching criteria'))
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: students.length,
@@ -1807,21 +2568,67 @@ class _StudentsTabState extends State<_StudentsTab> {
                   itemBuilder: (_, i) {
                     final s = students[i];
                     final eid = s['id'] is int ? s['id'] as int : int.tryParse('${s['id']}');
-                    final status = s['enrollmentStatus']?.toString() ?? 'PENDING';
+                    final status = (s['enrollmentStatus'] ?? s['status'] ?? 'PENDING').toString().toUpperCase();
+                    final renewal = s['renewalStatus']?.toString() ?? 'ACTIVE';
                     return Card(
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(s['traineeName']?.toString() ?? 'Student', style: const TextStyle(fontWeight: FontWeight.w700)),
-                            Text('${s['batchName'] ?? ''} · $status · ${s['paymentStatus'] ?? ''}'),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    s['traineeName']?.toString() ?? 'Student',
+                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: status == 'APPROVED' || status == 'ACTIVE'
+                                        ? const Color(0xFFDCFCE7)
+                                        : status == 'PENDING'
+                                            ? const Color(0xFFFEF3C7)
+                                            : const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    status,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: status == 'APPROVED' || status == 'ACTIVE'
+                                          ? const Color(0xFF166534)
+                                          : status == 'PENDING'
+                                              ? const Color(0xFF92400E)
+                                              : const Color(0xFF991B1B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Batch: ${s['batchName'] ?? 'General'} · Renewal: $renewal · ${s['paymentStatus'] ?? 'PAID'}', style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
                             if (s['attendancePercentage'] != null)
-                              Text('Attendance ${s['attendancePercentage']}%', style: const TextStyle(fontSize: 12)),
+                              Text('Attendance: ${s['attendancePercentage']}%', style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
                             const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: eid == null ? null : () => _openStudentFile(eid, s),
-                              child: const Text('Open student file'),
+                            Row(
+                              children: [
+                                TextButton.icon(
+                                  onPressed: eid == null ? null : () => _openStudentFile(eid, s),
+                                  icon: const Icon(Icons.folder_open_outlined, size: 16),
+                                  label: const Text('Student File'),
+                                ),
+                                const SizedBox(width: 8),
+                                if (eid != null)
+                                  OutlinedButton.icon(
+                                    onPressed: () => _showRenewalDialog(eid, s),
+                                    icon: const Icon(Icons.autorenew_rounded, size: 16),
+                                    label: const Text('Renewal'),
+                                  ),
+                              ],
                             ),
                             Wrap(
                               spacing: 8,
@@ -1870,54 +2677,172 @@ class _AttendanceTabState extends State<_AttendanceTab> {
   List<Map<String, dynamic>> _trainees = [];
   bool _busy = false;
 
+  Future<void> _startQrSession() async {
+    if (_selected == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a batch first to start QR session')),
+      );
+      return;
+    }
+    final batchId = _selected!['id'] is int ? _selected!['id'] as int : int.tryParse('${_selected!['id']}');
+    if (batchId == null) return;
+
+    final res = await widget.auth.createQrSession(batchId: batchId, date: _date, duration: 15);
+    if (!mounted) return;
+    if (res['success'] == true) {
+      final qrCode = res['qrSessionCode']?.toString() ?? res['qrCode']?.toString() ?? 'QR-ATTENDANCE-ACTIVE';
+      final expiresAt = res['expiresAt']?.toString() ?? '15 minutes';
+      final sessionId = res['qrSessionId'] is int ? res['qrSessionId'] as int : int.tryParse('${res['qrSessionId']}');
+
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.qr_code_scanner_rounded, color: MartialArtsCentreDashboardScreen.primary),
+              SizedBox(width: 8),
+              Text('Live QR Attendance', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('Batch: ${_selected!['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
+                  borderRadius: BorderRadius.circular(16),
+                  color: const Color(0xFFF8FAFC),
+                ),
+                child: Column(
+                  children: [
+                    const Icon(Icons.qr_code_2_rounded, size: 120, color: MartialArtsCentreDashboardScreen.navy),
+                    const SizedBox(height: 8),
+                    Text(
+                      qrCode,
+                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5, color: MartialArtsCentreDashboardScreen.primary),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('Session Active · Expires at: $expiresAt', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              const SizedBox(height: 4),
+              const Text('Students scan this QR code on their mobile app to mark instant verified attendance.', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
+            ],
+          ),
+          actions: [
+            if (sessionId != null)
+              TextButton(
+                onPressed: () async {
+                  await widget.auth.closeQrSession(sessionId);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Close Session', style: TextStyle(color: Color(0xFFEF4444))),
+              ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Done'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['error']?.toString() ?? 'Could not start QR session')),
+      );
+    }
+  }
+
   Future<void> _loadSessions() async {
     setState(() => _busy = true);
-    final res = await widget.auth.attendanceSessions(date: _date);
-    if (!mounted) return;
-    final batches = (res['batches'] is List) ? res['batches'] as List : [];
-    final classes = (res['classes'] is List) ? res['classes'] as List : [];
-    _sessions = [
-      ...batches.whereType<Map>().map((e) => Map<String, dynamic>.from(e)),
-      ...classes.whereType<Map>().map((e) => Map<String, dynamic>.from(e)),
-    ];
-    setState(() => _busy = false);
+    try {
+      final res = await widget.auth.attendanceSessions(date: _date);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        final batches = (res['batches'] is List) ? res['batches'] as List : [];
+        final classes = (res['classes'] is List) ? res['classes'] as List : [];
+        _sessions = [
+          ...batches.whereType<Map>().map((e) => Map<String, dynamic>.from(e)),
+          ...classes.whereType<Map>().map((e) => Map<String, dynamic>.from(e)),
+        ];
+        if (_sessions.isNotEmpty && _selected == null) {
+          _selected = _sessions.first;
+          _loadTrainees();
+        }
+      } else {
+        final err = res['error']?.toString() ?? res['message']?.toString();
+        if (err != null) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading sessions: $e')));
+    }
+    if (mounted) setState(() => _busy = false);
   }
 
   Future<void> _loadTrainees() async {
     if (_selected == null) return;
     setState(() => _busy = true);
-    final id = _selected!['id'] is int ? _selected!['id'] as int : int.tryParse('${_selected!['id']}');
-    if (id == null) return;
-    final res = await widget.auth.attendanceTrainees(
-      type: _selected!['type']?.toString() ?? 'BATCH',
-      id: id,
-      date: _date,
-    );
-    if (!mounted) return;
-    _trainees = (res['trainees'] is List)
-        ? (res['trainees'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
-        : [];
-    setState(() => _busy = false);
+    try {
+      final id = _selected!['id'] is int ? _selected!['id'] as int : int.tryParse('${_selected!['id']}');
+      if (id == null) {
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      final res = await widget.auth.attendanceTrainees(
+        type: _selected!['type']?.toString() ?? 'BATCH',
+        id: id,
+        date: _date,
+      );
+      if (!mounted) return;
+      if (res['success'] == true) {
+        _trainees = (res['trainees'] is List)
+            ? (res['trainees'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+            : [];
+      } else {
+        final err = res['error']?.toString() ?? res['message']?.toString();
+        if (err != null) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        _trainees = [];
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading trainees: $e')));
+    }
+    if (mounted) setState(() => _busy = false);
   }
 
   Future<void> _save() async {
     if (_selected == null) return;
     final id = _selected!['id'] is int ? _selected!['id'] as int : int.tryParse('${_selected!['id']}');
     if (id == null) return;
-    final res = await widget.auth.saveAttendance({
-      'type': _selected!['type']?.toString() ?? 'BATCH',
-      'id': id,
-      'date': _date,
-      'trainees': _trainees.map((t) => {
-            'userId': t['userId'],
-            'status': t['status'] ?? 'PRESENT',
-            'notes': t['notes'] ?? '',
-          }).toList(),
-    });
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(res['message']?.toString() ?? 'Saved')),
-    );
+    setState(() => _busy = true);
+    try {
+      final res = await widget.auth.saveAttendance({
+        'type': _selected!['type']?.toString() ?? 'BATCH',
+        'id': id,
+        'date': _date,
+        'trainees': _trainees.map((t) => {
+              'userId': t['userId'],
+              'status': t['status'] ?? 'PRESENT',
+              'notes': t['notes'] ?? '',
+            }).toList(),
+      });
+      if (!mounted) return;
+      final ok = res['success'] == true;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            res['message']?.toString() ?? res['error']?.toString() ?? (ok ? 'Saved successfully' : 'Save failed'),
+          ),
+          backgroundColor: ok ? const Color(0xFF166534) : Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save error: $e'), backgroundColor: Colors.red));
+    }
+    if (mounted) setState(() => _busy = false);
   }
 
   @override
@@ -1948,23 +2873,67 @@ class _AttendanceTabState extends State<_AttendanceTab> {
             ],
           ),
         ),
-        if (_busy) const LinearProgressIndicator(),
-        Expanded(
-          flex: 2,
-          child: ListView(
-            children: _sessions.map((s) {
-              return ListTile(
-                selected: _selected?['id'] == s['id'],
-                title: Text(s['name']?.toString() ?? ''),
-                subtitle: Text('${s['time'] ?? ''} · ${s['type'] ?? ''}'),
-                onTap: () {
-                  setState(() => _selected = s);
-                  _loadTrainees();
-                },
-              );
-            }).toList(),
+        if (_selected != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.tonalIcon(
+                    onPressed: _startQrSession,
+                    icon: const Icon(Icons.qr_code_2_rounded),
+                    label: const Text('Start QR Attendance Session'),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        if (_busy) const LinearProgressIndicator(),
+        if (_sessions.isEmpty && !_busy)
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(
+              child: Text(
+                'No batches or classes found for this date.\nCreate active batches to take attendance.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Color(0xFF64748B)),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            flex: 2,
+            child: ListView(
+              children: _sessions.map((s) {
+                final isSel = _selected?['id'] == s['id'] && _selected?['type'] == s['type'];
+                return ListTile(
+                  selected: isSel,
+                  selectedTileColor: const Color(0xFFF1F5F9),
+                  title: Text(s['name']?.toString() ?? '', style: TextStyle(fontWeight: isSel ? FontWeight.w800 : FontWeight.w600)),
+                  subtitle: Text('${s['time'] ?? ''} · ${s['type'] ?? ''}'),
+                  trailing: isSel ? const Icon(Icons.check_circle, color: MartialArtsCentreDashboardScreen.primary) : null,
+                  onTap: () {
+                    setState(() => _selected = s);
+                    _loadTrainees();
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+        if (_selected != null && _trainees.isEmpty && !_busy)
+          const Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Icon(Icons.groups_outlined, size: 40, color: Color(0xFF94A3B8)),
+                SizedBox(height: 8),
+                Text(
+                  'No students enrolled in this batch yet.',
+                  style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
         if (_trainees.isNotEmpty) ...[
           const Divider(),
           Expanded(
@@ -1983,6 +2952,7 @@ class _AttendanceTabState extends State<_AttendanceTab> {
                       DropdownMenuItem(value: 'PRESENT', child: Text('Present')),
                       DropdownMenuItem(value: 'ABSENT', child: Text('Absent')),
                       DropdownMenuItem(value: 'LATE', child: Text('Late')),
+                      DropdownMenuItem(value: 'EXCUSED', child: Text('Excused')),
                     ],
                     onChanged: (v) => setState(() => _trainees[i]['status'] = v),
                   ),
@@ -1993,7 +2963,7 @@ class _AttendanceTabState extends State<_AttendanceTab> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: FilledButton(
-              onPressed: _save,
+              onPressed: _busy ? null : _save,
               style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
               child: const Text('Save attendance'),
             ),
@@ -2343,6 +3313,642 @@ class _SettingsTabState extends State<_SettingsTab> {
           child: _busy ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Save settings'),
         ),
       ],
+    );
+  }
+}
+
+// ==========================================
+// 5. BELT GRADING & SKILLS TAB
+// ==========================================
+class _GradingTab extends StatefulWidget {
+  const _GradingTab({required this.auth, required this.enrollments, required this.batches});
+  final CentreAuthService auth;
+  final List<Map<String, dynamic>> enrollments;
+  final List<Map<String, dynamic>> batches;
+
+  @override
+  State<_GradingTab> createState() => _GradingTabState();
+}
+
+class _GradingTabState extends State<_GradingTab> {
+  bool _loading = false;
+  List<Map<String, dynamic>> _gradings = [];
+  List<Map<String, dynamic>> _criteria = [];
+  String _selectedStyle = MartialArtsCatalog.styles.first;
+  String _selectedBelt = 'Yellow';
+
+  static const _belts = ['White', 'Yellow', 'Orange', 'Green', 'Blue', 'Purple', 'Brown', 'Black'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _loading = true);
+    try {
+      final gRes = await widget.auth.getGradings();
+      if (gRes['success'] == true && gRes['gradings'] is List) {
+        _gradings = (gRes['gradings'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+      final cRes = await widget.auth.getGradingCriteria(style: _selectedStyle, belt: _selectedBelt);
+      if (cRes['success'] == true && cRes['criteria'] is List) {
+        _criteria = (cRes['criteria'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _showScheduleDialog() async {
+    if (widget.enrollments.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No enrolled trainees available for grading')),
+      );
+      return;
+    }
+    int selectedTraineeId = widget.enrollments.first['userId'] is int
+        ? widget.enrollments.first['userId'] as int
+        : int.tryParse('${widget.enrollments.first['userId']}') ?? 0;
+    String targetBelt = 'Yellow';
+    String examiner = 'Sensei Examiner';
+    DateTime assessmentDate = DateTime.now().add(const Duration(days: 7));
+    final remarksCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: const Text('Schedule Belt Grading', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<int>(
+                  value: selectedTraineeId,
+                  decoration: const InputDecoration(labelText: 'Trainee', border: OutlineInputBorder()),
+                  items: widget.enrollments.map((e) {
+                    final uid = e['userId'] is int ? e['userId'] as int : int.tryParse('${e['userId']}') ?? 0;
+                    return DropdownMenuItem<int>(
+                      value: uid,
+                      child: Text(e['traineeName']?.toString() ?? 'Trainee $uid', overflow: TextOverflow.ellipsis),
+                    );
+                  }).toList(),
+                  onChanged: (v) => setDlg(() => selectedTraineeId = v ?? selectedTraineeId),
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: targetBelt,
+                  decoration: const InputDecoration(labelText: 'Target Belt', border: OutlineInputBorder()),
+                  items: _belts.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                  onChanged: (v) => setDlg(() => targetBelt = v ?? targetBelt),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: const InputDecoration(labelText: 'Examiner Name', border: OutlineInputBorder()),
+                  controller: TextEditingController(text: examiner),
+                  onChanged: (v) => examiner = v,
+                ),
+                const SizedBox(height: 12),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Assessment Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  subtitle: Text('${assessmentDate.year}-${assessmentDate.month.toString().padLeft(2, '0')}-${assessmentDate.day.toString().padLeft(2, '0')}'),
+                  trailing: const Icon(Icons.calendar_today, size: 20),
+                  onTap: () async {
+                    final d = await showDatePicker(
+                      context: ctx,
+                      initialDate: assessmentDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 180)),
+                    );
+                    if (d != null) setDlg(() => assessmentDate = d);
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: remarksCtrl,
+                  decoration: const InputDecoration(labelText: 'Notes / Criteria', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final res = await widget.auth.scheduleGrading({
+                  'traineeId': selectedTraineeId,
+                  'style': _selectedStyle,
+                  'targetBelt': targetBelt,
+                  'scheduledDate': '${assessmentDate.year}-${assessmentDate.month.toString().padLeft(2, '0')}-${assessmentDate.day.toString().padLeft(2, '0')}',
+                  'examiner': examiner,
+                  'remarks': remarksCtrl.text.trim(),
+                });
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? 'Assessment scheduled')),
+                  );
+                  _loadData();
+                }
+              },
+              child: const Text('Schedule'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showScoreDialog(Map<String, dynamic> grading) async {
+    final gid = grading['id'] is int ? grading['id'] as int : int.tryParse('${grading['id']}');
+    if (gid == null) return;
+    double score = 80;
+    bool passed = true;
+    bool autoPromote = true;
+    final remarksCtrl = TextEditingController(text: 'Demonstrated solid technique and balance.');
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlg) => AlertDialog(
+          title: Text('Score: ${grading['traineeName'] ?? 'Trainee'}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Target Belt: ${grading['targetBelt'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 12),
+                Text('Performance Score: ${score.toInt()}/100', style: const TextStyle(fontWeight: FontWeight.w700)),
+                Slider(
+                  value: score,
+                  min: 0,
+                  max: 100,
+                  divisions: 20,
+                  activeColor: MartialArtsCentreDashboardScreen.primary,
+                  onChanged: (v) => setDlg(() {
+                    score = v;
+                    passed = score >= 60;
+                  }),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: passed,
+                  title: const Text('Passed Assessment', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onChanged: (v) => setDlg(() => passed = v ?? false),
+                ),
+                if (passed)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: autoPromote,
+                    title: const Text('Auto-Promote & Issue Certificate', style: TextStyle(fontSize: 13)),
+                    onChanged: (v) => setDlg(() => autoPromote = v ?? false),
+                  ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: remarksCtrl,
+                  decoration: const InputDecoration(labelText: 'Examiner Remarks', border: OutlineInputBorder()),
+                  maxLines: 2,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                final res = await widget.auth.scoreGrading(gid, {
+                  'score': score.toInt(),
+                  'passed': passed,
+                  'autoPromote': autoPromote,
+                  'remarks': remarksCtrl.text.trim(),
+                });
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(res['message']?.toString() ?? 'Assessment scored')),
+                  );
+                  _loadData();
+                }
+              },
+              child: const Text('Submit Score'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _promote(int gid) async {
+    final res = await widget.auth.promoteGrading(gid);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message']?.toString() ?? 'Belt promotion approved')),
+      );
+      _loadData();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final scheduledCount = _gradings.where((g) => g['status'] == 'SCHEDULED').length;
+    final passedCount = _gradings.where((g) => g['passed'] == true || g['status'] == 'PASSED').length;
+    final promotedCount = _gradings.where((g) => g['status'] == 'PROMOTED').length;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              _metricTile('Scheduled', '$scheduledCount', const Color(0xFFD97706)),
+              const SizedBox(width: 8),
+              _metricTile('Passed', '$passedCount', const Color(0xFF16A34A)),
+              const SizedBox(width: 8),
+              _metricTile('Promoted', '$promotedCount', const Color(0xFF4F46E5)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: MartialArtsCentreDashboardScreen.primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: _showScheduleDialog,
+            icon: const Icon(Icons.add_task_rounded),
+            label: const Text('Schedule Belt Grading Assessment', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+          const SizedBox(height: 20),
+          const Text('Grading & Skill Assessments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: MartialArtsCentreDashboardScreen.navy)),
+          const SizedBox(height: 10),
+          if (_gradings.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+              child: const Center(child: Text('No grading assessments scheduled yet.', style: TextStyle(color: Color(0xFF64748B)))),
+            )
+          else
+            ..._gradings.map((g) {
+              final gid = g['id'] is int ? g['id'] as int : int.tryParse('${g['id']}');
+              final status = (g['status'] ?? 'SCHEDULED').toString().toUpperCase();
+              return Card(
+                elevation: 1,
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              g['traineeName']?.toString() ?? 'Trainee',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: status == 'PROMOTED'
+                                  ? const Color(0xFFDCFCE7)
+                                  : status == 'PASSED'
+                                      ? const Color(0xFFEFF6FF)
+                                      : const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: status == 'PROMOTED'
+                                    ? const Color(0xFF166534)
+                                    : status == 'PASSED'
+                                        ? const Color(0xFF1D4ED8)
+                                        : const Color(0xFF92400E),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text('Target Belt: ${g['targetBelt'] ?? 'Yellow'} · Style: ${g['style'] ?? 'Self-Defence'}', style: const TextStyle(fontSize: 13, color: Color(0xFF475569))),
+                      Text('Date: ${g['scheduledDate'] ?? ''} · Examiner: ${g['examiner'] ?? 'Sensei'}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      if (g['remarks'] != null && g['remarks'].toString().isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text('Remarks: ${g['remarks']}', style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: Color(0xFF334155))),
+                        ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (status == 'SCHEDULED')
+                            FilledButton.tonalIcon(
+                              onPressed: () => _showScoreDialog(g),
+                              icon: const Icon(Icons.rate_review_outlined, size: 16),
+                              label: const Text('Score / Evaluate'),
+                            ),
+                          if (status == 'PASSED' && gid != null)
+                            FilledButton.icon(
+                              style: FilledButton.styleFrom(backgroundColor: const Color(0xFF16A34A)),
+                              onPressed: () => _promote(gid),
+                              icon: const Icon(Icons.military_tech_rounded, size: 16),
+                              label: const Text('Approve Belt Promotion'),
+                            ),
+                          if (status == 'PROMOTED')
+                            const Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 16),
+                                SizedBox(width: 4),
+                                Text('Certificate Issued', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF16A34A))),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
+  Widget _metricTile(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Column(
+          children: [
+            Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: color)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// 6. INSTRUCTOR STAFF TAB
+// ==========================================
+class _InstructorsTab extends StatefulWidget {
+  const _InstructorsTab({required this.auth});
+  final CentreAuthService auth;
+
+  @override
+  State<_InstructorsTab> createState() => _InstructorsTabState();
+}
+
+class _InstructorsTabState extends State<_InstructorsTab> {
+  bool _loading = false;
+  List<Map<String, dynamic>> _instructors = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInstructors();
+  }
+
+  Future<void> _loadInstructors() async {
+    setState(() => _loading = true);
+    try {
+      final res = await widget.auth.getInstructors();
+      if (res['success'] == true && res['instructors'] is List) {
+        _instructors = (res['instructors'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _showAddInstructorDialog() async {
+    final nameCtrl = TextEditingController();
+    final desigCtrl = TextEditingController(text: 'Instructor');
+    final phoneCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final specCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Instructor Staff', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name *', border: OutlineInputBorder())),
+              const SizedBox(height: 10),
+              TextField(controller: desigCtrl, decoration: const InputDecoration(labelText: 'Designation (e.g. Head Coach)', border: OutlineInputBorder())),
+              const SizedBox(height: 10),
+              TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Phone', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+              const SizedBox(height: 10),
+              TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()), keyboardType: TextInputType.emailAddress),
+              const SizedBox(height: 10),
+              TextField(controller: specCtrl, decoration: const InputDecoration(labelText: 'Specialization (e.g. Karate, Krav Maga)', border: OutlineInputBorder())),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
+            onPressed: () async {
+              if (nameCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx);
+              final res = await widget.auth.createInstructor({
+                'name': nameCtrl.text.trim(),
+                'designation': desigCtrl.text.trim(),
+                'phone': phoneCtrl.text.trim(),
+                'email': emailCtrl.text.trim(),
+                'specialization': specCtrl.text.trim(),
+              });
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(res['message']?.toString() ?? 'Instructor added')),
+                );
+                _loadInstructors();
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteInstructor(int id) async {
+    final res = await widget.auth.deleteInstructor(id);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message']?.toString() ?? 'Instructor removed')),
+      );
+      _loadInstructors();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Center(child: CircularProgressIndicator());
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: MartialArtsCentreDashboardScreen.primary,
+        onPressed: _showAddInstructorDialog,
+        icon: const Icon(Icons.person_add),
+        label: const Text('Add Instructor'),
+      ),
+      body: _instructors.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.badge_outlined, size: 48, color: Color(0xFF94A3B8)),
+                  const SizedBox(height: 12),
+                  const Text('No instructors added yet', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: _showAddInstructorDialog,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add First Instructor'),
+                  ),
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: _instructors.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (_, i) {
+                final inst = _instructors[i];
+                final iid = inst['id'] is int ? inst['id'] as int : int.tryParse('${inst['id']}');
+                return Card(
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: const Color(0xFFFEE2E2),
+                      child: Text(
+                        (inst['name']?.toString() ?? 'I').substring(0, 1).toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w800, color: MartialArtsCentreDashboardScreen.primary),
+                      ),
+                    ),
+                    title: Text(inst['name']?.toString() ?? 'Instructor', style: const TextStyle(fontWeight: FontWeight.w700)),
+                    subtitle: Text('${inst['designation'] ?? 'Coach'} · ${inst['phone'] ?? inst['email'] ?? ''}'),
+                    trailing: iid == null
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Color(0xFFEF4444)),
+                            onPressed: () => _deleteInstructor(iid),
+                          ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+// ==========================================
+// 8. PAST SESSIONS TAB
+// ==========================================
+class _PastSessionsTab extends StatelessWidget {
+  const _PastSessionsTab({required this.classes});
+  final List<Map<String, dynamic>> classes;
+
+  @override
+  Widget build(BuildContext context) {
+    final past = classes.where((c) {
+      final status = (c['status'] ?? '').toString().toUpperCase();
+      return status == 'ENDED' || status == 'COMPLETED' || c['isPast'] == true;
+    }).toList();
+
+    if (past.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.history_toggle_off_rounded, size: 48, color: Color(0xFF94A3B8)),
+            SizedBox(height: 12),
+            Text('No completed online sessions yet.', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: past.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) {
+        final c = past[i];
+        final recording = c['recordingUrl']?.toString();
+        return Card(
+          elevation: 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(c['title']?.toString() ?? 'Session', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(4)),
+                      child: const Text('COMPLETED', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF475569))),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text('Instructor: ${c['instructor'] ?? 'Sensei'} · Batch: ${c['batchName'] ?? 'General'}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                Text('Scheduled: ${c['scheduledDate'] ?? ''} ${c['scheduledTime'] ?? ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                if (recording != null && recording.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  FilledButton.tonalIcon(
+                    onPressed: () async {
+                      final uri = Uri.tryParse(recording);
+                      if (uri != null && await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    icon: const Icon(Icons.play_circle_outline, size: 18),
+                    label: const Text('Watch Session Replay'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

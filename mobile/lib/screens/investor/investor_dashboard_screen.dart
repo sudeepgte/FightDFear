@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../../config/funding_catalog.dart';
 import '../../services/auth_state.dart';
@@ -38,18 +39,30 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
   Map<String, dynamic> _investor = {};
   List<Map<String, dynamic>> _portfolio = [];
   List<Map<String, dynamic>> _marketplace = [];
+  List<Map<String, dynamic>> _questions = [];
   double _totalInvested = 0;
+  double _estimatedMonthlyROI = 0;
+  double _escrowHeld = 0;
+
+  late final Razorpay _razorpay;
+  int? _pendingProposalId;
+  double? _pendingAmount;
+  String? _pendingProposalTitle;
 
   InvestorAuthService get _svc => InvestorAuthService(context.read<AuthState>().api);
 
   @override
   void initState() {
     super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
     _load();
   }
 
   @override
   void dispose() {
+    _razorpay.clear();
     _cityFilter.dispose();
     super.dispose();
   }
@@ -65,7 +78,10 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
         _investor = Map<String, dynamic>.from(res['investor'] ?? {});
         _portfolio = ModuleTheme.toList(res['portfolio'] ?? res['investments']);
         _marketplace = ModuleTheme.toList(res['marketplace']);
+        _questions = ModuleTheme.toList(res['questions']);
         _totalInvested = (res['totalInvested'] is num) ? (res['totalInvested'] as num).toDouble() : 0;
+        _estimatedMonthlyROI = (res['estimatedMonthlyROI'] is num) ? (res['estimatedMonthlyROI'] as num).toDouble() : 0;
+        _escrowHeld = (res['escrowHeld'] is num) ? (res['escrowHeld'] as num).toDouble() : 0;
         final market = await _svc.marketplace(
           category: _marketFilter == 'All' ? null : _marketFilter,
           city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
@@ -96,8 +112,6 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
 
   bool get _verified =>
       _canInvest || _partnerStatus == 'APPROVED' || _verificationStatus == 'VERIFIED';
-
-  bool get _subscribed => _investor['subscribed'] == true;
 
   bool get _needsProfile {
     const incomplete = {
@@ -181,11 +195,6 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
         'Complete your profile and wait for admin approval.',
         error: true,
       );
-      return;
-    }
-    if (!_subscribed) {
-      _toast('Premium subscription is required to express interest.', error: true);
-      await _subscribe();
       return;
     }
     if (_investBusy) return;
@@ -302,25 +311,94 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
 
     setState(() => _investBusy = true);
     try {
-      final res = await _svc.invest({
-        'proposalId': pid,
-        'amount': amount,
-      });
+      final orderRes = await _svc.createOrder(pid, amount);
       if (!mounted) return;
-      final success = res['success'] == true;
-      _toast(
-        success
-            ? (res['message']?.toString() ??
-                (alreadyPending ? 'Interest amount updated' : 'Investment interest submitted'))
-            : '${res['error'] ?? 'Failed to submit interest'}',
-        error: !success,
-      );
-      if (success) await _load();
+      if (orderRes['success'] != true) {
+        _toast('${orderRes['error'] ?? 'Failed to create payment order'}', error: true);
+        return;
+      }
+
+      if (orderRes['isMock'] == true) {
+        // Fallback simulation / test mode
+        final verifyRes = await _svc.verifyPayment(pid, {
+          'amount': amount,
+          'razorpay_order_id': orderRes['orderId'],
+          'razorpay_payment_id': 'pay_mock_${DateTime.now().millisecondsSinceEpoch}',
+          'razorpay_signature': 'mock_sig',
+        });
+        if (!mounted) return;
+        final success = verifyRes['success'] == true;
+        _toast(
+          success
+              ? (verifyRes['message']?.toString() ?? 'Investment received and held in Admin Escrow.')
+              : '${verifyRes['error'] ?? 'Payment verification failed'}',
+          error: !success,
+        );
+        if (success) await _load();
+        return;
+      }
+
+      _pendingProposalId = pid;
+      _pendingAmount = amount;
+      _pendingProposalTitle = proposal['title']?.toString() ?? 'Proposal';
+
+      _razorpay.open({
+        'key': orderRes['keyId'] ?? orderRes['key'] ?? 'rzp_test_RIlD5bEKRjyn3h',
+        'amount': orderRes['amount'],
+        'currency': orderRes['currency'] ?? 'INR',
+        'name': 'Fight D Fear Admin Escrow',
+        'description': 'Investment - $_pendingProposalTitle',
+        'order_id': orderRes['orderId'],
+        'prefill': {
+          'name': _investor['fullName'] ?? '',
+          'email': _investor['email'] ?? '',
+          'contact': _investor['phone'] ?? '',
+        },
+        'theme': {'color': '#F43F5E'},
+      });
     } catch (e) {
       if (mounted) _toast('$e', error: true);
     } finally {
       if (mounted) setState(() => _investBusy = false);
     }
+  }
+
+  Future<void> _onPaymentSuccess(PaymentSuccessResponse response) async {
+    final pid = _pendingProposalId;
+    final amount = _pendingAmount ?? 0;
+    _pendingProposalId = null;
+    _pendingAmount = null;
+
+    if (pid == null) return;
+
+    setState(() => _investBusy = true);
+    try {
+      final res = await _svc.verifyPayment(pid, {
+        'amount': amount,
+        'razorpay_order_id': response.orderId,
+        'razorpay_payment_id': response.paymentId,
+        'razorpay_signature': response.signature,
+      });
+      if (!mounted) return;
+      final success = res['success'] == true;
+      _toast(
+        success
+            ? (res['message']?.toString() ?? 'Investment of ₹$amount received and held in Admin Escrow.')
+            : '${res['error'] ?? 'Payment verification failed'}',
+        error: !success,
+      );
+      if (success) await _load();
+    } catch (e) {
+      if (mounted) _toast('Payment verification error: $e', error: true);
+    } finally {
+      if (mounted) setState(() => _investBusy = false);
+    }
+  }
+
+  void _onPaymentError(PaymentFailureResponse response) {
+    _pendingProposalId = null;
+    _pendingAmount = null;
+    _toast('Payment cancelled or failed: ${response.message ?? ''}', error: true);
   }
 
   Future<void> _withdrawInterest(Map<String, dynamic> item) async {
@@ -541,10 +619,6 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
             const SizedBox(height: 14),
             _statusBanner(),
           ],
-          if (_verified && !_subscribed) ...[
-            const SizedBox(height: 14),
-            _subscribeBanner(),
-          ],
           const SizedBox(height: 14),
           _metricsGrid(),
           const SizedBox(height: 16),
@@ -564,6 +638,10 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
           _section('Portfolio Overview', action: 'Open', onAction: () => setState(() => _tab = 2)),
           const SizedBox(height: 10),
           _portfolioOverview(),
+          const SizedBox(height: 16),
+          _section('My Asked Questions (${_questions.length})'),
+          const SizedBox(height: 10),
+          _myQuestionsCard(),
           const SizedBox(height: 16),
           _section('Recent Activity'),
           const SizedBox(height: 10),
@@ -646,75 +724,6 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
     );
   }
 
-  Future<void> _subscribe() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Premium Investor'),
-        content: const Text(
-          'Unlock investments and meeting requests with a Premium subscription (Rs 1999, mock payment).',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Not now')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: InvestorDashboardScreen.primary),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Subscribe'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !mounted) return;
-    try {
-      final res = await _svc.subscribe();
-      if (!mounted) return;
-      if (res['success'] == true) {
-        _toast(res['message']?.toString() ?? 'Subscribed');
-        await _load();
-      } else {
-        _toast(res['error']?.toString() ?? 'Subscribe failed', error: true);
-      }
-    } catch (e) {
-      if (mounted) _toast('$e', error: true);
-    }
-  }
-
-  Widget _subscribeBanner() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEF2FF),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFA5B4FC)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Premium required to invest and request meetings.',
-            style: TextStyle(
-              color: Color(0xFF312E81),
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton(
-              onPressed: _subscribe,
-              style: FilledButton.styleFrom(
-                backgroundColor: InvestorDashboardScreen.primary,
-                visualDensity: VisualDensity.compact,
-              ),
-              child: const Text('Subscribe · Rs 1999'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _topBar() {
     return Row(
       children: [
@@ -722,7 +731,6 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
           onPressed: () => showFundingMenuSheet(
             context,
             isEntrepreneur: false,
-            showSubscribe: !_subscribed,
             onProfile: () => setState(() => _tab = 3),
           ),
           icon: const Icon(Icons.menu_rounded, color: InvestorDashboardScreen.navy),
@@ -865,12 +873,12 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
 
   Widget _metricsGrid() {
     final items = [
-      _Metric('Invested', _money(_totalInvested), Icons.account_balance_wallet_outlined, const Color(0xFFFCE7F3)),
-      _Metric('Deals', '${_portfolio.length}', Icons.handshake_outlined, const Color(0xFFE0E7FF)),
-      _Metric('Market', '${_marketplace.length}', Icons.storefront_outlined, const Color(0xFFDCFCE7)),
-      _Metric('Active', '$_activeDeals', Icons.hourglass_bottom, const Color(0xFFFFE4E6)),
-      _Metric('Completed', '$_completedDeals', Icons.check_circle_outline, const Color(0xFFDCFCE7)),
-      _Metric('Open', '${_marketplace.length}', Icons.explore_outlined, const Color(0xFFE0F2FE)),
+      _Metric('Capital Invested', _money(_totalInvested), Icons.account_balance_wallet_outlined, const Color(0xFFFCE7F3)),
+      _Metric('Est. Monthly ROI', _money(_estimatedMonthlyROI), Icons.trending_up, const Color(0xFFDCFCE7)),
+      _Metric('Businesses Funded', '$_completedDeals', Icons.check_circle_outline, const Color(0xFFE0E7FF)),
+      _Metric('Escrow Held', _money(_escrowHeld), Icons.lock_clock_outlined, const Color(0xFFFEF3C7)),
+      _Metric('Total Deals', '${_portfolio.length}', Icons.handshake_outlined, const Color(0xFFE0F2FE)),
+      _Metric('Market Startups', '${_marketplace.length}', Icons.storefront_outlined, const Color(0xFFF1F5F9)),
     ];
     return GridView.builder(
       shrinkWrap: true,
@@ -1159,6 +1167,17 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _askQuestionDialog(p);
+                    },
+                    icon: const Icon(Icons.help_outline, size: 18),
+                    label: const Text('Ask Question'),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
@@ -1544,6 +1563,178 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
             child: Text(action, style: const TextStyle(color: InvestorDashboardScreen.primary, fontWeight: FontWeight.w700)),
           ),
       ],
+    );
+  }
+
+  Widget _myQuestionsCard() {
+    if (_questions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: _cardDeco(),
+        child: Row(
+          children: const [
+            Icon(Icons.help_outline, color: Color(0xFF94A3B8), size: 28),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'No questions asked yet. When browsing proposals in the marketplace, tap "Ask Question" to clarify business details with founders.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: _questions.map((q) {
+        final questionText = q['question']?.toString() ?? '';
+        final answerText = q['answer']?.toString() ?? '';
+        final proposalTitle = q['proposalTitle']?.toString() ?? 'Business Proposal';
+        final hasAnswer = answerText.isNotEmpty;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(14),
+          decoration: _cardDeco(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'On: $proposalTitle',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: InvestorDashboardScreen.navy,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: hasAnswer ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      hasAnswer ? 'Answered' : 'Pending',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: hasAnswer ? const Color(0xFF166534) : const Color(0xFFB45309),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Q: $questionText',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              if (hasAnswer) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.check_circle, size: 16, color: Color(0xFF10B981)),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          answerText,
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF334155)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Future<void> _askQuestionDialog(Map<String, dynamic> proposal) async {
+    final id = proposal['id'] is int ? proposal['id'] as int : int.tryParse('${proposal['id']}');
+    if (id == null) return;
+    final controller = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Ask Entrepreneur: ${proposal['title'] ?? ''}',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your question will appear on the public Q&A board for this proposal. The entrepreneur will answer directly.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'e.g. What is your current customer acquisition cost and monthly churn?',
+                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final q = controller.text.trim();
+              if (q.isEmpty) return;
+              Navigator.pop(ctx);
+              try {
+                final res = await _svc.askQuestion(id, q);
+                if (res['success'] == true) {
+                  _toast('Question submitted successfully!');
+                  await _load();
+                } else {
+                  _toast(res['error']?.toString() ?? 'Failed to submit question', error: true);
+                }
+              } catch (e) {
+                _toast('$e', error: true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: InvestorDashboardScreen.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Submit Question'),
+          ),
+        ],
+      ),
     );
   }
 

@@ -7,10 +7,14 @@ import 'package:provider/provider.dart';
 import '../../config/women_event_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/event_host_auth_service.dart';
+import '../../widgets/bank_details_form.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/profile_completion_actions.dart';
+import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/profile_location_picker.dart';
+import '../../widgets/registration_form_kit.dart';
 import '../../widgets/ux_feedback.dart';
+import 'event_host_dashboard_screen.dart';
 
 class EventHostProfileCompletionScreen extends StatefulWidget {
   const EventHostProfileCompletionScreen({super.key, this.onFinished});
@@ -40,6 +44,13 @@ class _EventHostProfileCompletionScreenState
   final _bio = TextEditingController();
   final _upi = TextEditingController();
   final _bank = TextEditingController();
+  final _accountHolder = TextEditingController();
+  final _accountNumber = TextEditingController();
+  final _confirmAccountNumber = TextEditingController();
+  final _ifsc = TextEditingController();
+  final _bankName = TextEditingController();
+  final _branchName = TextEditingController();
+  String _accountType = 'Savings';
   final _rate = TextEditingController(text: '500');
   final _credential = TextEditingController();
 
@@ -93,7 +104,8 @@ class _EventHostProfileCompletionScreenState
     }
     for (final c in [
       _name, _orgName, _phone, _whatsapp, _years, _address, _city, _stateOther,
-      _pincode, _mapLocation, _bio, _upi, _bank, _rate, _credential,
+      _pincode, _mapLocation, _bio, _upi, _bank, _accountHolder, _accountNumber,
+      _confirmAccountNumber, _ifsc, _bankName, _branchName, _rate, _credential,
     ]) {
       c.dispose();
     }
@@ -174,6 +186,17 @@ class _EventHostProfileCompletionScreenState
     _bio.text = p['bio']?.toString() ?? '';
     _upi.text = p['upiId']?.toString() ?? '';
     _bank.text = p['bankDetails']?.toString() ?? '';
+    BankDetailsSection.populateFromProfile(
+      profile: p,
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+      setAccountType: (t) => setState(() => _accountType = t),
+    );
     if (p['typicalPrice'] != null) {
       _rate.text = '${p['typicalPrice']}';
     }
@@ -219,7 +242,15 @@ class _EventHostProfileCompletionScreenState
       'durationMinutes': _duration,
       'bufferMinutes': _buffer,
       'upiId': _upi.text.trim(),
-      'bankDetails': _bank.text.trim(),
+      ...BankDetailsSection.buildPayload(
+        accountHolder: _accountHolder.text,
+        accountNumber: _accountNumber.text,
+        ifsc: _ifsc.text,
+        bankName: _bankName.text,
+        branch: _branchName.text,
+        accountType: _accountType,
+        upiId: _upi.text,
+      ),
     };
   }
 
@@ -227,6 +258,8 @@ class _EventHostProfileCompletionScreenState
     if (_name.text.trim().isEmpty) return '1.1 Full name is required';
     if (_orgName.text.trim().isEmpty) return '1.3 Organizer name is required';
     if ((_designation ?? '').isEmpty) return '1.2 Organizer type is required';
+    final expErr = RegValidators.experienceError(_years.text);
+    if (expErr != null) return '1.7 $expErr';
     if (_phone.text.trim().length != 10) return '1.5 Official phone must be 10 digits';
     if (_address.text.trim().isEmpty) return '2.1 Address is required';
     if (_city.text.trim().isEmpty) return '2.3 City is required';
@@ -234,6 +267,16 @@ class _EventHostProfileCompletionScreenState
     if (_state == 'Other' && _stateOther.text.trim().isEmpty) return '2.4 Enter state';
     if (_pincode.text.trim().length != 6) return '2.5 Pincode must be 6 digits';
     if (_credential.text.trim().isEmpty) return '1.8 GST / NGO / CIN number is required';
+    final bankErr = BankDetailsSection.validateBankDetails(
+      accountHolderController: _accountHolder,
+      accountNumberController: _accountNumber,
+      confirmAccountNumberController: _confirmAccountNumber,
+      ifscController: _ifsc,
+      bankNameController: _bankName,
+      branchNameController: _branchName,
+      upiController: _upi,
+    );
+    if (bankErr != null) return '9. $bankErr';
     if (_categories.isEmpty) return '3.1 Select at least one category';
     if (_audience.isEmpty) return '4.1 Who I serve is required';
     if (_days.isEmpty) return '6.1 Open days are required';
@@ -246,6 +289,18 @@ class _EventHostProfileCompletionScreenState
       return _profile['nextStepGuidance']?.toString();
     }
     return null;
+  }
+
+  void _finish() {
+    if (!mounted) return;
+    if (widget.onFinished != null) {
+      widget.onFinished!(context);
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const EventHostDashboardScreen()),
+        (_) => false,
+      );
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -271,6 +326,7 @@ class _EventHostProfileCompletionScreenState
           _applyProfile(Map<String, dynamic>.from(res));
         },
       );
+      if (mounted) _finish();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -309,11 +365,7 @@ class _EventHostProfileCompletionScreenState
       if (!mounted) return;
       await showVerificationSubmittedSheet(context);
       if (!mounted) return;
-      if (widget.onFinished != null) {
-        widget.onFinished!(context);
-      } else {
-        Navigator.of(context).pop(true);
-      }
+      _finish();
     } catch (e) {
       if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -370,8 +422,7 @@ class _EventHostProfileCompletionScreenState
     }
   }
 
-
-  void _skip() => ProfileCompletionActions.skip(context, widget.onFinished);
+  void _skip() => _finish();
 
   @override
   Widget build(BuildContext context) {
@@ -572,14 +623,19 @@ class _EventHostProfileCompletionScreenState
                   ),
                   _field(_rate, '8.4', 'Typical ticket (₹, 0 = free)', required: true, keyboardType: TextInputType.number),
                 ]),
-                _section('9', 'Finance / UPI', [
-                  _field(_upi, '9.1', 'UPI ID', hint: 'name@upi'),
-                  _field(_bank, '9.2', 'Bank details', hint: 'Account name, number, IFSC', maxLines: 2),
-                  const Text(
-                    'UPI is needed to withdraw. Earnings stay in your wallet until you request payout from Finance.',
-                    style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                  ),
-                ]),
+                BankDetailsSection(
+                  accountHolderController: _accountHolder,
+                  accountNumberController: _accountNumber,
+                  confirmAccountNumberController: _confirmAccountNumber,
+                  ifscController: _ifsc,
+                  bankNameController: _bankName,
+                  branchNameController: _branchName,
+                  upiController: _upi,
+                  accountType: _accountType,
+                  onAccountTypeChanged: (t) => setState(() => _accountType = t),
+                  sectionNumber: '9',
+                  title: 'Finance & Payout Bank Details',
+                ),
                 _section('10', 'Documents (optional)', [
                   const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
                   const SizedBox(height: 10),
@@ -717,10 +773,13 @@ class _EventHostProfileCompletionScreenState
     TextInputType? keyboardType,
     int maxLines = 1,
     String? hint,
+    String? helper,
+    String? errorText,
     bool required = false,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
   }) {
+    final resolvedHelper = helper ?? ProfileFieldHelper.helperForLabel(label);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextField(
@@ -732,6 +791,9 @@ class _EventHostProfileCompletionScreenState
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
           hintText: hint,
+          helperText: resolvedHelper,
+          helperMaxLines: 2,
+          errorText: errorText,
           counterText: maxLength != null ? '' : null,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
@@ -748,15 +810,19 @@ class _EventHostProfileCompletionScreenState
     required List<String> options,
     required ValueChanged<String?> onChanged,
     bool required = false,
+    String? helper,
   }) {
     final items = [...options];
     if (value != null && value.isNotEmpty && !items.contains(value)) items.add(value);
+    final resolvedHelper = helper ?? 'Select $label from the list.';
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
+          helperText: resolvedHelper,
+          helperMaxLines: 2,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           filled: true,
           fillColor: Colors.white,

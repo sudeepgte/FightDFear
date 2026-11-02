@@ -279,7 +279,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/{id:[0-9]+}", method = RequestMethod.GET)
-    public String getUser(@PathVariable Long id, Model model, HttpSession session) {
+    public String getUser(@PathVariable("id") Long id, Model model, HttpSession session) {
         User sessionUser = (User) session.getAttribute("user");
         Admin sessionAdmin = (Admin) session.getAttribute("admin");
         if (sessionUser == null && sessionAdmin == null) {
@@ -485,11 +485,8 @@ public class UserController {
 
             session.setAttribute("regPrefillEmail", normEmail);
             session.setAttribute("regPrefillPassword", password);
-            session.setAttribute("regSuccessName", fullName);
-            session.setAttribute("regSuccessEmail", normEmail);
-            session.setAttribute("regSuccessPhone", phone);
-
-            return "redirect:/users/register/success";
+            redirectAttributes.addFlashAttribute("success", "Registration successful! Please sign in with your email.");
+            return "redirect:/login?registered=true&email=" + java.net.URLEncoder.encode(normEmail, java.nio.charset.StandardCharsets.UTF_8);
 
         } catch (Exception e) {
             log.error("Registration failed", e);
@@ -563,7 +560,7 @@ public class UserController {
     }
 
     @PostMapping("/delete/{id}")
-    public String deleteUser(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+    public String deleteUser(@PathVariable("id") Long id, HttpSession session, RedirectAttributes redirectAttributes) {
         User sessionUser = (User) session.getAttribute("user");
         Admin sessionAdmin = (Admin) session.getAttribute("admin");
         if (sessionUser == null && sessionAdmin == null) {
@@ -1026,7 +1023,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.GET)
-    public String showUpdateForm(@PathVariable Long id, Model model, HttpSession session) {
+    public String showUpdateForm(@PathVariable("id") Long id, Model model, HttpSession session) {
         User sessionUser = (User) session.getAttribute("user");
         if (sessionUser == null || !sessionUser.getId().equals(id)) {
             session.setAttribute("redirectAfterLogin", "/users/update/" + id);
@@ -1052,7 +1049,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.POST)
-    public String updateUser(@PathVariable Long id,
+    public String updateUser(@PathVariable("id") Long id,
                              @RequestParam("name") String name,
                              @RequestParam("email") String email,
                              @RequestParam("phone") String phone,

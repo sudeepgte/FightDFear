@@ -54,6 +54,19 @@ public class WomenProduct {
         aliases.put("tactical accessories", "ACCESSORIES");
         aliases.put("wellness essentials", "WELLNESS");
         aliases.put("other domains", "OTHER");
+        // Mobile & web seller option codes & display labels
+        aliases.put("fashion", "CLOTHING");
+        aliases.put("beauty", "SKINCARE");
+        aliases.put("home_decor", "OTHER");
+        aliases.put("home decor", "OTHER");
+        aliases.put("organic_food", "OTHER");
+        aliases.put("organic food", "OTHER");
+        aliases.put("baby", "OTHER");
+        aliases.put("baby products", "OTHER");
+        aliases.put("jewellery", "ACCESSORIES");
+        aliases.put("jewelry", "ACCESSORIES");
+        aliases.put("books", "OTHER");
+        aliases.put("fitness", "WELLNESS");
         CATEGORY_ALIASES = java.util.Collections.unmodifiableMap(aliases);
     }
 
@@ -67,7 +80,9 @@ public class WomenProduct {
     public static String normalizeCategory(String category) {
         if (category == null || category.isBlank()) return null;
         String key = category.trim().toLowerCase(java.util.Locale.ROOT);
-        return CATEGORY_ALIASES.get(key);
+        String mapped = CATEGORY_ALIASES.get(key);
+        if (mapped != null) return mapped;
+        return in.sp.main.Util.ProductCategories.normalize(category);
     }
 
     public static String categoryLabel(String category) {

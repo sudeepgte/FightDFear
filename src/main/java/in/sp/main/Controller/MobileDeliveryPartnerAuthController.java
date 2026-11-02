@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import in.sp.main.Config.JwtUtil;
 import in.sp.main.Entities.DeliveryPartner;
 import in.sp.main.Entities.PartnerProfileStatus;
+import in.sp.main.Entities.VerificationStatus;
 import in.sp.main.Entities.WomenProductOrder;
 import in.sp.main.Repository.DeliveryPartnerRepository;
 import in.sp.main.Repository.WomenProductOrderRepository;
@@ -133,16 +134,18 @@ public class MobileDeliveryPartnerAuthController {
 
         session.setAttribute("loggedDelivery", p);
         String token = jwtUtil.generateToken(p.getEmail(), "DELIVERY");
+        boolean isApproved = p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || p.getVerificationStatus() == VerificationStatus.VERIFIED;
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("token", token);
         res.put("tokenType", "Bearer");
         res.put("role", "DELIVERY");
+        res.put("approved", isApproved);
+        res.put("status", isApproved ? "APPROVED" : (p.getPartnerProfileStatus() != null ? p.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
+        res.put("partnerProfileStatus", isApproved ? "APPROVED" : (p.getPartnerProfileStatus() != null ? p.getPartnerProfileStatus().name() : "PROFILE_INCOMPLETE"));
         res.put("partner", summary(p));
-        res.put("needsProfileCompletion",
-                PartnerLifecycleSupport.needsProfileCompletion(p.getPartnerProfileStatus()));
-        res.put("canSubmitForVerification",
-                profileService.isReadyForVerification(p)
+        res.put("needsProfileCompletion", !isApproved && PartnerLifecycleSupport.needsProfileCompletion(p.getPartnerProfileStatus()));
+        res.put("canSubmitForVerification", !isApproved && profileService.isReadyForVerification(p)
                         && p.getPartnerProfileStatus() != PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
         return ResponseEntity.ok(res);
     }
@@ -301,7 +304,7 @@ public class MobileDeliveryPartnerAuthController {
     @PostMapping("/orders/{id}/notes")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateNotes(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         DeliveryPartner p = requirePartner(session);
@@ -317,7 +320,7 @@ public class MobileDeliveryPartnerAuthController {
 
     @PostMapping("/orders/{id}/accept")
     @Transactional
-    public ResponseEntity<Map<String, Object>> accept(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> accept(@PathVariable("id") Long id, HttpSession session) {
         DeliveryPartner p = requireApproved(session);
         if (p == null) return unauthorized();
         if (p.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
@@ -336,7 +339,7 @@ public class MobileDeliveryPartnerAuthController {
     @PostMapping("/orders/{id}/status")
     @Transactional
     public ResponseEntity<Map<String, Object>> updateStatus(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, String> body,
             HttpSession session) {
         DeliveryPartner p = requireApproved(session);
@@ -356,7 +359,7 @@ public class MobileDeliveryPartnerAuthController {
     }
 
     @GetMapping("/orders/{id}/track")
-    public ResponseEntity<Map<String, Object>> track(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> track(@PathVariable("id") Long id, HttpSession session) {
         DeliveryPartner p = requirePartner(session);
         if (p == null) return unauthorized();
         WomenProductOrder o = orderRepo.findById(id).orElse(null);
@@ -371,7 +374,7 @@ public class MobileDeliveryPartnerAuthController {
     @PostMapping("/orders/{id}/location")
     @Transactional
     public ResponseEntity<Map<String, Object>> pingLocation(
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @RequestBody Map<String, Object> body,
             HttpSession session) {
         DeliveryPartner p = requireApproved(session);

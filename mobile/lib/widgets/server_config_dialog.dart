@@ -93,7 +93,7 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
               controller: _urlCtrl,
               decoration: InputDecoration(
                 labelText: 'Server Base URL',
-                hintText: 'http://10.222.42.179:8084',
+                hintText: ApiConfig.defaultLocalLanHost,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.clear, size: 20),
@@ -108,6 +108,33 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
               spacing: 6,
               runSpacing: 6,
               children: [
+                ActionChip(
+                  label: const Text('Auto-detect', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                  avatar: const Icon(Icons.auto_mode, size: 14, color: Color(0xFFF43F5E)),
+                  onPressed: () async {
+                    setState(() {
+                      _testing = true;
+                      _testResult = 'Scanning for reachable backend...';
+                    });
+                    final auth = context.read<AuthState>();
+                    final found = await auth.autoDetectWorkingServer();
+                    if (!mounted) return;
+                    if (found != null) {
+                      _urlCtrl.text = found;
+                      setState(() {
+                        _testing = false;
+                        _testSuccess = true;
+                        _testResult = 'Auto-detected reachable server at $found!';
+                      });
+                    } else {
+                      setState(() {
+                        _testing = false;
+                        _testSuccess = false;
+                        _testResult = 'Could not find an active server. Make sure phone is on same Wi-Fi and port 8084 is open.';
+                      });
+                    }
+                  },
+                ),
                 ActionChip(
                   label: const Text('My PC Wi-Fi', style: TextStyle(fontSize: 11)),
                   avatar: const Icon(Icons.wifi, size: 14),

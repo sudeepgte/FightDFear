@@ -215,13 +215,59 @@ class _WomenLawyerDetailScreenState extends State<WomenLawyerDetailScreen> {
       totalAmount: rate,
     );
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(res['success'] == true
-            ? (res['message']?.toString() ?? 'Booking requested')
-            : (res['error']?.toString() ?? 'Booking failed')),
-      ),
-    );
+    if (res['success'] != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['error']?.toString() ?? 'Booking failed')),
+      );
+      return;
+    }
+
+    final bookingId = res['bookingId'] is int
+        ? res['bookingId'] as int
+        : int.tryParse('${res['bookingId']}');
+
+    if (rate > 0 && bookingId != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Booking created. Opening Razorpay payment...')),
+      );
+      final api = context.read<AuthState>().api;
+      await _checkout.pay(
+        context: context,
+        amount: rate,
+        description: 'Legal Consultation - ${w['fullName'] ?? 'Lawyer'}',
+        createOrderFn: () => api.post(
+          '/payment/create-order',
+          body: {
+            'type': 'LAWYER_BOOKING',
+            'targetId': bookingId,
+            'amount': rate,
+          },
+        ),
+        verifyPayload: (resp) => {
+          'type': 'LAWYER_BOOKING',
+          'targetId': bookingId,
+          'bookingId': bookingId,
+          'razorpay_order_id': resp.orderId,
+          'razorpay_payment_id': resp.paymentId,
+          'razorpay_signature': resp.signature,
+          'amount': rate,
+        },
+        onError: (err) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Payment failed: $err')),
+          );
+        },
+        onSuccess: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Payment successful! Consultation confirmed.')),
+          );
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message']?.toString() ?? 'Booking requested successfully')),
+      );
+    }
   }
 
   @override

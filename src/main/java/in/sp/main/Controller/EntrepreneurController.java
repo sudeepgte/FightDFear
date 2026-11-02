@@ -150,6 +150,10 @@ public class EntrepreneurController {
                 session.setAttribute("loggedEntrepreneur", e);
 
                 // Status Gating Logic
+                boolean isApproved = e.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || e.getVerificationStatus() == VerificationStatus.VERIFIED;
+                if (isApproved) {
+                    return "redirect:/entrepreneur/dashboard";
+                }
                 PartnerProfileStatus status = e.getPartnerProfileStatus();
                 if (status == PartnerProfileStatus.PROFILE_INCOMPLETE) {
                     return "redirect:/entrepreneur/profile-completion";
@@ -199,6 +203,11 @@ public class EntrepreneurController {
         Entrepreneur e = getLoggedEntrepreneur(session);
         if (e == null)
             return "redirect:/entrepreneur/login";
+
+        boolean isApproved = e.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || e.getVerificationStatus() == VerificationStatus.VERIFIED;
+        if (isApproved) {
+            return "redirect:/entrepreneur/dashboard";
+        }
 
         Entrepreneur refreshed = entrepreneurRepository.findById(e.getId()).orElse(e);
         int completionPct = calculateEntrepreneurCompletionPct(refreshed);
@@ -455,10 +464,14 @@ public class EntrepreneurController {
             org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder
                     .getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
-                Optional<Entrepreneur> opt = entrepreneurRepository.findByEmail(auth.getName());
-                if (opt.isPresent()) {
-                    e = opt.get();
-                    session.setAttribute("loggedEntrepreneur", e);
+                boolean isEntrepreneurRole = auth.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().equals("ROLE_ENTREPRENEUR") || a.getAuthority().equals("ENTREPRENEUR"));
+                if (isEntrepreneurRole) {
+                    Optional<Entrepreneur> opt = entrepreneurRepository.findByEmail(auth.getName());
+                    if (opt.isPresent()) {
+                        e = opt.get();
+                        session.setAttribute("loggedEntrepreneur", e);
+                    }
                 }
             }
         }

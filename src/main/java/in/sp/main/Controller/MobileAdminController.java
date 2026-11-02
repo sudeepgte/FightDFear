@@ -1013,7 +1013,7 @@ public class MobileAdminController {
 
     @PostMapping("/sos/{id}/resolve")
     @Transactional
-    public ResponseEntity<Map<String, Object>> resolveSos(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> resolveSos(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         SOSRequest req = sosRequestRepository.findById(id).orElse(null);
         if (req != null) {
@@ -1052,7 +1052,7 @@ public class MobileAdminController {
 
     @PostMapping("/reported-videos/{id}/dismiss")
     @Transactional
-    public ResponseEntity<Map<String, Object>> dismissReport(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> dismissReport(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         videoReportRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("success", true, "message", "Report dismissed."));
@@ -1105,7 +1105,7 @@ public class MobileAdminController {
 
     @PostMapping("/contact-messages/{id}/mark-read")
     @Transactional
-    public ResponseEntity<Map<String, Object>> markContactMessageRead(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> markContactMessageRead(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         ContactMessage cm = contactMessageRepository.findById(id).orElse(null);
         if (cm != null) {
@@ -1121,7 +1121,7 @@ public class MobileAdminController {
 
     @PostMapping("/users/{id}/toggle-ban")
     @Transactional
-    public ResponseEntity<Map<String, Object>> toggleUserBan(@PathVariable Long id, HttpSession session) {
+    public ResponseEntity<Map<String, Object>> toggleUserBan(@PathVariable("id") Long id, HttpSession session) {
         if (requireAdmin(session) == null) return unauthorized();
         User u = userRepository.findById(id).orElse(null);
         if (u == null) return badRequest("User not found.");
