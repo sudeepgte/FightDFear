@@ -18,6 +18,7 @@ import 'martial_arts_centre_dashboard_screen.dart';
 import 'martial_arts_centre_login_screen.dart';
 import 'martial_arts_centre_register_screen.dart';
 import 'martial_arts_centre_screen.dart';
+import 'martial_arts_enroll_screen.dart';
 import 'martial_arts_qr_scanner_screen.dart';
 
 /// Browse approved martial arts centres + My Trainings.
@@ -49,6 +50,7 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
 
   bool _loading = true;
   bool _centreLoggedIn = false;
+  bool _showBanner = true;
   String? _error;
   List<Map<String, dynamic>> _centres = [];
   List<Map<String, dynamic>> _enrollments = [];
@@ -286,9 +288,11 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
   }
 
   String _mediaUrl(String? path) {
-    if (path == null || path.isEmpty) return '';
-    if (path.startsWith('http')) return path;
     final base = context.read<AuthState>().api.baseUrl;
+    if (path == null || path.trim().isEmpty) {
+      return '$base/assets/images/martialArts.jpg';
+    }
+    if (path.startsWith('http')) return path;
     return path.startsWith('/') ? '$base$path' : '$base/$path';
   }
 
@@ -387,70 +391,94 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
   Widget _buildExplore() {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1B4B),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Martial arts & self-defence centre?',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Karate, Taekwondo & similar — register here. For Gym or Zumba, use Fitness & Wellness.',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (_centreLoggedIn)
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
-                        onPressed: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const MartialArtsCentreDashboardScreen()),
-                          );
-                          await _refreshCentreLogin();
-                        },
-                        child: const Text('My dashboard'),
-                      )
-                    else ...[
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
-                        onPressed: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const MartialArtsCentreRegisterScreen()),
-                          );
-                        },
-                        child: const Text('Register trainer'),
+        if (_showBanner)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1B4B),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(right: 28),
+                        child: Text(
+                          'Martial arts & self-defence centre?',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                        ),
                       ),
-                      FilledButton(
-                        style: FilledButton.styleFrom(backgroundColor: MartialArtsScreen.primary),
-                        onPressed: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const MartialArtsCentreLoginScreen()),
-                          );
-                          await _refreshCentreLogin();
-                        },
-                        child: const Text('Centre sign in'),
+                      const SizedBox(height: 4),
+                      const Padding(
+                        padding: EdgeInsets.only(right: 28),
+                        child: Text(
+                          'Karate, Taekwondo & similar — register here. For Gym or Zumba, use Fitness & Wellness.',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          if (_centreLoggedIn)
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
+                              onPressed: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const MartialArtsCentreDashboardScreen()),
+                                );
+                                await _refreshCentreLogin();
+                              },
+                              child: const Text('My dashboard'),
+                            )
+                          else ...[
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)),
+                              onPressed: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const MartialArtsCentreRegisterScreen()),
+                                );
+                              },
+                              child: const Text('Register trainer'),
+                            ),
+                            FilledButton(
+                              style: FilledButton.styleFrom(backgroundColor: MartialArtsScreen.primary),
+                              onPressed: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const MartialArtsCentreLoginScreen()),
+                                );
+                                await _refreshCentreLogin();
+                              },
+                              child: const Text('Centre sign in'),
+                            ),
+                          ],
+                        ],
                       ),
                     ],
-                  ],
-                ),
-              ],
+                  ),
+                  Positioned(
+                    top: -6,
+                    right: -6,
+                    child: IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                      tooltip: 'Dismiss banner',
+                      onPressed: () {
+                        setState(() {
+                          _showBanner = false;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: TextField(
@@ -477,6 +505,51 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
             ),
           ),
         ),
+        // Horizontal Style / Category Filter Bar
+        SizedBox(
+          height: 40,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: MartialArtsCatalog.styles.length + 1,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final isAll = index == 0;
+              final style = isAll ? 'All Styles' : MartialArtsCatalog.styles[index - 1];
+              final isSelected = isAll
+                  ? (_styleFilter == null || _styleFilter!.isEmpty)
+                  : (_styleFilter?.toLowerCase() == style.toLowerCase());
+              return ChoiceChip(
+                showCheckmark: false,
+                avatar: isAll
+                    ? Icon(Icons.apps, size: 16, color: isSelected ? Colors.white : MartialArtsScreen.primary)
+                    : Icon(Icons.sports_martial_arts, size: 16, color: isSelected ? Colors.white : MartialArtsScreen.primary),
+                label: Text(style),
+                selected: isSelected,
+                selectedColor: MartialArtsScreen.primary,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : MartialArtsScreen.navy,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: isSelected ? MartialArtsScreen.primary : Colors.grey.shade300,
+                  ),
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    _styleFilter = isAll ? null : style;
+                  });
+                  _loadCentres();
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
           child: Wrap(
@@ -566,13 +639,96 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                             itemCount: _centres.length,
                             itemBuilder: (context, i) {
                               final c = _centres[i];
+                              final isBatch = c['isBatch'] == true;
                               final id = c['id'] is int
                                   ? c['id'] as int
                                   : int.tryParse('${c['id']}') ?? 0;
-                              final photo = _mediaUrl(c['profilePhoto']?.toString());
+                              final rawPhoto = c['profilePhoto']?.toString() ?? '';
+                              final photo = _mediaUrl(rawPhoto);
                               final styles = (c['styles'] is List)
                                   ? (c['styles'] as List).map((e) => e.toString()).toList()
                                   : <String>[];
+
+                              if (isBatch) {
+                                final alreadyEnrolled = c['alreadyEnrolled'] == true;
+                                final batchStyle = c['style']?.toString() ?? 'Martial Arts';
+                                final batchFee = (c['fee'] is num) ? (c['fee'] as num).toDouble() : 0.0;
+                                final feeStr = batchFee <= 0 ? 'FREE' : '₹${batchFee.toStringAsFixed(0)}/mo';
+                                final batchDays = c['availableDays']?.toString() ?? '';
+                                final timeSlot = c['timeSlot']?.toString() ?? '';
+                                final mode = c['batchType']?.toString() ?? 'Offline';
+
+                                final tags = <DetailTag>[
+                                  DetailTag(
+                                    label: mode,
+                                    icon: Icons.wifi,
+                                    background: const Color(0xFF1E293B),
+                                    foreground: Colors.white,
+                                  ),
+                                  DetailTag(
+                                    label: batchStyle,
+                                    icon: Icons.sports_martial_arts,
+                                    background: const Color(0xFFFFE4E6),
+                                    foreground: MartialArtsScreen.primary,
+                                  ),
+                                  DetailTag(
+                                    label: feeStr,
+                                    icon: Icons.currency_rupee,
+                                    background: const Color(0xFFDCFCE7),
+                                    foreground: const Color(0xFF166534),
+                                  ),
+                                  if (batchDays.isNotEmpty)
+                                    DetailTag(
+                                      label: batchDays,
+                                      icon: Icons.calendar_month_outlined,
+                                    ),
+                                  if (timeSlot.isNotEmpty)
+                                    DetailTag(
+                                      label: timeSlot,
+                                      icon: Icons.schedule_outlined,
+                                    ),
+                                ];
+
+                                return DetailListingCard(
+                                  title: c['name']?.toString() ?? 'Batch',
+                                  eyebrow: c['centreName']?.toString() ?? 'Martial Arts Centre',
+                                  location: c['location']?.toString(),
+                                  photoUrl: photo,
+                                  tags: tags,
+                                  phone: c['phoneNumber']?.toString(),
+                                  showMediaActions: false,
+                                  primaryLabel: alreadyEnrolled ? 'Already Enrolled' : 'Book This Batch',
+                                  primaryButtonColor: alreadyEnrolled ? const Color(0xFF166534) : MartialArtsScreen.primary,
+                                  onPrimary: () async {
+                                    if (alreadyEnrolled) {
+                                      _tabs.animateTo(1);
+                                      _loadEnrollments();
+                                      return;
+                                    }
+                                    final batchMap = {
+                                      'id': c['batchId'],
+                                      'name': c['name'],
+                                      'style': c['style'],
+                                      'fee': c['fee'],
+                                    };
+                                    final centreMap = {
+                                      'id': c['centreId'],
+                                      'name': c['centreName'],
+                                      'location': c['location'],
+                                    };
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => MartialArtsEnrollScreen(
+                                          centre: centreMap,
+                                          batch: batchMap,
+                                        ),
+                                      ),
+                                    );
+                                    _loadEnrollments();
+                                  },
+                                );
+                              }
+
                               final tags = <DetailTag>[
                                 DetailTag(
                                   label: _feeLabel(c),
@@ -607,7 +763,7 @@ class _MartialArtsScreenState extends State<MartialArtsScreen>
                                 title: c['name']?.toString() ?? 'Centre',
                                 eyebrow: 'Martial Arts Centre',
                                 location: c['location']?.toString(),
-                                photoUrl: photo.isEmpty ? null : photo,
+                                photoUrl: photo,
                                 tags: tags,
                                 phone: c['phoneNumber']?.toString(),
                                 showMediaActions: true,

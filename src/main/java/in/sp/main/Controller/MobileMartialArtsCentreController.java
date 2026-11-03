@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -81,6 +82,8 @@ public class MobileMartialArtsCentreController {
     @Autowired
     private in.sp.main.Service.MartialArtsCareService martialArtsCareService;
 
+    @Autowired
+    private in.sp.main.Service.EmailAsyncService emailAsyncService;
 
     @Autowired
     private in.sp.main.Service.QrAttendanceService qrAttendanceService;
@@ -709,6 +712,44 @@ public class MobileMartialArtsCentreController {
         }
         enrollmentRepository.save(enrollment);
 
+        if (enrollment.getUser() != null || enrollment.getEmail() != null) {
+            String studentEmail = enrollment.getEmail() != null && !enrollment.getEmail().isBlank()
+                    ? enrollment.getEmail()
+                    : (enrollment.getUser() != null ? enrollment.getUser().getEmail() : null);
+            if (studentEmail != null && !studentEmail.isBlank()) {
+                try {
+                    String centerName = enrollment.getCenter() != null ? enrollment.getCenter().getName() : "Centre";
+                    String batchName = enrollment.getBatch() != null ? enrollment.getBatch().getName() : "Training Batch";
+                    String studentName = enrollment.getFullName() != null ? enrollment.getFullName()
+                            : (enrollment.getUser() != null ? enrollment.getUser().getFullName() : "Student");
+
+                    String subject = "Fight D Fear - Enrollment Application Update: " + centerName;
+                    String bodyText = "";
+                    if (status == TrainingStatus.APPROVED) {
+                        subject = "Fight D Fear - Enrollment Application Approved!: " + centerName;
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Great news! Your enrollment application for batch \"" + batchName + "\" at " + centerName + " has been APPROVED!\n\n"
+                                + "Please log in to the Fight D Fear app or website to complete your payment and confirm your seat.\n\nThank you,\nFight D Fear Healthcare";
+                    } else if (status == TrainingStatus.REJECTED) {
+                        subject = "Fight D Fear - Enrollment Application Update: " + centerName;
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Your enrollment application for batch \"" + batchName + "\" at " + centerName + " was not accepted at this time.\n\n"
+                                + "You can explore other available training centres or batches in the Fight D Fear app.\n\nThank you,\nFight D Fear Healthcare";
+                    } else if (status == TrainingStatus.COMPLETED) {
+                        subject = "Fight D Fear - Training Completed & Digital Certificate!";
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Congratulations! You have completed your training program for \"" + batchName + "\" at " + centerName + ".\n\n"
+                                + "Your digital completion certificate is now available in your Fight D Fear account under My Trainings.\n\nThank you,\nFight D Fear Healthcare";
+                    } else {
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Your enrollment status for batch \"" + batchName + "\" at " + centerName + " is now: " + status.name() + ".\n\n"
+                                + "Log in to your Fight D Fear account to view details.\n\nThank you,\nFight D Fear Healthcare";
+                    }
+                    emailAsyncService.sendEmailAsync(studentEmail, subject, bodyText);
+                } catch (Exception ignored) {}
+            }
+        }
+
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("message", "Status updated");
@@ -869,6 +910,30 @@ public class MobileMartialArtsCentreController {
                 attendance.setStatus(status);
                 attendance.setNotes(t.get("notes") != null ? t.get("notes").toString() : "");
                 attendanceRepository.save(attendance);
+
+                if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                    try {
+                        String studentName = user.getFullName() != null ? user.getFullName() : "Trainee";
+                        String centerName = centre.getName();
+                        String batchName = batch != null ? batch.getName() : (oc != null ? oc.getTitle() : "Session");
+                        String subject = "Fight D Fear - Attendance Marked " + status.name() + ": " + centerName;
+                        String bodyText = "";
+                        if (status == AttendanceStatus.PRESENT) {
+                            bodyText = "Hello " + studentName + ",\n\n"
+                                    + "Your attendance for batch \"" + batchName + "\" at " + centerName + " on " + date + " has been marked PRESENT.\n\n"
+                                    + "Thank you for attending class!\n\nFight D Fear Healthcare";
+                        } else if (status == AttendanceStatus.ABSENT) {
+                            bodyText = "Hello " + studentName + ",\n\n"
+                                    + "Your attendance for batch \"" + batchName + "\" at " + centerName + " on " + date + " was marked ABSENT.\n\n"
+                                    + "If you missed class or have a valid reason, please inform your instructor or centre manager.\n\nThank you,\nFight D Fear Healthcare";
+                        } else {
+                            bodyText = "Hello " + studentName + ",\n\n"
+                                    + "Your attendance for batch \"" + batchName + "\" at " + centerName + " on " + date + " was marked " + status.name() + ".\n\n"
+                                    + "Thank you,\nFight D Fear Healthcare";
+                        }
+                        emailAsyncService.sendEmailAsync(user.getEmail(), subject, bodyText);
+                    } catch (Exception ignored) {}
+                }
             }
 
             Map<String, Object> res = new LinkedHashMap<>();
@@ -950,17 +1015,42 @@ public class MobileMartialArtsCentreController {
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("student", enrollmentSummary(e));
-        res.put("fullName", e.getFullName());
+        res.put("fullName", e.getFullName() != null ? e.getFullName() : (e.getUser() != null ? e.getUser().getFullName() : "Student"));
         res.put("phone", e.getPhoneNumber());
         res.put("email", e.getEmail());
+        res.put("dob", e.getDob() != null ? e.getDob().toString() : null);
         res.put("age", e.getAge());
         res.put("gender", e.getGender());
-        res.put("medicalConditions", e.getMedicalConditions());
-        res.put("allergies", e.getAllergies());
-        res.put("coachNotes", e.getCoachNotes());
+        res.put("emergencyName", e.getEmergencyContactName());
+        res.put("emergencyPhone", e.getEmergencyContactPhone());
+        res.put("residentialAddress", e.getResidentialAddress());
+        res.put("enrolledAt", e.getEnrolledAt() != null ? e.getEnrolledAt().toString() : null);
+
+        res.put("centreName", e.getCenter() != null ? e.getCenter().getName() : null);
+        res.put("batchName", e.getBatch() != null ? e.getBatch().getName() : null);
+        res.put("style", e.getBatch() != null && e.getBatch().getStyle() != null ? e.getBatch().getStyle() : (e.getMartialArtsType() != null ? e.getMartialArtsType().getName() : null));
+        res.put("skillLevel", e.getSkillLevel() != null ? e.getSkillLevel() : (e.getBatch() != null ? e.getBatch().getSkillLevel() : null));
+        res.put("instructor", e.getBatch() != null ? e.getBatch().getInstructor() : null);
+        res.put("timeSlot", e.getBatch() != null ? e.getBatch().getTimeSlot() : null);
+        res.put("mode", e.getBatch() != null ? e.getBatch().getBatchType() : "Offline");
+        res.put("startDate", e.getProposedStartDate() != null ? e.getProposedStartDate().toString() : null);
+        res.put("trainerPreference", e.getTrainerPreference());
+        res.put("preferredDays", e.getPreferredDays() != null && !e.getPreferredDays().isEmpty()
+                ? e.getPreferredDays().stream().map(Enum::name).collect(Collectors.joining(", "))
+                : (e.getBatch() != null ? e.getBatch().getAvailableDays() : null));
+
+        double fee = e.getBatch() != null && e.getBatch().getFee() != null ? e.getBatch().getFee() : 0.0;
+        res.put("fee", fee);
+        res.put("amountPaid", e.getAmountPaid());
         res.put("status", e.getStatus() == null ? "PENDING" : e.getStatus().name());
         res.put("paymentStatus", e.getPaymentStatus());
-        res.put("batchName", e.getBatch() == null ? null : e.getBatch().getName());
+
+        res.put("trainingGoal", e.getTrainingGoal());
+        res.put("motivation", e.getMotivation());
+        res.put("medicalConditions", e.getMedicalConditions());
+        res.put("allergies", e.getAllergies());
+        res.put("fitnessNotes", e.getFitnessNotes());
+        res.put("coachNotes", e.getCoachNotes());
         res.put("attendanceHistory", history);
         return ResponseEntity.ok(res);
     }
@@ -1178,16 +1268,30 @@ public class MobileMartialArtsCentreController {
             eMap.put("slot", e.getBatch() != null ? e.getBatch().getTimeSlot() : "N/A");
             eMap.put("enrollmentStatus", e.getStatus() != null ? e.getStatus().toString() : "PENDING");
             eMap.put("paymentStatus", e.getPaymentStatus() != null ? e.getPaymentStatus() : "UNPAID");
-            eMap.put("amount", e.getAmountPaid() != null ? e.getAmountPaid() : 0.0);
+            eMap.put("amount", e.getAmountPaid() != null ? e.getAmountPaid() : (e.getBatch() != null && e.getBatch().getFee() != null ? e.getBatch().getFee() : 0.0));
+            eMap.put("fee", e.getBatch() != null && e.getBatch().getFee() != null ? e.getBatch().getFee() : 0.0);
             eMap.put("progress", e.getProgressPercentage() != null ? e.getProgressPercentage() : 0);
+            eMap.put("emergencyContactName", e.getEmergencyContactName());
+            eMap.put("emergencyContactPhone", e.getEmergencyContactPhone());
+            eMap.put("residentialAddress", e.getResidentialAddress());
+            eMap.put("proposedStartDate", e.getProposedStartDate() != null ? e.getProposedStartDate().toString() : null);
+            eMap.put("trainerPreference", e.getTrainerPreference());
+            eMap.put("preferredDays", e.getPreferredDays() != null && !e.getPreferredDays().isEmpty()
+                    ? e.getPreferredDays().stream().map(Enum::name).collect(Collectors.joining(", "))
+                    : (e.getBatch() != null ? e.getBatch().getAvailableDays() : null));
+            eMap.put("trainingGoal", e.getTrainingGoal());
+            eMap.put("motivation", e.getMotivation());
+            eMap.put("medicalConditions", e.getMedicalConditions());
+            eMap.put("allergies", e.getAllergies());
+            eMap.put("fitnessNotes", e.getFitnessNotes());
+            eMap.put("coachNotes", e.getCoachNotes());
+
             Long userId = e.getUser() != null ? e.getUser().getId() : -1L;
             List<Attendance> history = attendanceRepository.findByUserId(userId);
             long totalAtt = history.size();
             long presentCount = history.stream()
                     .filter(h -> h.getStatus() == AttendanceStatus.PRESENT).count();
             eMap.put("attendancePercentage", totalAtt == 0 ? 0 : (int) ((double) presentCount / totalAtt * 100));
-            eMap.put("coachNotes", e.getCoachNotes());
-            eMap.put("medicalConditions", e.getMedicalConditions());
             enrollList.add(eMap);
         }
         enrollList.sort((a, b) -> Long.compare((Long) b.get("id"), (Long) a.get("id")));

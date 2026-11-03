@@ -14,6 +14,7 @@ public class EnrollmentRequest {
     private String email;
     private String address;
     private String emergencyName;
+    private String emergencyPhone;
     private String style;
     private String skillLevel;
     private List<String> preferredDays;
@@ -60,6 +61,9 @@ public class EnrollmentRequest {
 
     public String getEmergencyName() { return emergencyName; }
     public void setEmergencyName(String emergencyName) { this.emergencyName = emergencyName; }
+
+    public String getEmergencyPhone() { return emergencyPhone; }
+    public void setEmergencyPhone(String emergencyPhone) { this.emergencyPhone = emergencyPhone; }
 
     public String getStyle() { return style; }
     public void setStyle(String style) { this.style = style; }

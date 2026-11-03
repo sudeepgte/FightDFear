@@ -34,6 +34,9 @@ public class QrAttendanceService {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
+    @Autowired
+    private EmailAsyncService emailAsyncService;
+
     private String generateSecureToken() {
         byte[] bytes = new byte[24];
         RANDOM.nextBytes(bytes);
@@ -161,6 +164,18 @@ public class QrAttendanceService {
         attendance.setStatus(AttendanceStatus.PRESENT);
         attendance.setNotes("QR Check-in (Session #" + session.getId() + ")");
         attendanceRepository.save(attendance);
+
+        if (student.getEmail() != null && !student.getEmail().isBlank()) {
+            try {
+                String studentName = student.getFullName() != null ? student.getFullName() : "Trainee";
+                String subject = "Fight D Fear - Attendance Marked Present: " + centre.getName();
+                String body = "Hello " + studentName + ",\n\n"
+                        + "Your attendance for batch \"" + batch.getName() + "\" at " + centre.getName() + " on " + attendanceDate + " has been marked PRESENT via QR check-in.\n\n"
+                        + "Check-in Time: " + attendance.getJoinTime() + "\n\n"
+                        + "Thank you for attending class!\n\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(student.getEmail(), subject, body);
+            } catch (Exception ignored) {}
+        }
 
         log.info("Student {} successfully checked into batch {} via QR session {}", student.getId(), batch.getId(), session.getId());
 

@@ -37,6 +37,9 @@ public class AttendanceController {
     @Autowired
     private MartialArtsCenterRepository centerRepository;
 
+    @Autowired
+    private in.sp.main.Service.EmailAsyncService emailAsyncService;
+
     @GetMapping("/attendance/my-attendance")
     public String showMyAttendance(HttpSession session, Model model) {
         User user = (User) session.getAttribute("user");
@@ -283,12 +286,39 @@ public class AttendanceController {
                     attendance.setMode("ONLINE");
                 }
 
-                attendance.setUser(userRepository.findById(userId).get());
-                attendance.setCenter(center);
-                attendance.setAttendanceDate(date);
-                attendance.setStatus(status);
-                attendance.setNotes(Objects.toString(t.get("notes"), ""));
-                attendanceRepository.save(attendance);
+                User student = userRepository.findById(userId).orElse(null);
+                if (student != null) {
+                    attendance.setUser(student);
+                    attendance.setCenter(center);
+                    attendance.setAttendanceDate(date);
+                    attendance.setStatus(status);
+                    attendance.setNotes(Objects.toString(t.get("notes"), ""));
+                    attendanceRepository.save(attendance);
+
+                    if (student.getEmail() != null && !student.getEmail().isBlank()) {
+                        try {
+                            String studentName = student.getFullName() != null ? student.getFullName() : "Trainee";
+                            String centerName = center.getName();
+                            String batchName = batch != null ? batch.getName() : (oc != null ? oc.getTitle() : "Session");
+                            String subject = "Fight D Fear - Attendance Marked " + status.name() + ": " + centerName;
+                            String bodyText = "";
+                            if (status == AttendanceStatus.PRESENT) {
+                                bodyText = "Hello " + studentName + ",\n\n"
+                                        + "Your attendance for batch \"" + batchName + "\" at " + centerName + " on " + date + " has been marked PRESENT.\n\n"
+                                        + "Thank you for attending class!\n\nFight D Fear Healthcare";
+                            } else if (status == AttendanceStatus.ABSENT) {
+                                bodyText = "Hello " + studentName + ",\n\n"
+                                        + "Your attendance for batch \"" + batchName + "\" at " + centerName + " on " + date + " was marked ABSENT.\n\n"
+                                        + "If you missed class or have a valid reason, please inform your instructor or centre manager.\n\nThank you,\nFight D Fear Healthcare";
+                            } else {
+                                bodyText = "Hello " + studentName + ",\n\n"
+                                        + "Your attendance for batch \"" + batchName + "\" at " + centerName + " on " + date + " was marked " + status.name() + ".\n\n"
+                                        + "Thank you,\nFight D Fear Healthcare";
+                            }
+                            emailAsyncService.sendEmailAsync(student.getEmail(), subject, bodyText);
+                        } catch (Exception ignored) {}
+                    }
+                }
             }
 
             return ResponseEntity.ok("Attendance saved successfully");

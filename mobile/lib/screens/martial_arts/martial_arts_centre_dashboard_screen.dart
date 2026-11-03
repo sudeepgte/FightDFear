@@ -2500,6 +2500,230 @@ class _StudentsTabState extends State<_StudentsTab> {
     );
   }
 
+  Widget _reviewCard(String title, IconData icon, List<Widget> children) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: MartialArtsCentreDashboardScreen.primary),
+                const SizedBox(width: 8),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E1B4B))),
+              ],
+            ),
+            const Divider(height: 16),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _reviewRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openApplicationReview(int eid, Map<String, dynamic> s) async {
+    final res = await widget.auth.studentFile(eid);
+    if (!mounted) return;
+
+    final fullName = res['fullName'] ?? s['traineeName'] ?? 'Student';
+    final email = res['email'] ?? s['email'] ?? '—';
+    final phone = res['phone'] ?? s['phone'] ?? '—';
+    final dob = res['dob'] ?? s['dob'] ?? '—';
+    final age = res['age'] ?? s['age'] ?? '';
+    final gender = res['gender'] ?? s['gender'] ?? '—';
+    final emergency = res['emergencyName'] ?? s['emergencyContactName'] ?? '—';
+    final emergencyPhone = res['emergencyPhone'] ?? s['emergencyContactPhone'] ?? '';
+    final address = res['residentialAddress'] ?? s['residentialAddress'] ?? '—';
+    final enrolledAt = res['enrolledAt'] ?? s['enrolledAt'] ?? '—';
+
+    final centreName = res['centreName'] ?? s['centreName'] ?? 'Centre';
+    final batchName = res['batchName'] ?? s['batchName'] ?? '—';
+    final style = res['style'] ?? s['style'] ?? '—';
+    final level = res['skillLevel'] ?? s['skillLevel'] ?? '—';
+    final instructor = res['instructor'] ?? s['instructor'] ?? '—';
+    final days = res['preferredDays'] ?? s['preferredDays'] ?? s['availableDays'] ?? '—';
+    final timeSlot = res['timeSlot'] ?? s['timeSlot'] ?? '—';
+    final mode = res['mode'] ?? s['mode'] ?? 'Offline';
+    final startDate = res['startDate'] ?? s['proposedStartDate'] ?? '—';
+    final trainerPref = res['trainerPreference'] ?? s['trainerPreference'] ?? '—';
+
+    final fee = res['fee'] ?? s['fee'] ?? s['amount'] ?? 0;
+    final status = (res['status'] ?? s['status'] ?? s['enrollmentStatus'] ?? 'PENDING').toString().toUpperCase();
+    final paymentStatus = (res['paymentStatus'] ?? s['paymentStatus'] ?? 'PENDING').toString().toUpperCase();
+
+    final goal = res['trainingGoal'] ?? s['trainingGoal'] ?? '—';
+    final motivation = res['motivation'] ?? s['motivation'] ?? '—';
+    final medical = res['medicalConditions'] ?? s['medicalConditions'] ?? 'None reported';
+    final allergies = res['allergies'] ?? s['allergies'] ?? 'None reported';
+    final fitnessNotes = res['fitnessNotes'] ?? s['fitnessNotes'] ?? 'None reported';
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.88,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        builder: (_, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2)),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Review Application', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Color(0xFF1E1B4B))),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: status == 'APPROVED' || status == 'ACTIVE'
+                            ? const Color(0xFFDCFCE7)
+                            : status == 'PENDING'
+                                ? const Color(0xFFFEF3C7)
+                                : const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Application ID: APP-$eid', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          Text(status, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: status == 'APPROVED' ? const Color(0xFF166534) : const Color(0xFF92400E))),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _reviewCard('1. Student Information', Icons.person_outlined, [
+                      _reviewRow('Full Name', '$fullName'),
+                      _reviewRow('Email', '$email'),
+                      _reviewRow('Phone', '$phone'),
+                      _reviewRow('DOB & Age', '$dob ${age.toString().isNotEmpty ? "($age Yrs)" : ""}'),
+                      _reviewRow('Gender', '$gender'),
+                      _reviewRow('Emergency Contact', '$emergency ${emergencyPhone.isNotEmpty ? "($emergencyPhone)" : ""}'),
+                      _reviewRow('Address', '$address'),
+                      _reviewRow('Registration Date', '$enrolledAt'),
+                    ]),
+                    _reviewCard('2. Enrollment Details', Icons.menu_book_outlined, [
+                      _reviewRow('Centre', '$centreName'),
+                      _reviewRow('Discipline', '$style'),
+                      _reviewRow('Batch Name', '$batchName'),
+                      _reviewRow('Skill Level', '$level'),
+                      _reviewRow('Coach / Instructor', '$instructor'),
+                      _reviewRow('Preferred Days', '$days'),
+                      _reviewRow('Time Slot', '$timeSlot'),
+                      _reviewRow('Proposed Start Date', '$startDate'),
+                      _reviewRow('Trainer Preference', '$trainerPref'),
+                      _reviewRow('Training Mode', '$mode'),
+                    ]),
+                    _reviewCard('3. Fee Details', Icons.payments_outlined, [
+                      _reviewRow('Monthly Fee', '₹$fee'),
+                      _reviewRow('Payment Status', '$paymentStatus'),
+                    ]),
+                    _reviewCard('4. Goals & Motivation', Icons.track_changes_outlined, [
+                      _reviewRow('Training Goal', '$goal'),
+                      _reviewRow('Motivation', '$motivation'),
+                    ]),
+                    _reviewCard('5. Health & Medical Notes', Icons.medical_services_outlined, [
+                      _reviewRow('Medical Conditions', '$medical'),
+                      _reviewRow('Allergies', '$allergies'),
+                      _reviewRow('Fitness Notes', '$fitnessNotes'),
+                    ]),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (status == 'PENDING') ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final res = await widget.auth.updateStudentStatus(eid, 'REJECTED');
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(res['message']?.toString() ?? 'Application rejected')),
+                            );
+                            widget.onChanged();
+                          }
+                        },
+                        child: const Text('Reject Application', style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF16A34A),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          final res = await widget.auth.updateStudentStatus(eid, 'APPROVED');
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(res['message']?.toString() ?? 'Application approved!')),
+                            );
+                            widget.onChanged();
+                          }
+                        },
+                        child: const Text('Approve Application', style: TextStyle(fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _search.dispose();
@@ -2614,6 +2838,20 @@ class _StudentsTabState extends State<_StudentsTab> {
                             if (s['attendancePercentage'] != null)
                               Text('Attendance: ${s['attendancePercentage']}%', style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A))),
                             const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: eid == null ? null : () => _openApplicationReview(eid, s),
+                                icon: const Icon(Icons.visibility_outlined, size: 16),
+                                label: const Text('View Application Details'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: MartialArtsCentreDashboardScreen.primary,
+                                  side: const BorderSide(color: MartialArtsCentreDashboardScreen.primary),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
                                 TextButton.icon(
@@ -2671,91 +2909,20 @@ class _AttendanceTab extends StatefulWidget {
 }
 
 class _AttendanceTabState extends State<_AttendanceTab> {
+  int _subnavIndex = 0; // 0: Daily Roster & Marking, 1: Dynamic QR Engine
   String _date = DateTime.now().toIso8601String().substring(0, 10);
   List<Map<String, dynamic>> _sessions = [];
   Map<String, dynamic>? _selected;
   List<Map<String, dynamic>> _trainees = [];
   bool _busy = false;
 
-  Future<void> _startQrSession() async {
-    if (_selected == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a batch first to start QR session')),
-      );
-      return;
-    }
-    final batchId = _selected!['id'] is int ? _selected!['id'] as int : int.tryParse('${_selected!['id']}');
-    if (batchId == null) return;
-
-    final res = await widget.auth.createQrSession(batchId: batchId, date: _date, duration: 15);
-    if (!mounted) return;
-    if (res['success'] == true) {
-      final qrCode = res['qrSessionCode']?.toString() ?? res['qrCode']?.toString() ?? 'QR-ATTENDANCE-ACTIVE';
-      final expiresAt = res['expiresAt']?.toString() ?? '15 minutes';
-      final sessionId = res['qrSessionId'] is int ? res['qrSessionId'] as int : int.tryParse('${res['qrSessionId']}');
-
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.qr_code_scanner_rounded, color: MartialArtsCentreDashboardScreen.primary),
-              SizedBox(width: 8),
-              Text('Live QR Attendance', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text('Batch: ${_selected!['name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 2),
-                  borderRadius: BorderRadius.circular(16),
-                  color: const Color(0xFFF8FAFC),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(Icons.qr_code_2_rounded, size: 120, color: MartialArtsCentreDashboardScreen.navy),
-                    const SizedBox(height: 8),
-                    Text(
-                      qrCode,
-                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16, letterSpacing: 1.5, color: MartialArtsCentreDashboardScreen.primary),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text('Session Active · Expires at: $expiresAt', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              const SizedBox(height: 4),
-              const Text('Students scan this QR code on their mobile app to mark instant verified attendance.', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-            ],
-          ),
-          actions: [
-            if (sessionId != null)
-              TextButton(
-                onPressed: () async {
-                  await widget.auth.closeQrSession(sessionId);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                },
-                child: const Text('Close Session', style: TextStyle(color: Color(0xFFEF4444))),
-              ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Done'),
-            ),
-          ],
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['error']?.toString() ?? 'Could not start QR session')),
-      );
-    }
-  }
+  // QR Engine State
+  Map<String, dynamic>? _qrSelectedBatch;
+  int _qrDuration = 15; // 15, 30, 60
+  String? _activeQrCode;
+  int? _activeSessionId;
+  String? _activeExpiresAt;
+  bool _generatingQr = false;
 
   Future<void> _loadSessions() async {
     setState(() => _busy = true);
@@ -2773,13 +2940,8 @@ class _AttendanceTabState extends State<_AttendanceTab> {
           _selected = _sessions.first;
           _loadTrainees();
         }
-      } else {
-        final err = res['error']?.toString() ?? res['message']?.toString();
-        if (err != null) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading sessions: $e')));
-    }
+    } catch (_) {}
     if (mounted) setState(() => _busy = false);
   }
 
@@ -2803,13 +2965,9 @@ class _AttendanceTabState extends State<_AttendanceTab> {
             ? (res['trainees'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
             : [];
       } else {
-        final err = res['error']?.toString() ?? res['message']?.toString();
-        if (err != null) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
         _trainees = [];
       }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading trainees: $e')));
-    }
+    } catch (_) {}
     if (mounted) setState(() => _busy = false);
   }
 
@@ -2834,7 +2992,7 @@ class _AttendanceTabState extends State<_AttendanceTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            res['message']?.toString() ?? res['error']?.toString() ?? (ok ? 'Saved successfully' : 'Save failed'),
+            res['message']?.toString() ?? res['error']?.toString() ?? (ok ? 'Attendance records saved successfully' : 'Save failed'),
           ),
           backgroundColor: ok ? const Color(0xFF166534) : Colors.red,
         ),
@@ -2845,127 +3003,517 @@ class _AttendanceTabState extends State<_AttendanceTab> {
     if (mounted) setState(() => _busy = false);
   }
 
+  Future<void> _generateQrSession() async {
+    if (_qrSelectedBatch == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select a training batch first')),
+      );
+      return;
+    }
+    final batchId = _qrSelectedBatch!['id'] is int
+        ? _qrSelectedBatch!['id'] as int
+        : int.tryParse('${_qrSelectedBatch!['id']}');
+    if (batchId == null) return;
+
+    setState(() => _generatingQr = true);
+    try {
+      final res = await widget.auth.createQrSession(
+        batchId: batchId,
+        date: _date,
+        duration: _qrDuration,
+      );
+      if (!mounted) return;
+      if (res['success'] == true) {
+        setState(() {
+          _activeQrCode = res['qrSessionCode']?.toString() ?? res['qrCode']?.toString() ?? 'QR-SESSION-ACTIVE';
+          _activeSessionId = res['qrSessionId'] is int ? res['qrSessionId'] as int : int.tryParse('${res['qrSessionId']}');
+          _activeExpiresAt = res['expiresAt']?.toString() ?? '$_qrDuration minutes';
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['error']?.toString() ?? 'Could not generate QR session')),
+        );
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) setState(() => _generatingQr = false);
+    }
+  }
+
+  Future<void> _endQrSession() async {
+    if (_activeSessionId != null) {
+      await widget.auth.closeQrSession(_activeSessionId!);
+    }
+    if (mounted) {
+      setState(() {
+        _activeQrCode = null;
+        _activeSessionId = null;
+        _activeExpiresAt = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('QR Attendance Session ended')),
+      );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _loadSessions();
+    if (widget.batches.isNotEmpty) {
+      _qrSelectedBatch = widget.batches.first;
+    }
+  }
+
+  Widget _buildStatusBtn(int traineeIndex, String statusKey, String label, Color activeBg, Color activeFg) {
+    final currentStatus = (_trainees[traineeIndex]['status']?.toString() ?? 'PRESENT').toUpperCase();
+    final isSelected = currentStatus == statusKey;
+
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: InkWell(
+          onTap: () {
+            setState(() {
+              _trainees[traineeIndex]['status'] = statusKey;
+            });
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? activeBg : Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isSelected ? activeBg : Colors.grey.shade300,
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: isSelected ? activeFg : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Subnav Switcher Bar
         Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)', border: OutlineInputBorder()),
-                  controller: TextEditingController(text: _date),
-                  onSubmitted: (v) {
-                    _date = v.trim();
-                    _loadSessions();
-                  },
-                ),
-              ),
-              IconButton(onPressed: _loadSessions, icon: const Icon(Icons.refresh)),
-            ],
-          ),
-        ),
-        if (_selected != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Row(
               children: [
                 Expanded(
-                  child: FilledButton.tonalIcon(
-                    onPressed: _startQrSession,
-                    icon: const Icon(Icons.qr_code_2_rounded),
-                    label: const Text('Start QR Attendance Session'),
+                  child: InkWell(
+                    onTap: () => setState(() => _subnavIndex = 0),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _subnavIndex == 0 ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _subnavIndex == 0
+                            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.assignment_ind_outlined, size: 16, color: _subnavIndex == 0 ? const Color(0xFF1E1B4B) : const Color(0xFF64748B)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Daily Roster & Marking',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _subnavIndex == 0 ? const Color(0xFF1E1B4B) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _subnavIndex = 1),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _subnavIndex == 1 ? Colors.white : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: _subnavIndex == 1
+                            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.qr_code_2_rounded, size: 16, color: _subnavIndex == 1 ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF64748B)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Dynamic QR Engine',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: _subnavIndex == 1 ? MartialArtsCentreDashboardScreen.primary : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-        if (_busy) const LinearProgressIndicator(),
-        if (_sessions.isEmpty && !_busy)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Center(
-              child: Text(
-                'No batches or classes found for this date.\nCreate active batches to take attendance.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF64748B)),
+        ),
+
+        // SUBNAV 0: DAILY ROSTER & MARKING
+        if (_subnavIndex == 0) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: _selected != null ? '${_selected!['type']}_${_selected!['id']}' : null,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'SELECT BATCH / ONLINE SESSION *',
+                    hintText: 'Choose a batch or session…',
+                    border: OutlineInputBorder(),
+                    filled: true,
+                    fillColor: Colors.white,
+                  ),
+                  items: _sessions.map((s) {
+                    final key = '${s['type']}_${s['id']}';
+                    final label = '${s['name']} (${s['time'] ?? 'Regular'})';
+                    return DropdownMenuItem(value: key, child: Text(label, overflow: TextOverflow.ellipsis));
+                  }).toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      final parts = v.split('_');
+                      if (parts.length >= 2) {
+                        final type = parts[0];
+                        final id = int.tryParse(parts[1]);
+                        final match = _sessions.firstWhere(
+                          (s) => s['type'] == type && (s['id'] == id || '${s['id']}' == parts[1]),
+                          orElse: () => _sessions.first,
+                        );
+                        setState(() => _selected = match);
+                        _loadTrainees();
+                      }
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: TextEditingController(text: _date),
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'ATTENDANCE DATE',
+                          border: OutlineInputBorder(),
+                          suffixIcon: Icon(Icons.calendar_today_outlined, size: 18),
+                        ),
+                        onTap: () async {
+                          final parsed = DateTime.tryParse(_date) ?? DateTime.now();
+                          final d = await showDatePicker(
+                            context: context,
+                            initialDate: parsed,
+                            firstDate: DateTime.now().subtract(const Duration(days: 90)),
+                            lastDate: DateTime.now().add(const Duration(days: 30)),
+                          );
+                          if (d != null) {
+                            setState(() {
+                              _date = d.toIso8601String().substring(0, 10);
+                            });
+                            _loadSessions();
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filledTonal(
+                      onPressed: _loadSessions,
+                      icon: const Icon(Icons.refresh),
+                      tooltip: 'Refresh Roster',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (_busy) const LinearProgressIndicator(),
+          if (_sessions.isEmpty && !_busy)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  'No batches or classes found for this date.\nCreate active batches to take attendance.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
+              ),
+            )
+          else if (_selected != null && _trainees.isEmpty && !_busy)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Icon(Icons.calendar_month_outlined, size: 48, color: Color(0xFF94A3B8)),
+                  SizedBox(height: 10),
+                  Text('Select a Session to Start Marking Attendance', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: Color(0xFF1E1B4B))),
+                  SizedBox(height: 4),
+                  Text('Pick an offline batch or live online class from the dropdown above to view student rosters and mark attendance.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+                ],
+              ),
+            )
+          else if (_trainees.isNotEmpty) ...[
+            Expanded(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                itemCount: _trainees.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (_, i) {
+                  final t = _trainees[i];
+                  final name = t['name']?.toString() ?? 'Trainee';
+                  final rate = t['attendanceRate'] ?? t['attendancePercentage'] ?? 100;
+
+                  return Card(
+                    margin: EdgeInsets.zero,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF1E1B4B))),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
+                                child: Text('Rate: $rate%', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF475569))),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              _buildStatusBtn(i, 'PRESENT', 'P (Present)', const Color(0xFF16A34A), Colors.white),
+                              _buildStatusBtn(i, 'ABSENT', 'A (Absent)', const Color(0xFFDCFCE7), const Color(0xFF166534)),
+                              _buildStatusBtn(i, 'LATE', 'L (Late)', const Color(0xFFFEF3C7), const Color(0xFF92400E)),
+                              _buildStatusBtn(i, 'EXCUSED', 'E (Excused)', const Color(0xFFE0F2FE), const Color(0xFF0369A1)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          )
-        else
-          Expanded(
-            flex: 2,
-            child: ListView(
-              children: _sessions.map((s) {
-                final isSel = _selected?['id'] == s['id'] && _selected?['type'] == s['type'];
-                return ListTile(
-                  selected: isSel,
-                  selectedTileColor: const Color(0xFFF1F5F9),
-                  title: Text(s['name']?.toString() ?? '', style: TextStyle(fontWeight: isSel ? FontWeight.w800 : FontWeight.w600)),
-                  subtitle: Text('${s['time'] ?? ''} · ${s['type'] ?? ''}'),
-                  trailing: isSel ? const Icon(Icons.check_circle, color: MartialArtsCentreDashboardScreen.primary) : null,
-                  onTap: () {
-                    setState(() => _selected = s);
-                    _loadTrainees();
-                  },
-                );
-              }).toList(),
-            ),
-          ),
-        if (_selected != null && _trainees.isEmpty && !_busy)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              children: [
-                Icon(Icons.groups_outlined, size: 40, color: Color(0xFF94A3B8)),
-                SizedBox(height: 8),
-                Text(
-                  'No students enrolled in this batch yet.',
-                  style: TextStyle(color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: FilledButton.icon(
+                onPressed: _busy ? null : _save,
+                icon: const Icon(Icons.cloud_upload_rounded),
+                label: const Text('Save Attendance Records'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: MartialArtsCentreDashboardScreen.primary,
+                  minimumSize: const Size.fromHeight(48),
                 ),
-              ],
+              ),
             ),
-          ),
-        if (_trainees.isNotEmpty) ...[
-          const Divider(),
+          ],
+        ],
+
+        // SUBNAV 1: DYNAMIC QR ENGINE
+        if (_subnavIndex == 1) ...[
           Expanded(
-            flex: 3,
-            child: ListView.builder(
-              itemCount: _trainees.length,
-              itemBuilder: (_, i) {
-                final t = _trainees[i];
-                return ListTile(
-                  title: Text(t['name']?.toString() ?? ''),
-                  subtitle: DropdownButton<String>(
-                    value: (t['status']?.toString() ?? 'PENDING').replaceAll(' ', '_'),
-                    isExpanded: true,
-                    items: const [
-                      DropdownMenuItem(value: 'PENDING', child: Text('Pending')),
-                      DropdownMenuItem(value: 'PRESENT', child: Text('Present')),
-                      DropdownMenuItem(value: 'ABSENT', child: Text('Absent')),
-                      DropdownMenuItem(value: 'LATE', child: Text('Late')),
-                      DropdownMenuItem(value: 'EXCUSED', child: Text('Excused')),
-                    ],
-                    onChanged: (v) => setState(() => _trainees[i]['status'] = v),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              children: [
+                Card(
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        DropdownButtonFormField<Map<String, dynamic>>(
+                          value: _qrSelectedBatch,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Select Training Batch *',
+                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          items: widget.batches.map((b) {
+                            final name = '${b['name'] ?? 'Batch'} (${b['style'] ?? ''} · ${b['timeSlot'] ?? ''})';
+                            return DropdownMenuItem(value: b, child: Text(name, overflow: TextOverflow.ellipsis));
+                          }).toList(),
+                          onChanged: (v) => setState(() => _qrSelectedBatch = v),
+                        ),
+                        const SizedBox(height: 12),
+                        DropdownButtonFormField<int>(
+                          value: _qrDuration,
+                          decoration: const InputDecoration(
+                            labelText: 'Validity Window',
+                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 15, child: Text('15 Minutes (Standard Class Start)')),
+                            DropdownMenuItem(value: 30, child: Text('30 Minutes')),
+                            DropdownMenuItem(value: 60, child: Text('60 Minutes (Full Class Duration)')),
+                          ],
+                          onChanged: (v) => setState(() => _qrDuration = v ?? 15),
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed: _generatingQr ? null : _generateQrSession,
+                          icon: const Icon(Icons.qr_code_rounded),
+                          label: const Text('Generate Active Session QR'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: MartialArtsCentreDashboardScreen.primary,
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: FilledButton(
-              onPressed: _busy ? null : _save,
-              style: FilledButton.styleFrom(backgroundColor: MartialArtsCentreDashboardScreen.primary),
-              child: const Text('Save attendance'),
+                ),
+                if (_activeQrCode != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: MartialArtsCentreDashboardScreen.primary, width: 2),
+                      boxShadow: [
+                        BoxShadow(color: MartialArtsCentreDashboardScreen.primary.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 4)),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(color: const Color(0xFFFFE4E6), borderRadius: BorderRadius.circular(20)),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.sensors, size: 14, color: MartialArtsCentreDashboardScreen.primary),
+                              SizedBox(width: 4),
+                              Text('Live QR Session Active', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: MartialArtsCentreDashboardScreen.primary)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          '${_qrSelectedBatch?['name'] ?? 'Training Session'} ($_date)',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF1E1B4B)),
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Students can scan this QR code using the Fight D Fear mobile app or enter the code to mark attendance.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
+                            ],
+                          ),
+                          child: Image.network(
+                            'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${Uri.encodeComponent(_activeQrCode!)}',
+                            width: 180,
+                            height: 180,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 180,
+                              height: 180,
+                              color: const Color(0xFFF1F5F9),
+                              child: const Icon(Icons.qr_code_2, size: 80, color: Color(0xFF1E1B4B)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'SESSION CHECK-IN CODE:',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF64748B), letterSpacing: 0.8),
+                        ),
+                        const SizedBox(height: 4),
+                        SelectableText(
+                          _activeQrCode!,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: MartialArtsCentreDashboardScreen.primary,
+                            letterSpacing: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _generateQrSession,
+                                icon: const Icon(Icons.refresh, size: 16),
+                                label: const Text('Refresh QR'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: _endQrSession,
+                                icon: const Icon(Icons.stop_circle_outlined, size: 16),
+                                label: const Text('End Session'),
+                                style: FilledButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ],

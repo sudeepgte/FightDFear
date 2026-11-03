@@ -213,6 +213,7 @@ class DynamicLocationHierarchyPickerState extends State<DynamicLocationHierarchy
         // 1. Country Selection
         DropdownButtonFormField<String>(
           key: const ValueKey('location_country_dropdown'),
+          isExpanded: true,
           value: _countries.contains(_country) ? _country : _countries.first,
           decoration: InputDecoration(
             labelText: 'Country${widget.isRequired ? ' *' : ''}',
@@ -230,7 +231,7 @@ class DynamicLocationHierarchyPickerState extends State<DynamicLocationHierarchy
             filled: true,
             fillColor: Colors.white,
           ),
-          items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+          items: _countries.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: (v) {
             if (v != null && v != _country) {
               setState(() {
@@ -254,6 +255,7 @@ class DynamicLocationHierarchyPickerState extends State<DynamicLocationHierarchy
         // 2. State Selection
         DropdownButtonFormField<String>(
           key: const ValueKey('location_state_dropdown'),
+          isExpanded: true,
           value: _states.contains(_state) ? _state : null,
           decoration: InputDecoration(
             labelText: 'State / Union Territory${widget.isRequired ? ' *' : ''}',
@@ -273,7 +275,7 @@ class DynamicLocationHierarchyPickerState extends State<DynamicLocationHierarchy
             filled: true,
             fillColor: Colors.white,
           ),
-          items: _states.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+          items: _states.map((s) => DropdownMenuItem(value: s, child: Text(s, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: (v) {
             setState(() {
               _state = v;
@@ -292,6 +294,7 @@ class DynamicLocationHierarchyPickerState extends State<DynamicLocationHierarchy
         // 3. District Selection
         DropdownButtonFormField<String>(
           key: const ValueKey('location_district_dropdown'),
+          isExpanded: true,
           value: _districts.contains(_district) ? _district : null,
           decoration: InputDecoration(
             labelText: 'District${widget.isRequired ? ' *' : ''}',
@@ -313,7 +316,7 @@ class DynamicLocationHierarchyPickerState extends State<DynamicLocationHierarchy
             filled: true,
             fillColor: Colors.white,
           ),
-          items: _districts.map((d) => DropdownMenuItem(value: d, child: Text(d))).toList(),
+          items: _districts.map((d) => DropdownMenuItem(value: d, child: Text(d, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: _state == null
               ? null
               : (v) {

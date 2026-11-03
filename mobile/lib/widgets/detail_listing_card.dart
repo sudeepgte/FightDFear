@@ -28,6 +28,7 @@ class DetailListingCard extends StatelessWidget {
     this.tags = const [],
     this.onPrimary,
     this.primaryLabel = 'View Profile & Book',
+    this.primaryButtonColor,
     this.phone,
     this.showMediaActions = true,
     this.onChat,
@@ -49,6 +50,7 @@ class DetailListingCard extends StatelessWidget {
   final List<DetailTag> tags;
   final VoidCallback? onPrimary;
   final String primaryLabel;
+  final Color? primaryButtonColor;
   final String? phone;
   final bool showMediaActions;
   final VoidCallback? onChat;
@@ -223,9 +225,12 @@ class DetailListingCard extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  gradient: const LinearGradient(
-                    colors: [ModuleTheme.navy, ModuleTheme.primary],
-                  ),
+                  color: primaryButtonColor,
+                  gradient: primaryButtonColor != null
+                      ? null
+                      : const LinearGradient(
+                          colors: [ModuleTheme.navy, ModuleTheme.primary],
+                        ),
                 ),
                 child: Material(
                   color: Colors.transparent,

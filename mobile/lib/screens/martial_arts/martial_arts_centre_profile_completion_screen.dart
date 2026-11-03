@@ -321,17 +321,27 @@ class _MartialArtsCentreProfileCompletionScreenState
     if (_about.text.trim().isEmpty) return '7.1 About the centre is required';
     if (_howWeTeach.text.trim().isEmpty) return '7.2 How we teach is required';
     if (_offers.isEmpty) return '7.3 Select what you offer';
-    if (forSubmit && _batchCount == 0) return '8. Add at least one program / batch';
     return null;
   }
 
   void _handleNavigationAfterSave(Map<String, dynamic> res) {
+    _profile = res;
     final status = (res['centreProfileStatus'] ?? _profile['centreProfileStatus'] ?? '').toString().toUpperCase();
     final isApproved = res['approved'] == true || status == 'APPROVED';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Profile saved successfully!'),
+        backgroundColor: Color(0xFF16A34A),
+        duration: Duration(seconds: 2),
+      ),
+    );
 
     if (isApproved) {
       if (widget.onFinished != null) {
         widget.onFinished!(context);
+      } else if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
       } else {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MartialArtsCentreDashboardScreen()),
@@ -349,32 +359,13 @@ class _MartialArtsCentreProfileCompletionScreenState
       return;
     }
 
-    if (status == 'CHANGES_REQUESTED' || status == 'REJECTED') {
-      final note = res['changesRequestedNote'] ?? res['rejectionReason'] ?? 'Admin requested changes to your profile.';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$note'),
-          backgroundColor: const Color(0xFFEA580C),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-      return;
-    }
-
-    final missing = res['missingItems'];
-    if (missing is List && missing.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Profile saved! Missing for verification: ${missing.take(2).join(', ')}'),
-          backgroundColor: const Color(0xFF1E1B4B),
-        ),
-      );
+    if (widget.onFinished != null) {
+      widget.onFinished!(context);
+    } else if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop(true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile saved successfully! Tap "Submit for Verification" when ready.'),
-          backgroundColor: Color(0xFF16A34A),
-        ),
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MartialArtsCentreDashboardScreen()),
       );
     }
   }
@@ -730,6 +721,34 @@ class _MartialArtsCentreProfileCompletionScreenState
                       : Text(canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
                 ),
                 const SizedBox(height: 16),
+                _section('0', 'Centre Logo & Thumbnail *', [
+                  const Text(
+                    'Upload an official logo or centre front photo. This appears as your centre thumbnail across mobile & web search results.',
+                    style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                  ),
+                  const SizedBox(height: 10),
+                  if (_profile['profilePhoto'] != null && _profile['profilePhoto'].toString().trim().isNotEmpty) ...[
+                    Center(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          '$_baseUrl${_profile['profilePhoto']}',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.business, size: 60, color: Color(0xFF94A3B8)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  _uploadTile(
+                    '0.1 Choose Centre Logo / Thumbnail',
+                    _profile['profilePhoto']?.toString(),
+                    _uploadingPhoto,
+                    () => _uploadFile(kind: 'photo'),
+                  ),
+                ]),
                 _section('1', 'Centre identity', [
                   _field(_name, '1.1', 'Centre name', required: true),
                   _dropdown(
@@ -781,32 +800,24 @@ class _MartialArtsCentreProfileCompletionScreenState
                     onChanged: (v) => setState(() => _affiliation = v),
                   ),
                 ]),
-                _section('2', 'Location', [
+                _section('2', 'Location & Premises Address', [
                   DynamicLocationHierarchyPicker(
                     api: context.read<AuthState>().api,
                     initialCountry: 'India',
                     initialState: _state,
+                    initialDistrict: _city.text.isNotEmpty ? _city.text : null,
+                    initialFullAddress: _area.text.isNotEmpty ? _area.text : null,
                     initialCity: _city.text.isNotEmpty ? _city.text : null,
                     isRequired: true,
                     onLocationChanged: ({required country, required state, required district, String? city, String? fullAddress}) {
                       setState(() {
                         _state = state;
-                        if (city != null && city.isNotEmpty) _city.text = city;
+                        if (district.isNotEmpty) _city.text = district;
+                        if (fullAddress != null && fullAddress.isNotEmpty) _area.text = fullAddress;
                       });
                     },
                   ),
                   const SizedBox(height: 12),
-                  _field(_area, '2.1', 'Hall / Street / Landmark', required: true),
-                  _field(_city, '2.3', 'City / Locality', required: true),
-                  _dropdown(
-                    number: '2.4',
-                    label: 'State / Union Territory',
-                    value: _state,
-                    options: MartialArtsCatalog.indianStates,
-                    required: true,
-                    onChanged: (v) => setState(() => _state = v),
-                  ),
-                  if (_state == 'Other') _field(_stateOther, '2.4', 'Enter state', required: true),
                   _field(
                     _pincode,
                     '2.5',
@@ -909,87 +920,6 @@ class _MartialArtsCentreProfileCompletionScreenState
                   const SizedBox(height: 8),
                   _chips(MartialArtsCatalog.offers, _offers),
                 ]),
-                _section('8', 'First program / batch', [
-                  Text(
-                    _batchCount > 0
-                        ? 'You have $_batchCount program(s). Add more from the Batches tab.'
-                        : 'Add at least one martial arts program to submit.',
-                    style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
-                  ),
-                  if (_batchCount == 0) ...[
-                    const SizedBox(height: 10),
-                    _field(_batchName, '8.1', 'Program name', required: true),
-                    _dropdown(
-                      number: '8.2',
-                      label: 'Style',
-                      value: _batchStyle,
-                      options: MartialArtsCatalog.styles,
-                      required: true,
-                      onChanged: (v) => setState(() => _batchStyle = v),
-                    ),
-                    const Text('8.3 Batch days *', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
-                    Wrap(
-                      spacing: 8,
-                      children: MartialArtsCatalog.days.map((d) {
-                        final on = _batchDays.contains(d);
-                        return FilterChip(
-                          label: Text(d.substring(0, 3)),
-                          selected: on,
-                          onSelected: (v) => setState(() {
-                            if (v) {
-                              _batchDays.add(d);
-                            } else {
-                              _batchDays.remove(d);
-                            }
-                          }),
-                        );
-                      }).toList(),
-                    ),
-                    _timeTile('8.4 Start time *', _batchStart, (t) => _batchStart = t),
-                    _timeTile('8.5 End time *', _batchEnd, (t) => _batchEnd = t),
-                    _dropdown(
-                      number: '8.6',
-                      label: 'Duration (minutes)',
-                      value: '$_duration',
-                      options: MartialArtsCatalog.durations.map((e) => '$e').toList(),
-                      onChanged: (v) => setState(() => _duration = int.tryParse(v ?? '60') ?? 60),
-                    ),
-                    _dropdown(
-                      number: '8.7',
-                      label: 'Buffer (minutes)',
-                      value: '$_buffer',
-                      options: const ['0', '5', '10', '15'],
-                      onChanged: (v) => setState(() => _buffer = int.tryParse(v ?? '0') ?? 0),
-                    ),
-                    _field(_batchInstructor, '8.8', 'Instructor', required: true),
-                    _field(_batchCapacity, '8.9', 'Capacity', required: true, keyboardType: TextInputType.number),
-                    _field(_batchFee, '8.11', 'Monthly fee (₹)', required: true, keyboardType: TextInputType.number),
-                    _field(_batchAdmission, '8.12', 'Admission fee (₹)', keyboardType: TextInputType.number),
-                    _dropdown(
-                      number: '8.13',
-                      label: 'Trial',
-                      value: _trialType,
-                      options: MartialArtsCatalog.trialTypes,
-                      onChanged: (v) => setState(() {
-                        _trialType = v ?? 'None';
-                        _trialAvailable = _trialType != 'None';
-                      }),
-                    ),
-                    _dropdown(
-                      number: '8.14',
-                      label: 'Mode',
-                      value: _batchMode,
-                      options: MartialArtsCatalog.modes,
-                      required: true,
-                      onChanged: (v) => setState(() => _batchMode = v ?? 'Offline'),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton.tonal(
-                      onPressed: _saving ? null : _createFirstBatch,
-                      child: const Text('Create first program'),
-                    ),
-                  ],
-                ]),
                 BankDetailsSection(
                   accountHolderController: _accountHolder,
                   accountNumberController: _accountNumber,
@@ -1000,10 +930,10 @@ class _MartialArtsCentreProfileCompletionScreenState
                   upiController: _upi,
                   accountType: _accountType,
                   onAccountTypeChanged: (t) => setState(() => _accountType = t),
-                  sectionNumber: '9',
+                  sectionNumber: '8',
                 ),
-                _section('9B', 'Pricing overview', [
-                  _field(_startingFee, '9.3', 'Starting monthly fee (₹)', keyboardType: TextInputType.number),
+                _section('9', 'Pricing overview', [
+                  _field(_startingFee, '9.1', 'Starting monthly fee (₹)', keyboardType: TextInputType.number),
                 ]),
                 _section('10', 'Documents (optional)', [
                   const Text(
@@ -1012,13 +942,7 @@ class _MartialArtsCentreProfileCompletionScreenState
                   ),
                   const SizedBox(height: 10),
                   _uploadTile(
-                    '10.1 Profile photo',
-                    _profile['profilePhoto']?.toString(),
-                    _uploadingPhoto,
-                    () => _uploadFile(kind: 'photo'),
-                  ),
-                  _uploadTile(
-                    '10.2 Trainer / affiliation certificate',
+                    '10.1 Trainer / affiliation certificate',
                     _profile['certificatePath']?.toString(),
                     _uploadingCert,
                     () => _uploadFile(kind: 'cert'),
@@ -1112,6 +1036,7 @@ class _MartialArtsCentreProfileCompletionScreenState
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: DropdownButtonFormField<String>(
+        isExpanded: true,
         initialValue: value != null && items.contains(value) ? value : null,
         decoration: InputDecoration(
           labelText: '$number $label${required ? ' *' : ''}',
@@ -1121,7 +1046,7 @@ class _MartialArtsCentreProfileCompletionScreenState
           filled: true,
           fillColor: Colors.white,
         ),
-        items: items.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+        items: items.map((o) => DropdownMenuItem(value: o, child: Text(o, overflow: TextOverflow.ellipsis))).toList(),
         onChanged: onChanged,
       ),
     );

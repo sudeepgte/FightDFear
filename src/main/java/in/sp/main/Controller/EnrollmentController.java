@@ -50,6 +50,9 @@ public class EnrollmentController {
     @Autowired
     private AttendanceRepository attendanceRepository;
 
+    @Autowired
+    private in.sp.main.Service.EmailAsyncService emailAsyncService;
+
     @RequestMapping(value = "/listEnrollments/{userId}", method = GET)
     public String listEnrollments(@PathVariable Long userId, Model model, HttpSession session) {
         User currentUser = (User) session.getAttribute("user");
@@ -183,6 +186,7 @@ public class EnrollmentController {
 
             // Emergency
             enrollment.setEmergencyContactName(request.getEmergencyName());
+            enrollment.setEmergencyContactPhone(request.getEmergencyPhone());
 
             // Training Preference
             enrollment.setSkillLevel(request.getSkillLevel());
@@ -211,6 +215,33 @@ public class EnrollmentController {
             enrollment.setConsentRules(request.isConsentRules());
 
             Enrollment saved = enrollmentRepository.save(enrollment);
+
+            if (saved != null) {
+                // Send email to Trainee
+                if (saved.getEmail() != null && !saved.getEmail().isBlank()) {
+                    try {
+                        String subject = "Fight D Fear - Enrollment Application Submitted: " + center.getName();
+                        String body = "Hello " + (saved.getFullName() != null ? saved.getFullName() : "Student") + ",\n\n"
+                                + "Your enrollment application for batch \"" + batch.getName() + "\" at " + center.getName() + " has been submitted successfully.\n\n"
+                                + "Status: Pending Centre Review\n"
+                                + (saved.getProposedStartDate() != null ? "Proposed Start Date: " + saved.getProposedStartDate() + "\n" : "")
+                                + "\nYou will receive an email once the centre reviews and approves your application.\n\nThank you,\nFight D Fear Healthcare";
+                        emailAsyncService.sendEmailAsync(saved.getEmail(), subject, body);
+                    } catch (Exception ignored) {}
+                }
+                // Send email to Centre Owner
+                if (center.getEmail() != null && !center.getEmail().isBlank()) {
+                    try {
+                        String subject = "Fight D Fear - New Student Enrollment Application: " + (saved.getFullName() != null ? saved.getFullName() : "Student");
+                        String body = "Hello " + center.getName() + ",\n\n"
+                                + "A new student (" + (saved.getFullName() != null ? saved.getFullName() : "Student") + ") has submitted an enrollment application for batch \"" + batch.getName() + "\".\n\n"
+                                + "Phone: " + (saved.getPhoneNumber() != null ? saved.getPhoneNumber() : "—") + "\n"
+                                + "Email: " + (saved.getEmail() != null ? saved.getEmail() : "—") + "\n\n"
+                                + "Please log in to your Fight D Fear Centre Hub to review and approve the application.\n\nThank you,\nFight D Fear Healthcare";
+                        emailAsyncService.sendEmailAsync(center.getEmail(), subject, body);
+                    } catch (Exception ignored) {}
+                }
+            }
 
             boolean isFree = (batch.getFee() == null || batch.getFee() <= 0);
             double fee = isFree ? 0.0 : batch.getFee();
@@ -378,6 +409,45 @@ public class EnrollmentController {
             enrollment.setCertificateDetails(certificatePath);
         }
         enrollmentRepository.save(enrollment);
+
+        if (enrollment.getUser() != null || enrollment.getEmail() != null) {
+            String studentEmail = enrollment.getEmail() != null && !enrollment.getEmail().isBlank()
+                    ? enrollment.getEmail()
+                    : (enrollment.getUser() != null ? enrollment.getUser().getEmail() : null);
+            if (studentEmail != null && !studentEmail.isBlank()) {
+                try {
+                    String centerName = enrollment.getCenter() != null ? enrollment.getCenter().getName() : "Centre";
+                    String batchName = enrollment.getBatch() != null ? enrollment.getBatch().getName() : "Training Batch";
+                    String studentName = enrollment.getFullName() != null ? enrollment.getFullName()
+                            : (enrollment.getUser() != null ? enrollment.getUser().getFullName() : "Student");
+
+                    String subject = "Fight D Fear - Enrollment Application Update: " + centerName;
+                    String bodyText = "";
+                    if (status == TrainingStatus.APPROVED) {
+                        subject = "Fight D Fear - Enrollment Application Approved!: " + centerName;
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Great news! Your enrollment application for batch \"" + batchName + "\" at " + centerName + " has been APPROVED!\n\n"
+                                + "Please log in to the Fight D Fear app or website to complete your payment and confirm your seat.\n\nThank you,\nFight D Fear Healthcare";
+                    } else if (status == TrainingStatus.REJECTED) {
+                        subject = "Fight D Fear - Enrollment Application Update: " + centerName;
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Your enrollment application for batch \"" + batchName + "\" at " + centerName + " was not accepted at this time.\n\n"
+                                + "You can explore other available training centres or batches in the Fight D Fear app.\n\nThank you,\nFight D Fear Healthcare";
+                    } else if (status == TrainingStatus.COMPLETED) {
+                        subject = "Fight D Fear - Training Completed & Digital Certificate!";
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Congratulations! You have completed your training program for \"" + batchName + "\" at " + centerName + ".\n\n"
+                                + "Your digital completion certificate is now available in your Fight D Fear account under My Trainings.\n\nThank you,\nFight D Fear Healthcare";
+                    } else {
+                        bodyText = "Hello " + studentName + ",\n\n"
+                                + "Your enrollment status for batch \"" + batchName + "\" at " + centerName + " is now: " + status.name() + ".\n\n"
+                                + "Log in to your Fight D Fear account to view details.\n\nThank you,\nFight D Fear Healthcare";
+                    }
+                    emailAsyncService.sendEmailAsync(studentEmail, subject, bodyText);
+                } catch (Exception ignored) {}
+            }
+        }
+
         return ResponseEntity.ok(java.util.Map.of(
                 "success", true,
                 "message", "Status updated",

@@ -481,23 +481,33 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 20px;
+            gap: 16px;
             flex-wrap: wrap;
             box-shadow: 0 4px 14px rgba(244, 63, 94, 0.04);
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .completion-banner-left {
-            flex: 1;
-            min-width: 260px;
+            flex: 1 1 200px;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .completion-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 8px;
             margin-bottom: 8px;
             font-size: 0.9rem;
             font-weight: 700;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .progress-bar-bg {
@@ -936,6 +946,51 @@
             background: #FFFFFF;
             color: var(--navy);
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        /* Student Status Filter Pills Toolbar */
+        .student-filter-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            background: #F1F5F9;
+            padding: 5px;
+            border-radius: 999px;
+            width: fit-content;
+            max-width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 0.84rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            outline: none;
+            white-space: nowrap;
+        }
+
+        .filter-tab-pill:hover {
+            color: var(--primary);
+            background: rgba(244, 63, 94, 0.08);
+        }
+
+        .filter-tab-pill.active {
+            background: var(--primary) !important;
+            color: #FFFFFF !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25) !important;
         }
         .attendance-summary-grid {
             display: grid;
@@ -1399,7 +1454,43 @@
         }
         .btn-review-approve:hover { background: var(--navy-light); }
 
-        /* —— Responsive Grids and Media Queries —— */
+        /* —— Responsive Grids, Global Word Wrap & Device Overrides —— */
+        html, body {
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+            word-wrap: break-word !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        p, span, h1, h2, h3, h4, h5, h6, label, div, td, th, a, button, input, select, textarea {
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            max-width: 100%;
+        }
+
+        .main-wrapper, .content-container, .content-panel, .centre-card, .live-card, .stat-card,
+        .att-stat-card, .review-field, .review-app-card, .review-card, .modal-window, .info-grid,
+        .form-grid-2, .review-field-grid, .review-two-col, .stat-cards-grid, .live-cards-grid,
+        .attendance-summary-grid, .att-filter-grid, .table-responsive-custom, .topbar {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .table-responsive-custom {
+            width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            display: block !important;
+            margin-bottom: 16px;
+        }
+
+        .data-table {
+            width: 100% !important;
+            border-collapse: collapse;
+            min-width: 580px;
+        }
+
         .att-filter-grid {
             display: grid;
             grid-template-columns: 1fr 220px auto;
@@ -1408,22 +1499,39 @@
         }
 
         @media (max-width: 991px) {
-            .review-two-col { grid-template-columns: 1fr; }
-            .att-filter-grid { grid-template-columns: 1fr 1fr; }
+            .main-wrapper {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .review-two-col { grid-template-columns: 1fr !important; }
+            .att-filter-grid { grid-template-columns: 1fr !important; }
             .att-filter-grid > div:last-child { grid-column: 1 / -1; }
             .att-filter-grid > div:last-child button { width: 100%; justify-content: center; }
         }
 
         @media (max-width: 768px) {
             .topbar {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 12px;
-                padding: 14px 16px;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 12px !important;
+                padding: 12px 16px !important;
             }
             .topbar > div:last-child {
-                width: 100%;
-                justify-content: space-between;
+                width: 100% !important;
+                justify-content: space-between !important;
+            }
+            .topbar-actions {
+                width: 100% !important;
+                justify-content: space-between !important;
+                flex-wrap: wrap !important;
+            }
+            div[style*="grid-template-columns:1fr 1fr"],
+            div[style*="grid-template-columns: 1fr 1fr"],
+            div[style*="grid-template-columns:1fr 220px auto"],
+            .form-grid-2, .review-field-grid, .review-field-grid.cols-2, .review-pay-grid,
+            .review-two-col, .att-filter-grid, .live-cards-grid, .info-grid {
+                grid-template-columns: 1fr !important;
             }
             .welcome-banner {
                 flex-direction: column;
@@ -1446,15 +1554,12 @@
                 text-align: center;
             }
             .stat-cards-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
                 gap: 12px;
             }
             .attendance-summary-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
+                grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) !important;
                 gap: 10px;
-            }
-            .att-filter-grid {
-                grid-template-columns: 1fr;
             }
             .att-subnav {
                 width: 100%;
@@ -1464,18 +1569,19 @@
                 text-align: center;
                 justify-content: center;
             }
-            .live-cards-grid {
-                grid-template-columns: 1fr;
-            }
             .panel-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
             }
             .panel-header button,
             .panel-header a {
-                width: 100%;
-                justify-content: center;
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .btn-quick-add, .btn-header-cta {
+                width: 100% !important;
+                justify-content: center !important;
             }
             .content-panel {
                 padding: 16px;
@@ -1497,30 +1603,26 @@
                 grid-template-columns: 1fr !important;
             }
             .review-student-layout { flex-direction: column; align-items: center; text-align: left; }
-            .review-field-grid,
-            .review-field-grid.cols-2,
-            .review-pay-grid { grid-template-columns: 1fr; }
             .review-actions { justify-content: stretch; }
             .review-actions button { width: 100%; }
             .review-app-title { font-size: 1.3rem; }
-            .form-grid-2 { grid-template-columns: 1fr !important; }
             .modal-window {
-                width: 95%;
-                margin: 8px;
-                max-height: 92vh;
+                width: 96% !important;
+                margin: 6px auto !important;
+                max-height: 94vh !important;
             }
             .modal-header-custom,
             .modal-body-custom,
             .modal-footer-custom {
-                padding: 14px 16px;
+                padding: 12px 14px !important;
             }
             .modal-footer-custom {
-                flex-direction: column-reverse;
-                gap: 8px;
+                flex-direction: column-reverse !important;
+                gap: 8px !important;
             }
-            .modal-footer-custom button {
-                width: 100%;
-                justify-content: center;
+            .modal-footer-custom button, .modal-footer-custom a {
+                width: 100% !important;
+                justify-content: center !important;
             }
         }
 
@@ -1973,39 +2075,42 @@
                     <div class="panel-header">
                         <div class="panel-title"><i class="bi bi-calendar-event text-danger"></i> Today's Schedule & Programs</div>
                     </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Program / Batch</th>
-                                <th>Style</th>
-                                <th>Schedule</th>
-                                <th>Days</th>
-                                <th>Mode</th>
-                                <th>Capacity</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="batch" items="${batches}">
+                    <div class="table-responsive-custom">
+                        <table class="data-table">
+                            <thead>
                                 <tr>
-                                    <td><strong><c:out value="${batch.name}"/></strong></td>
-                                    <td><span class="batch-style-badge"><c:out value="${batch.style}"/></span></td>
-                                    <td><c:out value="${batch.timeSlot}"/></td>
-                                    <td><span class="badge-status badge-offline"><c:out value="${batch.availableDays}"/></span></td>
-                                    <td><span class="badge-status ${batch.batchType == 'Online' ? 'badge-online' : 'badge-offline'}"><c:out value="${batch.batchType != null ? batch.batchType : 'Offline'}"/></span></td>
-                                    <td><c:out value="${batch.capacity != null ? batch.capacity : 20}"/> seats</td>
-                                    <td><span class="status-pill status-pill-${batch.status != null ? batch.status : 'Active'}"><c:out value="${batch.status != null ? batch.status : 'Active'}"/></span></td>
+                                    <th>Program / Batch</th>
+                                    <th>Style</th>
+                                    <th>Schedule</th>
+                                    <th>Days</th>
+                                    <th>Mode</th>
+                                    <th>Capacity</th>
+                                    <th>Status</th>
                                 </tr>
-                            </c:forEach>
-                            <c:if test="${empty batches}">
-                                <tr>
-                                    <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-gray);">
-                                        No active batches found. Complete your profile verification to add training programs.
-                                    </td>
-                                </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="batch" items="${batches}">
+                                    <tr>
+                                        <td><strong><c:out value="${batch.name}"/></strong></td>
+                                        <td><span class="batch-style-badge"><c:out value="${batch.style}"/></span></td>
+                                        <td><c:out value="${batch.timeSlot}"/></td>
+                                        <td><span class="badge-status badge-offline"><c:out value="${batch.availableDays}"/></span></td>
+                                        <td><span class="badge-status ${batch.batchType == 'Online' ? 'badge-online' : 'badge-offline'}"><c:out value="${batch.batchType != null ? batch.batchType : 'Offline'}"/></span></td>
+                                        <td><c:out value="${batch.capacity != null ? batch.capacity : 20}"/> seats</td>
+                                        <td><span class="status-pill status-pill-${batch.status != null ? batch.status : 'Active'}"><c:out value="${batch.status != null ? batch.status : 'Active'}"/></span></td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty batches}">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-gray);">
+                                            No active batches found. Complete your profile verification to add training programs.
+                                        </td>
+                                    </tr>
+                                </c:if>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 </div>
             </div>
 
@@ -2150,62 +2255,72 @@
                     <div class="panel-header">
                         <div class="panel-title"><i class="bi bi-people-fill text-danger"></i> Students / Trainees</div>
                     </div>
-                    <div class="d-flex flex-wrap gap-2 mb-3" id="studentStatusTabs">
-                        <button type="button" class="btn btn-sm rounded-pill active" data-student-filter="PENDING" onclick="filterStudentRows('PENDING', this)" style="background:#FFF1F2;color:#F43F5E;border:1px solid #FECDD3;">Pending Applications</button>
-                        <button type="button" class="btn btn-sm rounded-pill" data-student-filter="ACTIVE" onclick="filterStudentRows('ACTIVE', this)" style="background:#fff;border:1px solid #E2E8F0;">Active Students</button>
-                        <button type="button" class="btn btn-sm rounded-pill" data-student-filter="REJECTED" onclick="filterStudentRows('REJECTED', this)" style="background:#fff;border:1px solid #E2E8F0;">Rejected</button>
-                        <button type="button" class="btn btn-sm rounded-pill" data-student-filter="ALL" onclick="filterStudentRows('ALL', this)" style="background:#fff;border:1px solid #E2E8F0;">All</button>
+                    <div class="student-filter-toolbar" id="studentStatusTabs">
+                        <button type="button" class="filter-tab-pill active" data-student-filter="PENDING" onclick="filterStudentRows('PENDING', this)">
+                            <i class="bi bi-clock-history"></i> Pending Applications
+                        </button>
+                        <button type="button" class="filter-tab-pill" data-student-filter="ACTIVE" onclick="filterStudentRows('ACTIVE', this)">
+                            <i class="bi bi-check-circle-fill"></i> Active Students
+                        </button>
+                        <button type="button" class="filter-tab-pill" data-student-filter="REJECTED" onclick="filterStudentRows('REJECTED', this)">
+                            <i class="bi bi-x-circle-fill"></i> Rejected
+                        </button>
+                        <button type="button" class="filter-tab-pill" data-student-filter="ALL" onclick="filterStudentRows('ALL', this)">
+                            <i class="bi bi-grid-fill"></i> All
+                        </button>
                     </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Batch</th>
-                                <th>Application Status</th>
-                                <th>Payment</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach var="enroll" items="${enrollments}">
-                                <c:set var="appFee" value="${enroll.batch != null && enroll.batch.fee != null ? enroll.batch.fee : 0}"/>
-                                <c:set var="admFee" value="${enroll.batch != null && enroll.batch.admissionFee != null ? enroll.batch.admissionFee : 0}"/>
-                                <tr class="student-row"
-                                    data-status="${enroll.status != null ? enroll.status : 'PENDING'}"
-                                    data-payment="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PENDING'}"
-                                    data-enroll-id="${enroll.id}"
-                                    id="student-row-${enroll.id}">
-                                    <td>
-                                        <strong><c:out value="${enroll.fullName != null ? enroll.fullName : (enroll.user.fullName != null ? enroll.user.fullName : enroll.user.name)}"/></strong>
-                                        <div class="small text-muted"><c:out value="${enroll.email != null ? enroll.email : enroll.user.email}"/></div>
-                                        <div class="small text-muted"><c:out value="${enroll.phoneNumber != null ? enroll.phoneNumber : ''}"/></div>
-                                    </td>
-                                    <td>
-                                        <c:out value="${enroll.batch != null ? enroll.batch.name : 'General Enrollment'}"/>
-                                        <div class="small text-muted"><c:out value="${enroll.batch != null ? enroll.batch.style : ''}"/></div>
-                                    </td>
-                                    <td><span class="badge-status"><c:out value="${enroll.status != null ? enroll.status : 'PENDING'}"/></span></td>
-                                    <td><span class="badge-status"><c:out value="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PENDING'}"/></span></td>
-                                    <td style="white-space:nowrap;">
-                                        <button type="button" class="btn-card-action" onclick="openEnrollmentReview(${enroll.id})">
-                                            <i class="bi bi-eye"></i> View / Review
-                                        </button>
-                                        <c:if test="${enroll.status == 'PENDING'}">
-                                            <button type="button" class="btn-card-action primary" onclick="updateEnrollmentStatus(${enroll.id}, 'APPROVED')">Approve</button>
-                                            <button type="button" class="btn-card-action danger" onclick="updateEnrollmentStatus(${enroll.id}, 'REJECTED')">Reject</button>
-                                        </c:if>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                            <c:if test="${empty enrollments}">
+                    <div class="table-responsive-custom">
+                        <table class="data-table">
+                            <thead>
                                 <tr>
-                                    <td colspan="5" style="text-align:center;padding:24px;color:var(--text-gray);">
-                                        No pending applications.
-                                    </td>
+                                    <th>Student</th>
+                                    <th>Batch</th>
+                                    <th>Application Status</th>
+                                    <th>Payment</th>
+                                    <th>Actions</th>
                                 </tr>
-                            </c:if>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <c:forEach var="enroll" items="${enrollments}">
+                                    <c:set var="appFee" value="${enroll.batch != null && enroll.batch.fee != null ? enroll.batch.fee : 0}"/>
+                                    <c:set var="admFee" value="${enroll.batch != null && enroll.batch.admissionFee != null ? enroll.batch.admissionFee : 0}"/>
+                                    <tr class="student-row"
+                                        data-status="${enroll.status != null ? enroll.status : 'PENDING'}"
+                                        data-payment="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PENDING'}"
+                                        data-enroll-id="${enroll.id}"
+                                        id="student-row-${enroll.id}">
+                                        <td>
+                                            <strong><c:out value="${enroll.fullName != null ? enroll.fullName : (enroll.user.fullName != null ? enroll.user.fullName : enroll.user.name)}"/></strong>
+                                            <div class="small text-muted"><c:out value="${enroll.email != null ? enroll.email : enroll.user.email}"/></div>
+                                            <div class="small text-muted"><c:out value="${enroll.phoneNumber != null ? enroll.phoneNumber : ''}"/></div>
+                                        </td>
+                                        <td>
+                                            <c:out value="${enroll.batch != null ? enroll.batch.name : 'General Enrollment'}"/>
+                                            <div class="small text-muted"><c:out value="${enroll.batch != null ? enroll.batch.style : ''}"/></div>
+                                        </td>
+                                        <td><span class="badge-status"><c:out value="${enroll.status != null ? enroll.status : 'PENDING'}"/></span></td>
+                                        <td><span class="badge-status"><c:out value="${enroll.paymentStatus != null ? enroll.paymentStatus : 'PENDING'}"/></span></td>
+                                        <td style="white-space:nowrap;">
+                                            <button type="button" class="btn-card-action" onclick="openEnrollmentReview(${enroll.id})">
+                                                <i class="bi bi-eye"></i> View / Review
+                                            </button>
+                                            <c:if test="${enroll.status == 'PENDING'}">
+                                                <button type="button" class="btn-card-action primary" onclick="updateEnrollmentStatus(${enroll.id}, 'APPROVED')">Approve</button>
+                                                <button type="button" class="btn-card-action danger" onclick="updateEnrollmentStatus(${enroll.id}, 'REJECTED')">Reject</button>
+                                            </c:if>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                                <c:if test="${empty enrollments}">
+                                    <tr>
+                                        <td colspan="5" style="text-align:center;padding:24px;color:var(--text-gray);">
+                                            No pending applications.
+                                        </td>
+                                    </tr>
+                                </c:if>
+                            </tbody>
+                        </table>
+                    </div>
                     </div><!-- /studentsListShell -->
 
                     <!-- Structured Review Application (inline, matches Centre Hub reference) -->
@@ -2296,7 +2411,12 @@
                                         </div>
                                         <div class="review-field">
                                             <label>Emergency Contact</label>
-                                            <div class="val"><c:out value="${not empty enroll.emergencyContactName ? enroll.emergencyContactName : '—'}"/></div>
+                                            <div class="val">
+                                                <c:out value="${not empty enroll.emergencyContactName ? enroll.emergencyContactName : '—'}"/>
+                                                <c:if test="${not empty enroll.emergencyContactPhone}">
+                                                    (<c:out value="${enroll.emergencyContactPhone}"/>)
+                                                </c:if>
+                                            </div>
                                         </div>
                                         <div class="review-field">
                                             <label>Address</label>
@@ -2336,12 +2456,20 @@
                                             <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.instructor ? enroll.batch.instructor : '—'}"/></div>
                                         </div>
                                         <div class="review-field">
-                                            <label>Days</label>
-                                            <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.availableDays ? enroll.batch.availableDays : '—'}"/></div>
+                                            <label>Preferred Days</label>
+                                            <div class="val"><c:out value="${not empty enroll.preferredDays ? enroll.preferredDays : (enroll.batch != null && not empty enroll.batch.availableDays ? enroll.batch.availableDays : '—')}"/></div>
                                         </div>
                                         <div class="review-field">
                                             <label>Time</label>
                                             <div class="val"><c:out value="${enroll.batch != null && not empty enroll.batch.timeSlot ? enroll.batch.timeSlot : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Proposed Start Date</label>
+                                            <div class="val"><c:out value="${enroll.proposedStartDate != null ? enroll.proposedStartDate : '—'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Trainer Preference</label>
+                                            <div class="val"><c:out value="${not empty enroll.trainerPreference ? enroll.trainerPreference : '—'}"/></div>
                                         </div>
                                         <div class="review-field">
                                             <label>Mode</label>
@@ -2378,28 +2506,54 @@
                                 </div>
                             </div>
 
-                            <!-- 4. Goals -->
-                            <div class="review-card">
-                                <h3 class="review-card-title"><span class="ri"><i class="bi bi-bullseye"></i></span> 4. Applicant's Goals</h3>
-                                <c:choose>
-                                    <c:when test="${not empty enroll.trainingGoal || not empty enroll.motivation || not empty enroll.skillLevel}">
-                                        <c:if test="${not empty enroll.skillLevel}">
-                                            <div class="review-field" style="margin-bottom:12px;">
-                                                <label>Experience / Level</label>
-                                                <div class="val"><c:out value="${enroll.skillLevel}"/></div>
-                                            </div>
-                                        </c:if>
-                                        <c:if test="${not empty enroll.trainingGoal}">
-                                            <p class="review-goals-text"><c:out value="${enroll.trainingGoal}"/></p>
-                                        </c:if>
-                                        <c:if test="${not empty enroll.motivation}">
-                                            <p class="review-goals-text" style="${not empty enroll.trainingGoal ? 'margin-top:10px;' : ''}"><c:out value="${enroll.motivation}"/></p>
-                                        </c:if>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <p class="review-goals-empty">No goals or additional information provided.</p>
-                                    </c:otherwise>
-                                </c:choose>
+                            <!-- 4. Goals & Health -->
+                            <div class="review-two-col">
+                                <div class="review-card">
+                                    <h3 class="review-card-title"><span class="ri"><i class="bi bi-bullseye"></i></span> 4. Applicant's Goals</h3>
+                                    <c:choose>
+                                        <c:when test="${not empty enroll.trainingGoal || not empty enroll.motivation || not empty enroll.skillLevel}">
+                                            <c:if test="${not empty enroll.skillLevel}">
+                                                <div class="review-field" style="margin-bottom:12px;">
+                                                    <label>Experience / Level</label>
+                                                    <div class="val"><c:out value="${enroll.skillLevel}"/></div>
+                                                </div>
+                                            </c:if>
+                                            <c:if test="${not empty enroll.trainingGoal}">
+                                                <div class="review-field" style="margin-bottom:10px;">
+                                                    <label>Training Goal</label>
+                                                    <p class="review-goals-text" style="margin:0;"><c:out value="${enroll.trainingGoal}"/></p>
+                                                </div>
+                                            </c:if>
+                                            <c:if test="${not empty enroll.motivation}">
+                                                <div class="review-field">
+                                                    <label>Motivation</label>
+                                                    <p class="review-goals-text" style="margin:0;"><c:out value="${enroll.motivation}"/></p>
+                                                </div>
+                                            </c:if>
+                                        </c:when>
+                                        <c:otherwise>
+                                            <p class="review-goals-empty">No goals or motivation specified.</p>
+                                        </c:otherwise>
+                                    </c:choose>
+                                </div>
+
+                                <div class="review-card">
+                                    <h3 class="review-card-title"><span class="ri"><i class="bi bi-heart-pulse"></i></span> 5. Health &amp; Medical Notes</h3>
+                                    <div class="review-field-grid">
+                                        <div class="review-field">
+                                            <label>Medical Conditions</label>
+                                            <div class="val"><c:out value="${not empty enroll.medicalConditions ? enroll.medicalConditions : 'None reported'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Allergies</label>
+                                            <div class="val"><c:out value="${not empty enroll.allergies ? enroll.allergies : 'None reported'}"/></div>
+                                        </div>
+                                        <div class="review-field">
+                                            <label>Fitness / Injury Notes</label>
+                                            <div class="val"><c:out value="${not empty enroll.fitnessNotes ? enroll.fitnessNotes : 'None reported'}"/></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- 5. Payment Status -->
@@ -3382,9 +3536,18 @@
     <!-- ========================================================================= -->
     <!-- JAVASCRIPT: TAB, QR, BELT GRADING & STAFF CONTROLLERS -->
     <!-- ========================================================================= -->
+    <script id="batches-json-data" type="application/json">
+        <c:out value="${not empty batchesJson ? batchesJson : '[]'}" escapeXml="false"/>
+    </script>
     <script>
         const contextPath = '${pageContext.request.contextPath}';
-        const batchesData = ${not empty batchesJson ? batchesJson : '[]'};
+        let batchesData = [];
+        try {
+            const rawJson = document.getElementById('batches-json-data').textContent;
+            batchesData = JSON.parse(rawJson.trim() || '[]');
+        } catch (e) {
+            batchesData = [];
+        }
 
         function toggleSidebar() {
             document.querySelector('.sidebar').classList.toggle('show');
@@ -3507,16 +3670,18 @@
         }
 
         function filterStudentRows(filter, btn) {
-            document.querySelectorAll('#studentStatusTabs .btn').forEach(b => {
-                b.style.background = '#fff';
-                b.style.color = '#0F172A';
-                b.style.border = '1px solid #E2E8F0';
+            document.querySelectorAll('#studentStatusTabs .filter-tab-pill').forEach(b => {
+                b.style.background = 'transparent';
+                b.style.color = 'var(--text-gray)';
+                b.style.borderColor = 'transparent';
+                b.style.boxShadow = 'none';
                 b.classList.remove('active');
             });
             if (btn) {
-                btn.style.background = '#FFF1F2';
-                btn.style.color = '#F43F5E';
-                btn.style.border = '1px solid #FECDD3';
+                btn.style.background = 'var(--primary)';
+                btn.style.color = '#FFFFFF';
+                btn.style.borderColor = 'var(--primary)';
+                btn.style.boxShadow = '0 4px 12px rgba(244, 63, 94, 0.25)';
                 btn.classList.add('active');
             }
             document.querySelectorAll('.student-row').forEach(row => {
@@ -3551,7 +3716,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            filterStudentRows('PENDING', document.querySelector('#studentStatusTabs .btn.active'));
+            filterStudentRows('PENDING', document.querySelector('#studentStatusTabs .filter-tab-pill.active'));
         });
 
         function generateQrSession() {

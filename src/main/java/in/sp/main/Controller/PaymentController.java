@@ -79,6 +79,9 @@ public class PaymentController {
     private EnrollmentRepository enrollmentRepository;
 
     @Autowired
+    private in.sp.main.Service.EmailAsyncService emailAsyncService;
+
+    @Autowired
     private in.sp.main.Service.MartialArtsCareService martialArtsCareService;
 
     @Autowired
@@ -955,6 +958,37 @@ public class PaymentController {
                     enrollment.setStatus(TrainingStatus.IN_PROGRESS);
                 }
                 enrollmentRepository.save(enrollment);
+
+                // Dispatch Email Notifications for Martial Arts Payment
+                String studentEmail = enrollment.getEmail() != null && !enrollment.getEmail().isBlank()
+                        ? enrollment.getEmail()
+                        : (user != null ? user.getEmail() : null);
+                String studentName = enrollment.getFullName() != null ? enrollment.getFullName()
+                        : (user != null && user.getFullName() != null ? user.getFullName() : "Student");
+                String centerName = enrollment.getCenter() != null ? enrollment.getCenter().getName() : "Centre";
+                String batchName = enrollment.getBatch() != null ? enrollment.getBatch().getName() : "Training Batch";
+
+                if (studentEmail != null && !studentEmail.isBlank()) {
+                    try {
+                        String subject = "Fight D Fear - Enrollment Payment Confirmed: " + centerName;
+                        String body = "Hello " + studentName + ",\n\n"
+                                + "Your payment of ₹" + (int) amountPaid + " for batch \"" + batchName + "\" at " + centerName + " has been verified and confirmed!\n\n"
+                                + "Payment ID: " + paymentId + "\n"
+                                + "Status: Confirmed / Active Trainee\n\n"
+                                + "Log in to your Fight D Fear account to view schedule, attendance, and training details.\n\nThank you,\nFight D Fear Healthcare";
+                        emailAsyncService.sendEmailAsync(studentEmail, subject, body);
+                    } catch (Exception ignored) {}
+                }
+
+                if (enrollment.getCenter() != null && enrollment.getCenter().getEmail() != null && !enrollment.getCenter().getEmail().isBlank()) {
+                    try {
+                        String subject = "Fight D Fear - Enrollment Payment Received: " + studentName;
+                        String body = "Hello " + centerName + ",\n\n"
+                                + "Payment of ₹" + (int) amountPaid + " for student " + studentName + " (Batch: \"" + batchName + "\") has been received and verified.\n\n"
+                                + "Payment ID: " + paymentId + "\n\nThank you,\nFight D Fear Healthcare";
+                        emailAsyncService.sendEmailAsync(enrollment.getCenter().getEmail(), subject, body);
+                    } catch (Exception ignored) {}
+                }
 
                 if (enrollment.getCenter() != null) {
                     user.setMartialArtsCenter(enrollment.getCenter());

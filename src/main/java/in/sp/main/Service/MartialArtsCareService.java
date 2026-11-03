@@ -49,6 +49,8 @@ public class MartialArtsCareService {
     @Autowired
     private MartialArtsBatchRepository batchRepository;
     @Autowired
+    private EmailAsyncService emailAsyncService;
+    @Autowired
     private MartialArtsCenterRepository centreRepository;
     @Autowired
     private CentreFavoriteRepository favoriteRepository;
@@ -200,7 +202,30 @@ public class MartialArtsCareService {
         }
         e.setStatus(TrainingStatus.CANCELLED);
         e.setCancelReason(reason == null || reason.isBlank() ? "Cancelled by member" : reason.trim());
-        return enrollmentRepository.save(e);
+        Enrollment saved = enrollmentRepository.save(e);
+
+        if (saved.getCenter() != null && saved.getCenter().getEmail() != null && !saved.getCenter().getEmail().isBlank()) {
+            try {
+                String studentName = saved.getFullName() != null ? saved.getFullName() : (user.getFullName() != null ? user.getFullName() : "Student");
+                String subject = "Fight D Fear - Enrollment Cancelled: " + studentName;
+                String body = "Hello " + saved.getCenter().getName() + ",\n\n"
+                        + "Student " + studentName + " has cancelled their enrollment for batch \"" + (saved.getBatch() != null ? saved.getBatch().getName() : "Batch") + "\".\n\n"
+                        + (saved.getCancelReason() != null ? "Reason: " + saved.getCancelReason() + "\n\n" : "")
+                        + "Thank you,\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(saved.getCenter().getEmail(), subject, body);
+            } catch (Exception ignored) {}
+        }
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            try {
+                String centerName = saved.getCenter() != null ? saved.getCenter().getName() : "Centre";
+                String subject = "Fight D Fear - Enrollment Cancelled: " + centerName;
+                String body = "Hello " + (user.getFullName() != null ? user.getFullName() : "Student") + ",\n\n"
+                        + "Your enrollment for batch \"" + (saved.getBatch() != null ? saved.getBatch().getName() : "Batch") + "\" at " + centerName + " has been cancelled.\n\n"
+                        + "Thank you,\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(user.getEmail(), subject, body);
+            } catch (Exception ignored) {}
+        }
+        return saved;
     }
 
     @Transactional
@@ -231,7 +256,29 @@ public class MartialArtsCareService {
         e.setTransferUsed(true);
         e.setStatus(TrainingStatus.TRANSFERRED);
         e.setCancelReason("Transferred to " + target.getName());
-        return enrollmentRepository.save(e);
+        Enrollment saved = enrollmentRepository.save(e);
+
+        if (saved.getCenter() != null && saved.getCenter().getEmail() != null && !saved.getCenter().getEmail().isBlank()) {
+            try {
+                String studentName = saved.getFullName() != null ? saved.getFullName() : (user.getFullName() != null ? user.getFullName() : "Student");
+                String subject = "Fight D Fear - Batch Transfer Requested: " + studentName;
+                String body = "Hello " + saved.getCenter().getName() + ",\n\n"
+                        + "Student " + studentName + " has transferred their enrollment to batch \"" + target.getName() + "\".\n\n"
+                        + "Thank you,\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(saved.getCenter().getEmail(), subject, body);
+            } catch (Exception ignored) {}
+        }
+        if (user.getEmail() != null && !user.getEmail().isBlank()) {
+            try {
+                String centerName = saved.getCenter() != null ? saved.getCenter().getName() : "Centre";
+                String subject = "Fight D Fear - Batch Transfer Confirmed: " + centerName;
+                String body = "Hello " + (user.getFullName() != null ? user.getFullName() : "Student") + ",\n\n"
+                        + "Your enrollment at " + centerName + " has been transferred to batch \"" + target.getName() + "\".\n\n"
+                        + "Thank you,\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(user.getEmail(), subject, body);
+            } catch (Exception ignored) {}
+        }
+        return saved;
     }
 
     @Transactional

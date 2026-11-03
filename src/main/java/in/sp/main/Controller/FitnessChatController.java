@@ -31,6 +31,9 @@ public class FitnessChatController {
     @Autowired
     private FitnessTrainerRepository trainerRepository;
 
+    @Autowired
+    private in.sp.main.Service.EmailAsyncService emailAsyncService;
+
     // Helper to get logged in User or Trainer
     private User getSessionUser(HttpSession session) {
         return (User) session.getAttribute("user");
@@ -93,11 +96,32 @@ public class FitnessChatController {
         chatMsg.setMessage(message);
 
         // Determine if sender is the user or the trainer
+        String preview = message.length() > 80 ? message.substring(0, 80) + "..." : message;
         if (currentUser != null && currentUser.getId().equals(userId)) {
             chatMsg.setSenderType("USER");
+            if (trainer.getEmail() != null && !trainer.getEmail().isBlank()) {
+                try {
+                    String subject = "Fight D Fear - New message from " + (user.getFullName() != null ? user.getFullName() : "Trainee");
+                    String body = "Hello Coach " + (trainer.getFullName() != null ? trainer.getFullName() : "Trainer") + ",\n\n"
+                            + (user.getFullName() != null ? user.getFullName() : "A trainee") + " sent you a message:\n\n"
+                            + "\"" + preview + "\"\n\n"
+                            + "Please open the Fight D Fear app to view and reply.\n\nThank you,\nFight D Fear Healthcare";
+                    emailAsyncService.sendEmailAsync(trainer.getEmail(), subject, body);
+                } catch (Exception ignored) {}
+            }
         } else if (currentTrainer != null && currentTrainer.getId().equals(trainerId)) {
             chatMsg.setSenderType("TRAINER");
             pushNotificationService.notifyUser(userId, "New Message from Coach " + trainer.getFullName(), message, Map.of("type", "FITNESS_CHAT", "trainerId", trainerId.toString()));
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                try {
+                    String subject = "Fight D Fear - New message from Coach " + trainer.getFullName();
+                    String body = "Hello " + (user.getFullName() != null ? user.getFullName() : "Trainee") + ",\n\n"
+                            + "Coach " + trainer.getFullName() + " sent you a message:\n\n"
+                            + "\"" + preview + "\"\n\n"
+                            + "Please open the Fight D Fear app to view and reply.\n\nThank you,\nFight D Fear Healthcare";
+                    emailAsyncService.sendEmailAsync(user.getEmail(), subject, body);
+                } catch (Exception ignored) {}
+            }
         } else {
             return ResponseEntity.status(403).body("Forbidden");
         }

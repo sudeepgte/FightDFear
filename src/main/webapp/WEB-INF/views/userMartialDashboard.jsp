@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -534,14 +536,14 @@
                                             <div class="col-md-6 col-xl-4 center-card-item" 
                                                  data-name="${center.name} ${batch.style} ${batch.name}" 
                                                  data-location="${center.location} ${center.city}" 
-                                                 data-style="${batch.style.toLowerCase()}" 
+                                                 data-style="${not empty batch.style ? fn:toLowerCase(batch.style) : ''}"
                                                  data-fee="${batch.fee != null ? batch.fee : 0}"
-                                                 data-mode="${batch.batchType != null ? batch.batchType.toLowerCase() : 'offline'}"
-                                                 data-trial="${batch.trialType != null ? batch.trialType.toLowerCase() : 'none'}"
-                                                 data-age="${batch.ageGroup != null ? batch.ageGroup.toLowerCase() : 'all'}">
+                                                 data-mode="${not empty batch.batchType ? fn:toLowerCase(batch.batchType) : 'offline'}"
+                                                 data-trial="${not empty batch.trialType ? fn:toLowerCase(batch.trialType) : 'none'}"
+                                                 data-age="${not empty batch.ageGroup ? fn:toLowerCase(batch.ageGroup) : 'all'}">
                                                 <div class="center-card">
                                                     <div class="position-relative">
-                                                        <img src="${pageContext.request.contextPath}${center.profilePhoto}" class="center-img" alt="${center.name}" onerror="this.src='${pageContext.request.contextPath}/beauty/images/centres.jpg'">
+                                                        <img src="${pageContext.request.contextPath}${not empty center.profilePhoto ? center.profilePhoto : '/assets/images/martialArts.jpg'}" class="center-img" alt="<c:out value="${center.name}"/>" onerror="this.src='${pageContext.request.contextPath}/assets/images/martialArts.jpg'">
                                                         <div class="position-absolute top-0 start-0 p-3">
                                                             <span class="badge bg-dark rounded-pill px-3 py-1 shadow-sm" style="font-size:0.72rem;">
                                                                 <i class="fas fa-wifi me-1"></i> ${batch.batchType}
@@ -603,10 +605,10 @@
                                         </c:forEach>
                                     </c:when>
                                     <c:otherwise>
-                                        <div class="col-md-6 col-xl-4 center-card-item" data-name="${center.name}" data-location="${center.location}" data-style="${center.stylesTaught.toLowerCase()}" data-fee="0" data-mode="offline" data-trial="none" data-age="all">
+                                        <div class="col-md-6 col-xl-4 center-card-item" data-name="${center.name}" data-location="${center.location}" data-style="${not empty center.stylesTaught ? fn:toLowerCase(center.stylesTaught) : ''}" data-fee="0" data-mode="offline" data-trial="none" data-age="all">
                                             <div class="center-card">
                                                 <div class="position-relative">
-                                                    <img src="${pageContext.request.contextPath}${center.profilePhoto}" class="center-img" alt="${center.name}" onerror="this.src='${pageContext.request.contextPath}/beauty/images/centres.jpg'">
+                                                    <img src="${pageContext.request.contextPath}${not empty center.profilePhoto ? center.profilePhoto : '/assets/images/martialArts.jpg'}" class="center-img" alt="<c:out value="${center.name}"/>" onerror="this.src='${pageContext.request.contextPath}/assets/images/martialArts.jpg'">
                                                 </div>
                                                 <div class="p-4 flex-grow-1 d-flex flex-column">
                                                     <h5 class="fw-bold text-dark mb-2">${center.name}</h5>

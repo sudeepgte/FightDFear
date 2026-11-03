@@ -57,6 +57,7 @@ public class Enrollment {
 
     // 2. Emergency Contact
     private String emergencyContactName;
+    private String emergencyContactPhone;
 
     // 3. Training Preference
     private String skillLevel; // Beginner, Intermediate, Advanced
@@ -145,6 +146,8 @@ public class Enrollment {
     public void setResidentialAddress(String residentialAddress) { this.residentialAddress = residentialAddress; }
     public String getEmergencyContactName() { return emergencyContactName; }
     public void setEmergencyContactName(String emergencyContactName) { this.emergencyContactName = emergencyContactName; }
+    public String getEmergencyContactPhone() { return emergencyContactPhone; }
+    public void setEmergencyContactPhone(String emergencyContactPhone) { this.emergencyContactPhone = emergencyContactPhone; }
 
     public String getSkillLevel() { return skillLevel; }
     public void setSkillLevel(String skillLevel) { this.skillLevel = skillLevel; }
@@ -194,4 +197,4 @@ public class Enrollment {
     public void setBillingCycle(String billingCycle) { this.billingCycle = billingCycle; }
     public String getCurrentBelt() { return currentBelt; }
     public void setCurrentBelt(String currentBelt) { this.currentBelt = currentBelt; }
-}
+}

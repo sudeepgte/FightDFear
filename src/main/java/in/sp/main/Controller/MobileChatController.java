@@ -56,6 +56,9 @@ public class MobileChatController {
     @Autowired
     private in.sp.main.Repository.UserFollowRepository userFollowRepository;
 
+    @Autowired
+    private in.sp.main.Service.EmailAsyncService emailAsyncService;
+
     private User requireUser(HttpSession session) {
         User u = session == null ? null : (User) session.getAttribute("user");
         if (u != null) return u;
@@ -206,6 +209,19 @@ public class MobileChatController {
             }
         } catch (Exception e) {
             System.err.println("Failed to broadcast chat STOMP message: " + e.getMessage());
+        }
+
+        if (peer.getEmail() != null && !peer.getEmail().isBlank()) {
+            try {
+                String preview = message.length() > 80 ? message.substring(0, 80) + "..." : message;
+                String senderName = current.getFullName() != null ? current.getFullName() : "A member";
+                String subject = "Fight D Fear - New message from " + senderName;
+                String emailBody = "Hello " + (peer.getFullName() != null ? peer.getFullName() : "Member") + ",\n\n"
+                        + senderName + " sent you a new message:\n\n"
+                        + "\"" + preview + "\"\n\n"
+                        + "Please open the Fight D Fear app or website to view and reply.\n\nThank you,\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(peer.getEmail(), subject, emailBody);
+            } catch (Exception ignored) {}
         }
 
         Map<String, Object> response = new LinkedHashMap<>();

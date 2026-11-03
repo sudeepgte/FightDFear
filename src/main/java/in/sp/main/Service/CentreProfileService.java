@@ -70,6 +70,7 @@ public class CentreProfileService {
 
     public List<String> missingItems(MartialArtsCenter centre) {
         List<String> missing = new ArrayList<>();
+        if (blank(centre.getProfilePhoto())) missing.add("0.1 Centre Logo / Thumbnail");
         if (blank(centre.getName())) missing.add("1.1 Centre name");
         if (blank(centre.getCentreType())) missing.add("1.2 Centre type");
         if (blank(centre.getContactPerson())) missing.add("1.3 Owner / manager");
@@ -97,7 +98,7 @@ public class CentreProfileService {
 
     public int calculateCompletionPct(MartialArtsCenter centre) {
         int filled = 0;
-        int total = 16;
+        int total = 17;
         if (!blank(centre.getName())) filled++;
         if (!blank(centre.getCentreType())) filled++;
         if (!blank(centre.getContactPerson())) filled++;
@@ -114,6 +115,7 @@ public class CentreProfileService {
         if (!blank(centre.getAbout())) filled++;
         if (!blank(centre.getHowWeTeach())) filled++;
         if (!blank(centre.getWhatWeOffer())) filled++;
+        if (!blank(centre.getProfilePhoto())) filled++;
         return (int) Math.round(100.0 * filled / total);
     }
 

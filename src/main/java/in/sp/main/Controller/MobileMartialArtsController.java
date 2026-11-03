@@ -79,9 +79,10 @@ public class MobileMartialArtsController {
             }
             List<MartialArtsBatch> batches = c.getBatches();
             if (!styleQ.isEmpty()) {
-                String taught = c.getStylesTaught() == null ? "" : c.getStylesTaught().toLowerCase(Locale.ROOT);
-                boolean match = taught.contains(styleQ)
-                        || batches.stream().anyMatch(b -> b.getStyle() != null && b.getStyle().toLowerCase(Locale.ROOT).contains(styleQ));
+                String normQ = styleQ.replaceAll("[^a-z0-9]", "");
+                String taught = c.getStylesTaught() == null ? "" : c.getStylesTaught().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+                boolean match = taught.contains(normQ)
+                        || batches.stream().anyMatch(b -> b.getStyle() != null && b.getStyle().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "").contains(normQ));
                 if (!match) continue;
             }
             Double minFee = minFee(batches);
@@ -90,11 +91,34 @@ public class MobileMartialArtsController {
                     && batches.stream().noneMatch(martialArtsCareService::isBatchDayToday)) continue;
             if (Boolean.TRUE.equals(online)
                     && batches.stream().noneMatch(martialArtsCareService::isOnlineBatch)) continue;
+
             Map<String, Object> dto = centreSummary(c, user);
             if (lat != null && lng != null && c.getCentreLat() != null && c.getCentreLng() != null) {
                 dto.put("distanceKm", haversineKm(lat, lng, c.getCentreLat(), c.getCentreLng()));
             }
             centres.add(dto);
+
+            if (batches != null && !batches.isEmpty()) {
+                for (MartialArtsBatch b : batches) {
+                    if (!styleQ.isEmpty()) {
+                        String normQ = styleQ.replaceAll("[^a-z0-9]", "");
+                        String bStyle = b.getStyle() == null ? "" : b.getStyle().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+                        String cTaught = c.getStylesTaught() == null ? "" : c.getStylesTaught().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
+                        if (!bStyle.contains(normQ) && !cTaught.contains(normQ)) {
+                            continue;
+                        }
+                    }
+                    if (feeMax != null && b.getFee() != null && b.getFee() > feeMax) continue;
+                    if (Boolean.TRUE.equals(batchToday) && !martialArtsCareService.isBatchDayToday(b)) continue;
+                    if (Boolean.TRUE.equals(online) && !martialArtsCareService.isOnlineBatch(b)) continue;
+
+                    Map<String, Object> bDto = batchDiscoveryDto(c, b, user);
+                    if (lat != null && lng != null && c.getCentreLat() != null && c.getCentreLng() != null) {
+                        bDto.put("distanceKm", haversineKm(lat, lng, c.getCentreLat(), c.getCentreLng()));
+                    }
+                    centres.add(bDto);
+                }
+            }
         }
         centres.sort((a, b) -> compareCentres(a, b, sort));
 
@@ -391,7 +415,10 @@ public class MobileMartialArtsController {
         m.put("state", c.getState());
         m.put("pincode", c.getPincode());
         m.put("phoneNumber", c.getPhoneNumber());
-        m.put("profilePhoto", c.getProfilePhoto());
+        String photo = (c.getProfilePhoto() != null && !c.getProfilePhoto().isBlank())
+                ? c.getProfilePhoto()
+                : "/assets/images/martialArts.jpg";
+        m.put("profilePhoto", photo);
         m.put("about", truncate(c.getAbout(), 160));
         m.put("batchCount", batches.size());
         m.put("minFee", minFee);
@@ -406,6 +433,43 @@ public class MobileMartialArtsController {
         Map<String, Object> next = martialArtsCareService.nextBatchInfo(c, batches);
         m.putAll(next);
         m.put("styles", stylesOf(c, batches));
+        return m;
+    }
+
+    private Map<String, Object> batchDiscoveryDto(MartialArtsCenter c, MartialArtsBatch b, User user) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", c.getId());
+        m.put("centreId", c.getId());
+        m.put("batchId", b.getId());
+        m.put("isBatch", true);
+        m.put("name", b.getName());
+        m.put("centreName", c.getName());
+        m.put("style", b.getStyle() != null ? b.getStyle() : "Martial Arts");
+        m.put("instructor", b.getInstructor() != null && !b.getInstructor().isBlank() ? b.getInstructor() : c.getContactPerson());
+        m.put("ageGroup", b.getAgeGroup() != null ? b.getAgeGroup() : "All");
+        m.put("skillLevel", b.getSkillLevel() != null ? b.getSkillLevel() : "All Levels");
+        m.put("availableDays", b.getAvailableDays() != null ? b.getAvailableDays() : "");
+        m.put("timeSlot", b.getTimeSlot() != null ? b.getTimeSlot() : "");
+        m.put("batchType", b.getBatchType() != null ? b.getBatchType() : "Offline");
+        m.put("status", b.getStatus() != null ? b.getStatus() : "Active");
+        m.put("capacity", b.getCapacity());
+        m.put("location", c.getLocation() != null ? c.getLocation() : c.getCity());
+        m.put("city", c.getCity());
+        m.put("phoneNumber", c.getPhoneNumber());
+        m.put("fee", b.getFee() != null ? b.getFee() : 0.0);
+        m.put("minFee", b.getFee() != null ? b.getFee() : 0.0);
+        m.put("admissionFee", b.getAdmissionFee());
+        m.put("trialType", b.getTrialType() != null ? b.getTrialType() : "None");
+        m.put("rating", c.getRating() == null ? 0 : c.getRating());
+        String photo = (c.getProfilePhoto() != null && !c.getProfilePhoto().isBlank())
+                ? c.getProfilePhoto()
+                : "/assets/images/martialArts.jpg";
+        m.put("profilePhoto", photo);
+        boolean enrolled = user != null && enrollmentRepository.findByUser(user).stream()
+                .anyMatch(e -> e.getBatch() != null && b.getId().equals(e.getBatch().getId())
+                        && e.getStatus() != in.sp.main.Entities.TrainingStatus.CANCELLED
+                        && e.getStatus() != in.sp.main.Entities.TrainingStatus.REJECTED);
+        m.put("alreadyEnrolled", enrolled);
         return m;
     }
 

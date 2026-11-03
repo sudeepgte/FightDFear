@@ -81,6 +81,7 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
     'Other',
   ];
   static const _relations = [
+    'Parent',
     'Father',
     'Mother',
     'Husband',
@@ -256,6 +257,7 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
       'address': _addressCtrl.text.trim(),
       'emergencyName':
           '${_emergencyNameCtrl.text.trim()} ($_emergencyRelation) · ${_emergencyPhoneCtrl.text.trim()}',
+      'emergencyPhone': _emergencyPhoneCtrl.text.trim(),
       'style': widget.batch['style'],
       'skillLevel': _skill,
       'preferredDays': _days.toList(),
@@ -402,6 +404,29 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
     );
   }
 
+  Widget _buildSafeDropdown({
+    required String value,
+    required List<String> options,
+    required String label,
+    required ValueChanged<String?> onChanged,
+  }) {
+    final list = [...options];
+    if (value.isNotEmpty && !list.contains(value)) {
+      list.insert(0, value);
+    }
+    final selectedVal = list.contains(value) ? value : (list.isNotEmpty ? list.first : null);
+    return DropdownButtonFormField<String>(
+      value: selectedVal,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      items: list.map((o) => DropdownMenuItem(value: o, child: Text(o, overflow: TextOverflow.ellipsis))).toList(),
+      onChanged: onChanged,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final feeLabel = _isFree ? 'Free batch' : 'Fee: ₹${_courseFee.toStringAsFixed(0)}';
@@ -486,21 +511,17 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _gender,
-                decoration: const InputDecoration(labelText: 'Gender *', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'Female', child: Text('Female')),
-                  DropdownMenuItem(value: 'Male', child: Text('Male')),
-                  DropdownMenuItem(value: 'Other', child: Text('Other')),
-                ],
+                options: const ['Female', 'Male', 'Other'],
+                label: 'Gender *',
                 onChanged: (v) => setState(() => _gender = v ?? _gender),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _occupation,
-                decoration: const InputDecoration(labelText: 'Occupation *', border: OutlineInputBorder()),
-                items: _occupations.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+                options: _occupations,
+                label: 'Occupation *',
                 onChanged: (v) => setState(() => _occupation = v ?? _occupation),
               ),
               const SizedBox(height: 12),
@@ -529,13 +550,10 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
 
               _section('Emergency information'),
               _field(_emergencyNameCtrl, 'Emergency contact name *', required: true),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _emergencyRelation,
-                decoration: const InputDecoration(
-                  labelText: 'Relationship *',
-                  border: OutlineInputBorder(),
-                ),
-                items: _relations.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+                options: _relations,
+                label: 'Relationship *',
                 onChanged: (v) => setState(() => _emergencyRelation = v ?? _emergencyRelation),
               ),
               const SizedBox(height: 12),
@@ -556,57 +574,38 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
               ),
 
               _section('Training details'),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _skill,
-                decoration: const InputDecoration(labelText: 'Skill level *', border: OutlineInputBorder()),
-                items: const [
-                  DropdownMenuItem(value: 'Beginner', child: Text('Beginner')),
-                  DropdownMenuItem(value: 'Intermediate', child: Text('Intermediate')),
-                  DropdownMenuItem(value: 'Advanced', child: Text('Advanced')),
-                ],
+                options: const ['Beginner', 'Intermediate', 'Advanced', 'All levels'],
+                label: 'Skill level *',
                 onChanged: (v) => setState(() => _skill = v ?? _skill),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _preferredBatch,
-                decoration: const InputDecoration(
-                  labelText: 'Preferred batch *',
-                  border: OutlineInputBorder(),
-                ),
-                items: _batchSlots.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                options: _batchSlots,
+                label: 'Preferred batch *',
                 onChanged: (v) => setState(() => _preferredBatch = v ?? _preferredBatch),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _trainingMode,
-                decoration: const InputDecoration(
-                  labelText: 'Training mode *',
-                  border: OutlineInputBorder(),
-                ),
-                items: _modes.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+                options: _modes,
+                label: 'Training mode *',
                 onChanged: (v) => setState(() => _trainingMode = v ?? _trainingMode),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _previousExperience,
-                decoration: const InputDecoration(
-                  labelText: 'Previous martial arts experience *',
-                  border: OutlineInputBorder(),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'Yes', child: Text('Yes')),
-                  DropdownMenuItem(value: 'No', child: Text('No')),
-                ],
+                options: const ['Yes', 'No'],
+                label: 'Previous martial arts experience *',
                 onChanged: (v) => setState(() => _previousExperience = v ?? _previousExperience),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _fitnessGoal,
-                decoration: const InputDecoration(
-                  labelText: 'Fitness goal *',
-                  border: OutlineInputBorder(),
-                ),
-                items: _goals.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                options: _goals,
+                label: 'Fitness goal *',
                 onChanged: (v) => setState(() => _fitnessGoal = v ?? _fitnessGoal),
               ),
               const SizedBox(height: 12),
@@ -659,13 +658,10 @@ class _MartialArtsEnrollScreenState extends State<MartialArtsEnrollScreen> {
               ),
 
               _section('Medical information'),
-              DropdownButtonFormField<String>(
+              _buildSafeDropdown(
                 value: _bloodGroup,
-                decoration: const InputDecoration(
-                  labelText: 'Blood group *',
-                  border: OutlineInputBorder(),
-                ),
-                items: _bloodGroups.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(),
+                options: _bloodGroups,
+                label: 'Blood group *',
                 onChanged: (v) => setState(() => _bloodGroup = v ?? _bloodGroup),
               ),
               const SizedBox(height: 8),
