@@ -235,9 +235,6 @@
         <!-- Top Bar -->
         <header class="topbar">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/lawyer/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; text-decoration: none;">
-                    <i class="bi bi-arrow-left"></i> Back
-                </a>
                 <a href="${pageContext.request.contextPath}/" class="brand">
                     <img src="${pageContext.request.contextPath}/images/logo.png" alt="FightDFear Logo">
                     <span class="brand-text">Fight D Fear</span>
@@ -246,7 +243,7 @@
             </div>
             <div class="topbar-actions">
                 <a href="${pageContext.request.contextPath}/" class="btn-skip" style="display: inline-flex; align-items: center; gap: 6px;">
-                    <i class="bi bi-house-door"></i> Back to Home
+                    <i class="bi bi-house-door"></i> Home
                 </a>
                 <a href="${pageContext.request.contextPath}/lawyer/dashboard" class="btn-skip">Skip to Dashboard</a>
                 <button type="submit" class="btn-save" id="btnSaveTop">
@@ -256,12 +253,9 @@
         </header>
 
         <div class="container">
-            <div class="fdf-nav-bar" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div class="fdf-nav-bar" style="grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
                 <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/lawyer/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid #e2e8f0; background: #fff;">
                     <i class="bi bi-arrow-left"></i> Back
-                </a>
-                <a href="${pageContext.request.contextPath}/" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid #e2e8f0; background: #fff;">
-                    <i class="bi bi-house-door"></i> Back to Home
                 </a>
             </div>
             <!-- Left Form Section -->

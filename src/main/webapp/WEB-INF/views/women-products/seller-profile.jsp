@@ -80,9 +80,9 @@
         }
 
         .header-brand img {
-            height: 34px;
-            width: 34px;
-            border-radius: 8px;
+            height: 44px;
+            width: 44px;
+            border-radius: 10px;
             object-fit: cover;
         }
 
@@ -803,8 +803,11 @@
             <span class="portal-badge">Seller Profile</span>
         </a>
         <div class="header-actions">
+            <a class="btn-skip" href="${pageContext.request.contextPath}/" style="margin-right:6px;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a class="btn-skip" href="${pageContext.request.contextPath}/women-products/seller/dashboard">
-                <i class="bi bi-arrow-left"></i> Skip to Dashboard
+                <i class="bi bi-speedometer2"></i> Dashboard
             </a>
             <button type="button" class="btn-primary" onclick="triggerProfileSave()">
                 <i class="bi bi-cloud-check-fill"></i> Save Profile
@@ -813,6 +816,9 @@
     </header>
 
     <main class="main-container">
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-products/seller/dashboard'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
         <!-- Alerts -->
         <c:if test="${not empty error}">
             <div class="alert-banner alert-error">

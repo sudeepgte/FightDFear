@@ -111,6 +111,8 @@ public class DoctorDocumentService {
         }
     }
 
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".pdf");
+
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is required");
@@ -119,7 +121,14 @@ public class DoctorDocumentService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File must be 5 MB or smaller");
         }
         String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+        String originalFilename = file.getOriginalFilename();
+        boolean validContentType = contentType != null && ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT));
+        boolean validExtension = false;
+        if (originalFilename != null && originalFilename.contains(".")) {
+            String ext = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase(Locale.ROOT);
+            validExtension = ALLOWED_EXTENSIONS.contains(ext);
+        }
+        if (!validContentType && !validExtension) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only JPG, PNG, or PDF files are allowed");
         }
     }

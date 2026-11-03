@@ -74,11 +74,12 @@
             outline: none;
         }
         .main-container {
-            flex: 1;
+            flex: 1 0 auto;
             max-width: 640px;
             width: 100%;
-            margin: 28px auto 40px;
-            padding: 0 16px;
+            margin: 28px auto 0;
+            padding: 0 16px 80px;
+            box-sizing: border-box;
         }
         .info-banner {
             background: var(--rose-soft);
@@ -338,12 +339,16 @@
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px);
             display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;
+            overflow-y: auto;
+            box-sizing: border-box;
         }
         .modal-card {
             background: #FFFFFF; border-radius: 20px; max-width: 480px; width: 100%; padding: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); max-height: 90vh;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-sizing: border-box;
         }
-        .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-shrink: 0; }
         .modal-header .icon-wrap {
             width: 42px; height: 42px; border-radius: 12px; background: var(--rose-soft); color: var(--primary);
             display: flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0;
@@ -352,6 +357,7 @@
         .modal-body {
             background: var(--bg-page); border: 1px solid var(--border-color); border-radius: 12px;
             padding: 14px 16px; margin-bottom: 20px;
+            flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
         }
         .review-row {
             display: flex; justify-content: space-between; gap: 12px; padding: 8px 0;
@@ -360,7 +366,7 @@
         .review-row:last-child { border-bottom: none; }
         .review-row .label { color: var(--text-gray); font-weight: 500; }
         .review-row .value { color: var(--navy); font-weight: 700; text-align: right; word-break: break-word; }
-        .modal-actions { display: flex; gap: 10px; }
+        .modal-actions { display: flex; gap: 10px; flex-shrink: 0; margin-top: auto; }
         .btn-modal-cancel {
             flex: 1; padding: 12px; background: #FFFFFF; border: 1px solid var(--border-color);
             color: var(--navy); border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; font-family: inherit;
@@ -386,27 +392,32 @@
             border-radius: 20px;
             max-width: 640px;
             width: 100%;
-            max-height: 94vh;
+            max-height: 90vh;
             display: flex;
             flex-direction: column;
             padding: 22px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             overflow: hidden;
+            box-sizing: border-box;
         }
+        .map-modal-card .modal-header { flex-shrink: 0; }
         .map-search-row {
             display: flex;
             gap: 8px;
             margin-bottom: 12px;
             position: relative;
+            flex-shrink: 0;
         }
         .map-canvas-wrap {
             position: relative;
             width: 100%;
             height: 320px;
+            min-height: 180px;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--border-color);
             background: #E2E8F0;
+            flex: 1 1 auto;
         }
         .map-suggestions {
             position: absolute;
@@ -445,6 +456,7 @@
             margin-top: 12px;
             font-size: 0.86rem;
             line-height: 1.4;
+            flex-shrink: 0;
         }
         .map-selected-label {
             font-weight: 700;
@@ -487,18 +499,21 @@
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear"
-                 style="height:32px;width:32px;border-radius:8px;object-fit:cover;"
+                 style="height:44px;width:44px;border-radius:10px;object-fit:cover;"
                  onerror="this.style.display='none';">
             Fight D Fear
         </a>
-        <div class="header-links">
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/login">Sign in</a>
         </div>
     </header>
 
     <main class="main-container">
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="info-banner">
             <h1>Create your Fight D Fear account</h1>
@@ -770,8 +785,8 @@
 
     <!-- Terms & Conditions Modal -->
     <div id="termsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="termsModalTitle" style="display:none;">
-        <div class="modal-card" style="max-width: 580px; max-height: 85vh; display: flex; flex-direction: column;">
-            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px;">
+        <div class="modal-card" style="max-width: 580px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 14px; margin-bottom: 14px; flex-shrink: 0;">
                 <div class="icon-wrap"><i class="bi bi-journal-check"></i></div>
                 <div style="flex: 1;">
                     <h3 id="termsModalTitle">Terms &amp; Conditions</h3>
@@ -779,7 +794,7 @@
                 </div>
                 <button type="button" id="btnCloseTermsModal" class="btn-close-modal" aria-label="Close modal">&times;</button>
             </div>
-            <div class="modal-body" id="termsModalContent" style="overflow-y: auto; max-height: 48vh; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 12px;">
+            <div class="modal-body" id="termsModalContent" style="overflow-y: auto; flex: 1 1 auto; min-height: 0; font-size: 0.88rem; line-height: 1.6; color: var(--navy); background: #FFF; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 12px;">
                 <div id="termsTextSection">
                     <h4 style="font-size:0.95rem; font-weight:800; color:var(--navy); margin-bottom:4px;">1. Purpose &amp; Women-Centric Community</h4>
                     <p style="margin-bottom:12px; color:var(--text-gray);">Fight D Fear is an empowerment, health, and personal safety ecosystem built for women. By registering, you commit to upholding the values of mutual respect, trust, empathy, and integrity within our community.</p>
@@ -797,7 +812,7 @@
                     <p style="margin-bottom:0; color:var(--text-gray);">Any harassment, stalking, hate speech, or abuse targeted at any member or partner will result in permanent account termination and potential reporting to law enforcement authorities.</p>
                 </div>
             </div>
-            <div class="modal-actions" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color);">
+            <div class="modal-actions" style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-color); flex-shrink: 0;">
                 <button type="button" class="btn-modal-cancel" id="btnDismissTerms">Close</button>
                 <button type="button" class="btn-modal-confirm" id="btnAcceptTermsModal" style="background:var(--success);">
                     <i class="bi bi-check-lg"></i> I Read &amp; Agree (Accept)
@@ -901,8 +916,8 @@
             setFieldError('email', 'Email address must not exceed 100 characters.');
             return false;
         }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
-            setFieldError('email', 'Please enter a valid email address (e.g. name@example.com).');
+        if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(val)) {
+            setFieldError('email', 'Enter a valid mail id (must be @gmail.com)');
             return false;
         }
         clearFieldError('email');
@@ -1101,8 +1116,8 @@
             setFieldError('emergencyContactEmail', 'Emergency contact email must not exceed 100 characters.');
             return false;
         }
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val)) {
-            setFieldError('emergencyContactEmail', 'Please enter a valid emergency contact email (e.g. name@example.com).');
+        if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(val)) {
+            setFieldError('emergencyContactEmail', 'Enter a valid mail id (must be @gmail.com)');
             return false;
         }
         clearFieldError('emergencyContactEmail');

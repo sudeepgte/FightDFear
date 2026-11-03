@@ -98,11 +98,19 @@ class EventHostAuthService {
 
   Future<Map<String, dynamic>> uploadPhotos({
     String? profilePath,
+    String? logoPath,
+    String? documentPath,
     String? galleryPath,
   }) async {
     final files = <http.MultipartFile>[];
     if (profilePath != null && profilePath.isNotEmpty) {
       files.add(await http.MultipartFile.fromPath('profileImage', profilePath));
+    }
+    if (logoPath != null && logoPath.isNotEmpty) {
+      files.add(await http.MultipartFile.fromPath('logoImage', logoPath));
+    }
+    if (documentPath != null && documentPath.isNotEmpty) {
+      files.add(await http.MultipartFile.fromPath('document', documentPath));
     }
     if (galleryPath != null && galleryPath.isNotEmpty) {
       files.add(await http.MultipartFile.fromPath('galleryPhotos', galleryPath));

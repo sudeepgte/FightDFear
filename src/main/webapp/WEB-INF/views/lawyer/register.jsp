@@ -492,7 +492,7 @@
     <header class="app-header">
         <div style="display: flex; align-items: center; gap: 16px;">
             <a href="${pageContext.request.contextPath}/" class="header-brand">
-                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Fight D Fear
             </a>
         </div>
         <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
@@ -506,12 +506,9 @@
     <!-- Main Container -->
     <main class="main-container">
 
-        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
             <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
                 <i class="bi bi-arrow-left"></i> Back
-            </a>
-            <a href="${pageContext.request.contextPath}/" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
-                <i class="bi bi-house-door"></i> Back to Home
             </a>
         </div>
 
@@ -563,8 +560,9 @@
                 <div class="form-group">
                     <label for="email">Email *</label>
                     <div class="input-wrapper">
-                        <input type="email" id="email" name="email" class="form-input" placeholder="lawyer@example.com" required>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="lawyer@gmail.com" required>
                     </div>
+                    <div class="error-msg" id="emailError" style="display:none; color:#dc2626; font-size:0.82rem; margin-top:4px;">Enter a valid mail id (must be @gmail.com)</div>
                 </div>
 
                 <!-- OTP Dispatch & Verification -->
@@ -740,10 +738,13 @@
         async function handleSendOtp() {
             hideAlert();
             const email = document.getElementById('email').value.trim();
-            if (!email || !email.includes('@') || !email.includes('.')) {
-                showAlert('Please enter a valid email address first.');
+            const emailErr = document.getElementById('emailError');
+            if (!email || !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email)) {
+                if (emailErr) emailErr.style.display = 'block';
+                showAlert('Enter a valid mail id (must be @gmail.com)');
                 return;
             }
+            if (emailErr) emailErr.style.display = 'none';
 
             const btn = document.getElementById('btnSendOtp');
             btn.disabled = true;
@@ -846,10 +847,16 @@
             const confirm = document.getElementById('confirmPassword').value;
             const terms = document.getElementById('termsCheck').checked;
 
+            const emailErr = document.getElementById('emailError');
             if (!name) { showAlert('Lawyer name is required.'); return; }
             if (!barCouncilId) { showAlert('Bar Council ID is required.'); return; }
             if (!phone || phone.length !== 10) { showAlert('Valid 10-digit mobile number is required.'); return; }
-            if (!email || !email.includes('@')) { showAlert('Valid email address is required.'); return; }
+            if (!email || !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email)) {
+                if (emailErr) emailErr.style.display = 'block';
+                showAlert('Enter a valid mail id (must be @gmail.com)');
+                return;
+            }
+            if (emailErr) emailErr.style.display = 'none';
             if (!isOtpVerified) { showAlert('Please verify your email OTP before registering.'); return; }
             if (!pass || pass.length < 6) { showAlert('Password must be at least 6 characters.'); return; }
             if (pass !== confirm) { showAlert('Passwords do not match.'); return; }

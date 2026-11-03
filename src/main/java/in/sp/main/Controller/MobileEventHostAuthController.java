@@ -692,6 +692,8 @@ public class MobileEventHostAuthController {
     @Transactional
     public ResponseEntity<Map<String, Object>> uploadPhotos(
             @RequestParam(value = "profileImage", required = false) org.springframework.web.multipart.MultipartFile profileImage,
+            @RequestParam(value = "logoImage", required = false) org.springframework.web.multipart.MultipartFile logoImage,
+            @RequestParam(value = "document", required = false) org.springframework.web.multipart.MultipartFile document,
             @RequestParam(value = "galleryPhotos", required = false) org.springframework.web.multipart.MultipartFile galleryPhotos,
             HttpSession session) {
         EventHost host = requireHost(session);
@@ -699,7 +701,17 @@ public class MobileEventHostAuthController {
         host = hostRepo.findById(host.getId()).orElse(host);
         try {
             if (profileImage != null && !profileImage.isEmpty()) {
-                host.setLogoPath(fileUploadService.saveFile(profileImage));
+                String path = fileUploadService.saveFile(profileImage);
+                host.setProfilePhotoPath(path);
+                if (host.getLogoPath() == null || host.getLogoPath().isBlank()) {
+                    host.setLogoPath(path);
+                }
+            }
+            if (logoImage != null && !logoImage.isEmpty()) {
+                host.setLogoPath(fileUploadService.saveFile(logoImage));
+            }
+            if (document != null && !document.isEmpty()) {
+                host.setDocumentPath(fileUploadService.saveFile(document));
             }
             if (galleryPhotos != null && !galleryPhotos.isEmpty()) {
                 String path = fileUploadService.saveFile(galleryPhotos);
@@ -709,7 +721,7 @@ public class MobileEventHostAuthController {
             hostRepo.save(host);
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
-            res.put("message", "Photos saved");
+            res.put("message", "Files saved successfully");
             res.putAll(hostProfileService.profilePayload(host));
             return ResponseEntity.ok(res);
         } catch (Exception ex) {

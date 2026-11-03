@@ -57,6 +57,9 @@ public class DoctorAppointmentService {
     @Autowired
     private PushNotificationService pushNotificationService;
 
+    @Autowired
+    private EmailAsyncService emailAsyncService;
+
     @Transactional
     public DoctorAppointment transitionByDoctor(DoctorAppointment appointment, Doctor doctor, DoctorAppointmentStatus target) {
         requireOwnedByDoctor(appointment, doctor);
@@ -72,6 +75,14 @@ public class DoctorAppointmentService {
                     "Appointment update",
                     "Your appointment #" + saved.getId() + " is now " + saved.getStatus(),
                     Map.of("type", "APPOINTMENT_STATUS", "appointmentId", String.valueOf(saved.getId())));
+            notifyPatientEmail(
+                    saved,
+                    "Fight D Fear - Appointment Status Update: Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor"),
+                    "Hello " + (saved.getUser().getFullName() != null ? saved.getUser().getFullName() : "Patient") + ",\n\n"
+                            + "Your appointment with Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor")
+                            + " scheduled for " + saved.getAppointmentTime() + " is now " + saved.getStatus().name() + ".\n\n"
+                            + "Please open the Fight D Fear app or website to view details.\n\nThank you,\nFight D Fear Healthcare"
+            );
         }
         return saved;
     }
@@ -95,6 +106,15 @@ public class DoctorAppointmentService {
                 "Appointment cancelled",
                 "Patient cancelled appointment #" + saved.getId(),
                 Map.of("type", "APPOINTMENT_CANCELLED", "appointmentId", String.valueOf(saved.getId())));
+        notifyPatientEmail(
+                saved,
+                "Fight D Fear - Appointment Cancelled: Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor"),
+                "Hello " + (user.getFullName() != null ? user.getFullName() : "Patient") + ",\n\n"
+                        + "Your appointment with Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor")
+                        + " scheduled for " + saved.getAppointmentTime() + " has been cancelled.\n\n"
+                        + (saved.getCancelReason() != null ? "Note: " + saved.getCancelReason() + "\n" : "")
+                        + "\nIf you wish to reschedule or find another doctor, please open the Fight D Fear app or website.\n\nThank you,\nFight D Fear Healthcare"
+        );
         return saved;
     }
 
@@ -123,6 +143,14 @@ public class DoctorAppointmentService {
                 "Appointment rescheduled",
                 "Appointment #" + saved.getId() + " moved to " + newTime,
                 true);
+        notifyPatientEmail(
+                saved,
+                "Fight D Fear - Appointment Rescheduled: Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor"),
+                "Hello " + (user.getFullName() != null ? user.getFullName() : "Patient") + ",\n\n"
+                        + "Your appointment with Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor")
+                        + " has been rescheduled to " + newTime + ".\n\n"
+                        + "Please open the Fight D Fear app or website to view your updated schedule.\n\nThank you,\nFight D Fear Healthcare"
+        );
         return saved;
     }
 
@@ -151,6 +179,14 @@ public class DoctorAppointmentService {
                     "Your appointment was moved to " + newTime,
                     Map.of("type", "APPOINTMENT_RESCHEDULED", "appointmentId", String.valueOf(saved.getId())));
         }
+        notifyPatientEmail(
+                saved,
+                "Fight D Fear - Appointment Rescheduled: Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor"),
+                "Hello " + (saved.getUser() != null && saved.getUser().getFullName() != null ? saved.getUser().getFullName() : "Patient") + ",\n\n"
+                        + "Your appointment with Dr. " + (saved.getDoctor() != null ? saved.getDoctor().getFullName() : "Doctor")
+                        + " has been rescheduled to " + newTime + ".\n\n"
+                        + "Please open the Fight D Fear app or website to view your updated schedule.\n\nThank you,\nFight D Fear Healthcare"
+        );
         return saved;
     }
 
@@ -275,5 +311,15 @@ public class DoctorAppointmentService {
                 "Appointment cancelled",
                 patient + " cancelled appointment #" + appointment.getId() + ".",
                 true);
+    }
+
+    private void notifyPatientEmail(DoctorAppointment appt, String subject, String body) {
+        if (appt == null || appt.getUser() == null || appt.getUser().getEmail() == null || appt.getUser().getEmail().isBlank()) {
+            return;
+        }
+        try {
+            emailAsyncService.sendEmailAsync(appt.getUser().getEmail(), subject, body);
+        } catch (Exception ignored) {
+        }
     }
 }

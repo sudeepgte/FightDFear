@@ -508,9 +508,12 @@
     <!-- App Header -->
     <header class="app-header">
         <a href="${pageContext.request.contextPath}/" class="header-brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Fight D Fear
         </a>
-        <div class="header-links">
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/centres/login">Sign in</a>
         </div>
     </header>
@@ -518,8 +521,8 @@
     <!-- Main Container -->
     <main class="main-container">
 
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
 
         <!-- Info Card Matching Mobile -->
@@ -576,10 +579,10 @@
                 <div class="form-group">
                     <label for="email">Email *</label>
                     <div class="input-wrapper">
-                        <input type="email" id="email" name="email" class="form-input" placeholder="centre@example.com" maxlength="80" required>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="centre@gmail.com" maxlength="80" required>
                     </div>
                     <div class="hint">Official email used for student inquiries, logins, and OTP verification.</div>
-                    <div class="error-msg" id="err-email"><i class="bi bi-exclamation-circle-fill"></i> Valid email address is required.</div>
+                    <div class="error-msg" id="err-email"><i class="bi bi-exclamation-circle-fill"></i> Enter a valid mail id (must be @gmail.com)</div>
                 </div>
 
                 <!-- OTP Dispatch & Verification -->
@@ -807,9 +810,9 @@
                 if (showErr) setFieldError('email', true, 'Email address is required.');
                 return false;
             }
-            const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
             if (!emailRegex.test(val)) {
-                if (showErr) setFieldError('email', true, 'Please enter a valid email format (e.g. centre@example.com).');
+                if (showErr) setFieldError('email', true, 'Enter a valid mail id (must be @gmail.com)');
                 return false;
             }
             setFieldError('email', false);

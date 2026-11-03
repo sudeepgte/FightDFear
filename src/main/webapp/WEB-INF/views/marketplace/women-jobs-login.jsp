@@ -261,8 +261,9 @@
                     <label>Email Address</label>
                     <div class="input-wrapper">
                         <i class="bi bi-envelope prefix-icon"></i>
-                        <input type="email" name="email" class="form-input" placeholder="partner@example.com" value="<c:out value='${registeredEmail}'/>" required>
+                        <input type="email" id="email" name="email" class="form-input" placeholder="partner@gmail.com" value="<c:out value='${registeredEmail}'/>" required>
                     </div>
+                    <div id="emailError" style="display:none; color: #DC2626; font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
                 </div>
                 <div class="form-group">
                     <div class="pw-row">
@@ -306,22 +307,43 @@
             });
         }
 
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+
+        function validateEmail() {
+            if (!emailInput || !emailError) return true;
+            const val = emailInput.value.trim();
+            if (!val) {
+                emailError.textContent = 'Email Address is required';
+                emailError.style.display = 'block';
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+                emailError.style.display = 'block';
+                return false;
+            }
+            emailError.style.display = 'none';
+            return true;
+        }
+
+        if (emailInput && emailError) {
+            emailInput.addEventListener('input', validateEmail);
+            emailInput.addEventListener('blur', validateEmail);
+        }
+
         document.getElementById('workerLoginForm').addEventListener('submit', function(event) {
             var box = document.getElementById('js-login-error');
             var msg = document.getElementById('js-login-error-msg');
             box.style.display = 'none';
             var email = (this.email.value || '').trim();
             var password = this.password.value || '';
-            if (email === '') {
+            if (!validateEmail()) {
                 event.preventDefault();
-                msg.textContent = 'Email Address is required.';
+                msg.textContent = 'Enter a valid mail id (must be @gmail.com)';
                 box.style.display = 'flex';
-                return;
-            }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                event.preventDefault();
-                msg.textContent = 'Please enter a valid email address.';
-                box.style.display = 'flex';
+                emailInput.focus();
                 return;
             }
             if (password === '') {

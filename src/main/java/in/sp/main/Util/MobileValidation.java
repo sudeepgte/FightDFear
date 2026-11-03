@@ -10,7 +10,8 @@ import in.sp.main.Entities.Gender;
  */
 public final class MobileValidation {
 
-    private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final Pattern EMAIL =
+            Pattern.compile("^[a-zA-Z0-9._%+-]+@gmail\\.com$", Pattern.CASE_INSENSITIVE);
     private static final Pattern PHONE10 = Pattern.compile("^\\d{10}$");
     private static final Pattern PASSWORD =
             Pattern.compile("^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$");
@@ -39,7 +40,7 @@ public final class MobileValidation {
     }
 
     public static String requireEmail(String email) {
-        if (!isEmail(email)) return "Enter a valid email address";
+        if (!isEmail(email)) return "Enter a valid mail id (must be @gmail.com)";
         return null;
     }
 

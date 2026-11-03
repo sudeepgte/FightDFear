@@ -79,9 +79,9 @@
         }
 
         .header-brand img {
-            height: 34px;
-            width: 34px;
-            border-radius: 8px;
+            height: 44px;
+            width: 44px;
+            border-radius: 10px;
             object-fit: cover;
         }
 
@@ -154,8 +154,8 @@
             flex: 1;
             width: 100%;
             max-width: 1280px;
-            margin: 20px auto 50px;
-            padding: 0 clamp(16px, 2.5vw, 32px);
+            margin: 20px auto 40px;
+            padding: 0 clamp(16px, 2.5vw, 32px) 80px;
             box-sizing: border-box;
         }
 
@@ -671,13 +671,14 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(4px);
             z-index: 1000;
             display: none;
             align-items: center;
             justify-content: center;
             padding: 16px;
+            overflow-y: auto;
         }
 
         .map-modal-card {
@@ -814,18 +815,37 @@
             background: #FFFFFF;
             border-radius: 18px;
             width: 100%;
-            max-width: 650px;
-            max-height: 85vh;
+            max-width: 860px;
+            max-height: 90vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             box-shadow: var(--shadow-float);
             animation: modalPop 0.2s ease-out;
+            position: relative;
         }
 
         .review-modal-body {
             padding: 20px 24px;
             overflow-y: auto;
+            flex: 1 1 auto;
+            min-height: 0;
+            overscroll-behavior: contain;
+        }
+
+        .review-modal-footer, .map-modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            background: #FFFFFF;
+            flex-shrink: 0;
+            position: sticky;
+            bottom: 0;
+            z-index: 20;
         }
 
         .review-summary-banner {
@@ -835,42 +855,125 @@
             padding: 16px;
             background: #F8FAFC;
             border: 1px solid var(--border-color);
-            border-radius: 12px;
+            border-radius: 14px;
             margin-bottom: 16px;
         }
 
         .rev-avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
+            width: 60px;
+            height: 60px;
+            border-radius: 14px;
             object-fit: cover;
             background: var(--rose-soft);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: var(--primary);
             flex-shrink: 0;
             overflow: hidden;
+            border: 2px solid #FFF;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
 
         .rev-details h4 {
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             font-weight: 800;
             color: var(--navy);
-            margin-bottom: 2px;
+            margin-bottom: 3px;
         }
 
         .rev-details p {
-            font-size: 0.82rem;
+            font-size: 0.84rem;
             color: var(--text-gray);
+            margin: 0;
+        }
+
+        .rev-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .rev-section-card {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+        }
+
+        .rev-section-title {
+            font-size: 0.88rem;
+            font-weight: 800;
+            color: var(--navy);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #F1F5F9;
+            padding-bottom: 6px;
+        }
+
+        .rev-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 5px 0;
+            font-size: 0.83rem;
+            border-bottom: 1px dashed #F1F5F9;
+            gap: 12px;
+        }
+        .rev-row:last-child {
+            border-bottom: none;
+        }
+
+        .rev-lbl {
+            color: var(--text-gray);
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .rev-val {
+            color: var(--navy);
+            font-weight: 700;
+            text-align: right;
+            word-break: break-word;
+        }
+
+        .rev-chips-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .rev-chip {
+            background: #F1F5F9;
+            color: var(--navy);
+            border-radius: 6px;
+            padding: 3px 9px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .rev-chip-primary {
+            background: var(--rose-soft);
+            color: var(--primary);
+            border: 1px solid var(--rose-border);
         }
 
         /* Bottom Action Buttons */
         .bottom-actions {
             margin-top: 28px;
+            margin-bottom: 24px;
             display: flex;
             gap: 14px;
+            flex-wrap: wrap;
         }
 
         .btn-bottom-save {
@@ -1064,9 +1167,6 @@
     <!-- Header Navigation -->
     <header class="app-header">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-events/organizer/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 6px;" title="Go Back">
-                <i class="bi bi-arrow-left"></i> Back
-            </a>
             <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="header-brand">
                 <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
                 <span>Event Host Studio</span>
@@ -1075,7 +1175,7 @@
         </div>
         <div class="header-actions">
             <a href="${pageContext.request.contextPath}/" class="btn-skip" style="margin-right:8px;">
-                <i class="bi bi-house-door"></i> Back to Home
+                <i class="bi bi-house-door"></i> Home
             </a>
             <a href="${pageContext.request.contextPath}/women-events/organizer/dashboard" class="btn-skip">
                 <i class="bi bi-speedometer2"></i> Dashboard
@@ -1091,12 +1191,9 @@
 
     <main class="main-container">
 
-        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
             <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-events/organizer/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
                 <i class="bi bi-arrow-left"></i> Back
-            </a>
-            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
-                <i class="bi bi-house-door"></i> Back to Home
             </a>
         </div>
 
@@ -1316,8 +1413,13 @@
 
                     <div class="form-group">
                         <label for="credentialNumber">1.6 Reg / GST / NGO Credential Number <span class="req">*</span></label>
-                        <input type="text" id="credentialNumber" name="credentialNumber" class="form-input" value="<c:out value='${host.credentialNumber}'/>" placeholder="CIN, GSTIN, NGO Darpan ID or Reg. No." required maxlength="80">
-                        <div class="error-msg" id="err-credentialNumber"><i class="bi bi-exclamation-circle-fill"></i> Registration / Credential identification number is required.</div>
+                        <input type="text" id="credentialNumber" name="credentialNumber" class="form-input"
+                               value="<c:out value='${host.credentialNumber}'/>"
+                               placeholder="CIN, GSTIN, NGO Darpan ID or Reg. No."
+                               required maxlength="21"
+                               style="text-transform: uppercase;"
+                               oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9\/-]/g, '').slice(0, 21); validateCredentialNumber();">
+                        <div class="error-msg" id="err-credentialNumber"><i class="bi bi-exclamation-circle-fill"></i> Valid Credential registration number (3 to 21 characters, A-Z, 0-9, /, -) is required.</div>
                     </div>
 
                     <div class="form-group">
@@ -1904,7 +2006,7 @@
                         <i class="bi bi-building"></i>
                     </div>
                     <div class="rev-details">
-                        <h4 id="revModalOrgName">SheLeads Foundation</h4>
+                        <h4 id="revModalOrgName">Organization Name</h4>
                         <p><span id="revModalHostName">Organizer Name</span> &bull; <span id="revModalCityState">City, State</span></p>
                     </div>
                 </div>
@@ -1928,15 +2030,113 @@
 
                 <div id="revModalSuccessSection" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;padding:14px;margin-bottom:16px;">
                     <div style="font-weight:700;font-size:0.88rem;color:#166534;">
-                        <i class="bi bi-check-circle-fill"></i> All 16 mandatory fields are complete and verified!
+                        <i class="bi bi-check-circle-fill"></i> All mandatory profile fields are complete and verified!
                     </div>
                     <div style="font-size:0.82rem;color:#15803D;margin-top:4px;">
                         Your host profile is ready for submission. Our team will review your credentials within 24–48 hours.
                     </div>
                 </div>
+
+                <!-- Detailed Filled Fields Overview -->
+                <div class="rev-grid-2">
+                    <!-- 1. Organization & Host Identity -->
+                    <div class="rev-section-card">
+                        <div class="rev-section-title"><i class="bi bi-building text-primary"></i> 1. Organization &amp; Credentials</div>
+                        <div class="rev-row"><span class="rev-lbl">Organization Name</span><span class="rev-val" id="revDetailOrgName">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Organizer Type</span><span class="rev-val" id="revDetailOrgType">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Host / Contact Person</span><span class="rev-val" id="revDetailHostName">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Credential / Reg. No.</span><span class="rev-val" id="revDetailCredential" style="font-family:monospace;letter-spacing:0.5px;">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Years of Experience</span><span class="rev-val" id="revDetailExperience">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Events Conducted</span><span class="rev-val" id="revDetailEventsConducted">-</span></div>
+                    </div>
+
+                    <!-- 2. Contact & Online Presence -->
+                    <div class="rev-section-card">
+                        <div class="rev-section-title"><i class="bi bi-telephone text-primary"></i> 2. Contact &amp; Social Links</div>
+                        <div class="rev-row"><span class="rev-lbl">Official Phone</span><span class="rev-val" id="revDetailPhone">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">WhatsApp Number</span><span class="rev-val" id="revDetailWhatsapp">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Official Website</span><span class="rev-val" id="revDetailWebsite">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Instagram</span><span class="rev-val" id="revDetailInstagram">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Facebook / LinkedIn</span><span class="rev-val" id="revDetailSocialOther">-</span></div>
+                    </div>
+                </div>
+
+                <div class="rev-grid-2">
+                    <!-- 3. Location & Venue Base -->
+                    <div class="rev-section-card">
+                        <div class="rev-section-title"><i class="bi bi-geo-alt-fill text-danger"></i> 3. Operational Location</div>
+                        <div class="rev-row"><span class="rev-lbl">Office / Venue Address</span><span class="rev-val" id="revDetailAddress">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">City, State &amp; PIN</span><span class="rev-val" id="revDetailLocation">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Pin Coordinates</span><span class="rev-val" id="revDetailPin">-</span></div>
+                    </div>
+
+                    <!-- 4. Operational Schedule -->
+                    <div class="rev-section-card">
+                        <div class="rev-section-title"><i class="bi bi-clock-history text-primary"></i> 4. Timings &amp; Operating Days</div>
+                        <div class="rev-row"><span class="rev-lbl">Open Hours</span><span class="rev-val" id="revDetailHours">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Break Hours</span><span class="rev-val" id="revDetailBreak">-</span></div>
+                        <div class="rev-row" style="flex-direction:column;align-items:flex-start;">
+                            <span class="rev-lbl mb-1">Operating Days</span>
+                            <div class="rev-chips-wrap" id="revDetailDays"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Offerings & Audience -->
+                <div class="rev-section-card">
+                    <div class="rev-section-title"><i class="bi bi-calendar-event text-primary"></i> 5. Event Offerings &amp; Audience</div>
+                    <div class="rev-row" style="flex-direction:column;align-items:flex-start;">
+                        <span class="rev-lbl mb-1">Event Categories Offered</span>
+                        <div class="rev-chips-wrap" id="revDetailCategories"></div>
+                    </div>
+                    <div class="rev-row mt-2" style="flex-direction:column;align-items:flex-start;">
+                        <span class="rev-lbl mb-1">Target Audience</span>
+                        <div class="rev-chips-wrap" id="revDetailAudience"></div>
+                    </div>
+                    <div class="rev-row mt-2" style="flex-direction:column;align-items:flex-start;">
+                        <span class="rev-lbl mb-1">Facilities Provided</span>
+                        <div class="rev-chips-wrap" id="revDetailFacilities"></div>
+                    </div>
+                    <div class="rev-row"><span class="rev-lbl">Doorstep / On-site Service</span><span class="rev-val" id="revDetailDoorService">-</span></div>
+                </div>
+
+                <!-- 6. About & Description -->
+                <div class="rev-section-card">
+                    <div class="rev-section-title"><i class="bi bi-card-text text-primary"></i> 6. About the Organization &amp; Mission</div>
+                    <div style="font-size:0.83rem;color:var(--navy);line-height:1.6;white-space:pre-wrap;" id="revDetailBio">-</div>
+                </div>
+
+                <div class="rev-grid-2">
+                    <!-- 7. Sessions & Pricing -->
+                    <div class="rev-section-card">
+                        <div class="rev-section-title"><i class="bi bi-tag-fill text-primary"></i> 7. Session Format &amp; Pricing</div>
+                        <div class="rev-row"><span class="rev-lbl">Session Mode</span><span class="rev-val" id="revDetailSessionMode">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Typical Ticket Price</span><span class="rev-val" id="revDetailTicketPrice" style="color:var(--primary);">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Standard Duration</span><span class="rev-val" id="revDetailDuration">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Buffer Time</span><span class="rev-val" id="revDetailBuffer">-</span></div>
+                    </div>
+
+                    <!-- 8. Settlement Bank Details -->
+                    <div class="rev-section-card">
+                        <div class="rev-section-title"><i class="bi bi-bank text-primary"></i> 8. Payout &amp; Bank Settlement</div>
+                        <div class="rev-row"><span class="rev-lbl">Account Holder</span><span class="rev-val" id="revDetailBankHolder">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Bank &amp; Branch</span><span class="rev-val" id="revDetailBankName">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">Account Number</span><span class="rev-val" id="revDetailBankAccount" style="font-family:monospace;">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">IFSC Code</span><span class="rev-val" id="revDetailBankIfsc" style="font-family:monospace;">-</span></div>
+                        <div class="rev-row"><span class="rev-lbl">UPI ID</span><span class="rev-val" id="revDetailUpiId">-</span></div>
+                    </div>
+                </div>
+
+                <!-- 9. Uploaded Documents & Assets -->
+                <div class="rev-section-card">
+                    <div class="rev-section-title"><i class="bi bi-file-earmark-check text-primary"></i> 9. Uploaded Credentials &amp; Documents</div>
+                    <div class="rev-row"><span class="rev-lbl">Profile Photo</span><span class="rev-val" id="revDetailPhotoStatus">-</span></div>
+                    <div class="rev-row"><span class="rev-lbl">Brand Logo</span><span class="rev-val" id="revDetailLogoStatus">-</span></div>
+                    <div class="rev-row"><span class="rev-lbl">Registration Proof Document</span><span class="rev-val" id="revDetailDocStatus">-</span></div>
+                </div>
             </div>
 
-            <div class="map-modal-footer">
+            <div class="review-modal-footer">
                 <button type="button" class="btn-skip" onclick="closeReviewModal()">Keep Editing</button>
                 <button type="button" class="btn-primary" id="btnFinalSubmit" onclick="executeFinalSubmit()">
                     <i class="bi bi-send-check-fill me-1"></i> Submit Profile for Review
@@ -2100,8 +2300,13 @@
         }
 
         function validateCredentialNumber() {
-            const val = (document.getElementById('credentialNumber')?.value || '').trim();
-            return setFieldState('credentialNumber', 'err-credentialNumber', val.length >= 2, 'Credential registration number is required.');
+            const input = document.getElementById('credentialNumber');
+            if (input) {
+                input.value = input.value.toUpperCase().replace(/[^A-Z0-9\/-]/g, '').slice(0, 21);
+            }
+            const val = (input?.value || '').trim();
+            const valid = val.length >= 3 && val.length <= 21 && /^[A-Z0-9\/-]+$/.test(val);
+            return setFieldState('credentialNumber', 'err-credentialNumber', valid, 'Valid credential registration number (3 to 21 characters, A-Z, 0-9, /, -) is required.');
         }
 
         function validateYearsExperience() {
@@ -2925,7 +3130,7 @@
 
             // 5. Credential number
             const cred = (document.getElementById('credentialNumber')?.value || '').trim();
-            checks.push({ key: '1.8 GST / NGO / CIN number', valid: cred.length >= 2, target: 'credentialNumber' });
+            checks.push({ key: '1.8 GST / NGO / CIN number', valid: cred.length >= 3 && cred.length <= 21 && /^[A-Z0-9\/-]+$/.test(cred), target: 'credentialNumber' });
 
             // 6. Address
             const addr = (document.getElementById('officeAddress')?.value || '').trim();
@@ -3077,18 +3282,131 @@
         // Profile Review & Submission Modal
         // -------------------------------------------------------------
         function openReviewModal() {
+            serializeBankDetails();
             const status = calculateProfileStatus();
             const reviewModal = document.getElementById('profileReviewModalBackdrop');
             if (!reviewModal) return;
 
-            document.getElementById('revModalOrgName').textContent = (document.getElementById('organizerName')?.value || 'Organization Name').trim();
-            document.getElementById('revModalHostName').textContent = (document.getElementById('fullName')?.value || 'Host Name').trim();
+            // Form Inputs
+            const orgName = (document.getElementById('organizerName')?.value || '').trim();
+            const orgType = (document.getElementById('organizerType')?.value || '').trim();
+            const hostName = (document.getElementById('fullName')?.value || '').trim();
+            const credNum = (document.getElementById('credentialNumber')?.value || '').trim();
+            const expYears = (document.getElementById('yearsExperience')?.value || '').trim();
+            const evtsConducted = (document.getElementById('eventsConducted')?.value || '').trim();
+
+            const ph = (document.getElementById('phone')?.value || '').trim();
+            const wa = (document.getElementById('whatsappNumber')?.value || '').trim();
+            const web = (document.getElementById('website')?.value || '').trim();
+            const insta = (document.getElementById('instagram')?.value || '').trim();
+            const fb = (document.getElementById('facebook')?.value || '').trim();
+            const li = (document.getElementById('linkedin')?.value || '').trim();
+
+            const addr = (document.getElementById('officeAddress')?.value || '').trim();
             const city = (document.getElementById('inputCity')?.value || '').trim();
             const state = (document.getElementById('stateSelect')?.value || '').trim();
+            const pin = (document.getElementById('inputPincode')?.value || '').trim();
+            const lat = (document.getElementById('latitude')?.value || '').trim();
+            const lng = (document.getElementById('longitude')?.value || '').trim();
+
+            const opDays = Array.from(document.querySelectorAll('.cb-day:checked')).map(cb => cb.value);
+            const opTime = (document.getElementById('openTime')?.value || '').trim();
+            const clTime = (document.getElementById('closeTime')?.value || '').trim();
+            const brkStart = (document.getElementById('breakStart')?.value || '').trim();
+            const brkEnd = (document.getElementById('breakEnd')?.value || '').trim();
+
+            const cats = Array.from(document.querySelectorAll('.cb-category:checked')).map(cb => cb.value);
+            const auds = Array.from(document.querySelectorAll('.cb-audience:checked')).map(cb => cb.value);
+            const facs = Array.from(document.querySelectorAll('.cb-facility:checked')).map(cb => cb.value);
+            const door = document.getElementById('doorService')?.checked;
+
+            const bio = (document.getElementById('hostBio')?.value || '').trim();
+            const sm = (document.getElementById('sessionMode')?.value || '').trim();
+            const tp = (document.getElementById('typicalPrice')?.value || '').trim();
+            const dur = (document.getElementById('durationMinutes')?.value || '').trim();
+            const buf = (document.getElementById('bufferMinutes')?.value || '').trim();
+
+            const bHolder = (document.getElementById('bankAccountHolder')?.value || '').trim();
+            const bName = (document.getElementById('bankName')?.value || '').trim();
+            const bBranch = (document.getElementById('bankBranch')?.value || '').trim();
+            const bAcct = (document.getElementById('bankAccountNumber')?.value || '').trim();
+            const bIfsc = (document.getElementById('bankIfsc')?.value || '').trim();
+            const upi = (document.getElementById('upiId')?.value || '').trim();
+
+            const pFile = document.getElementById('profilePhoto');
+            const hasP = (pFile && pFile.files && pFile.files.length > 0) || !!(document.getElementById('existingProfilePhoto')?.value || '').trim();
+            const lFile = document.getElementById('logoFile');
+            const hasL = (lFile && lFile.files && lFile.files.length > 0) || !!(document.getElementById('existingLogo')?.value || '').trim();
+            const dFile = document.getElementById('documentFile');
+            const hasD = (dFile && dFile.files && dFile.files.length > 0) || !!(document.getElementById('existingDocument')?.value || '').trim();
+
+            // Set Header Summaries
+            document.getElementById('revModalOrgName').textContent = orgName || 'Organization Name';
+            document.getElementById('revModalHostName').textContent = hostName || 'Host Name';
             document.getElementById('revModalCityState').textContent = [city, state].filter(Boolean).join(', ') || 'Location';
 
             document.getElementById('revModalPct').textContent = status.pct + '%';
             document.getElementById('revModalBar').style.width = status.pct + '%';
+
+            // Set Detail Sections
+            const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val || '—'; };
+            setText('revDetailOrgName', orgName);
+            setText('revDetailOrgType', orgType);
+            setText('revDetailHostName', hostName);
+            setText('revDetailCredential', credNum);
+            setText('revDetailExperience', expYears ? expYears + ' Years' : '—');
+            setText('revDetailEventsConducted', evtsConducted ? evtsConducted + ' Events' : '0 Events');
+
+            setText('revDetailPhone', ph);
+            setText('revDetailWhatsapp', wa || 'Same as official phone');
+            setText('revDetailWebsite', web);
+            setText('revDetailInstagram', insta);
+            setText('revDetailSocialOther', [fb, li].filter(Boolean).join(' | ') || '—');
+
+            setText('revDetailAddress', addr);
+            setText('revDetailLocation', [city, state, pin ? 'PIN: ' + pin : ''].filter(Boolean).join(', '));
+            setText('revDetailPin', (lat && lng) ? lat + ', ' + lng : 'Pinned on map');
+
+            setText('revDetailHours', (opTime && clTime) ? opTime + ' – ' + clTime : '—');
+            setText('revDetailBreak', (brkStart && brkEnd) ? brkStart + ' – ' + brkEnd : 'None');
+
+            const setChips = (id, list, fallback) => {
+                const c = document.getElementById(id);
+                if (!c) return;
+                c.innerHTML = '';
+                if (!list || list.length === 0) {
+                    c.innerHTML = '<span style="font-size:0.8rem;color:var(--text-gray);">' + fallback + '</span>';
+                } else {
+                    list.forEach(item => {
+                        const s = document.createElement('span');
+                        s.className = 'rev-chip rev-chip-primary';
+                        s.textContent = item;
+                        c.appendChild(s);
+                    });
+                }
+            };
+            setChips('revDetailDays', opDays, 'No operational days selected');
+            setChips('revDetailCategories', cats, 'No event categories selected');
+            setChips('revDetailAudience', auds, 'General audience');
+            setChips('revDetailFacilities', facs, 'Standard workshop facilities');
+
+            setText('revDetailDoorService', door ? 'Yes, On-site / Doorstep Available' : 'No');
+            setText('revDetailBio', bio || 'No mission bio provided.');
+
+            setText('revDetailSessionMode', sm);
+            setText('revDetailTicketPrice', tp ? '₹' + tp : 'Free / Not Specified');
+            setText('revDetailDuration', dur ? dur + ' Mins' : '—');
+            setText('revDetailBuffer', buf ? buf + ' Mins' : '—');
+
+            setText('revDetailBankHolder', bHolder);
+            setText('revDetailBankName', [bName, bBranch].filter(Boolean).join(' - ') || '—');
+            setText('revDetailBankAccount', bAcct ? (bAcct.length > 4 ? '•••• •••• ' + bAcct.slice(-4) : bAcct) : '—');
+            setText('revDetailBankIfsc', bIfsc);
+            setText('revDetailUpiId', upi);
+
+            setText('revDetailPhotoStatus', hasP ? '✓ Profile Photo Uploaded' : 'Pending Upload');
+            setText('revDetailLogoStatus', hasL ? '✓ Brand Logo Uploaded' : 'Pending Upload');
+            setText('revDetailDocStatus', hasD ? '✓ Document / ID Proof Attached' : 'Pending Upload');
 
             const missSec = document.getElementById('revModalMissingSection');
             const missList = document.getElementById('revModalMissingList');

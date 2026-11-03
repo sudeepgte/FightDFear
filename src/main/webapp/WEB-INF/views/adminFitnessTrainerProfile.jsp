@@ -294,7 +294,8 @@
             z-index: 1000;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
         }.tag-pill {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
             background: #f1f5f9;
             color: var(--text-dark);
             padding: 4px 12px;
@@ -304,6 +305,11 @@
             margin-right: 6px;
             margin-bottom: 6px;
             border: 1px solid var(--border-color);
+            max-width: 100%;
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            line-height: 1.35;
         }
 
         .tag-pill.highlight {

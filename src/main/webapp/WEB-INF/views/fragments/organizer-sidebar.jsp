@@ -29,7 +29,8 @@
                 </a>
             </c:when>
             <c:otherwise>
-                <a href="${ctx}/women-events/organizer/profile-completion" class="org-nav-item ${nav eq 'create' ? 'active' : ''}"
+                <a href="javascript:void(0);" class="org-nav-item ${nav eq 'create' ? 'active' : ''}"
+                   onclick="alert('${host.partnerProfileStatus eq 'PENDING_ADMIN_APPROVAL' ? 'Your profile is currently under review by admin. Once approved, you will be able to create events.' : 'Please complete your profile and wait for admin approval before creating events.'}');"
                    title="Locked until admin approval" style="opacity:.65;">
                     <i class="bi bi-lock-fill"></i><span>Create Event</span>
                 </a>

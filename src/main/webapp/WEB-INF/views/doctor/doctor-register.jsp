@@ -239,7 +239,7 @@
     <header class="app-header">
         <a class="header-brand" href="${pageContext.request.contextPath}/">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear"
-                 style="height:32px;width:32px;border-radius:8px;object-fit:cover;">
+                 style="height:44px;width:44px;border-radius:10px;object-fit:cover;">
             Fight D Fear
         </a>
         <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
@@ -251,12 +251,9 @@
     </header>
 
     <main class="main-container">
-        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
             <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
                 <i class="bi bi-arrow-left"></i> Back
-            </a>
-            <a href="${pageContext.request.contextPath}/" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
-                <i class="bi bi-house-door"></i> Back to Home
             </a>
         </div>
         <c:choose>
@@ -309,10 +306,10 @@
                             <div class="otp-row">
                                 <input type="email" id="email" name="email" class="form-input"
                                        value="${email != null ? email : ''}"
-                                       placeholder="doctor@example.com" required maxlength="120" autocomplete="email">
+                                       placeholder="doctor@gmail.com" required maxlength="120" autocomplete="email">
                                 <button type="button" id="sendOtpBtn" class="btn-otp">Send OTP</button>
                             </div>
-                            <div class="error-msg" id="emailError">Enter a valid email address.</div>
+                            <div class="error-msg" id="emailError">Enter a valid mail id (must be @gmail.com)</div>
                         </div>
 
                         <div class="form-group" id="otpGroup" style="display:none;">
@@ -426,7 +423,7 @@
             let otpBusy = false;
 
             const pwdRule = /^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/;
-            const emailRule = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+            const emailRule = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
             const phoneRule = /^\d{10}$/;
 
             function showAlert(msg, isError) {
@@ -467,7 +464,7 @@
             function emailMsg() {
                 const v = email.value.trim();
                 if (!v) return 'Email is required.';
-                if (!emailRule.test(v)) return 'Enter a valid email address.';
+                if (!emailRule.test(v)) return 'Enter a valid mail id (must be @gmail.com)';
                 return null;
             }
             function pwdMsg() {

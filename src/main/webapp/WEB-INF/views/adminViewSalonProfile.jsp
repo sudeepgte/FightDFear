@@ -57,18 +57,28 @@
   }
   .section-header h3 { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--ap-text); }
 
-  .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px 18px; }
+  .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px 18px; width: 100%; box-sizing: border-box; }
+  .info-field { min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
   .info-field.span-all { grid-column: 1 / -1; }
   .info-field-label {
     display: block; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
     text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
   }
-  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--ap-text); word-break: break-word; }
+  .info-field-value {
+    font-size: 0.95rem; font-weight: 600; color: var(--ap-text);
+    overflow-wrap: anywhere; word-break: break-word; max-width: 100%; min-width: 0;
+  }
+  .bio-box {
+    background: #F8FAFC; border: 1px solid var(--ap-border); border-radius: 10px; padding: 12px;
+    font-weight: 500; font-size: 0.9rem; color: var(--ap-text); overflow-wrap: anywhere; word-break: break-word;
+    max-width: 100%; min-width: 0; white-space: pre-wrap; line-height: 1.5;
+  }
   .empty-text { color: #94A3B8; font-size: 0.88rem; font-style: italic; }
 
   .badge-status-lg {
     display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px;
-    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em;
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; max-width: 100%;
+    white-space: normal; word-break: break-word;
   }
   .status-APPROVED, .status-VERIFIED { background: var(--ap-success-bg); color: var(--ap-success); }
   .status-REJECTED { background: var(--ap-danger-bg); color: var(--ap-danger); }
@@ -77,8 +87,9 @@
   .status-READY_FOR_VERIFICATION, .status-REGISTERED { background: #FEF3C7; color: #B45309; }
 
   .tag-pill {
-    display: inline-flex; padding: 4px 10px; border-radius: 999px; background: #F8FAFC;
+    display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; background: #F8FAFC;
     border: 1px solid var(--ap-border); font-size: 0.78rem; font-weight: 600; margin: 0 6px 6px 0; color: #334155;
+    max-width: 100%; white-space: normal; word-break: break-word; overflow-wrap: anywhere; line-height: 1.35;
   }
   .fee-tile {
     border: 1px solid var(--ap-border); border-radius: 12px; padding: 12px; background: #FCFCFD; height: 100%;

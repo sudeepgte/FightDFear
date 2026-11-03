@@ -39,7 +39,7 @@ public class EventHostProfileService {
                 || host.getVerificationStatus() == VerificationStatus.VERIFIED;
     }
 
-    public List<String> missingItems(EventHost host) {
+    public List<String> mandatoryMissingItems(EventHost host) {
         List<String> missing = new ArrayList<>();
         if (host == null) {
             missing.add("1.1 Full name");
@@ -67,14 +67,21 @@ public class EventHostProfileService {
         if (PartnerLifecycleSupport.blank(host.getSessionMode()) || host.getTypicalPrice() == null) {
             missing.add("8. Typical ticket");
         }
-        if (PartnerLifecycleSupport.blank(host.getProfilePhotoPath())) {
-            missing.add("10.1 Profile photo");
-        }
-        if (PartnerLifecycleSupport.blank(host.getLogoPath())) {
-            missing.add("10.2 Brand logo");
-        }
-        if (PartnerLifecycleSupport.blank(host.getDocumentPath())) {
-            missing.add("10.3 ID / Registration proof");
+        return missing;
+    }
+
+    public List<String> missingItems(EventHost host) {
+        List<String> missing = new ArrayList<>(mandatoryMissingItems(host));
+        if (host != null) {
+            if (PartnerLifecycleSupport.blank(host.getProfilePhotoPath())) {
+                missing.add("10.1 Profile photo");
+            }
+            if (PartnerLifecycleSupport.blank(host.getLogoPath())) {
+                missing.add("10.2 Brand logo");
+            }
+            if (PartnerLifecycleSupport.blank(host.getDocumentPath())) {
+                missing.add("10.3 ID / Registration proof");
+            }
         }
         return missing;
     }
@@ -100,7 +107,7 @@ public class EventHostProfileService {
             return hostRepository.save(host);
         }
 
-        if (missing.isEmpty()) {
+        if (mandatoryMissingItems(host).isEmpty()) {
             setLifecycleStatus(host, PartnerProfileStatus.READY_FOR_VERIFICATION);
         } else if (current == null
                 || current == PartnerProfileStatus.REGISTERED
@@ -112,7 +119,7 @@ public class EventHostProfileService {
     }
 
     public boolean isReadyForVerification(EventHost host) {
-        return missingItems(host).isEmpty();
+        return mandatoryMissingItems(host).isEmpty();
     }
 
     public Map<String, Object> profilePayload(EventHost host) {
@@ -324,7 +331,7 @@ public class EventHostProfileService {
                 || s == PartnerProfileStatus.APPROVED) {
             return false;
         }
-        return missing.isEmpty();
+        return mandatoryMissingItems(host).isEmpty();
     }
 
     private String guidance(EventHost host, List<String> missing) {

@@ -475,7 +475,9 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     if (onFinished != null) {
       onFinished(context);
     } else {
-      Navigator.of(context).pop();
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DoctorDashboardScreen()),
+      );
     }
   }
 
@@ -518,6 +520,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
             duration: Duration(seconds: 2),
           ),
         );
+        _leave();
       }
     } catch (e) {
       if (mounted) {
@@ -909,13 +912,12 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
   }
 
   Widget _statusHeader() {
-    final pct = (_profile['profileCompletionPct'] is num)
-        ? (_profile['profileCompletionPct'] as num).toDouble()
-        : double.tryParse('${_profile['profileCompletionPct']}') ?? 0;
+    final pctInt = (_profile['profileCompletionPct'] is num)
+        ? (_profile['profileCompletionPct'] as num).toInt()
+        : (int.tryParse('${_profile['profileCompletionPct']}') ?? _calculateClientProgress());
     final status = _profile['doctorProfileStatus']?.toString() ?? 'PROFILE_INCOMPLETE';
     final statusLabel = (_profile['doctorProfileStatusLabel'] ?? _statusLabel(status)).toString();
     final missing = ModuleTheme.toList(_profile['missingItems']).map((e) => e.toString()).toList();
-    final canSubmit = _profile['canSubmitForVerification'] == true;
     final guidance = _profile['nextStepGuidance']?.toString() ?? '';
     final rejection = _profile['rejectionReason']?.toString();
     final changes = _profile['changesRequestedNote']?.toString();
@@ -923,68 +925,406 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     final draft = _profile['pendingDraft'];
     final draftStatus = draft is Map ? draft['status']?.toString() : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ProfileCompletionCard(
-          percent: pct,
-          statusLabel: statusLabel,
-          hint: ProfileCompletionCard.hintFromMissing(missing, guidance: guidance),
-          actionLabel: '',
-          onAction: () {},
-          showActionButton: false,
-          trailing: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (hasPending) ...[
-                Text(
-                  draftStatus == 'PENDING_REVIEW'
-                      ? 'Your edits are pending admin approval. Approved live data is unchanged.'
-                      : 'You have unpublished profile changes. Submit them for re-verification when ready.',
-                  style: const TextStyle(color: Color(0xFFB45309), fontSize: 12),
+              const Row(
+                children: [
+                  Icon(Icons.assignment_turned_in_outlined, color: ModuleTheme.primary, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    'Profile Completion',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: pctInt >= 100 ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(height: 8),
-              ],
-              if (rejection != null && rejection.isNotEmpty)
-                Text('Rejection reason: $rejection', style: const TextStyle(color: Colors.red, fontSize: 12)),
-              if (changes != null && changes.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text('Changes requested: $changes', style: const TextStyle(color: Color(0xFFB45309), fontSize: 12)),
-              ],
-              if (missing.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                const Text('Missing required items:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: missing
-                      .map((m) => Chip(
-                            label: Text(m, style: const TextStyle(fontSize: 12)),
-                            backgroundColor: const Color(0xFFFFF7ED),
-                          ))
-                      .toList(),
+                child: Text(
+                  '$pctInt%',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    color: pctInt >= 100 ? const Color(0xFF166534) : const Color(0xFF92400E),
+                  ),
                 ),
-              ],
+              ),
             ],
           ),
-        ),
-        const SizedBox(height: 12),
-        FilledButton(
-          onPressed: (_submitting || !canSubmit) ? null : _submit,
-          child: _submitting
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : Text(
-                  status == 'APPROVED'
-                      ? 'Submit Changes for Re-verification'
-                      : (canSubmit ? 'Submit for Verification' : 'Complete required items to submit'),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: (pctInt / 100.0).clamp(0.0, 1.0),
+              minHeight: 10,
+              backgroundColor: const Color(0xFFF1F5F9),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                pctInt >= 100 ? const Color(0xFF10B981) : ModuleTheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Text('Status: ', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              Text(
+                statusLabel,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+              ),
+            ],
+          ),
+          if (hasPending) ...[
+            const SizedBox(height: 8),
+            Text(
+              draftStatus == 'PENDING_REVIEW'
+                  ? 'Your edits are pending admin approval. Approved live data is unchanged.'
+                  : 'You have unpublished profile changes. Submit them for re-verification when ready.',
+              style: const TextStyle(color: Color(0xFFB45309), fontSize: 12),
+            ),
+          ],
+          if (rejection != null && rejection.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text('Rejection reason: $rejection', style: const TextStyle(color: Colors.red, fontSize: 12)),
+          ],
+          if (changes != null && changes.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text('Changes requested: $changes', style: const TextStyle(color: Color(0xFFB45309), fontSize: 12)),
+          ],
+          if (guidance.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(guidance, style: const TextStyle(color: Color(0xFF475569), fontSize: 12, height: 1.4)),
+          ],
+          const SizedBox(height: 14),
+
+          if (missing.isNotEmpty || pctInt < 100) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
+                      SizedBox(width: 6),
+                      Text(
+                        'Profile Incomplete',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF92400E)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Complete the remaining required items below to activate your account for verification.',
+                    style: TextStyle(fontSize: 12, color: Color(0xFFB45309), height: 1.35),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+          ],
+
+          const Text(
+            'Completion Checklist',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF334155)),
+          ),
+          const SizedBox(height: 10),
+
+          ..._allChecklistDefs.map((def) {
+            final isMissing = _isChecklistItemMissing(def, missing);
+            final isDone = !isMissing;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    isDone ? Icons.check_circle_rounded : Icons.cancel_outlined,
+                    size: 18,
+                    color: isDone ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${def.code} ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: isDone ? const Color(0xFF334155) : const Color(0xFF0F172A),
+                            ),
+                          ),
+                          TextSpan(
+                            text: def.label,
+                            style: TextStyle(
+                              fontWeight: isDone ? FontWeight.w400 : FontWeight.w600,
+                              fontSize: 13,
+                              color: isDone ? const Color(0xFF64748B) : const Color(0xFF1E293B),
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _showReviewProfileBottomSheet,
+            icon: const Icon(Icons.assignment_ind_outlined, size: 18),
+            label: const Text('Review Profile Details'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(46),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              side: const BorderSide(color: ModuleTheme.primary, width: 1.5),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              foregroundColor: ModuleTheme.primary,
+              textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isChecklistItemMissing(_ChecklistItemDef def, List<String> missingBackend) {
+    if (missingBackend.isNotEmpty) {
+      return missingBackend.any((m) => m.contains(def.code) || m.contains(def.matchKey));
+    }
+    switch (def.code) {
+      case '1.0':
+        final photo = _profile['profilePhotoPath']?.toString();
+        return photo == null || photo.trim().isEmpty;
+      case '1.2':
+        return _resolvedSpecialization.isEmpty;
+      case '1.3':
+        return _resolvedQualification.isEmpty;
+      case '1.4':
+        final reg = _medicalReg.text.trim();
+        return reg.isEmpty || reg.length < 3 || reg.length > 60;
+      case '1.5':
+        final exp = int.tryParse(_experience.text.trim());
+        return exp == null || exp < 0 || exp > 50;
+      case '2.1':
+        return _hospital.text.trim().isEmpty;
+      case '2.2':
+        return _clinicAddress.text.trim().isEmpty || _city.text.trim().isEmpty;
+      case '2.4':
+        return _resolvedState.isEmpty;
+      case '2.5':
+        return !RegExp(r'^\d{6}$').hasMatch(_pincode.text.trim());
+      case '3.':
+        return _selectedModes.isEmpty;
+      case '4.':
+        return _slots.isEmpty;
+      case '5.':
+        return _languages.isEmpty;
+      case '7.1':
+        final fee = double.tryParse(_consultationFee.text.trim());
+        return fee == null || fee < 0;
+      default:
+        return false;
+    }
+  }
+
+  int _calculateClientProgress() {
+    int filled = 0;
+    for (final def in _allChecklistDefs) {
+      if (!_isChecklistItemMissing(def, [])) filled++;
+    }
+    return ((100.0 * filled) / _allChecklistDefs.length).round();
+  }
+
+  void _showReviewProfileBottomSheet() {
+    final spec = _resolvedSpecialization;
+    final qual = _resolvedQualification;
+    final reg = _medicalReg.text.trim();
+    final exp = _experience.text.trim();
+    final hosp = _hospital.text.trim();
+    final addr = _clinicAddress.text.trim();
+    final city = _city.text.trim();
+    final state = _resolvedState;
+    final pin = _pincode.text.trim();
+    final mapLoc = _mapLocation.text.trim();
+    final fee = _consultationFee.text.trim();
+    final chatFee = _chatFee.text.trim();
+    final callFee = _callFee.text.trim();
+    final videoFee = _videoFee.text.trim();
+    final bioText = _bio.text.trim();
+    final upiId = _upi.text.trim();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                 ),
-        ),
-      ],
+                child: Row(
+                  children: [
+                    const Icon(Icons.assignment_ind_outlined, color: ModuleTheme.primary, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Review Doctor Profile', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF0F172A))),
+                          Text('Verify all entered details before submission', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _reviewSectionCard('1. Professional Information', [
+                        _reviewRow('Full Name', _fullName.text.isEmpty ? '—' : _fullName.text),
+                        _reviewRow('Specialization', spec.isEmpty ? '—' : spec),
+                        _reviewRow('Qualification', qual.isEmpty ? '—' : qual),
+                        _reviewRow('Experience', exp.isEmpty ? '—' : '$exp years'),
+                        _reviewRow('Medical Reg No.', reg.isEmpty ? '—' : reg),
+                      ]),
+                      _reviewSectionCard('2. Hospital / Clinic Information', [
+                        _reviewRow('Hospital / Clinic', hosp.isEmpty ? '—' : hosp),
+                        _reviewRow('Clinic Address', addr.isEmpty ? '—' : addr),
+                        _reviewRow('City / State', [city, state, pin].where((e) => e.isNotEmpty).join(', ').isEmpty ? '—' : [city, state, pin].where((e) => e.isNotEmpty).join(', ')),
+                        _reviewRow('Google Maps', mapLoc.isEmpty ? '—' : mapLoc),
+                      ]),
+                      _reviewSectionCard('3 & 4. Modes & Working Availability', [
+                        _reviewRow('Consultation Modes', _selectedModes.isEmpty ? '—' : _selectedModes.map(DoctorCatalog.modeLabel).join(', ')),
+                        _reviewRow('Slot Duration', '$_slotDuration minutes'),
+                        _reviewRow('Buffer Between Patients', '$_bufferMinutes minutes'),
+                        _reviewRow('Emergency Available', _emergency ? 'Yes' : 'No'),
+                        _reviewRow('Auto-Confirm Bookings', _autoConfirm ? 'Yes' : 'No'),
+                      ]),
+                      _reviewSectionCard('5 & 6. Languages & Services Offered', [
+                        _reviewRow('Languages', _languages.isEmpty ? '—' : _languages.join(', ')),
+                        _reviewRow('Services Offered', _servicesOffered.isEmpty ? '—' : _servicesOffered.join(', ')),
+                      ]),
+                      _reviewSectionCard('7 & 8. Fees & Bio', [
+                        _reviewRow('Consultation Fee', fee.isEmpty ? '—' : '₹$fee'),
+                        _reviewRow('Chat Fee', chatFee.isEmpty ? '—' : '₹$chatFee'),
+                        _reviewRow('Call Fee', callFee.isEmpty ? '—' : '₹$callFee'),
+                        _reviewRow('Video Fee', videoFee.isEmpty ? '—' : '₹$videoFee'),
+                        _reviewRow('Bio', bioText.isEmpty ? '—' : bioText),
+                      ]),
+                      _reviewSectionCard('9 & 10. Bank Details & Documents', [
+                        _reviewRow('UPI ID', upiId.isEmpty ? '—' : upiId),
+                        _reviewRow('Bank Account', _accountNumber.text.isEmpty ? '—' : '${_bankName.text} (${_accountNumber.text})'),
+                        _reviewRow('Profile Photo', _profile['profilePhotoPath'] != null ? 'Uploaded' : 'Not uploaded'),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Looks Good', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _reviewSectionCard(String title, List<Widget> children) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: ModuleTheme.primary)),
+          const SizedBox(height: 8),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _reviewRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+          ),
+          Expanded(
+            child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1178,8 +1518,9 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
           );
         }).toList(),
       ),
-      const SizedBox(height: 8),
-      const Text('4.7 Buffer between patients', style: TextStyle(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 12),
+      const Text('4.7 Buffer between patients (minutes)', style: TextStyle(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 6),
       Wrap(
         spacing: 8,
         children: [0, 5, 10, 15].map((m) {
@@ -1189,6 +1530,28 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
             onSelected: (_) => setState(() => _bufferMinutes = m),
           );
         }).toList(),
+      ),
+      const SizedBox(height: 6),
+      Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline, size: 16, color: Color(0xFF64748B)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Buffer time provides a required gap between consecutive patient appointments for sanitizing, note-taking, or case review.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF475569), height: 1.35),
+              ),
+            ),
+          ],
+        ),
       ),
       const SizedBox(height: 8),
       Row(
@@ -1373,35 +1736,32 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                 ]),
                 _availabilitySection(),
                 _section('5', 'Languages', [
-                  Text('5.1 Languages you consult in *',
-                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                  const SizedBox(height: 8),
-                  _chipGroup(
-                    options: DoctorCatalog.languages,
-                    selected: _languages,
-                    onChanged: (v, on) => setState(() {
-                      if (on) {
-                        _languages.add(v);
-                      } else {
-                        _languages.remove(v);
-                      }
+                  MultiSelectDropdownField(
+                    label: '5.1 Languages you consult in',
+                    placeholder: 'Select languages you consult in...',
+                    availableOptions: DoctorCatalog.languages,
+                    selectedValues: _languages,
+                    onSelectionChanged: (updated) => setState(() {
+                      _languages
+                        ..clear()
+                        ..addAll(updated);
                     }),
+                    hintText: 'Select all languages you are comfortable conducting consultations in.',
+                    isRequired: true,
                   ),
                 ]),
                 _section('6', 'Services offered', [
-                  Text('6.1 Select services patients can book',
-                      style: TextStyle(color: Colors.grey.shade700, fontSize: 13)),
-                  const SizedBox(height: 8),
-                  _chipGroup(
-                    options: DoctorCatalog.services,
-                    selected: _servicesOffered,
-                    onChanged: (v, on) => setState(() {
-                      if (on) {
-                        _servicesOffered.add(v);
-                      } else {
-                        _servicesOffered.remove(v);
-                      }
+                  MultiSelectDropdownField(
+                    label: '6.1 Services patients can book',
+                    placeholder: 'Select services offered...',
+                    availableOptions: DoctorCatalog.services,
+                    selectedValues: _servicesOffered,
+                    onSelectionChanged: (updated) => setState(() {
+                      _servicesOffered
+                        ..clear()
+                        ..addAll(updated);
                     }),
+                    hintText: 'Select all medical consultation and clinical services patients can book with you.',
                   ),
                 ]),
                 _section('7', 'Fees', [
@@ -1541,6 +1901,20 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                           ),
                         )),
                   ],
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: _showReviewProfileBottomSheet,
+                    icon: const Icon(Icons.assignment_ind_outlined, size: 18),
+                    label: const Text('Review Profile Details'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(46),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      side: const BorderSide(color: ModuleTheme.primary, width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      foregroundColor: ModuleTheme.primary,
+                      textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     'Save your profile first. When all required sections are complete, submit for admin verification.',
@@ -1553,6 +1927,10 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                     Expanded(
                       child: OutlinedButton(
                         onPressed: (_saving || _submitting) ? null : _saveProfile,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                         child: _saving
                             ? const SizedBox(
                                 width: 18,
@@ -1566,6 +1944,10 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                     Expanded(
                       child: FilledButton(
                         onPressed: (_saving || _submitting || !(_profile['canSubmitForVerification'] == true)) ? null : _submit,
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
                         child: _submitting
                             ? const SizedBox(
                                 width: 18,
@@ -1575,7 +1957,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                             : Text(
                                 (_profile['doctorProfileStatus']?.toString() == 'APPROVED')
                                     ? 'Submit Changes'
-                                    : ((_profile['canSubmitForVerification'] == true) ? 'Submit for Verification' : 'Submit (Incomplete)'),
+                                    : ((_profile['canSubmitForVerification'] == true) ? 'Submit Verification' : 'Submit (Incomplete)'),
                               ),
                       ),
                     ),
@@ -1586,3 +1968,309 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     );
   }
 }
+
+class _ChecklistItemDef {
+  final String code;
+  final String label;
+  final String matchKey;
+
+  const _ChecklistItemDef({
+    required this.code,
+    required this.label,
+    required this.matchKey,
+  });
+}
+
+const _allChecklistDefs = <_ChecklistItemDef>[
+  _ChecklistItemDef(code: '1.0', label: 'Profile photo', matchKey: 'Profile photo'),
+  _ChecklistItemDef(code: '1.2', label: 'Specialization', matchKey: 'Specialization'),
+  _ChecklistItemDef(code: '1.3', label: 'Qualification', matchKey: 'Qualification'),
+  _ChecklistItemDef(code: '1.4', label: 'Medical registration number (3–60 alphanumeric characters)', matchKey: 'Medical registration number'),
+  _ChecklistItemDef(code: '1.5', label: 'Years of experience (0–50)', matchKey: 'Years of experience'),
+  _ChecklistItemDef(code: '2.1', label: 'Hospital / clinic name', matchKey: 'Hospital / clinic name'),
+  _ChecklistItemDef(code: '2.2', label: 'Clinic address and city', matchKey: 'Clinic address'),
+  _ChecklistItemDef(code: '2.4', label: 'State', matchKey: 'State'),
+  _ChecklistItemDef(code: '2.5', label: 'Pincode', matchKey: 'Pincode'),
+  _ChecklistItemDef(code: '3.', label: 'Consultation mode', matchKey: 'Consultation mode'),
+  _ChecklistItemDef(code: '4.', label: 'Working availability', matchKey: 'Working availability'),
+  _ChecklistItemDef(code: '5.', label: 'Languages', matchKey: 'Languages'),
+  _ChecklistItemDef(code: '7.1', label: 'Consultation fee', matchKey: 'Consultation fee'),
+];
+
+class MultiSelectDropdownField extends StatelessWidget {
+  const MultiSelectDropdownField({
+    super.key,
+    required this.label,
+    required this.placeholder,
+    required this.availableOptions,
+    required this.selectedValues,
+    required this.onSelectionChanged,
+    this.hintText,
+    this.isRequired = false,
+  });
+
+  final String label;
+  final String placeholder;
+  final List<String> availableOptions;
+  final Set<String> selectedValues;
+  final ValueChanged<Set<String>> onSelectionChanged;
+  final String? hintText;
+  final bool isRequired;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF334155)),
+            ),
+            if (isRequired)
+              const Text(' *', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => _openMultiSelectSheet(context),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 50),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: selectedValues.isEmpty ? const Color(0xFFCBD5E1) : const Color(0xFF94A3B8)),
+              borderRadius: BorderRadius.circular(12),
+              color: Colors.white,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: selectedValues.isEmpty
+                      ? Text(
+                          placeholder,
+                          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                        )
+                      : Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: selectedValues.map((val) {
+                            return Chip(
+                              label: Text(
+                                val,
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: ModuleTheme.primary),
+                              ),
+                              backgroundColor: const Color(0xFFF0F7FF),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: const BorderSide(color: Color(0xFFBAE6FD)),
+                              ),
+                              deleteIcon: const Icon(Icons.close, size: 14, color: ModuleTheme.primary),
+                              onDeleted: () {
+                                final updated = Set<String>.from(selectedValues)..remove(val);
+                                onSelectionChanged(updated);
+                              },
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                            );
+                          }).toList(),
+                        ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF64748B)),
+              ],
+            ),
+          ),
+        ),
+        if (hintText != null && hintText!.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(
+            hintText!,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _openMultiSelectSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _MultiSelectSheet(
+        title: label,
+        availableOptions: availableOptions,
+        initialSelected: selectedValues,
+        onSave: onSelectionChanged,
+      ),
+    );
+  }
+}
+
+class _MultiSelectSheet extends StatefulWidget {
+  const _MultiSelectSheet({
+    required this.title,
+    required this.availableOptions,
+    required this.initialSelected,
+    required this.onSave,
+  });
+
+  final String title;
+  final List<String> availableOptions;
+  final Set<String> initialSelected;
+  final ValueChanged<Set<String>> onSave;
+
+  @override
+  State<_MultiSelectSheet> createState() => _MultiSelectSheetState();
+}
+
+class _MultiSelectSheetState extends State<_MultiSelectSheet> {
+  late final Set<String> _tempSelected;
+  final _searchCtrl = TextEditingController();
+  final _customCtrl = TextEditingController();
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tempSelected = Set<String>.from(widget.initialSelected);
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _customCtrl.dispose();
+    super.dispose();
+  }
+
+  void _addCustom() {
+    final text = _customCtrl.text.trim();
+    if (text.isNotEmpty) {
+      setState(() {
+        _tempSelected.add(text);
+        _customCtrl.clear();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allOptions = <String>{...widget.availableOptions, ..._tempSelected}.toList();
+    final filtered = _query.isEmpty
+        ? allOptions
+        : allOptions.where((opt) => opt.toLowerCase().contains(_query.toLowerCase())).toList();
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Color(0xFF0F172A)),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    widget.onSave(_tempSelected);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Done', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v.trim()),
+              decoration: InputDecoration(
+                hintText: 'Search...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () => setState(() {
+                          _searchCtrl.clear();
+                          _query = '';
+                        }),
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _customCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Other (type custom)...',
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onSubmitted: (_) => _addCustom(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _addCustom,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ModuleTheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('+ Add'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView.builder(
+              itemCount: filtered.length,
+              itemBuilder: (ctx, idx) {
+                final option = filtered[idx];
+                final isSelected = _tempSelected.contains(option);
+                return CheckboxListTile(
+                  title: Text(option, style: TextStyle(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400)),
+                  value: isSelected,
+                  activeColor: ModuleTheme.primary,
+                  onChanged: (checked) {
+                    setState(() {
+                      if (checked == true) {
+                        _tempSelected.add(option);
+                      } else {
+                        _tempSelected.remove(option);
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

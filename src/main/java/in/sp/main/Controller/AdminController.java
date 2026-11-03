@@ -2202,12 +2202,16 @@ public class AdminController {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
         EventHost h = eventHostRepository.findById(id).orElse(null);
         if (h != null) {
+            if (EventHostProfileService.isApproved(h)) {
+                ra.addFlashAttribute("message", "This event organizer is already approved.");
+                return "redirect:/admin/event-hosts/" + id + "/profile";
+            }
             eventHostProfileService.setLifecycleStatus(h, PartnerProfileStatus.APPROVED);
             h.setRejectionReason(null);
             h.setChangesRequestedNote(null);
             eventHostRepository.save(h);
+            ra.addFlashAttribute("message", "Event organizer approved. They can now create events.");
         }
-        ra.addFlashAttribute("message", "Event organizer approved. They can now create events.");
         return "redirect:/admin/event-hosts/" + id + "/profile";
     }
 

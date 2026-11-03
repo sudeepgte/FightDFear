@@ -228,7 +228,7 @@
     <header class="app-header">
         <div style="display: flex; align-items: center; gap: 16px;">
             <a href="${pageContext.request.contextPath}/" class="header-brand">
-                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+                <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Fight D Fear
             </a>
         </div>
         <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
@@ -240,12 +240,9 @@
     </header>
 
     <main class="main-container">
-        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
             <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
                 <i class="bi bi-arrow-left"></i> Back
-            </a>
-            <a href="${pageContext.request.contextPath}/" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
-                <i class="bi bi-house-door"></i> Back to Home
             </a>
         </div>
         <div class="form-card">
@@ -270,8 +267,9 @@
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-input" placeholder="lawyer@example.com" 
+                    <input type="email" id="email" name="email" class="form-input" placeholder="lawyer@gmail.com"
                            value="<c:out value='${not empty registeredEmail ? registeredEmail : (not empty param.email ? param.email : \"\")}'/>" required autofocus>
+                    <div id="emailError" style="display:none; color:#dc2626; font-size:0.82rem; margin-top:4px;">Enter a valid mail id (must be @gmail.com)</div>
                 </div>
 
                 <div class="form-group">
@@ -310,6 +308,28 @@
                 icon.className = 'bi bi-eye';
             }
         }
+
+        const form = document.querySelector('form');
+        const emailInput = document.getElementById('email');
+        const emailErr = document.getElementById('emailError');
+        function checkEmail() {
+            const v = emailInput.value.trim();
+            if (!v || !/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(v)) {
+                emailErr.style.display = 'block';
+                return false;
+            }
+            emailErr.style.display = 'none';
+            return true;
+        }
+        emailInput.addEventListener('input', function() {
+            if (emailErr.style.display === 'block') checkEmail();
+        });
+        form.addEventListener('submit', function(e) {
+            if (!checkEmail()) {
+                e.preventDefault();
+                emailInput.focus();
+            }
+        });
     </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>

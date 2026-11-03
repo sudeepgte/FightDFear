@@ -62,8 +62,10 @@ public class DoctorPaymentService {
     }
 
     public boolean mockPaymentsEnabled() {
-        // PAYMENT_MOCK=true must win locally even when test Razorpay keys are present.
-        return mockEnabled;
+        if (razorpayConfigured() && !mockEnabled) {
+            return false;
+        }
+        return mockEnabled || !razorpayConfigured();
     }
 
     public boolean paymentsAvailable() {

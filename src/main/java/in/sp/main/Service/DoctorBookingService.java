@@ -52,6 +52,9 @@ public class DoctorBookingService {
     private PushNotificationService pushNotificationService;
 
     @Autowired
+    private EmailAsyncService emailAsyncService;
+
+    @Autowired
     private in.sp.main.Repository.DoctorRepository doctorRepository;
 
     public void requireBookableDoctor(Doctor doctor) {
@@ -266,6 +269,15 @@ public class DoctorBookingService {
                     "New appointment request",
                     "A patient requested appointment #" + saved.getId(),
                     Map.of("type", "NEW_BOOKING", "appointmentId", String.valueOf(saved.getId())));
+            if (user != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+                String subject = "Fight D Fear - Appointment Requested: Dr. " + lockedDoctor.getFullName();
+                String body = "Hello " + (user.getFullName() != null ? user.getFullName() : "Patient") + ",\n\n"
+                        + "Your appointment request with Dr. " + lockedDoctor.getFullName() + " for " + appointmentTime + " (" + (consultationType != null ? consultationType : "Clinic") + ") has been submitted.\n\n"
+                        + "Status: " + saved.getStatus().name() + "\n"
+                        + (reason != null && !reason.isBlank() ? "Reason: " + reason + "\n" : "")
+                        + "\nPlease open the Fight D Fear app or website to view your booking details.\n\nThank you,\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(user.getEmail(), subject, body);
+            }
         } catch (Exception ignored) {
         }
         return saved;
@@ -358,6 +370,19 @@ public class DoctorBookingService {
         if (saved.getMeetingRoomId() != null && saved.getMeetingRoomId().contains("-NEW-")) {
             saved.setMeetingRoomId(doctorPaymentService.generatePrivateRoomId(saved.getId()));
             saved = appointmentRepository.save(saved);
+        }
+        if (user != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+            try {
+                String subject = "Fight D Fear - Appointment Confirmed: Dr. " + lockedDoctor.getFullName();
+                String body = "Hello " + (user.getFullName() != null ? user.getFullName() : "Patient") + ",\n\n"
+                        + "Your appointment with Dr. " + lockedDoctor.getFullName() + " for " + appointmentTime + " (" + (consultationType != null ? consultationType : "Clinic") + ") is confirmed!\n\n"
+                        + "Fee Paid: ₹" + (int) amountPaid + "\n"
+                        + (paymentId != null && !paymentId.isBlank() ? "Payment ID: " + paymentId + "\n" : "")
+                        + (reason != null && !reason.isBlank() ? "Reason: " + reason + "\n" : "")
+                        + "\nPlease open the Fight D Fear app or website to join video consult or view clinic details.\n\nThank you,\nFight D Fear Healthcare";
+                emailAsyncService.sendEmailAsync(user.getEmail(), subject, body);
+            } catch (Exception ignored) {
+            }
         }
         return appointmentService.markConfirmedAfterPayment(saved);
     }

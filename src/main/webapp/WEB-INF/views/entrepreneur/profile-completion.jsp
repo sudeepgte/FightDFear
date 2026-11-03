@@ -768,7 +768,7 @@
     <!-- Sticky Top Header -->
     <header class="app-header">
         <a href="${pageContext.request.contextPath}/entrepreneur/dashboard" class="header-brand">
-            <i class="bi bi-rocket-takeoff-fill"></i>
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
             <span>Fight D Fear</span>
             <span style="font-size:0.8rem; font-weight:600; color:var(--text-gray); font-family:var(--font-main);">/ Entrepreneur Profile</span>
         </a>
@@ -777,7 +777,7 @@
                 <i class="bi bi-house-door"></i> Home
             </a>
             <a href="${pageContext.request.contextPath}/entrepreneur/dashboard" class="btn-skip">
-                <i class="bi bi-arrow-left"></i> Dashboard
+                <i class="bi bi-speedometer2"></i> Dashboard
             </a>
             <button type="button" id="btnHeaderSave" class="btn-header-save">
                 <i class="bi bi-floppy2-fill"></i> Save Details
@@ -787,8 +787,8 @@
 
     <main class="main-container">
 
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/entrepreneur/dashboard'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
 
         <!-- Server Success / Error Feedback -->

@@ -143,7 +143,7 @@ public class Salon {
     public static final String USERNAME_PATTERN = "^[a-zA-Z0-9_]{3,20}$";
     public static final int EMAIL_MAX_LENGTH = 255;
     public static final int PHONE_LENGTH = 10;
-    public static final String EMAIL_PATTERN = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
+    public static final String EMAIL_PATTERN = "^[a-zA-Z0-9._%+-]+@gmail\\.com$";
     public static final String PHONE_PATTERN = "^\\d{10}$";
     public static final int ADDRESS_MAX_LENGTH = 500;
     public static final int CITY_STATE_MAX_LENGTH = 100;

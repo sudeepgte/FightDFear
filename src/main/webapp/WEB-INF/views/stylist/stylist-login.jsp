@@ -185,7 +185,7 @@
 
         <div class="form-panel">
             <div class="login-card">
-                <a href="${pageContext.request.contextPath}/index.html" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
+                <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="back-home"><i class="bi bi-arrow-left"></i> Back</a>
                 
                 <h2>Welcome Back 👋</h2>
                 <p class="subtitle">Stylist Management Portal</p>
@@ -206,8 +206,9 @@
                         <label>Email Address</label>
                         <div class="input-wrapper">
                             <i class="bi bi-envelope"></i>
-                            <input type="email" name="email" class="fdf-input" placeholder="Enter your email" required>
+                            <input type="email" id="email" name="email" class="fdf-input" placeholder="stylist@gmail.com" required>
                         </div>
+                        <div id="emailError" style="display:none; color: var(--brand-pink, #E11D48); font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
                     </div>
                     <div class="fdf-form-group">
                         <label>Password</label>
@@ -238,6 +239,43 @@
             </div>
         </div>
     </div>
+    <script>
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+        const form = document.querySelector('form[action*="/stylists/login"]');
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+
+        function validateEmail() {
+            if (!emailInput || !emailError) return true;
+            const val = emailInput.value.trim();
+            if (!val) {
+                emailError.textContent = 'Email is required';
+                emailError.style.display = 'block';
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+                emailError.style.display = 'block';
+                return false;
+            }
+            emailError.style.display = 'none';
+            return true;
+        }
+
+        if (emailInput && emailError) {
+            emailInput.addEventListener('input', validateEmail);
+            emailInput.addEventListener('blur', validateEmail);
+        }
+
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (!validateEmail()) {
+                    e.preventDefault();
+                    emailInput.focus();
+                }
+            });
+        }
+    </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>
 </html>

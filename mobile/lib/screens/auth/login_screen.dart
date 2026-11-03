@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
+import '../../widgets/registration_form_kit.dart';
 import '../../widgets/server_config_dialog.dart';
 import '../safety/home_screen.dart';
 import 'register_screen.dart';
@@ -10,9 +11,13 @@ import '../user/user_dashboard_screen.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({
     super.key,
+    this.initialEmail,
     this.redirectToSos = false,
     this.popOnSuccess = false,
   });
+
+  /// Pre-filled email (e.g. after registration).
+  final String? initialEmail;
 
   /// When true, successful login opens the SOS home instead of popping back.
   final bool redirectToSos;
@@ -37,6 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialEmail != null && widget.initialEmail!.isNotEmpty) {
+      _email.text = widget.initialEmail!;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<AuthState>().autoDetectWorkingServer();
@@ -63,8 +71,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (email.isEmpty) {
       setState(() => _emailError = 'Email is required');
-    } else if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      setState(() => _emailError = 'Enter a valid email address');
+    } else if (!RegValidators.isEmail(email)) {
+      setState(() => _emailError = 'Enter a valid mail id (must be @gmail.com)');
     }
 
     if (pass.isEmpty) {
@@ -314,7 +322,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             decoration: _decoration(
                               'Email',
                               icon: Icons.email_outlined,
-                              helperText: 'Enter an active email address.',
+                              helperText: 'Enter your registered @gmail.com address.',
                               errorText: _emailError,
                             ),
                           ),

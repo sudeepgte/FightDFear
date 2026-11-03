@@ -60,7 +60,7 @@
             font-size: 1.1rem; font-weight: 800; color: var(--navy); text-decoration: none;
         }
         .header-brand img {
-            height: 32px; width: 32px; border-radius: 8px; object-fit: cover;
+            height: 44px; width: 44px; border-radius: 10px; object-fit: cover;
         }
         .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .btn-skip, .btn-header-save, .btn-primary, .btn-ghost {
@@ -627,13 +627,211 @@
             box-shadow: 0 3px 8px rgba(244, 63, 94, 0.25);
         }
 
-        
+
+        /* Custom Multi-Select Dropdowns for Languages & Services */
+        .fdf-multiselect {
+            position: relative;
+            width: 100%;
+        }
+        .fdf-multiselect-trigger {
+            min-height: 46px;
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .fdf-multiselect-trigger:hover {
+            border-color: #cbd5e1;
+        }
+        .fdf-multiselect-trigger:focus, .fdf-multiselect.open .fdf-multiselect-trigger {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+            outline: none;
+        }
+        .fdf-multiselect-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            flex: 1;
+        }
+        .fdf-multiselect-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--rose-light);
+            color: var(--primary);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .fdf-multiselect-chip-remove {
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 0.8;
+            color: var(--primary);
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+        .fdf-multiselect-chip-remove:hover {
+            opacity: 1;
+        }
+        .fdf-multiselect-placeholder {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+        .fdf-multiselect-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalFadeIn 0.15s ease-out;
+        }
+        .fdf-multiselect.open .fdf-multiselect-dropdown {
+            display: flex;
+        }
+        .fdf-multiselect-search-wrap {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+        .fdf-multiselect-search {
+            width: 100%;
+            padding: 7px 10px;
+            font-size: 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .fdf-multiselect-search:focus {
+            border-color: var(--primary);
+        }
+        .fdf-multiselect-list {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .fdf-multiselect-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            font-size: 0.88rem;
+            color: var(--navy);
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .fdf-multiselect-item:hover {
+            background: #fff1f2;
+        }
+        .fdf-multiselect-item input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .fdf-multiselect-custom-wrap {
+            display: flex;
+            gap: 6px;
+            padding: 8px 10px;
+            border-top: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+        .fdf-multiselect-custom-input {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+        }
+        .fdf-multiselect-custom-input:focus {
+            border-color: var(--primary);
+        }
+        .fdf-multiselect-custom-btn {
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: var(--navy);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .fdf-multiselect-custom-btn:hover {
+            background: #0f172a;
+        }
+
         /* Map Picker Styles (Aligned with /users/register) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px);
             display: none; align-items: center; justify-content: center;
             z-index: 9999; padding: 16px;
+        }
+        .review-modal-card {
+            background: #FFFFFF; border-radius: 20px; max-width: 800px; width: 100%;
+            max-height: 92vh; display: flex; flex-direction: column; padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        .review-modal-body {
+            overflow-y: auto; padding-right: 6px; margin: 12px 0 16px; flex: 1;
+        }
+        .review-section-block {
+            background: #F8FAFC; border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
+        }
+        .review-section-title {
+            font-size: 0.95rem; font-weight: 800; color: var(--navy); margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 6px;
+        }
+        .review-section-title .num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 20px; height: 20px; border-radius: 50%; background: var(--primary);
+            color: #fff; font-size: 0.72rem; font-weight: 700;
+        }
+        .review-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px 14px;
+        }
+        .review-item {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .review-item.full {
+            grid-column: 1 / -1;
+        }
+        .review-item-label {
+            font-size: 0.75rem; text-transform: uppercase; font-weight: 700;
+            color: var(--text-gray); letter-spacing: 0.5px;
+        }
+        .review-item-value {
+            font-size: 0.9rem; font-weight: 600; color: var(--navy); word-break: break-word;
+        }
+        .review-modal-actions {
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0; flex-wrap: wrap;
         }
         .map-modal-card {
             background: #FFFFFF; border-radius: 20px; max-width: 680px; width: 100%;
@@ -713,16 +911,13 @@
 <body>
     <header class="app-header">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/doctors/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 6px;" title="Go Back">
-                <i class="bi bi-arrow-left"></i> Back
-            </a>
             <a class="header-brand" href="${pageContext.request.contextPath}/doctors/dashboard">
                 <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear">
                 Fight D Fear
             </a>
         </div>
         <div class="header-actions">
-            <a class="btn-skip" href="${pageContext.request.contextPath}/" style="margin-right:6px;"><i class="bi bi-house-door"></i> Back to Home</a>
+            <a class="btn-skip" href="${pageContext.request.contextPath}/" style="margin-right:6px;"><i class="bi bi-house-door"></i> Home</a>
             <a class="btn-skip" href="${pageContext.request.contextPath}/doctors/dashboard" style="margin-right:6px;"><i class="bi bi-speedometer2"></i> Dashboard</a>
             <a class="btn-skip" href="${pageContext.request.contextPath}/doctors/profile-completion/skip">Skip for now</a>
             <button type="button" class="btn-header-save" id="headerReviewBtn">Review profile</button>
@@ -730,12 +925,9 @@
     </header>
 
     <main class="main-container">
-        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
             <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/doctors/dashboard'; }" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
                 <i class="bi bi-arrow-left"></i> Back
-            </a>
-            <a href="${pageContext.request.contextPath}/" class="btn-skip" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 10px; font-weight: 600;">
-                <i class="bi bi-house-door"></i> Back to Home
             </a>
         </div>
         <c:if test="${not empty error}">
@@ -810,14 +1002,6 @@
                     <div class="progress-bar-container">
                         <div class="progress-bar-fill"></div>
                     </div>
-                    <p class="progress-guidance"><strong>${statusLabel}</strong> — ${nextStepGuidance}</p>
-                    <c:if test="${not empty missingItems}">
-                        <div class="missing-list">
-                            <c:forEach var="m" items="${missingItems}">
-                                <span><i class="bi bi-exclamation-circle"></i> ${m}</span>
-                            </c:forEach>
-                        </div>
-                    </c:if>
                 </div>
 
                 <!-- EDIT -->
@@ -1053,6 +1237,9 @@
                                         <option value="10" ${bufMin == 10 ? 'selected' : ''}>10</option>
                                         <option value="15" ${bufMin == 15 ? 'selected' : ''}>15</option>
                                     </select>
+                                    <div class="hint" style="font-size:0.8rem; color:var(--text-gray); margin-top:4px;">
+                                        Break or preparation time between consecutive appointments (e.g. for sanitizing, note-taking, or case review).
+                                    </div>
                                 </div>
                                 <div class="field">
                                     <label>Break start</label>
@@ -1089,8 +1276,29 @@
                             <div class="grid">
                                 <div class="field full">
                                     <label>Languages you consult in <span class="req">*</span></label>
-                                    <input type="text" name="languages" id="languages" value="${doctor.languages != null ? doctor.languages : ''}" placeholder="e.g. English, Hindi" maxlength="120">
-                                    <div class="error-msg" id="err-languages">Enter at least one language.</div>
+                                    <input type="hidden" name="languages" id="languages" value="${doctor.languages != null ? doctor.languages : ''}">
+                                    <div class="fdf-multiselect" id="languagesMultiselect" tabindex="0">
+                                        <div class="fdf-multiselect-trigger">
+                                            <div class="fdf-multiselect-chips" id="languagesChips">
+                                                <span class="fdf-multiselect-placeholder">Select languages you consult in...</span>
+                                            </div>
+                                            <i class="bi bi-chevron-down" style="color:var(--text-gray);font-size:0.85rem;margin-left:8px;"></i>
+                                        </div>
+                                        <div class="fdf-multiselect-dropdown">
+                                            <div class="fdf-multiselect-search-wrap">
+                                                <input type="text" class="fdf-multiselect-search" placeholder="Search language...">
+                                            </div>
+                                            <div class="fdf-multiselect-list"></div>
+                                            <div class="fdf-multiselect-custom-wrap">
+                                                <input type="text" class="fdf-multiselect-custom-input" placeholder="Other language...">
+                                                <button type="button" class="fdf-multiselect-custom-btn">+ Add</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hint" style="font-size:0.8rem;color:var(--text-gray);margin-top:4px;">
+                                        Select all languages you are comfortable conducting consultations in.
+                                    </div>
+                                    <div class="error-msg" id="err-languages">Select at least one language.</div>
                                 </div>
                             </div>
                         </div>
@@ -1101,7 +1309,28 @@
                             <div class="grid">
                                 <div class="field full">
                                     <label>Services patients can book</label>
-                                    <input type="text" name="services" id="services" value="${doctor.services != null ? doctor.services : ''}" placeholder="Optional, comma-separated">
+                                    <input type="hidden" name="services" id="services" value="${doctor.services != null ? doctor.services : ''}">
+                                    <div class="fdf-multiselect" id="servicesMultiselect" tabindex="0">
+                                        <div class="fdf-multiselect-trigger">
+                                            <div class="fdf-multiselect-chips" id="servicesChips">
+                                                <span class="fdf-multiselect-placeholder">Select services offered...</span>
+                                            </div>
+                                            <i class="bi bi-chevron-down" style="color:var(--text-gray);font-size:0.85rem;margin-left:8px;"></i>
+                                        </div>
+                                        <div class="fdf-multiselect-dropdown">
+                                            <div class="fdf-multiselect-search-wrap">
+                                                <input type="text" class="fdf-multiselect-search" placeholder="Search service...">
+                                            </div>
+                                            <div class="fdf-multiselect-list"></div>
+                                            <div class="fdf-multiselect-custom-wrap">
+                                                <input type="text" class="fdf-multiselect-custom-input" placeholder="Other service...">
+                                                <button type="button" class="fdf-multiselect-custom-btn">+ Add</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="hint" style="font-size:0.8rem;color:var(--text-gray);margin-top:4px;">
+                                        Select all medical consultation and clinical services patients can book with you.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1314,101 +1543,122 @@
                         </div>
 
                         <!-- 11. Review & Submit -->
-                        <div class="section-card" id="reviewSubmitSection">
+                        <div class="section-card" id="reviewSubmitSection" style="margin-top:20px;">
                             <div class="section-title"><span class="num">11</span> Review &amp; Submit</div>
-                            <p style="color:var(--text-gray);font-size:0.9rem;margin:0 0 12px;line-height:1.45;">
-                                Use <strong>Review profile</strong> to confirm what you entered. Save first, then submit for verification when ready.
+                            <p style="color:var(--text-gray);font-size:0.92rem;margin:0 0 16px;line-height:1.5;">
+                                Click <strong>Review Profile</strong> to verify all details before submitting. You can save your profile as a draft anytime or submit for official verification once required fields are complete.
                             </p>
-                            <div class="preview-row"><span class="k">Completion</span><span class="v">${profileCompletionPct}%</span></div>
-                            <div class="preview-row"><span class="k">Status</span><span class="v">${statusLabel}</span></div>
-                            <div class="preview-row"><span class="k">Next step</span><span class="v" style="font-weight:600;text-align:right;">${nextStepGuidance}</span></div>
-                            <c:if test="${not empty missingItems}">
-                                <div class="missing-list" style="margin:12px 0 4px;">
-                                    <c:forEach var="m" items="${missingItems}">
-                                        <span>${m}</span>
-                                    </c:forEach>
-                                </div>
-                                <p style="font-size:0.82rem;color:#B45309;margin:8px 0 0;font-weight:600;">Fill the missing items above, save, then return here to submit.</p>
-                            </c:if>
                             <input type="hidden" name="intent" id="profileIntent" value="">
-                            <div class="actions" style="border-top:none;padding-top:12px;margin-top:8px;">
-                                <a class="btn-skip" href="${pageContext.request.contextPath}/doctors/profile-completion/skip">Skip for now</a>
-                                <button type="button" class="btn-ghost" id="reviewBtn">Review profile</button>
-                                <button type="submit" class="btn-primary" id="submitVerifyBtn">
-                                    Save &amp; Submit for verification
+                            <div class="actions" style="border-top:1px solid #E2E8F0;padding-top:16px;margin-top:8px;display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;">
+                                <a class="btn-skip" href="${pageContext.request.contextPath}/doctors/profile-completion/skip" style="padding:10px 18px;border-radius:10px;font-weight:600;">Skip for now</a>
+                                <button type="button" class="btn-ghost" id="reviewBtn" style="padding:10px 20px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:8px;">
+                                    <i class="bi bi-eye"></i> Review Profile
+                                </button>
+                                <button type="submit" class="btn-primary" id="submitVerifyBtn" style="padding:10px 22px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:8px;">
+                                    <i class="bi bi-check2-circle"></i> Save &amp; Submit for verification
                                 </button>
                             </div>
                         </div>
                     </form>
                 </div>
+            </div>
 
-                <!-- PREVIEW -->
-                <div id="previewPanel" style="display:none;">
-                    <div class="preview-card">
-                        <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:6px;">11. Review &amp; Submit</h2>
-                        <p style="color:var(--text-gray);font-size:0.9rem;margin-bottom:12px;">Confirm your details before saving. ${statusLabel} — ${nextStepGuidance}</p>
+        </div>
+    </main>
 
-                        <div class="section-title"><span class="num">1</span> Professional Information</div>
-                        <div class="preview-row"><span class="k">Name</span><span class="v" id="pvFullName">—</span></div>
-                        <div class="preview-row"><span class="k">Email</span><span class="v">${doctor.email}</span></div>
-                        <div class="preview-row"><span class="k">Phone</span><span class="v" id="pvPhone">—</span></div>
-                        <div class="preview-row"><span class="k">Gender</span><span class="v" id="pvGender">—</span></div>
-                        <div class="preview-row"><span class="k">Specialization</span><span class="v" id="pvSpec">—</span></div>
-                        <div class="preview-row"><span class="k">Qualification</span><span class="v" id="pvQual">—</span></div>
-                        <div class="preview-row"><span class="k">Experience</span><span class="v" id="pvExp">—</span></div>
-                        <div class="preview-row"><span class="k">Medical Reg No.</span><span class="v" id="pvReg">—</span></div>
+    <!-- Review Profile Modal Dialog -->
+    <div id="reviewProfileModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle" style="display:none;">
+        <div class="review-modal-card">
+            <div class="modal-header">
+                <div class="icon-wrap"><i class="bi bi-person-lines-fill"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="reviewModalTitle" style="font-size:1.18rem;font-weight:800;color:var(--navy);margin:0;">Review Doctor Profile</h3>
+                    <p style="font-size:0.83rem;color:var(--text-gray);margin:2px 0 0;">Please review your profile information before submitting.</p>
+                </div>
+                <button type="button" class="btn-close-modal" id="btnCloseReviewModal" aria-label="Close modal">&times;</button>
+            </div>
 
-                        <div class="section-title"><span class="num">2</span> Clinic / Hospital</div>
-                        <div class="preview-row"><span class="k">Hospital / Clinic</span><span class="v" id="pvHospital">—</span></div>
-                        <div class="preview-row"><span class="k">Address</span><span class="v" id="pvAddress">—</span></div>
-                        <div class="preview-row"><span class="k">City / State / Pin</span><span class="v" id="pvLocation">—</span></div>
-                        <div class="preview-row"><span class="k">Maps</span><span class="v" id="pvMap">—</span></div>
+            <div class="review-modal-body">
+                <!-- Section 1 -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">1</span> Professional Information</div>
+                    <div class="review-grid">
+                        <div class="review-item"><span class="review-item-label">Full Name</span><span class="review-item-value" id="pvFullName">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Email</span><span class="review-item-value">${doctor.email}</span></div>
+                        <div class="review-item"><span class="review-item-label">Phone</span><span class="review-item-value" id="pvPhone">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Gender</span><span class="review-item-value" id="pvGender">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Specialization</span><span class="review-item-value" id="pvSpec">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Qualification</span><span class="review-item-value" id="pvQual">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Experience</span><span class="review-item-value" id="pvExp">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Medical Reg No.</span><span class="review-item-value" id="pvReg">—</span></div>
+                    </div>
+                </div>
 
-                        <div class="section-title"><span class="num">3</span> Consultation Modes</div>
-                        <div class="preview-row"><span class="k">Modes</span><span class="v" id="pvModes">—</span></div>
+                <!-- Section 2 -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">2</span> Clinic / Hospital Information</div>
+                    <div class="review-grid">
+                        <div class="review-item full"><span class="review-item-label">Hospital / Clinic</span><span class="review-item-value" id="pvHospital">—</span></div>
+                        <div class="review-item full"><span class="review-item-label">Address</span><span class="review-item-value" id="pvAddress">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Location</span><span class="review-item-value" id="pvLocation">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Google Maps</span><span class="review-item-value" id="pvMap">—</span></div>
+                    </div>
+                </div>
 
-                        <div class="section-title"><span class="num">4</span> Availability</div>
-                        <div class="preview-row"><span class="k">Days / Hours</span><span class="v" id="pvAvail">—</span></div>
-                        <div class="preview-row"><span class="k">Slot / Buffer</span><span class="v" id="pvSlot">—</span></div>
-                        <div class="preview-row"><span class="k">Break</span><span class="v" id="pvBreak">—</span></div>
-                        <div class="preview-row"><span class="k">Blocked dates</span><span class="v" id="pvBlocked">—</span></div>
-                        <div class="preview-row"><span class="k">Auto-confirm</span><span class="v" id="pvAuto">—</span></div>
-                        <div class="preview-row"><span class="k">Emergency</span><span class="v" id="pvEmerg">—</span></div>
+                <!-- Section 3 & 4 -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">3 &amp; 4</span> Consultation Modes &amp; Working Hours</div>
+                    <div class="review-grid">
+                        <div class="review-item full"><span class="review-item-label">Consultation Modes</span><span class="review-item-value" id="pvModes">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Availability</span><span class="review-item-value" id="pvAvail">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Slot Duration / Buffer</span><span class="review-item-value" id="pvSlot">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Break Time</span><span class="review-item-value" id="pvBreak">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Blocked Dates</span><span class="review-item-value" id="pvBlocked">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Auto Confirm</span><span class="review-item-value" id="pvAuto">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Emergency Consult</span><span class="review-item-value" id="pvEmerg">—</span></div>
+                    </div>
+                </div>
 
-                        <div class="section-title"><span class="num">5</span> Languages</div>
-                        <div class="preview-row"><span class="k">Languages</span><span class="v" id="pvLang">—</span></div>
+                <!-- Section 5 & 6 -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">5 &amp; 6</span> Languages &amp; Services</div>
+                    <div class="review-grid">
+                        <div class="review-item full"><span class="review-item-label">Languages</span><span class="review-item-value" id="pvLang">—</span></div>
+                        <div class="review-item full"><span class="review-item-label">Services Offered</span><span class="review-item-value" id="pvServices">—</span></div>
+                    </div>
+                </div>
 
-                        <div class="section-title"><span class="num">6</span> Services offered</div>
-                        <div class="preview-row"><span class="k">Services</span><span class="v" id="pvServices">—</span></div>
+                <!-- Section 7 & 8 -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">7 &amp; 8</span> Fees &amp; About Bio</div>
+                    <div class="review-grid">
+                        <div class="review-item"><span class="review-item-label">Consultation Fee</span><span class="review-item-value" id="pvFee">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Other Fees</span><span class="review-item-value" id="pvOtherFees">—</span></div>
+                        <div class="review-item full"><span class="review-item-label">Bio</span><span class="review-item-value" id="pvBio">—</span></div>
+                    </div>
+                </div>
 
-                        <div class="section-title"><span class="num">7</span> Fees</div>
-                        <div class="preview-row"><span class="k">Consultation</span><span class="v" id="pvFee">—</span></div>
-                        <div class="preview-row"><span class="k">Chat / Call / Video</span><span class="v" id="pvOtherFees">—</span></div>
-
-                        <div class="section-title"><span class="num">8</span> About you</div>
-                        <div class="preview-row"><span class="k">Bio</span><span class="v" id="pvBio">—</span></div>
-
-                        <div class="section-title"><span class="num">9</span> Payout</div>
-                        <div class="preview-row"><span class="k">UPI</span><span class="v" id="pvUpi">—</span></div>
-                        <div class="preview-row"><span class="k">Bank</span><span class="v" id="pvBank">—</span></div>
-
-                        <div class="section-title"><span class="num">10</span> Documents</div>
-                        <div class="preview-row"><span class="k">Profile photo</span><span class="v" id="pvPhotoDoc">—</span></div>
-                        <div class="preview-row"><span class="k">Government ID</span><span class="v" id="pvIdDoc">—</span></div>
-                        <div class="preview-row"><span class="k">Medical license</span><span class="v" id="pvLicDoc">—</span></div>
-                        <div class="preview-row"><span class="k">Registration certificate</span><span class="v" id="pvCertDoc">—</span></div>
-
-                        <div class="actions">
-                            <button type="button" class="btn-ghost" id="backEditBtn">Back &amp; Edit</button>
-                            <button type="button" class="btn-primary" id="confirmSaveBtn">Confirm &amp; Save</button>
-                        </div>
+                <!-- Section 9 & 10 -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">9 &amp; 10</span> Payout &amp; Documents</div>
+                    <div class="review-grid">
+                        <div class="review-item"><span class="review-item-label">UPI ID</span><span class="review-item-value" id="pvUpi">—</span></div>
+                        <div class="review-item full"><span class="review-item-label">Bank Details</span><span class="review-item-value" id="pvBank">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Profile Photo</span><span class="review-item-value" id="pvPhotoDoc">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Government ID</span><span class="review-item-value" id="pvIdDoc">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Medical License</span><span class="review-item-value" id="pvLicDoc">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Registration Certificate</span><span class="review-item-value" id="pvCertDoc">—</span></div>
                     </div>
                 </div>
             </div>
 
-
+            <div class="review-modal-actions">
+                <button type="button" class="btn-modal-cancel" id="btnCloseReviewModalBtn">Back &amp; Edit</button>
+                <button type="button" class="btn-ghost" id="modalSaveDraftBtn"><i class="bi bi-save"></i> Save Draft</button>
+                <button type="button" class="btn-modal-confirm" id="modalSubmitVerifyBtn"><i class="bi bi-check2-circle"></i> Confirm &amp; Submit for Verification</button>
+            </div>
         </div>
-    </main>
+    </div>
 
     <!-- Google Map Clinic Location Picker Modal (Identical architecture to /users/register) -->
     <div id="mapPickerModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle" style="display:none;">
@@ -1463,11 +1713,8 @@
             const ctx = '${pageContext.request.contextPath}';
             const form = document.getElementById('profileForm');
             const editPanel = document.getElementById('editPanel');
-            const previewPanel = document.getElementById('previewPanel');
             const reviewBtn = document.getElementById('reviewBtn');
             const headerReviewBtn = document.getElementById('headerReviewBtn');
-            const backEditBtn = document.getElementById('backEditBtn');
-            const confirmSaveBtn = document.getElementById('confirmSaveBtn');
             const submitVerifyBtn = document.getElementById('submitVerifyBtn');
             let saving = false;
 
@@ -2413,12 +2660,19 @@
                     });
                 }
 
-                // Languages: Letters, spaces, commas, hyphens only. Max 120 chars.
+                // Languages: Synced via multiselect
                 const lang = document.getElementById('languages');
                 if (lang) {
                     lang.addEventListener('input', function () {
-                        this.value = this.value.replace(/[^a-zA-Z\s,.'\-]/g, '').slice(0, 120);
                         validateLanguages(false);
+                        recalculateProgress();
+                    });
+                }
+
+                // Services: Synced via multiselect
+                const srv = document.getElementById('services');
+                if (srv) {
+                    srv.addEventListener('input', function () {
                         recalculateProgress();
                     });
                 }
@@ -2845,13 +3099,187 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     if (mapPickerModal && mapPickerModal.style.display === 'flex') closeMapPicker();
+                    const reviewModal = document.getElementById('reviewProfileModal');
+                    if (reviewModal && reviewModal.style.display === 'flex') closeReviewModal();
                 }
             });
 
             // -----------------------------------------------------------------
-            // Preview & Submission Handlers
+            // Multi-Select Dropdowns for Languages and Services
             // -----------------------------------------------------------------
-            function showPreview() {
+            function initMultiSelect(config) {
+                const container = document.getElementById(config.containerId);
+                if (!container) return;
+                const hiddenInput = document.getElementById(config.hiddenInputId);
+                const chipsContainer = document.getElementById(config.chipsId);
+                const trigger = container.querySelector('.fdf-multiselect-trigger');
+                const searchInput = container.querySelector('.fdf-multiselect-search');
+                const listContainer = container.querySelector('.fdf-multiselect-list');
+                const customInput = container.querySelector('.fdf-multiselect-custom-input');
+                const customBtn = container.querySelector('.fdf-multiselect-custom-btn');
+
+                let allOptions = [...config.options];
+                let selectedValues = [];
+
+                if (hiddenInput && hiddenInput.value) {
+                    selectedValues = hiddenInput.value.split(',')
+                        .map(s => s.trim())
+                        .filter(Boolean);
+                    selectedValues.forEach(v => {
+                        if (!allOptions.includes(v)) allOptions.push(v);
+                    });
+                }
+
+                function syncValue() {
+                    if (hiddenInput) {
+                        hiddenInput.value = selectedValues.join(', ');
+                        hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    renderChips();
+                    renderList(searchInput ? searchInput.value : '');
+                }
+
+                function renderChips() {
+                    if (!chipsContainer) return;
+                    chipsContainer.innerHTML = '';
+                    if (selectedValues.length === 0) {
+                        const placeholder = document.createElement('span');
+                        placeholder.className = 'fdf-multiselect-placeholder';
+                        placeholder.textContent = config.placeholder || 'Select...';
+                        chipsContainer.appendChild(placeholder);
+                        return;
+                    }
+
+                    selectedValues.forEach(val => {
+                        const chip = document.createElement('span');
+                        chip.className = 'fdf-multiselect-chip';
+                        chip.textContent = val;
+
+                        const removeBtn = document.createElement('span');
+                        removeBtn.className = 'fdf-multiselect-chip-remove';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.title = 'Remove ' + val;
+                        removeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectedValues = selectedValues.filter(x => x !== val);
+                            syncValue();
+                        });
+
+                        chip.appendChild(removeBtn);
+                        chipsContainer.appendChild(chip);
+                    });
+                }
+
+                function renderList(query) {
+                    if (!listContainer) return;
+                    listContainer.innerHTML = '';
+                    const q = (query || '').toLowerCase().trim();
+                    const filtered = allOptions.filter(opt => opt.toLowerCase().includes(q));
+
+                    if (filtered.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.style.padding = '8px 14px';
+                        empty.style.fontSize = '0.85rem';
+                        empty.style.color = '#94a3b8';
+                        empty.textContent = 'No matching options';
+                        listContainer.appendChild(empty);
+                        return;
+                    }
+
+                    filtered.forEach(opt => {
+                        const item = document.createElement('label');
+                        item.className = 'fdf-multiselect-item';
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = selectedValues.includes(opt);
+                        checkbox.addEventListener('change', () => {
+                            if (checkbox.checked) {
+                                if (!selectedValues.includes(opt)) selectedValues.push(opt);
+                            } else {
+                                selectedValues = selectedValues.filter(x => x !== opt);
+                            }
+                            syncValue();
+                        });
+
+                        const text = document.createElement('span');
+                        text.textContent = opt;
+
+                        item.appendChild(checkbox);
+                        item.appendChild(text);
+                        listContainer.appendChild(item);
+                    });
+                }
+
+                function addCustomOption() {
+                    if (!customInput) return;
+                    const val = customInput.value.trim();
+                    if (!val) return;
+                    if (!allOptions.includes(val)) allOptions.push(val);
+                    if (!selectedValues.includes(val)) selectedValues.push(val);
+                    customInput.value = '';
+                    syncValue();
+                }
+
+                if (customBtn) {
+                    customBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        addCustomOption();
+                    });
+                }
+                if (customInput) {
+                    customInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addCustomOption();
+                        }
+                    });
+                }
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', () => {
+                        renderList(searchInput.value);
+                    });
+                    searchInput.addEventListener('click', (e) => e.stopPropagation());
+                }
+
+                if (trigger) {
+                    trigger.addEventListener('click', (e) => {
+                        const isOpen = container.classList.contains('open');
+                        document.querySelectorAll('.fdf-multiselect.open').forEach(el => {
+                            if (el !== container) el.classList.remove('open');
+                        });
+                        container.classList.toggle('open', !isOpen);
+                        if (!isOpen && searchInput) {
+                            setTimeout(() => searchInput.focus(), 50);
+                        }
+                    });
+                }
+
+                renderChips();
+                renderList('');
+            }
+
+            document.addEventListener('click', function(e) {
+                document.querySelectorAll('.fdf-multiselect.open').forEach(function(el) {
+                    if (!el.contains(e.target)) {
+                        el.classList.remove('open');
+                    }
+                });
+            });
+
+            // -----------------------------------------------------------------
+            // Preview Modal & Submission Handlers
+            // -----------------------------------------------------------------
+            const reviewProfileModal = document.getElementById('reviewProfileModal');
+            const btnCloseReviewModal = document.getElementById('btnCloseReviewModal');
+            const btnCloseReviewModalBtn = document.getElementById('btnCloseReviewModalBtn');
+            const modalSaveDraftBtn = document.getElementById('modalSaveDraftBtn');
+            const modalSubmitVerifyBtn = document.getElementById('modalSubmitVerifyBtn');
+
+            function openReviewModal() {
                 if (!validateKeyFields('draft')) return;
 
                 function checked(name) {
@@ -2909,20 +3337,23 @@
                 document.getElementById('pvCertDoc').textContent =
                     fileLabel('degreeCertificate', '${not empty doctor.degreeCertificatePath ? "On file" : "Not uploaded"}');
 
-                editPanel.style.display = 'none';
-                previewPanel.style.display = 'block';
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (reviewProfileModal) reviewProfileModal.style.display = 'flex';
             }
 
-            reviewBtn.addEventListener('click', showPreview);
-            headerReviewBtn.addEventListener('click', showPreview);
-            backEditBtn.addEventListener('click', () => {
-                previewPanel.style.display = 'none';
-                editPanel.style.display = 'block';
-                saving = false;
-                confirmSaveBtn.disabled = false;
-                confirmSaveBtn.textContent = 'Confirm & Save';
-            });
+            function closeReviewModal() {
+                if (reviewProfileModal) reviewProfileModal.style.display = 'none';
+            }
+
+            if (reviewBtn) reviewBtn.addEventListener('click', openReviewModal);
+            if (headerReviewBtn) headerReviewBtn.addEventListener('click', openReviewModal);
+            if (btnCloseReviewModal) btnCloseReviewModal.addEventListener('click', closeReviewModal);
+            if (btnCloseReviewModalBtn) btnCloseReviewModalBtn.addEventListener('click', closeReviewModal);
+
+            if (reviewProfileModal) {
+                reviewProfileModal.addEventListener('click', function(e) {
+                    if (e.target === reviewProfileModal) closeReviewModal();
+                });
+            }
 
             function ensureCsrfOnForm() {
                 if (!form) return;
@@ -2948,29 +3379,46 @@
                 }
             }
 
-            confirmSaveBtn.addEventListener('click', () => {
-                if (saving) return;
-                if (!validateKeyFields('draft')) {
-                    previewPanel.style.display = 'none';
-                    editPanel.style.display = 'block';
-                    return;
-                }
-                var intentField = document.getElementById('profileIntent');
-                if (intentField) intentField.value = '';
-                saving = true;
-                confirmSaveBtn.disabled = true;
-                confirmSaveBtn.textContent = 'Saving...';
-                ensureCsrfOnForm();
-                form.submit();
-            });
+            if (modalSaveDraftBtn) {
+                modalSaveDraftBtn.addEventListener('click', function() {
+                    if (saving) return;
+                    if (!validateKeyFields('draft')) {
+                        closeReviewModal();
+                        return;
+                    }
+                    var intentField = document.getElementById('profileIntent');
+                    if (intentField) intentField.value = '';
+                    saving = true;
+                    modalSaveDraftBtn.disabled = true;
+                    modalSaveDraftBtn.textContent = 'Saving...';
+                    ensureCsrfOnForm();
+                    form.submit();
+                });
+            }
+
+            if (modalSubmitVerifyBtn) {
+                modalSubmitVerifyBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (saving) return;
+                    if (!validateKeyFields('verify')) {
+                        closeReviewModal();
+                        return;
+                    }
+                    var intentField = document.getElementById('profileIntent');
+                    if (intentField) intentField.value = 'submitVerification';
+                    saving = true;
+                    modalSubmitVerifyBtn.disabled = true;
+                    modalSubmitVerifyBtn.textContent = 'Submitting...';
+                    ensureCsrfOnForm();
+                    form.submit();
+                });
+            }
 
             if (submitVerifyBtn) {
                 submitVerifyBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     if (saving) return;
                     if (!validateKeyFields('verify')) {
-                        previewPanel.style.display = 'none';
-                        editPanel.style.display = 'block';
                         return;
                     }
                     var intentField = document.getElementById('profileIntent');
@@ -3054,6 +3502,40 @@
             initLocationSelectors();
             parseExistingBankDetails();
             initDocUploadListeners();
+            initMultiSelect({
+                containerId: 'languagesMultiselect',
+                hiddenInputId: 'languages',
+                chipsId: 'languagesChips',
+                placeholder: 'Select languages you consult in...',
+                options: [
+                    'English', 'Hindi', 'Kannada', 'Telugu', 'Tamil', 'Malayalam',
+                    'Bengali', 'Marathi', 'Gujarati', 'Punjabi', 'Urdu', 'Odia',
+                    'Assamese', 'Sanskrit', 'French', 'German', 'Spanish', 'Arabic'
+                ]
+            });
+            initMultiSelect({
+                containerId: 'servicesMultiselect',
+                hiddenInputId: 'services',
+                chipsId: 'servicesChips',
+                placeholder: 'Select services offered...',
+                options: [
+                    'General Medical Consultation',
+                    'Follow-up Consultation',
+                    'Prescription Renewal',
+                    'Preventive Health Checkup',
+                    'Chronic Disease Management',
+                    'Nutrition & Diet Counseling',
+                    'Second Medical Opinion',
+                    'Diagnostic Report Review',
+                    'Mental Health Counseling',
+                    "Women's Health Screening",
+                    'Pediatric Care',
+                    'Geriatric Care',
+                    'Vaccination Counseling',
+                    'Pre-marital Health Check',
+                    'Post-operative Follow-up'
+                ]
+            });
             updateLivePreview();
         })();
     </script>

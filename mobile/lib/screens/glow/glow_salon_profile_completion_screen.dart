@@ -376,7 +376,19 @@ class _GlowSalonProfileCompletionScreenState extends State<GlowSalonProfileCompl
     }
   }
 
-  void _skip() => _finish();
+  Future<void> _pickClock(void Function(TimeOfDay t) apply, TimeOfDay? current) async {
+    final picked = await showTimePicker(context: context, initialTime: current ?? const TimeOfDay(hour: 10, minute: 0));
+    if (picked != null) setState(() => apply(picked));
+  }
+
+  Future<void> _addBlockedDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked == null) return;
     final key = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
     setState(() => _blockedDates.add(key));
   }

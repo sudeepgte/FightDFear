@@ -747,7 +747,7 @@
     <!-- App Header -->
     <header class="app-header">
         <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="header-brand">
-            <i class="bi bi-heart-pulse-fill"></i>
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
             <span>Fight D Fear</span>
             <span class="portal-badge">Fitness Coach</span>
         </a>
@@ -756,7 +756,7 @@
                 <i class="bi bi-house-door"></i> Home
             </a>
             <a href="${pageContext.request.contextPath}/fitness/trainer/dashboard" class="btn-skip">
-                <i class="bi bi-arrow-left"></i> Studio Dashboard
+                <i class="bi bi-speedometer2"></i> Dashboard
             </a>
             <button type="button" class="btn-header-draft" onclick="submitProfile('saveDraft')">
                 <i class="bi bi-save"></i> Save Draft
@@ -770,8 +770,8 @@
     <!-- Main Content -->
     <main class="main-container">
 
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/fitness/trainer/dashboard'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
 
         <!-- Flash Messages -->

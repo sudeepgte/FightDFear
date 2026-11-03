@@ -70,23 +70,23 @@ void main() {
       });
       final prefs = await SharedPreferences.getInstance();
       ApiClient.setPreferences(prefs);
-      final api = ApiClient('http://192.168.0.3:8084');
+      final api = ApiClient('http://192.168.0.4:8084');
 
       // Obsolete host should be stripped and fallback to default LAN host
-      expect(api.baseUrl, 'http://192.168.0.3:8084');
+      expect(api.baseUrl, 'http://192.168.0.4:8084');
       expect(await api.getCustomBaseUrl(), isNull);
     });
   });
 
   group('ApiConfig Resolution Tests', () {
-    test('Android resolves to defaultLocalLanHost (192.168.0.3:8084) for physical phones and emulators', () {
+    test('Android resolves to defaultLocalLanHost (192.168.0.4:8084) for physical phones and emulators', () {
       final resolved = ApiConfig.resolve(isAndroid: true);
-      expect(resolved, 'http://192.168.0.3:8084');
+      expect(resolved, 'http://192.168.0.4:8084');
     });
 
     test('getCandidateUrls includes active laptop LAN, emulator, localhost, and cloud', () {
       final candidates = ApiConfig.getCandidateUrls(isAndroid: true);
-      expect(candidates.contains('http://192.168.0.3:8084'), isTrue);
+      expect(candidates.contains('http://192.168.0.4:8084'), isTrue);
       expect(candidates.contains('http://10.0.2.2:8084'), isTrue);
       expect(candidates.contains('http://localhost:8084'), isTrue);
       expect(candidates.contains('https://fightdfire.chethancodehub.com'), isTrue);

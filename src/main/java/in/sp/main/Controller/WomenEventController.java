@@ -590,7 +590,7 @@ public class WomenEventController {
         cookie.setHttpOnly(true);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
-        return "redirect:/women-events";
+        return "redirect:/women-events/host/login?loggedOut=true";
     }
 
     // =========================================================
@@ -770,10 +770,6 @@ public class WomenEventController {
                                   HttpSession session, Model model) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
-        boolean isApproved = host.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || host.getVerificationStatus() == VerificationStatus.VERIFIED;
-        if (isApproved && !Boolean.TRUE.equals(submitted)) {
-            return "redirect:/women-events/organizer/dashboard";
-        }
         host = eventHostRepository.findById(host.getId()).orElse(host);
         host = eventHostProfileService.refreshCompletion(host);
         session.setAttribute("loggedHost", host);
@@ -928,11 +924,15 @@ public class WomenEventController {
     }
 
     @GetMapping("/organizer/create")
-    public String createEventForm(HttpSession session, Model model) {
+    public String createEventForm(HttpSession session, Model model, RedirectAttributes ra) {
         EventHost host = checkAndGetHost(session);
         if (host == null) return "redirect:/women-events/host/login";
         if (!EventHostProfileService.isApproved(host)) {
-            return redirectIfFeaturesLocked(host, null, null);
+            String msg = (host.getPartnerProfileStatus() == PartnerProfileStatus.PENDING_ADMIN_APPROVAL)
+                    ? "Your profile is under review by admin. You will be able to create events once approved."
+                    : "Please complete your profile and wait for admin approval before creating events.";
+            if (ra != null) ra.addFlashAttribute("error", msg);
+            return "redirect:/women-events/organizer/dashboard";
         }
         model.addAttribute("categories", WomenEventCategory.values());
         model.addAttribute("host", host);

@@ -107,7 +107,7 @@ class _GlowProviderSignupScreenState extends State<GlowProviderSignupScreen> {
 
   Future<void> _sendOtp() async {
     if (!RegValidators.isEmail(_email.text)) {
-      setState(() => _error = 'Enter a valid email.');
+      setState(() => _error = 'Enter a valid mail id (must be @gmail.com)');
       return;
     }
     setState(() {
@@ -159,7 +159,7 @@ class _GlowProviderSignupScreenState extends State<GlowProviderSignupScreen> {
       return;
     }
     if (!RegValidators.isEmail(_email.text)) {
-      setState(() => _error = 'Enter a valid email.');
+      setState(() => _error = 'Enter a valid mail id (must be @gmail.com)');
       return;
     }
     if (!RegValidators.isPasswordStrong(_pass.text)) {

@@ -235,17 +235,21 @@
 </head>
 <body class="wp-auth">
     <header class="app-header">
-        <a class="header-brand" href="${pageContext.request.contextPath}/women-products">
-            <i class="bi bi-bag-heart-fill"></i> Women Products
+        <a class="header-brand" href="${pageContext.request.contextPath}/women-products" style="display: flex; align-items: center; gap: 10px;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
+            <span>Women Products</span>
         </a>
-        <div class="header-links">
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/women-products/seller/login">Seller login</a>
         </div>
     </header>
 
     <main class="main-container">
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-products'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="info-banner">
             <h2>Register as a Women Products seller</h2>
@@ -287,7 +291,8 @@
                 <div class="row-2">
                     <div class="form-group">
                         <label for="email">Email *</label>
-                        <input class="form-input" type="email" name="email" id="email" required placeholder="you@email.com">
+                        <input class="form-input" type="email" name="email" id="email" required placeholder="you@gmail.com" oninput="validateEmail()" onblur="validateEmail()">
+                        <div id="emailError" style="display:none; color: #DC2626; font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
                     </div>
                     <div class="form-group">
                         <label for="phone">Mobile number *</label>
@@ -499,10 +504,30 @@
             }, 1000);
         }
 
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+        function validateEmail() {
+            var emailInput = document.getElementById('email');
+            var emailError = document.getElementById('emailError');
+            if (!emailInput || !emailError) return true;
+            var val = emailInput.value.trim();
+            if (!val) {
+                emailError.textContent = 'Email is required';
+                emailError.style.display = 'block';
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+                emailError.style.display = 'block';
+                return false;
+            }
+            emailError.style.display = 'none';
+            return true;
+        }
+
         document.getElementById('btnSendOtp').addEventListener('click', function () {
             var email = document.getElementById('email').value.trim().toLowerCase();
-            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-                setOtpMsg('Please enter a valid email address.', false);
+            if (!validateEmail()) {
+                setOtpMsg('Enter a valid mail id (must be @gmail.com)', false);
                 return;
             }
             otpVerified = false;
@@ -582,8 +607,8 @@
             if (businessName.length < 2 || businessName.length > 100) {
                 e.preventDefault(); alert('Please enter your shop or business name.'); return;
             }
-            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-                e.preventDefault(); alert('Please enter a valid email address.'); return;
+            if (!validateEmail()) {
+                e.preventDefault(); alert('Enter a valid mail id (must be @gmail.com)'); return;
             }
             if (!/^[6-9]\d{9}$/.test(phone)) {
                 e.preventDefault(); alert('Please enter a valid 10-digit mobile number.'); return;

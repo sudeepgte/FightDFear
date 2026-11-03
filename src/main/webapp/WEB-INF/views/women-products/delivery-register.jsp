@@ -39,12 +39,20 @@
 </head>
 <body class="wp-auth">
     <header class="app-header">
-        <a class="header-brand" href="${pageContext.request.contextPath}/women-products"><i class="bi bi-truck"></i> Women Products</a>
-        <div class="header-links"><a href="${pageContext.request.contextPath}/women-products/delivery/login">Sign in</a></div>
+        <a class="header-brand" href="${pageContext.request.contextPath}/women-products" style="display: flex; align-items: center; gap: 10px;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
+            <span>Women Products</span>
+        </a>
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+            <a href="${pageContext.request.contextPath}/women-products/delivery/login">Sign in</a>
+        </div>
     </header>
     <main class="main-container">
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-products'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="info-banner">
             <h2>Delivery partner registration</h2>
@@ -64,7 +72,10 @@
                            pattern="[6-9][0-9]{9}" title="Valid 10-digit Indian mobile number"
                            oninput="this.value=this.value.replace(/[^0-9]/g,'')">
                 </div>
-                <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                <div class="form-group"><label>Email</label>
+                    <input type="email" id="email" name="email" placeholder="partner@gmail.com" required oninput="validateEmail()" onblur="validateEmail()">
+                    <div id="emailError" style="display:none; color: #DC2626; font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
+                </div>
                 <div class="form-group"><label>Password</label>
                     <input type="password" name="password" required minlength="6"
                            title="At least 6 characters, with a number and a special character">
@@ -77,6 +88,27 @@
         </div>
     </main>
     <script>
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+      const emailInput = document.getElementById('email');
+      const emailError = document.getElementById('emailError');
+
+      function validateEmail() {
+        if (!emailInput || !emailError) return true;
+        var val = emailInput.value.trim();
+        if (!val) {
+          emailError.textContent = 'Email is required';
+          emailError.style.display = 'block';
+          return false;
+        }
+        if (!emailRegex.test(val)) {
+          emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+          emailError.style.display = 'block';
+          return false;
+        }
+        emailError.style.display = 'none';
+        return true;
+      }
+
       document.getElementById('deliveryRegisterForm').addEventListener('submit', function (e) {
         var name = (this.fullName.value || '').trim();
         var phone = (this.phone.value || '').trim();
@@ -92,9 +124,10 @@
           alert('Enter a valid 10-digit Indian mobile number.');
           return;
         }
-        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        if (!validateEmail()) {
           e.preventDefault();
-          alert('Enter a valid email address.');
+          alert('Enter a valid mail id (must be @gmail.com)');
+          emailInput.focus();
           return;
         }
         if (!/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/.test(pass)) {

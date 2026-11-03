@@ -55,6 +55,10 @@ public class MobileDoctorController {
     @Autowired
     private in.sp.main.Service.FileUploadService fileUploadService;
     @Autowired
+    private in.sp.main.Service.DoctorNotificationService notificationService;
+    @Autowired
+    private in.sp.main.Service.EmailAsyncService emailAsyncService;
+    @Autowired
     private in.sp.main.Repository.DoctorInstantRequestRepository instantRequestRepository;
 
     @GetMapping
@@ -609,6 +613,31 @@ public class MobileDoctorController {
         }
 
         chatRepo.save(msg);
+
+        // Dispatch email notification to recipient
+        String preview = message.length() > 80 ? message.substring(0, 80) + "..." : message;
+        if ("USER".equals(msg.getSenderType()) && msg.getUser() != null) {
+            String patientName = msg.getUser().getFullName() != null && !msg.getUser().getFullName().isBlank() ? msg.getUser().getFullName() : "Patient";
+            notificationService.notifyDoctor(
+                target,
+                "CHAT_MESSAGE",
+                "New message from " + patientName,
+                patientName + " sent you a message: \"" + preview + "\". Open the Fight D Fear app or website to view and reply.",
+                true
+            );
+        } else if ("DOCTOR".equals(msg.getSenderType()) && msg.getUser() != null && msg.getUser().getEmail() != null && !msg.getUser().getEmail().isBlank()) {
+            String docName = (doctor != null && doctor.getFullName() != null && !doctor.getFullName().isBlank())
+                ? doctor.getFullName()
+                : ((target != null && target.getFullName() != null && !target.getFullName().isBlank()) ? target.getFullName() : "Doctor");
+            String patientName = msg.getUser().getFullName() != null && !msg.getUser().getFullName().isBlank() ? msg.getUser().getFullName() : "Patient";
+            String subject = "Fight D Fear - New message from Dr. " + docName;
+            String emailBody = "Hello " + patientName + ",\n\n"
+                    + "Dr. " + docName + " sent you a message:\n\n"
+                    + "\"" + preview + "\"\n\n"
+                    + "Please open the Fight D Fear app or website to view and reply.\n\nThank you,\nFight D Fear Healthcare";
+            emailAsyncService.sendEmailAsync(msg.getUser().getEmail(), subject, emailBody);
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(ok(Map.of("message", chatDto(msg))));
     }
 

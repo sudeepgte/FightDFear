@@ -179,14 +179,20 @@
 </head>
 <body>
     <header class="app-header">
-        <a class="header-brand" href="${pageContext.request.contextPath}/">
-            <i class="bi bi-heart-fill"></i> Fight D Fear
+        <a class="header-brand" href="${pageContext.request.contextPath}/" style="display: flex; align-items: center; gap: 10px;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
+            <span>Fight D Fear Admin</span>
         </a>
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+        </div>
     </header>
 
     <div class="main-container">
-        <a href="${pageContext.request.contextPath}/" class="back-home">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="back-home">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="form-card">
             <div class="card-header">
@@ -208,9 +214,10 @@
                     <div class="input-wrapper">
                         <i class="bi bi-envelope"></i>
                         <input type="email" id="email" name="email" class="form-input"
-                               placeholder="admin@example.com" required autocomplete="username"
+                               placeholder="admin@gmail.com" required autocomplete="username"
                                value="<c:out value='${prefillEmail}'/>">
                     </div>
+                    <div id="emailError" style="display:none; color: var(--error, #dc2626); font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
                 </div>
 
                 <div class="form-group">
@@ -247,6 +254,42 @@
 
 <script>
 (function () {
+    const form = document.querySelector('form[action*="/admin/loginAdmin"]');
+    const emailInput = document.getElementById('email');
+    const emailError = document.getElementById('emailError');
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+
+    function validateEmail() {
+        if (!emailInput || !emailError) return true;
+        const val = emailInput.value.trim();
+        if (!val) {
+            emailError.textContent = 'Admin Email is required';
+            emailError.style.display = 'block';
+            return false;
+        }
+        if (!emailRegex.test(val)) {
+            emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+            emailError.style.display = 'block';
+            return false;
+        }
+        emailError.style.display = 'none';
+        return true;
+    }
+
+    if (emailInput && emailError) {
+        emailInput.addEventListener('input', validateEmail);
+        emailInput.addEventListener('blur', validateEmail);
+    }
+
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            if (!validateEmail()) {
+                e.preventDefault();
+                emailInput.focus();
+            }
+        });
+    }
+
     document.querySelectorAll('[data-toggle-password]').forEach(function (btn) {
         btn.addEventListener('click', function () {
             var id = btn.getAttribute('data-toggle-password');

@@ -194,17 +194,21 @@
 </head>
 <body>
     <header class="app-header">
-        <a href="${pageContext.request.contextPath}/" class="header-brand">
-            <i class="bi bi-briefcase-fill"></i> Fight D Fear
+        <a href="${pageContext.request.contextPath}/" class="header-brand" style="display: flex; align-items: center; gap: 10px;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
+            <span>Fight D Fear</span>
         </a>
-        <div class="header-links">
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/women-jobs/login">Sign In</a>
         </div>
     </header>
 
     <div class="main-container">
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="info-banner">
             <h2>Join Women Jobs</h2>
@@ -243,10 +247,11 @@
                         <div class="input-wrapper" style="display: flex; gap: 10px; align-items: center;">
                             <div style="position: relative; flex-grow: 1;">
                                 <i class="bi bi-envelope prefix-icon"></i>
-                                <input type="email" id="email" name="email" class="form-input" placeholder="name@example.com" required>
+                                <input type="email" id="email" name="email" class="form-input" placeholder="name@gmail.com" required oninput="validateEmail()" onblur="validateEmail()">
                             </div>
                             <button type="button" id="btn-send-otp" class="btn-otp">Send OTP</button>
                         </div>
+                        <div id="emailError" style="display:none; color: #DC2626; font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
                     </div>
 
                     <div class="form-group" id="otp-section" style="display: none;">
@@ -521,6 +526,26 @@
 
         let isEmailVerified = false;
         let wjConfirmReady = false;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+
+        function validateEmail() {
+            const emailInput = document.getElementById('email');
+            const emailError = document.getElementById('emailError');
+            if (!emailInput || !emailError) return true;
+            const val = emailInput.value.trim();
+            if (!val) {
+                emailError.textContent = 'Email is required';
+                emailError.style.display = 'block';
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+                emailError.style.display = 'block';
+                return false;
+            }
+            emailError.style.display = 'none';
+            return true;
+        }
 
         document.getElementById('btn-send-otp').addEventListener('click', function() {
             const emailInput = document.getElementById('email');
@@ -529,8 +554,8 @@
             const otpSection = document.getElementById('otp-section');
             const sendBtn = this;
 
-            if (email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                alert('Please enter a valid email address first.');
+            if (!validateEmail()) {
+                alert('Enter a valid mail id (must be @gmail.com)');
                 return;
             }
 
@@ -642,13 +667,8 @@
                 return;
             }
 
-            if (email === '') {
-                showError('Email Address is required.');
-                event.preventDefault();
-                return;
-            }
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showError('Please enter a valid email address.');
+            if (!validateEmail()) {
+                showError('Enter a valid mail id (must be @gmail.com)');
                 event.preventDefault();
                 return;
             }

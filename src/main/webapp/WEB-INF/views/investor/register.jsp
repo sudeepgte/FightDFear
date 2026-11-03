@@ -495,9 +495,12 @@
 <body>
     <header class="app-header">
         <a href="${pageContext.request.contextPath}/" class="header-brand">
-            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 32px; width: 32px; border-radius: 8px; object-fit: cover;"> Fight D Fear
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Fight D Fear
         </a>
-        <div class="header-links">
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/investor/login">Sign in</a>
         </div>
     </header>
@@ -505,11 +508,8 @@
     <div class="register-container">
         
         <div style="display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
-            <a href="${pageContext.request.contextPath}/" class="back-link-top" style="margin: 0;">
-                <i class="bi bi-arrow-left"></i> Back to Home
-            </a>
-            <a href="${pageContext.request.contextPath}/investor/login" class="back-link-top" style="margin: 0;">
-                <i class="bi bi-box-arrow-in-right"></i> Back to Login
+            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="back-link-top" style="margin: 0;">
+                <i class="bi bi-arrow-left"></i> Back
             </a>
         </div>
 
@@ -544,7 +544,7 @@
                 <div class="row g-2">
                     <div class="col-8">
                         <div class="input-group-custom">
-                            <input type="email" id="email" name="email" class="form-control" placeholder="Enter email address" required autocomplete="email">
+                            <input type="email" id="email" name="email" class="form-control" placeholder="investor@gmail.com" required autocomplete="email">
                             <i class="field-icon bi bi-envelope"></i>
                         </div>
                     </div>
@@ -552,7 +552,7 @@
                         <button type="button" id="sendOtpBtn" class="btn w-100 btn-otp">Send OTP</button>
                     </div>
                 </div>
-                <div class="error-msg" id="err-email"><i class="bi bi-exclamation-circle-fill"></i> <span>Please enter a valid email address (e.g. name@domain.com).</span></div>
+                <div class="error-msg" id="err-email"><i class="bi bi-exclamation-circle-fill"></i> <span>Enter a valid mail id (must be @gmail.com)</span></div>
             </div>
 
             <!-- OTP Verification Row (Hidden by default, triggered on email send) -->
@@ -711,9 +711,9 @@
                 if (showError) setFieldError(emailInput, errEl, true, "Email address is required.");
                 return false;
             }
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+            const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
             if (!emailRegex.test(val)) {
-                if (showError) setFieldError(emailInput, errEl, true, "Please enter a valid email address (e.g. name@domain.com).");
+                if (showError) setFieldError(emailInput, errEl, true, "Enter a valid mail id (must be @gmail.com)");
                 return false;
             }
             setFieldError(emailInput, errEl, false);

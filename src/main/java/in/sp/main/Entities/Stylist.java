@@ -15,7 +15,7 @@ public class Stylist {
     public static final int BIO_MAX_LENGTH = 1000;
     public static final int AVAILABILITY_HOURS_MAX_LENGTH = 120;
     public static final String NAME_PATTERN = "^[A-Za-z][A-Za-z .'-]{1,49}$";
-    public static final String EMAIL_PATTERN = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
+    public static final String EMAIL_PATTERN = "^[a-zA-Z0-9._%+-]+@gmail\\.com$";
     public static final String PHONE_PATTERN = "^\\d{10}$";
 
     @Id

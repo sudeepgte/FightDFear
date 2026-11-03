@@ -52,7 +52,7 @@ class RegValidators {
       RegExp(r'^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$');
 
   static bool isEmail(String v) =>
-      RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim());
+      RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', caseSensitive: false).hasMatch(v.trim());
 
   static bool isPhone10(String v) => RegExp(r'^\d{10}$').hasMatch(v.trim());
 
@@ -75,7 +75,7 @@ class RegValidators {
 
   static String? emailError(String v) {
     if (v.trim().isEmpty) return 'Email is required';
-    if (!isEmail(v)) return 'Enter a valid email address';
+    if (!isEmail(v)) return 'Enter a valid mail id (must be @gmail.com)';
     return null;
   }
 

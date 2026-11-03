@@ -207,7 +207,7 @@
                     <div class="dr-step-dot" data-step="2" onclick="showStep(2)">2</div>
                 </div>
 
-                <a href="${pageContext.request.contextPath}/index" class="back-home"><i class="bi bi-arrow-left"></i> Return Home</a>
+                <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="back-home"><i class="bi bi-arrow-left"></i> Back</a>
                 <h2>Join the Elite</h2>
 
                 <c:if test="${not empty error}">
@@ -237,9 +237,9 @@
                         </div>
                         <div class="fdf-group">
                             <label>Email Address</label>
-                            <input type="email" name="email" id="email" class="fdf-input" placeholder="priya@example.com"
+                            <input type="email" name="email" id="email" class="fdf-input" placeholder="priya@gmail.com"
                                    value="${stylist.email}" maxlength="100" required>
-                            <div class="error-msg" id="err-email">Valid email is required (e.g., name@domain.com).</div>
+                            <div class="error-msg" id="err-email">Enter a valid mail id (must be @gmail.com)</div>
                         </div>
                         <div class="fdf-group">
                             <label>Phone Number</label>
@@ -439,7 +439,7 @@
                 if (fieldId === 'firstName' || fieldId === 'lastName') {
                     isValid = val.length >= 2 && /^[a-zA-Z][a-zA-Z .'-]*$/.test(val);
                 } else if (fieldId === 'email') {
-                    isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+                    isValid = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(val);
                 } else if (fieldId === 'contactNumber') {
                     isValid = /^\d{10}$/.test(val);
                 } else if (fieldId === 'profileImageFile') {

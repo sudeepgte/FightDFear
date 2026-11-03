@@ -90,6 +90,7 @@ class ApiClient {
   // Cached SharedPreferences instance + in-memory store for platform channel resilience
   static SharedPreferences? _cachedPrefs;
   static final Map<String, String> _memoryStore = {};
+  static DateTime? _lastPrefsAttempt;
 
   static void setPreferences(SharedPreferences? prefs) {
     _cachedPrefs = prefs;
@@ -97,6 +98,11 @@ class ApiClient {
 
   static Future<SharedPreferences?> getPreferences() async {
     if (_cachedPrefs != null) return _cachedPrefs;
+    if (_lastPrefsAttempt != null &&
+        DateTime.now().difference(_lastPrefsAttempt!).inSeconds < 15) {
+      return null;
+    }
+    _lastPrefsAttempt = DateTime.now();
     try {
       _cachedPrefs = await SharedPreferences.getInstance();
       return _cachedPrefs;

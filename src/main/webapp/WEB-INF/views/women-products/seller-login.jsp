@@ -166,17 +166,21 @@
 </head>
 <body class="wp-auth">
     <header class="app-header">
-        <a class="header-brand" href="${pageContext.request.contextPath}/women-products">
-            <i class="bi bi-bag-heart-fill"></i> Women Products
+        <a class="header-brand" href="${pageContext.request.contextPath}/women-products" style="display: flex; align-items: center; gap: 10px;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
+            <span>Women Products</span>
         </a>
-        <div class="header-links">
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
             <a href="${pageContext.request.contextPath}/women-products/seller/register">Register</a>
         </div>
     </header>
 
     <main class="main-container">
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-products'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="info-banner">
             <h2>Seller login</h2>
@@ -199,7 +203,8 @@
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input class="form-input" type="email" name="email" id="email" required placeholder="Enter your email" value="${registeredEmail}">
+                    <input class="form-input" type="email" name="email" id="email" required placeholder="you@gmail.com" value="${registeredEmail}">
+                    <div id="emailError" style="display:none; color: #DC2626; font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
@@ -225,16 +230,44 @@
             input.type = show ? 'text' : 'password';
             icon.className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
         });
+
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+
+        function validateEmail() {
+            if (!emailInput || !emailError) return true;
+            var val = emailInput.value.trim();
+            if (!val) {
+                emailError.textContent = 'Email is required';
+                emailError.style.display = 'block';
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+                emailError.style.display = 'block';
+                return false;
+            }
+            emailError.style.display = 'none';
+            return true;
+        }
+
+        if (emailInput && emailError) {
+            emailInput.addEventListener('input', validateEmail);
+            emailInput.addEventListener('blur', validateEmail);
+        }
+
         document.getElementById('sellerLoginForm').addEventListener('submit', function (e) {
             var box = document.getElementById('js-login-error');
             var msg = document.getElementById('js-login-error-msg');
             box.style.display = 'none';
             var email = (this.email.value || '').trim();
             var password = this.password.value || '';
-            if (email === '' || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+            if (!validateEmail()) {
                 e.preventDefault();
-                msg.textContent = 'Enter a valid email address.';
+                msg.textContent = 'Enter a valid mail id (must be @gmail.com)';
                 box.style.display = 'flex';
+                emailInput.focus();
                 return;
             }
             if (password === '') {

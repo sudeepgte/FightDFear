@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../services/auth_state.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../../widgets/server_config_dialog.dart';
+import '../user/user_dashboard_screen.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -31,7 +32,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _photoName;
   bool _terms = false;
   bool _emailOtpOk = false;
-  bool _phoneOtpOk = false;
   bool _locating = false;
   bool _submitting = false;
 
@@ -66,8 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _password.text == _confirm.text &&
         _address.text.trim().isNotEmpty &&
         _terms &&
-        _emailOtpOk &&
-        _phoneOtpOk;
+        _emailOtpOk;
   }
 
   Future<void> _pickDob() async {
@@ -177,13 +176,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    final emailText = _email.text.trim();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Registration successful! Please sign in to continue.'),
+        backgroundColor: Color(0xFF10B981),
+      ),
+    );
     await showRegistrationSuccessDialog(
       context,
       message: result['message']?.toString() ??
-          'Registration successful. Your account is under admin verification. You will be able to log in once your account is approved.',
+          'Registration successful. Please sign in to access your dashboard.',
       onDone: () {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          MaterialPageRoute(
+            builder: (_) => LoginScreen(initialEmail: emailText),
+          ),
         );
       },
     );
@@ -284,7 +293,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 }),
                 decoration: const InputDecoration(
                   labelText: 'Email *',
-                  helperText: 'Enter an active email address for account alerts.',
+                  helperText: 'Must be a valid @gmail.com address for account alerts.',
                   helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
@@ -300,7 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   final email = _email.text.trim();
                   if (!RegValidators.isEmail(email)) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Enter a valid email first')),
+                      const SnackBar(content: Text('Enter a valid mail id (must be @gmail.com)')),
                     );
                     return false;
                   }
@@ -355,9 +364,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(10),
                 ],
-                onChanged: (_) => setState(() {
-                  _phoneOtpOk = false;
-                }),
+                onChanged: (_) => setState(() {}),
                 decoration: const InputDecoration(
                   labelText: 'Phone (10 digits) *',
                   helperText: 'Enter your 10-digit mobile number.',
@@ -365,12 +372,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) => RegValidators.phoneError(v ?? ''),
-              ),
-              OtpVerifyRow(
-                key: const ValueKey('register_phone_otp'),
-                label: 'Phone',
-                verified: _phoneOtpOk,
-                onVerified: () => setState(() => _phoneOtpOk = true),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -424,13 +425,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 value: _gender,
                 decoration: const InputDecoration(
                   labelText: 'Gender (optional)',
-                  helperText: 'Select your gender identity (optional).',
+                  helperText: 'Fight D Fear is dedicated to women. Select Female or Other.',
                   helperMaxLines: 2,
                   border: OutlineInputBorder(),
                 ),
                 items: const [
                   DropdownMenuItem(value: 'FEMALE', child: Text('Female')),
-                  DropdownMenuItem(value: 'MALE', child: Text('Male')),
                   DropdownMenuItem(value: 'OTHER', child: Text('Other')),
                 ],
                 onChanged: (v) => setState(() => _gender = v),

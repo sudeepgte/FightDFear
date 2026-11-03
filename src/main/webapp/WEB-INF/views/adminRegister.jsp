@@ -227,7 +227,8 @@
                 <div class="form-group">
                     <label>Admin Email *</label>
                     <input type="email" name="email" id="email" class="form-input" required 
-                           placeholder="admin@example.com" pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}">
+                           placeholder="admin@gmail.com" oninput="validateEmail()" onblur="validateEmail()">
+                    <div id="emailError" style="display:none;color:#b91c1c;font-size:0.8rem;margin-top:6px;">Enter a valid mail id (must be @gmail.com)</div>
                 </div>
 
                 <div class="row-2">
@@ -264,10 +265,36 @@
     </div>
 
 <script>
+const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+const emailInput = document.getElementById('email');
+const emailError = document.getElementById('emailError');
+
+function validateEmail() {
+    if (!emailInput || !emailError) return true;
+    var val = emailInput.value.trim();
+    if (!val) {
+        emailError.textContent = 'Admin Email is required';
+        emailError.style.display = 'block';
+        return false;
+    }
+    if (!emailRegex.test(val)) {
+        emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+        emailError.style.display = 'block';
+        return false;
+    }
+    emailError.style.display = 'none';
+    return true;
+}
+
 (function () {
     var form = document.getElementById('adminRegisterForm');
     if (form) {
         form.addEventListener('submit', function (e) {
+            if (!validateEmail()) {
+                e.preventDefault();
+                emailInput.focus();
+                return;
+            }
             var pwd = document.getElementById('password');
             var confirm = document.getElementById('confirmPassword');
             var err = document.getElementById('confirmPasswordError');

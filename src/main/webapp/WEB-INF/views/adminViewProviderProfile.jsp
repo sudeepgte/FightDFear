@@ -124,22 +124,24 @@
   .section-header i { color: var(--primary); font-size: 1.2rem; }
   .section-header h3 { font-family: 'Outfit', sans-serif; font-size: 1.08rem; font-weight: 700; color: var(--navy); margin: 0; }
 
-  .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-  .info-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; width: 100%; box-sizing: border-box; }
+  .info-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
   .info-field.span-all { grid-column: 1 / -1; }
   .info-field-label {
     font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.55px; color: var(--text-muted);
   }
-  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--navy-mid); word-break: break-word; }
+  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--navy-mid); overflow-wrap: anywhere; word-break: break-word; max-width: 100%; min-width: 0; }
   .empty-text { color: var(--text-muted); font-style: italic; font-weight: 500; font-size: 0.9rem; }
   .bio-box {
     background: var(--rose-soft); border: 1px solid #fecdd3; border-radius: 12px;
     padding: 14px 16px; font-size: 0.94rem; line-height: 1.65; color: var(--navy-mid);
+    overflow-wrap: anywhere; word-break: break-word; max-width: 100%; min-width: 0; white-space: pre-wrap;
   }
   .tag-pill {
-    display: inline-block; background: var(--rose-soft); color: #9f1239;
+    display: inline-flex; align-items: center; background: var(--rose-soft); color: #9f1239;
     padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
-    margin: 0 6px 6px 0; border: 1px solid #fecdd3;
+    margin: 0 6px 6px 0; border: 1px solid #fecdd3; max-width: 100%; white-space: normal;
+    word-break: break-word; overflow-wrap: anywhere; line-height: 1.35;
   }
 
   .doc-row {

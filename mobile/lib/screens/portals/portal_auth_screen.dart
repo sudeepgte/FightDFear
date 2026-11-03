@@ -886,7 +886,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
                 onChanged: (_) => _refreshValidation(),
                 decoration: _fieldDecoration(
                   label: 'Email',
-                  helperText: 'Enter an active email address.',
+                  helperText: 'Must be a valid @gmail.com address.',
                   errorText: _fieldErrors['email'],
                   prefixIcon: Icons.email_outlined,
                 ),
@@ -996,7 +996,7 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
           },
           decoration: _fieldDecoration(
             label: 'Email *',
-            helperText: 'Enter an active email address.',
+            helperText: 'Must be a valid @gmail.com address.',
             errorText: _fieldErrors['email'],
             prefixIcon: Icons.email_outlined,
           ),

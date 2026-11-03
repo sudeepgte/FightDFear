@@ -107,7 +107,9 @@ class _MartialArtsCentreRegisterScreenState extends State<MartialArtsCentreRegis
   String? _validateEmail(String email) {
     final v = email.trim();
     if (v.isEmpty) return 'Email is required';
-    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(v)) return 'Enter a valid email';
+    if (!RegExp(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', caseSensitive: false).hasMatch(v)) {
+      return 'Enter a valid mail id (must be @gmail.com)';
+    }
     return null;
   }
 

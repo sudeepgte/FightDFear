@@ -16,11 +16,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/admin-portal.css">
 <style>
-  body.ap-page { margin: 0; }
+  body.ap-page { margin: 0; word-wrap: break-word; overflow-x: hidden; }
   .topbar { display: none !important; }
-  .layout { display: flex; min-height: 100vh; }
-  .main { flex: 1; min-width: 0; background: var(--ap-bg); }
-  .mainInner { max-width: 1100px; margin: 0 auto; padding: 22px 24px 48px; }
+  .layout { display: flex; min-height: 100vh; max-width: 100%; }
+  .main { flex: 1; min-width: 0; background: var(--ap-bg); overflow-x: hidden; }
+  .mainInner { max-width: 1100px; margin: 0 auto; padding: 22px 24px 48px; min-width: 0; box-sizing: border-box; }
 
   .back-nav {
     display: inline-flex; align-items: center; gap: 8px; color: var(--ap-muted);
@@ -31,9 +31,13 @@
   .header-card {
     background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px;
     padding: 22px; margin-bottom: 18px; box-shadow: var(--ap-shadow);
+    max-width: 100%; min-width: 0; box-sizing: border-box; overflow-wrap: break-word;
   }
-  .header-card h1 { margin: 0; font-size: 1.45rem; font-weight: 800; color: var(--ap-text); font-family: Outfit, Poppins, sans-serif; }
-  .header-card .contact-line { color: var(--ap-muted); font-size: 0.88rem; }
+  .header-card h1 {
+    margin: 0; font-size: 1.45rem; font-weight: 800; color: var(--ap-text);
+    font-family: Outfit, Poppins, sans-serif; overflow-wrap: anywhere; word-break: break-word;
+  }
+  .header-card .contact-line { color: var(--ap-muted); font-size: 0.88rem; overflow-wrap: anywhere; word-break: break-word; }
   .header-card .contact-line a { color: var(--ap-text); text-decoration: none; font-weight: 600; }
   .avatar-box {
     width: 96px; height: 96px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
@@ -46,29 +50,61 @@
   .review-card {
     background: var(--ap-card); border: 1px solid var(--ap-border); border-radius: 16px;
     padding: 22px; margin-bottom: 16px; box-shadow: var(--ap-shadow);
+    max-width: 100%; min-width: 0; box-sizing: border-box; overflow-wrap: break-word;
   }
   .section-header {
     display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
-    padding-bottom: 12px; border-bottom: 1px solid var(--ap-border);
+    padding-bottom: 12px; border-bottom: 1px solid var(--ap-border); flex-wrap: wrap;
   }
   .section-header i {
     width: 34px; height: 34px; border-radius: 10px; background: var(--ap-accent-soft); color: var(--ap-accent);
-    display: inline-flex; align-items: center; justify-content: center;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .section-header h3 { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--ap-text); }
+  .section-header h3 { margin: 0; font-size: 1.02rem; font-weight: 800; color: var(--ap-text); overflow-wrap: anywhere; }
 
-  .info-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px 18px; }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 18px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .info-field {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
   .info-field.span-all { grid-column: 1 / -1; }
   .info-field-label {
     display: block; font-size: 0.72rem; font-weight: 700; color: var(--ap-muted);
     text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
   }
-  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--ap-text); word-break: break-word; }
+  .info-field-value {
+    font-size: 0.95rem; font-weight: 600; color: var(--ap-text);
+    overflow-wrap: anywhere; word-break: break-word; max-width: 100%; min-width: 0;
+  }
+  .bio-box {
+    background: #F8FAFC;
+    border: 1px solid var(--ap-border);
+    border-radius: 10px;
+    padding: 12px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--ap-text);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 100%;
+    min-width: 0;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
   .empty-text { color: #94A3B8; font-size: 0.88rem; font-style: italic; }
 
   .badge-status-lg {
     display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px;
-    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em;
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.02em; max-width: 100%;
+    white-space: normal; word-break: break-word;
   }
   .status-APPROVED, .status-VERIFIED { background: var(--ap-success-bg); color: var(--ap-success); }
   .status-REJECTED { background: var(--ap-danger-bg); color: var(--ap-danger); }
@@ -76,34 +112,43 @@
   .status-PROFILE_INCOMPLETE, .status-PENDING, .status-PENDING_ADMIN_APPROVAL,
   .status-READY_FOR_VERIFICATION, .status-REGISTERED { background: #FEF3C7; color: #B45309; }
 
+  .tag-pill-container {
+    display: flex; flex-wrap: wrap; gap: 6px; max-width: 100%; min-width: 0;
+  }
   .tag-pill {
-    display: inline-flex; padding: 4px 10px; border-radius: 999px; background: #F8FAFC;
+    display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 999px; background: #F8FAFC;
     border: 1px solid var(--ap-border); font-size: 0.78rem; font-weight: 600; margin: 0 6px 6px 0; color: #334155;
+    max-width: 100%; white-space: normal; word-break: break-word; overflow-wrap: anywhere; line-height: 1.35;
   }
   .fee-tile {
     border: 1px solid var(--ap-border); border-radius: 12px; padding: 12px; background: #FCFCFD; height: 100%;
+    min-width: 0; overflow-wrap: anywhere; word-break: break-word;
   }
   .fee-tile .amt { font-size: 1.1rem; font-weight: 800; color: var(--ap-text); }
 
   .doc-row {
     display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--ap-border);
-    border-radius: 12px; margin-bottom: 10px; background: #fff;
+    border-radius: 12px; margin-bottom: 10px; background: #fff; max-width: 100%; min-width: 0;
+    box-sizing: border-box; flex-wrap: wrap;
+  }
+  .doc-row > div:nth-child(2) {
+    flex: 1; min-width: 0; overflow-wrap: anywhere; word-break: break-word;
   }
   .doc-icon {
     width: 40px; height: 40px; border-radius: 10px; background: var(--ap-accent-soft); color: var(--ap-accent);
     display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .doc-link { color: var(--ap-accent); font-weight: 700; text-decoration: none; font-size: 0.86rem; }
+  .doc-link { color: var(--ap-accent); font-weight: 700; text-decoration: none; font-size: 0.86rem; overflow-wrap: anywhere; word-break: break-word; }
   .doc-link:hover { text-decoration: underline; }
-  .warn-mobile { color: #B45309; font-size: 0.82rem; font-weight: 600; }
+  .warn-mobile { color: #B45309; font-size: 0.82rem; font-weight: 600; overflow-wrap: anywhere; word-break: break-word; }
 
   .history-table th { font-size: 0.72rem; color: var(--ap-muted); text-transform: uppercase; }
-  .history-table td { font-size: 0.84rem; vertical-align: top; }
+  .history-table td { font-size: 0.84rem; vertical-align: top; overflow-wrap: anywhere; word-break: break-word; }
 
-  .action-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .action-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; max-width: 100%; min-width: 0; }
   .btn-verify, .btn-reject, .btn-changes {
     border: 0; border-radius: 10px; padding: 12px 22px; font-weight: 700; font-size: 0.9rem;
-    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer; max-width: 100%;
   }
   .btn-verify { background: var(--ap-success); color: #fff; }
   .btn-changes { background: var(--ap-warn); color: #fff; }
@@ -111,13 +156,26 @@
   .reason-checks label {
     display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--ap-border);
     border-radius: 999px; padding: 6px 12px; font-size: 0.82rem; background: #fff; cursor: pointer;
+    max-width: 100%; white-space: normal; word-break: break-word;
   }
 
   @media (max-width: 768px) {
-    .mainInner { padding: 16px 14px 40px; }
-    .info-grid { grid-template-columns: 1fr; }
-    .action-bar form, .action-bar button { width: 100%; }
-    .btn-verify, .btn-reject, .btn-changes { width: 100%; justify-content: center; }
+    .mainInner { padding: 14px 12px 32px; }
+    .header-card, .review-card { padding: 16px 12px; border-radius: 12px; }
+    .info-grid { grid-template-columns: 1fr; gap: 12px; }
+    .avatar-box { width: 72px; height: 72px; }
+    .header-card h1 { font-size: 1.2rem; }
+    .action-bar form, .action-bar button, .action-bar .btn-verify, .action-bar .btn-reject, .action-bar .btn-changes {
+      width: 100%; justify-content: center;
+    }
+    .reason-checks { flex-direction: column; align-items: stretch; }
+    .reason-checks label { width: 100%; box-sizing: border-box; }
+  }
+
+  @media (max-width: 480px) {
+    .doc-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .fee-tile { padding: 10px; }
+    .fee-tile .amt { font-size: 1rem; }
   }
 </style>
 </head>
@@ -326,7 +384,7 @@
           </div>
           <div class="info-field span-all">
             <span class="info-field-label">Languages</span>
-            <div class="mt-1">
+            <div class="mt-1 tag-pill-container">
               <c:choose>
                 <c:when test="${not empty pp.languages}">
                   <c:forEach var="lang" items="${pp.languages}">
@@ -344,7 +402,7 @@
           </div>
           <div class="info-field span-all">
             <span class="info-field-label">Services</span>
-            <div class="mt-1">
+            <div class="mt-1 tag-pill-container">
               <c:choose>
                 <c:when test="${not empty pp.services}">
                   <c:forEach var="svc" items="${pp.services}">
@@ -456,7 +514,7 @@
         <div class="info-grid mb-3">
           <div class="info-field span-all">
             <span class="info-field-label">Consultation modes</span>
-            <div class="mt-1">
+            <div class="mt-1 tag-pill-container">
               <c:choose>
                 <c:when test="${not empty pp.consultationModes}">
                   <c:forEach var="mode" items="${pp.consultationModes}">
@@ -480,7 +538,7 @@
           </div>
           <div class="info-field span-all">
             <span class="info-field-label">Available days</span>
-            <div class="mt-1">
+            <div class="mt-1 tag-pill-container">
               <c:choose>
                 <c:when test="${not empty daysRaw}">
                   <c:forEach var="day" items="${fn:split(daysRaw, ',')}">
@@ -513,9 +571,11 @@
         <c:if test="${not empty pp.availabilitySlots}">
           <div class="mb-3">
             <span class="info-field-label d-block mb-2">Availability slots</span>
-            <c:forEach var="slot" items="${pp.availabilitySlots}">
-              <span class="tag-pill">${slot.day} ${slot.start}–${slot.end}</span>
-            </c:forEach>
+            <div class="tag-pill-container">
+              <c:forEach var="slot" items="${pp.availabilitySlots}">
+                <span class="tag-pill">${slot.day} ${slot.start}–${slot.end}</span>
+              </c:forEach>
+            </div>
           </div>
         </c:if>
 

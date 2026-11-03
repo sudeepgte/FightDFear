@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import 'api_client.dart';
 
@@ -67,10 +68,21 @@ class DoctorAuthService {
     void Function(double progress)? onProgress,
   }) async {
     final filename = file.path.split(RegExp(r'[\\/]')).last;
+    final ext = filename.contains('.') ? filename.substring(filename.lastIndexOf('.')).toLowerCase() : '';
+    MediaType? contentType;
+    if (ext == '.jpg' || ext == '.jpeg') {
+      contentType = MediaType('image', 'jpeg');
+    } else if (ext == '.png') {
+      contentType = MediaType('image', 'png');
+    } else if (ext == '.pdf') {
+      contentType = MediaType('application', 'pdf');
+    }
+
     final multipart = await http.MultipartFile.fromPath(
       'file',
       file.path,
       filename: filename,
+      contentType: contentType,
     );
     return _api.postMultipart(
       '/api/doctors/provider/documents/$type',

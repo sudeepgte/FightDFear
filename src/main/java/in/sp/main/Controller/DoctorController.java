@@ -42,8 +42,10 @@ import in.sp.main.Repository.DoctorReviewRepository;
 import in.sp.main.Service.DoctorAppointmentService;
 import in.sp.main.Service.DoctorBookingService;
 import in.sp.main.Service.DoctorDocumentService;
+import in.sp.main.Service.DoctorNotificationService;
 import in.sp.main.Service.DoctorProfileService;
 import in.sp.main.Service.DoctorRegistrationService;
+import in.sp.main.Service.EmailAsyncService;
 import in.sp.main.Service.FileUploadService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -84,6 +86,12 @@ public class DoctorController {
 
     @Autowired
     private in.sp.main.Repository.DoctorChatRepository doctorChatRepo;
+
+    @Autowired
+    private DoctorNotificationService doctorNotificationService;
+
+    @Autowired
+    private EmailAsyncService emailAsyncService;
 
     @Autowired
     private org.springframework.messaging.simp.SimpMessagingTemplate messagingTemplate;
@@ -258,9 +266,6 @@ public class DoctorController {
         Doctor d = requireLoggedDoctor(session);
         if (d == null) {
             return "redirect:/doctors/login";
-        }
-        if (isApprovedDoctor(d)) {
-            return "redirect:/doctors/dashboard";
         }
         session.removeAttribute("postLoginOpenProfile");
         d = doctorRepo.findById(d.getId()).orElse(d);
@@ -1208,6 +1213,27 @@ public class DoctorController {
         }
 
         doctorChatRepo.save(msg);
+
+        // Dispatch email notification to recipient
+        String preview = message.length() > 80 ? message.substring(0, 80) + "..." : message;
+        if ("USER".equals(senderType) && msg.getUser() != null) {
+            String patientName = msg.getUser().getFullName() != null ? msg.getUser().getFullName() : "Patient";
+            doctorNotificationService.notifyDoctor(
+                doc,
+                "CHAT_MESSAGE",
+                "New message from " + patientName,
+                patientName + " sent you a message: \"" + preview + "\". Open the Fight D Fear app or website to view and reply.",
+                true
+            );
+        } else if ("DOCTOR".equals(senderType) && msg.getUser() != null && msg.getUser().getEmail() != null && !msg.getUser().getEmail().isBlank()) {
+            String subject = "Fight D Fear - New message from Dr. " + doc.getFullName();
+            String body = "Hello " + (msg.getUser().getFullName() != null ? msg.getUser().getFullName() : "Patient") + ",\n\n"
+                    + "Dr. " + doc.getFullName() + " sent you a message:\n\n"
+                    + "\"" + preview + "\"\n\n"
+                    + "Please open the Fight D Fear app or website to view and reply.\n\nThank you,\nFight D Fear Healthcare";
+            emailAsyncService.sendEmailAsync(msg.getUser().getEmail(), subject, body);
+        }
+
         // Broadcast via WebSocket using Map to avoid serialization recursion
         java.util.Map<String, Object> payload = new java.util.HashMap<>();
         payload.put("id", msg.getId());

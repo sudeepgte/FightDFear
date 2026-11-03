@@ -41,12 +41,20 @@
 </head>
 <body class="wp-auth">
     <header class="app-header">
-        <a class="header-brand" href="${pageContext.request.contextPath}/women-products"><i class="bi bi-truck"></i> Women Products</a>
-        <div class="header-links"><a href="${pageContext.request.contextPath}/women-products/delivery/register">Register</a></div>
+        <a class="header-brand" href="${pageContext.request.contextPath}/women-products" style="display: flex; align-items: center; gap: 10px;">
+            <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear" style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;">
+            <span>Women Products</span>
+        </a>
+        <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
+            <a href="${pageContext.request.contextPath}/" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px; background: #fff;">
+                <i class="bi bi-house-door"></i> Home
+            </a>
+            <a href="${pageContext.request.contextPath}/women-products/delivery/register">Register</a>
+        </div>
     </header>
     <main class="main-container">
-        <a href="${pageContext.request.contextPath}/" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
-            <i class="bi bi-arrow-left"></i> Back to Home
+        <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/women-products'; }" class="back-home" style="display: inline-flex; align-items: center; gap: 6px; color: var(--text-gray, #64748B); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 16px;">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <div class="info-banner">
             <h2>Delivery login</h2>
@@ -56,7 +64,11 @@
             <c:if test="${not empty error}"><div class="alert">${error}</div></c:if>
             <form action="${pageContext.request.contextPath}/women-products/delivery/login" method="post">
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-                <div class="form-group"><label>Email</label><input class="form-input" type="email" name="email" required></div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input class="form-input" type="email" id="email" name="email" placeholder="partner@gmail.com" required>
+                    <div id="emailError" style="display:none; color: #DC2626; font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
+                </div>
                 <div class="form-group">
                     <label>Password</label>
                     <div class="password-field">
@@ -77,6 +89,42 @@
             input.type = show ? 'text' : 'password';
             icon.className = show ? 'bi bi-eye' : 'bi bi-eye-slash';
         });
+
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+        const form = document.querySelector('form[action*="/women-products/delivery/login"]');
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('emailError');
+
+        function validateEmail() {
+            if (!emailInput || !emailError) return true;
+            var val = emailInput.value.trim();
+            if (!val) {
+                emailError.textContent = 'Email is required';
+                emailError.style.display = 'block';
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                emailError.textContent = 'Enter a valid mail id (must be @gmail.com)';
+                emailError.style.display = 'block';
+                return false;
+            }
+            emailError.style.display = 'none';
+            return true;
+        }
+
+        if (emailInput && emailError) {
+            emailInput.addEventListener('input', validateEmail);
+            emailInput.addEventListener('blur', validateEmail);
+        }
+
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                if (!validateEmail()) {
+                    e.preventDefault();
+                    emailInput.focus();
+                }
+            });
+        }
     </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>

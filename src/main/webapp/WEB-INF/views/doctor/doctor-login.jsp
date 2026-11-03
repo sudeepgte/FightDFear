@@ -123,7 +123,7 @@
         <a class="header-brand" href="${pageContext.request.contextPath}/">
             <img src="${pageContext.request.contextPath}/assets/img/fightdfear-logo.jpg" alt="Fight D Fear"
                  onerror="this.onerror=null; this.src='${pageContext.request.contextPath}/images/logo.png';"
-                 style="height:32px;width:32px;border-radius:8px;object-fit:cover;">
+                 style="height:44px;width:44px;border-radius:10px;object-fit:cover;">
             Fight D Fear
         </a>
         <div class="header-links" style="display: flex; align-items: center; gap: 12px;">
@@ -135,12 +135,9 @@
     </header>
 
     <main class="main-container">
-        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
+        <div class="fdf-nav-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 20px; flex-wrap: wrap;">
             <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/'; }" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
                 <i class="bi bi-arrow-left"></i> Back
-            </a>
-            <a href="${pageContext.request.contextPath}/" class="btn-fdf-nav" style="display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 10px; color: var(--navy, #0F172A); font-weight: 600; font-size: 0.88rem; text-decoration: none; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.2s ease;">
-                <i class="bi bi-house-door"></i> Back to Home
             </a>
         </div>
         <div class="login-card">
@@ -180,11 +177,11 @@
                     <div class="input-wrap">
                         <i class="bi bi-envelope prefix"></i>
                         <input type="email" id="email" name="email" class="form-input"
-                               placeholder="doctor@example.com" required maxlength="120"
+                               placeholder="doctor@gmail.com" required maxlength="120"
                                value="${prefillEmail != null ? prefillEmail : (not empty param.email ? param.email : '')}"
                                autocomplete="username">
                     </div>
-                    <div class="error-msg" id="emailError">Enter a valid email address.</div>
+                    <div class="error-msg" id="emailError">Enter a valid mail id (must be @gmail.com)</div>
                 </div>
                 <div class="form-group">
                     <div class="label-row">
@@ -219,7 +216,7 @@
             const email = document.getElementById('email');
             const password = document.getElementById('password');
             const loginBtn = document.getElementById('loginBtn');
-            const emailRule = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+            const emailRule = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
             let submitting = false;
 
             function showErr(id, show, msg) {
@@ -237,7 +234,7 @@
                     ok = false;
                     if (show) {
                         email.classList.add('is-invalid');
-                        showErr('emailError', true, e ? 'Enter a valid email address.' : 'Email is required.');
+                        showErr('emailError', true, e ? 'Enter a valid mail id (must be @gmail.com)' : 'Email is required.');
                     }
                 } else {
                     email.classList.remove('is-invalid');

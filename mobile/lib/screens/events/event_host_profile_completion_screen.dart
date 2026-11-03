@@ -77,6 +77,8 @@ class _EventHostProfileCompletionScreenState
   bool _saving = false;
   bool _submitting = false;
   bool _uploadingPhoto = false;
+  bool _uploadingLogo = false;
+  bool _uploadingDoc = false;
   bool _uploadingGallery = false;
   String? _error;
   Map<String, dynamic> _profile = {};
@@ -266,7 +268,9 @@ class _EventHostProfileCompletionScreenState
     if ((_state ?? '').isEmpty) return '2.4 State is required';
     if (_state == 'Other' && _stateOther.text.trim().isEmpty) return '2.4 Enter state';
     if (_pincode.text.trim().length != 6) return '2.5 Pincode must be 6 digits';
-    if (_credential.text.trim().isEmpty) return '1.8 GST / NGO / CIN number is required';
+    final credText = _credential.text.trim();
+    if (credText.isEmpty) return '1.8 GST / NGO / CIN number is required';
+    if (credText.length < 3) return '1.8 GST / NGO / CIN number must be at least 3 characters';
     final bankErr = BankDetailsSection.validateBankDetails(
       accountHolderController: _accountHolder,
       accountNumberController: _accountNumber,
@@ -351,15 +355,13 @@ class _EventHostProfileCompletionScreenState
         doneLabel: 'Submitted',
         action: () async {
           final saveRes = await _svc.updateProfile(_profileBody());
-          if (saveRes['success'] == true) _applyProfile(Map<String, dynamic>.from(saveRes));
-          if (_profile['canSubmitForVerification'] != true) {
-            throw Exception('Complete all mandatory fields before submitting');
+          if (saveRes['success'] == true) {
+            _applyProfile(Map<String, dynamic>.from(saveRes));
           }
           final res = await _svc.submitVerification();
           if (res['success'] != true) {
             throw Exception(res['error']?.toString() ?? 'Submit failed');
           }
-          await _load();
         },
       );
       if (!mounted) return;
@@ -395,15 +397,19 @@ class _EventHostProfileCompletionScreenState
       final img = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
       path = img?.path;
     } catch (_) {}
-    path ??= (await FilePicker.platform.pickFiles(type: FileType.image))?.files.single.path;
+    path ??= (await FilePicker.platform.pickFiles(type: FileType.any))?.files.single.path;
     if (path == null || path.isEmpty) return;
     setState(() {
       if (kind == 'photo') _uploadingPhoto = true;
+      if (kind == 'logo') _uploadingLogo = true;
+      if (kind == 'document') _uploadingDoc = true;
       if (kind == 'gallery') _uploadingGallery = true;
     });
     try {
       final res = await _svc.uploadPhotos(
         profilePath: kind == 'photo' ? path : null,
+        logoPath: kind == 'logo' ? path : null,
+        documentPath: kind == 'document' ? path : null,
         galleryPath: kind == 'gallery' ? path : null,
       );
       if (!mounted) return;
@@ -416,6 +422,8 @@ class _EventHostProfileCompletionScreenState
       if (mounted) {
         setState(() {
           _uploadingPhoto = false;
+          _uploadingLogo = false;
+          _uploadingDoc = false;
           _uploadingGallery = false;
         });
       }
@@ -499,7 +507,19 @@ class _EventHostProfileCompletionScreenState
                   _field(_phone, '1.5', 'Official phone', required: true, keyboardType: TextInputType.phone, maxLength: 10, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
                   _field(_whatsapp, '1.6', 'WhatsApp', keyboardType: TextInputType.phone, maxLength: 10, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
                   _field(_years, '1.7', 'Years of experience', keyboardType: TextInputType.number, maxLength: 2, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
-                  _field(_credential, '1.8', 'GST / NGO / CIN number', required: true, hint: 'GST, NGO registration, or CIN'),
+                  _field(
+                    _credential,
+                    '1.8',
+                    'GST / NGO / CIN number',
+                    required: true,
+                    hint: 'GST, NGO registration, or CIN',
+                    maxLength: 21,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9/\-]')),
+                      LengthLimitingTextInputFormatter(21),
+                    ],
+                  ),
                 ]),
                 _section('2', 'Location', [
                   _field(_address, '2.1', 'Address', required: true),
@@ -636,10 +656,12 @@ class _EventHostProfileCompletionScreenState
                   sectionNumber: '9',
                   title: 'Finance & Payout Bank Details',
                 ),
-                _section('10', 'Documents (optional)', [
-                  const Text('Uploads are optional. You can add them later.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
+                _section('10', 'Documents & Proofs (optional)', [
+                  const Text('Upload official credentials, brand logo, and ID proof.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
                   const SizedBox(height: 10),
-                  _uploadTile('10.1 Profile photo', _profile['profileImageUrl']?.toString(), _uploadingPhoto, () => _uploadFile(kind: 'photo')),
+                  _uploadTile('10.1 Profile photo', _profile['profileImageUrl']?.toString() ?? _profile['profilePhotoPath']?.toString(), _uploadingPhoto, () => _uploadFile(kind: 'photo')),
+                  _uploadTile('10.2 Brand logo', _profile['logoUrl']?.toString() ?? _profile['logoPath']?.toString(), _uploadingLogo, () => _uploadFile(kind: 'logo')),
+                  _uploadTile('10.3 Important document / ID proof', _profile['documentPath']?.toString(), _uploadingDoc, () => _uploadFile(kind: 'document')),
                 ]),
                 _section('11', 'Event photos (optional)', [
                   const Text('Photos help attendees choose you.', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
@@ -778,6 +800,7 @@ class _EventHostProfileCompletionScreenState
     bool required = false,
     int? maxLength,
     List<TextInputFormatter>? inputFormatters,
+    TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     final resolvedHelper = helper ?? ProfileFieldHelper.helperForLabel(label);
     return Padding(
@@ -785,6 +808,7 @@ class _EventHostProfileCompletionScreenState
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        textCapitalization: textCapitalization,
         maxLines: maxLines,
         maxLength: maxLength,
         inputFormatters: inputFormatters,
