@@ -6,6 +6,7 @@ import '../../services/auth_state.dart';
 import '../../services/module_services.dart';
 import '../../services/payment_service.dart';
 import '../../widgets/detail_listing_card.dart';
+import '../../widgets/digital_ticket_dialog.dart';
 import '../../widgets/module_payment_checkout.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/ux_feedback.dart';
@@ -33,6 +34,9 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
   List<Map<String, dynamic>> _registrations = [];
   String _category = 'all';
   String _sort = 'newest';
+  String _formatFilter = 'ALL';
+  String _priceFilter = 'ALL';
+  final _searchFilter = TextEditingController();
   final _cityFilter = TextEditingController();
 
   @override
@@ -71,6 +75,7 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
     _checkout.dispose();
     _tabs.dispose();
     _cityFilter.dispose();
+    _searchFilter.dispose();
     super.dispose();
   }
 
@@ -80,9 +85,16 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
       _error = null;
     });
     try {
+      bool? isFree;
+      if (_priceFilter == 'FREE') isFree = true;
+      if (_priceFilter == 'PAID') isFree = false;
+
       final res = await _api.list(
         category: _category == 'all' ? null : _category,
         city: _cityFilter.text.trim().isEmpty ? null : _cityFilter.text.trim(),
+        format: _formatFilter == 'ALL' ? null : _formatFilter,
+        free: isFree,
+        search: _searchFilter.text.trim().isEmpty ? null : _searchFilter.text.trim(),
         sort: _sort,
       );
       if (!mounted) return;
@@ -265,68 +277,42 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
 
   void _showTicketDetails(Map<String, dynamic> r) {
     final event = r['event'] is Map ? Map<String, dynamic>.from(r['event'] as Map) : <String, dynamic>{};
-    final venue = [event['venue'], event['city']]
-        .where((e) => e != null && '$e'.trim().isNotEmpty)
-        .join(', ');
-    showModalBottomSheet(
+    showDialog(
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(event['name']?.toString() ?? 'Event',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
-              const SizedBox(height: 12),
-              Text('Ticket: ${r['ticketCode'] ?? 'Not provided'}',
-                  style: const TextStyle(fontWeight: FontWeight.w800)),
-              Text('Status: ${r['status'] ?? 'Not provided'}'),
-              Text('Role: ${r['role'] ?? 'ATTENDEE'}'),
-              Text('Paid: ${r['paid'] == true ? 'Yes' : 'No'}'),
-              if (r['amountPaid'] != null) Text('Amount paid: ₹${r['amountPaid']}'),
-              Text('Organizer: ${event['organizerName'] ?? 'Not provided'}'),
-              Text('Date: ${event['eventDate'] ?? 'Not provided'} ${event['eventTime'] ?? ''}'),
-              Text(venue.isEmpty ? 'Venue not provided' : 'Venue: $venue'),
-              Text('Checked in: ${r['checkedIn'] == true ? 'Yes' : 'No'}'),
-              const SizedBox(height: 12),
-              if (r['canCancel'] == true)
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _cancelRegistration(r);
-                    },
-                    child: const Text('Cancel registration'),
-                  ),
-                ),
-              if (r['canReview'] == true)
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _rateRegistration(r);
-                    },
-                    style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
-                    child: const Text('Leave a review'),
-                  ),
-                ),
-              if (r['cancelPolicy'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    '${r['cancelPolicy']}',
-                    style: const TextStyle(fontSize: 12, color: ModuleTheme.textGray),
-                  ),
-                ),
-            ],
-          ),
-        ),
+      barrierDismissible: true,
+      builder: (_) => DigitalTicketDialog(
+        ticketCode: r['ticketCode']?.toString() ?? '—',
+        qrToken: r['qrToken']?.toString(),
+        eventName: event['name']?.toString() ?? 'Event',
+        attendeeName: r['attendeeName']?.toString(),
+        eventDate: event['eventDate']?.toString(),
+        eventTime: event['eventTime']?.toString(),
+        venue: event['venue']?.toString(),
+        city: event['city']?.toString(),
+        mapsLocation: event['mapsLocation']?.toString(),
+        eventFormat: event['eventFormat']?.toString() ?? 'OFFLINE',
+        virtual: event['virtual'] == true,
+        streamLink: event['streamLink']?.toString(),
+        meetingPlatform: event['meetingPlatform']?.toString(),
+        status: r['status']?.toString() ?? 'REGISTERED',
+        checkedIn: r['checkedIn'] == true,
+        checkedInAt: r['checkedInAt']?.toString(),
+        amountPaid: (r['amountPaid'] is num) ? (r['amountPaid'] as num).toDouble() : 0.0,
+        ticketTypeName: r['ticketTypeName']?.toString() ?? 'General',
+        canCancel: r['canCancel'] == true,
+        onCancel: r['canCancel'] == true
+            ? () {
+                Navigator.of(context, rootNavigator: true).pop();
+                _cancelRegistration(r);
+              }
+            : null,
+        canReview: r['canReview'] == true,
+        onReview: r['canReview'] == true
+            ? () {
+                Navigator.of(context, rootNavigator: true).pop();
+                _rateRegistration(r);
+              }
+            : null,
       ),
     );
   }
@@ -368,16 +354,88 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
       child: ListView(
         padding: const EdgeInsets.only(bottom: 24),
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: _searchFilter,
+                    decoration: InputDecoration(
+                      hintText: 'Search events or keywords...',
+                      prefixIcon: const Icon(Icons.search, size: 18),
+                      suffixIcon: _searchFilter.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 16),
+                              onPressed: () {
+                                _searchFilter.clear();
+                                _loadEvents();
+                              },
+                            )
+                          : null,
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                    onSubmitted: (_) => _loadEvents(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _cityFilter,
+                    decoration: InputDecoration(
+                      hintText: 'City',
+                      prefixIcon: const Icon(Icons.location_on_outlined, size: 18),
+                      suffixIcon: _cityFilter.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 16),
+                              onPressed: () {
+                                _cityFilter.clear();
+                                _loadEvents();
+                              },
+                            )
+                          : null,
+                      isDense: true,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                    onSubmitted: (_) => _loadEvents(),
+                  ),
+                ),
+              ],
+            ),
+          ),
           SizedBox(
-            height: 48,
+            height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
               children: [
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: ChoiceChip(
-                    label: const Text('All'),
+                    label: const Text('All Categories'),
                     selected: _category == 'all',
                     onSelected: (_) {
                       setState(() => _category = 'all');
@@ -402,41 +460,62 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-            child: TextField(
-              controller: _cityFilter,
-              decoration: InputDecoration(
-                hintText: 'City',
-                prefixIcon: const Icon(Icons.search, size: 18),
-                suffixIcon: IconButton(icon: const Icon(Icons.tune), onPressed: _loadEvents),
-                isDense: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...['ALL', 'OFFLINE', 'ONLINE', 'HYBRID'].map((f) {
+                    final label = f == 'ALL'
+                        ? 'All Formats'
+                        : (f == 'OFFLINE' ? 'In-Person' : (f == 'ONLINE' ? 'Online' : 'Hybrid'));
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(label, style: const TextStyle(fontSize: 11)),
+                        selected: _formatFilter == f,
+                        onSelected: (_) {
+                          setState(() => _formatFilter = f);
+                          _loadEvents();
+                        },
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 8),
+                  ...['ALL', 'FREE', 'PAID'].map((p) {
+                    final label = p == 'ALL' ? 'All Prices' : (p == 'FREE' ? 'Free' : 'Paid');
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(label, style: const TextStyle(fontSize: 11)),
+                        selected: _priceFilter == p,
+                        onSelected: (_) {
+                          setState(() => _priceFilter = p);
+                          _loadEvents();
+                        },
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text('Newest', style: TextStyle(fontSize: 11)),
+                    selected: _sort == 'newest',
+                    onSelected: (_) {
+                      setState(() => _sort = 'newest');
+                      _loadEvents();
+                    },
+                  ),
+                  const SizedBox(width: 6),
+                  ChoiceChip(
+                    label: const Text('Top rated', style: TextStyle(fontSize: 11)),
+                    selected: _sort == 'rating',
+                    onSelected: (_) {
+                      setState(() => _sort = 'rating');
+                      _loadEvents();
+                    },
+                  ),
+                ],
               ),
-              onSubmitted: (_) => _loadEvents(),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-            child: Wrap(
-              spacing: 6,
-              children: [
-                ChoiceChip(
-                  label: const Text('Newest'),
-                  selected: _sort == 'newest',
-                  onSelected: (_) {
-                    setState(() => _sort = 'newest');
-                    _loadEvents();
-                  },
-                ),
-                ChoiceChip(
-                  label: const Text('Top rated'),
-                  selected: _sort == 'rating',
-                  onSelected: (_) {
-                    setState(() => _sort = 'rating');
-                    _loadEvents();
-                  },
-                ),
-              ],
             ),
           ),
           Padding(
@@ -464,6 +543,28 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
               final isFree = e['free'] == true || ((e['entryFee'] is num) && (e['entryFee'] as num) <= 0);
               final already = e['alreadyRegistered'] == true;
               final full = e['full'] == true;
+              final format = (e['eventFormat']?.toString().toUpperCase() ??
+                  (e['virtual'] == true ? 'ONLINE' : 'OFFLINE'));
+              final formatTag = format == 'ONLINE'
+                  ? const DetailTag(
+                      label: 'Online',
+                      icon: Icons.videocam,
+                      background: Color(0xFFEFF6FF),
+                      foreground: Color(0xFF1D4ED8),
+                    )
+                  : format == 'HYBRID'
+                      ? const DetailTag(
+                          label: 'Hybrid',
+                          icon: Icons.sensors,
+                          background: Color(0xFFFAF5FF),
+                          foreground: Color(0xFF7E22CE),
+                        )
+                      : const DetailTag(
+                          label: 'In-person',
+                          icon: Icons.place_outlined,
+                          background: Color(0xFFF1F5F9),
+                          foreground: Color(0xFF334155),
+                        );
               String cta;
               if (already) {
                 cta = e['myPaid'] == true ? 'View ticket' : 'Complete payment';
@@ -483,6 +584,7 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                   photoUrl: (image == null || image.isEmpty) ? null : image,
                   showMediaActions: false,
                   tags: [
+                    formatTag,
                     DetailTag(
                       label: isFree ? 'Free' : '₹${e['entryFee'] ?? 0}',
                       icon: Icons.currency_rupee,
@@ -575,23 +677,37 @@ class _WomenEventsScreenState extends State<WomenEventsScreen>
                       background: const Color(0xFFFEF3C7),
                       foreground: const Color(0xFFB45309),
                     ),
+                    if (r['ticketTypeName'] != null)
+                      DetailTag(
+                        label: '${r['ticketTypeName']}',
+                        icon: Icons.local_activity_outlined,
+                      ),
                     if (r['registeredAt'] != null)
                       DetailTag(label: '${r['registeredAt']}', icon: Icons.schedule),
                     if (r['status'] != null)
-                      DetailTag(label: '${r['status']}', icon: Icons.info_outline),
-                    if (needsPay)
-                      const DetailTag(label: 'Pay to confirm', icon: Icons.payment),
-                    if (r['checkedIn'] == true)
-                      const DetailTag(
-                        label: 'Checked in',
-                        icon: Icons.verified,
-                        background: Color(0xFFDCFCE7),
-                        foreground: Color(0xFF166534),
+                      DetailTag(
+                        label: '${r['status']}',
+                        icon: Icons.info_outline,
+                        background: cancelled ? const Color(0xFFFEE2E2) : const Color(0xFFF1F5F9),
+                        foreground: cancelled ? const Color(0xFF991B1B) : const Color(0xFF334155),
                       ),
+                    if (needsPay)
+                      const DetailTag(
+                        label: 'Pay to confirm',
+                        icon: Icons.payment,
+                        background: Color(0xFFFFF1F2),
+                        foreground: Color(0xFFBE123C),
+                      ),
+                    DetailTag(
+                      label: r['checkedIn'] == true ? 'Attended' : 'Awaiting Entry',
+                      icon: r['checkedIn'] == true ? Icons.verified : Icons.access_time,
+                      background: r['checkedIn'] == true ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                      foreground: r['checkedIn'] == true ? const Color(0xFF166534) : const Color(0xFF64748B),
+                    ),
                   ],
                   primaryLabel: needsPay
                       ? (_paying ? 'Paying…' : 'Pay now')
-                      : 'Ticket details',
+                      : 'View Digital Ticket',
                   onPrimary: needsPay && registrationId != null && !_paying
                       ? () => _payForRegistration(
                             registrationId: registrationId,

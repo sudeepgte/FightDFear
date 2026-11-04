@@ -480,6 +480,10 @@ class FitnessService {
     required String sessionType,
     required String duration,
     String note = '',
+    String? paymentMethod,
+    String? razorpayOrderId,
+    String? razorpayPaymentId,
+    String? razorpaySignature,
   }) =>
       _api.post('/api/fitness/trainers/$id/bookings', body: {
         'category': category,
@@ -488,6 +492,10 @@ class FitnessService {
         'sessionType': sessionType,
         'duration': duration,
         if (note.isNotEmpty) 'note': note,
+        if (paymentMethod != null && paymentMethod.isNotEmpty) 'paymentMethod': paymentMethod,
+        if (razorpayOrderId != null && razorpayOrderId.isNotEmpty) 'razorpayOrderId': razorpayOrderId,
+        if (razorpayPaymentId != null && razorpayPaymentId.isNotEmpty) 'razorpayPaymentId': razorpayPaymentId,
+        if (razorpaySignature != null && razorpaySignature.isNotEmpty) 'razorpaySignature': razorpaySignature,
       });
 
   Future<Map<String, dynamic>> submitReview(int bookingId, {required int rating, String comment = ''}) =>
@@ -555,7 +563,14 @@ class WomenEventsService {
 
   Future<Map<String, dynamic>> categories() => _api.get('/api/women-events/categories');
 
-  Future<Map<String, dynamic>> list({String? category, String? city, String? sort}) {
+  Future<Map<String, dynamic>> list({
+    String? category,
+    String? city,
+    String? sort,
+    String? format,
+    bool? free,
+    String? search,
+  }) {
     final q = <String>[];
     if (category != null && category.isNotEmpty && category != 'all') {
       q.add('category=${Uri.encodeQueryComponent(category)}');
@@ -565,6 +580,15 @@ class WomenEventsService {
     }
     if (sort != null && sort.isNotEmpty) {
       q.add('sort=${Uri.encodeQueryComponent(sort)}');
+    }
+    if (format != null && format.isNotEmpty && format != 'all') {
+      q.add('format=${Uri.encodeQueryComponent(format)}');
+    }
+    if (free != null) {
+      q.add('free=$free');
+    }
+    if (search != null && search.trim().isNotEmpty) {
+      q.add('search=${Uri.encodeQueryComponent(search.trim())}');
     }
     final qs = q.isEmpty ? '' : '?${q.join('&')}';
     return _api.get('/api/women-events$qs');

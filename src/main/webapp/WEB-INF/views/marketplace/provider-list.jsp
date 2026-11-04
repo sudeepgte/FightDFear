@@ -558,6 +558,90 @@
 
     <div class="container-fluid" style="padding: 20px 40px;">
 
+        <c:if test="${not empty message}">
+            <div class="alert alert-success alert-dismissible fade show" role="alert" style="border-radius:12px; margin-bottom: 20px;">
+                <i class="bi bi-check-circle-fill me-2"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </c:if>
+        <c:if test="${not empty error}">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="border-radius:12px; margin-bottom: 20px;">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> ${error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </c:if>
+
+        <!-- Top Header Action Row for My Bookings -->
+        <div id="myBookingsSection" class="d-flex justify-content-between align-items-center mb-3">
+            <a href="javascript:void(0);" onclick="if(window.history.length > 1){ window.history.back(); } else { window.location.href='${pageContext.request.contextPath}/users/dashboard'; }" class="btn btn-sm btn-light shadow-sm" style="border-radius:20px; padding: 6px 16px; font-weight:600; color:var(--secondary);">
+                <i class="bi bi-arrow-left me-1"></i> Go Back
+            </a>
+            <button type="button" onclick="toggleMyBookingsCard()" class="btn btn-sm shadow-sm" style="background: #FFE4E6; color: var(--primary); font-weight: 700; border-radius: 20px; padding: 8px 18px; border: 1px solid #FECDD3;">
+                <i class="bi bi-calendar-check-fill me-1"></i> My Appointments (${not empty myLawyerBookings ? fn:length(myLawyerBookings) : 0})
+            </button>
+        </div>
+
+        <!-- My Lawyer Bookings Card (Displayed on Top) -->
+        <div id="myBookingsCard" class="card shadow-sm mb-4" style="border-radius: 16px; border: 1.5px solid #FECDD3; background: #FFF5F7; ${not empty myLawyerBookings ? 'display:block;' : 'display:none;'}">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center pt-3 px-3 pb-0">
+                <h5 class="fw-bold m-0" style="color: #1E1B4B; font-size: 1.1rem;">
+                    <i class="bi bi-calendar-event-fill text-danger me-2"></i>My Booked Lawyer Appointments
+                </h5>
+                <span class="badge bg-danger rounded-pill px-3 py-2">${not empty myLawyerBookings ? fn:length(myLawyerBookings) : 0} Bookings</span>
+            </div>
+            <div class="card-body p-3">
+                <c:choose>
+                    <c:when test="${not empty myLawyerBookings}">
+                        <div class="row g-3">
+                            <c:forEach var="b" items="${myLawyerBookings}">
+                                <div class="col-12 col-md-6 col-lg-4">
+                                    <div class="p-3 bg-white rounded-3 border shadow-sm h-100 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h6 class="fw-bold mb-0 text-dark" style="font-size:1rem;">Adv. ${b.provider.fullName}</h6>
+                                                    <small class="text-muted" style="font-size:0.8rem;">${not empty b.provider.designation ? b.provider.designation : 'Women Lawyer Advocate'}</small>
+                                                </div>
+                                                <span class="badge ${b.status == 'CONFIRMED' || b.status == 'PAID' ? 'bg-success' : (b.status == 'CANCELLED' ? 'bg-danger' : 'bg-warning text-dark')} px-2 py-1" style="font-size:0.75rem;">
+                                                    ${b.status}
+                                                </span>
+                                            </div>
+                                            <div class="small text-secondary mb-1">
+                                                <i class="bi bi-clock-fill text-danger me-1"></i>
+                                                <span class="fw-semibold">Requested:</span> ${b.requestedTime != null ? b.requestedTime : 'Scheduled Time'}
+                                            </div>
+                                            <div class="small text-secondary mb-2">
+                                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                                                ${not empty b.provider.city ? b.provider.city : 'Chamber Consultation'}
+                                            </div>
+                                            <c:if test="${not empty b.note}">
+                                                <div class="p-2 bg-light rounded text-muted small mb-2" style="font-size:0.8rem;">
+                                                    <i class="bi bi-chat-left-text me-1"></i> "${b.note}"
+                                                </div>
+                                            </c:if>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                            <span class="fw-bold text-danger">₹${not empty b.provider.consultationFee ? b.provider.consultationFee : '1,500'}</span>
+                                            <a href="${pageContext.request.contextPath}/marketplace/view/${b.provider.id}" class="btn btn-sm btn-outline-danger px-3" style="border-radius:8px; font-weight:600; font-size:0.8rem;">
+                                                View Advocate
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-calendar-x display-6 d-block mb-2 text-secondary"></i>
+                            <p class="mb-0 fw-semibold">No lawyer appointments booked yet.</p>
+                            <small class="text-muted">Select a verified lawyer below and click "Book Now" to schedule a consultation.</small>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
+            </div>
+        </div>
+
         <!-- Hero -->
         <section class="hero">
             <h1>Find the Right Lawyer</h1>
@@ -787,7 +871,7 @@
         <i class="bi bi-people-fill"></i>
         <span>Lawyers</span>
     </a>
-    <a href="${pageContext.request.contextPath}/marketplace/myBookings" class="nav-item">
+    <a href="#myBookingsSection" onclick="toggleMyBookingsCard(); return false;" class="nav-item">
         <i class="bi bi-calendar-event"></i>
         <span>Appointments</span>
     </a>
@@ -796,6 +880,30 @@
         <span>Profile</span>
     </a>
 </div>
+
+    <script>
+        function toggleMyBookingsCard() {
+            const card = document.getElementById('myBookingsCard');
+            if (card) {
+                if (card.style.display === 'none' || card.style.display === '') {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash === '#myBookings' || window.location.hash === '#myBookingsSection') {
+                const card = document.getElementById('myBookingsCard');
+                if (card) {
+                    card.style.display = 'block';
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+        });
+    </script>
 
 
 

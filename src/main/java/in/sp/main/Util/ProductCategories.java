@@ -30,8 +30,6 @@ public final class ProductCategories {
      */
     public static String normalize(String raw) {
         if (raw == null || raw.isBlank()) return null;
-        String fromProduct = WomenProduct.normalizeCategory(raw);
-        if (fromProduct != null) return fromProduct;
 
         String key = raw.trim().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
         return switch (key) {

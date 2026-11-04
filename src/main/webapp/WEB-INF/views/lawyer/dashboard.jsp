@@ -214,7 +214,7 @@
 </head>
 <body>
 
-    <c:set var="isVerified" value="${lawyer.verificationStatus == 'VERIFIED'}" />
+    <c:set var="isVerified" value="${lawyer.verificationStatus == 'VERIFIED' || lawyer.partnerProfileStatus == 'APPROVED'}" />
     
     <c:set var="activeCasesCount" value="0" />
     <c:set var="upcomingAptCount" value="0" />
@@ -373,8 +373,8 @@
                             <div style="display:flex; align-items:center; gap:16px; flex:1;">
                                 <div class="action-icon" style="background: #FEF3C7; color: #D97706; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;"><i class="bi bi-hourglass-split"></i></div>
                                 <div class="action-content" style="flex:1; margin-left:0;">
-                                    <h3 style="color: #92400E; font-size: 1.15rem; font-weight: 700; margin-bottom: 4px;">Your Profile is Under Review</h3>
-                                    <p style="color: #B45309; font-size: 0.9rem; margin: 0; line-height: 1.5;">Your profile is currently under review by our admin team. All features and sections are accessible for viewing and updating. Booking activations and payouts will be fully unlocked once verified.</p>
+                                    <h3 style="color: #92400E; font-size: 1.15rem; font-weight: 700; margin-bottom: 4px;">Your Profile is Under Verification</h3>
+                                    <p style="color: #B45309; font-size: 0.9rem; margin: 0; line-height: 1.5;">Your profile is currently under verification by our admin team. Please wait while we verify your details and credentials. Booking activations and payouts will be fully unlocked once verified.</p>
                                 </div>
                             </div>
                             <a href="${pageContext.request.contextPath}/lawyer/profile-completion" class="btn-upload" style="text-decoration:none; white-space:nowrap; margin-left:16px;">Update Details</a>

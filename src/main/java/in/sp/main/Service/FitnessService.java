@@ -33,6 +33,9 @@ public class FitnessService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private FitnessNotificationService fitnessNotificationService;
+
     // --- PACKAGE MANAGEMENT ---
 
     @Transactional
@@ -142,6 +145,10 @@ public class FitnessService {
             }
             bookingRepository.save(booking);
         }
+
+        try {
+            fitnessNotificationService.notifyAttendanceRecorded(booking, saved);
+        } catch (Exception ignored) {}
 
         return saved;
     }

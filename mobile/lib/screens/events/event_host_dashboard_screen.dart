@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/women_event_catalog.dart';
 import '../../services/auth_state.dart';
 import '../../services/event_host_auth_service.dart';
 import '../../widgets/module_theme.dart';
 import '../landing/landing_screen.dart';
+import 'event_create_edit_screen.dart';
 import 'event_host_profile_completion_screen.dart';
 
 class EventHostDashboardScreen extends StatefulWidget {
@@ -38,6 +41,7 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
   bool _loadingRegs = false;
   String? _regsError;
   final _ticketCode = TextEditingController();
+  final _attendeeSearch = TextEditingController();
   bool _checkingIn = false;
 
   EventHostAuthService get _svc => EventHostAuthService(context.read<AuthState>().api);
@@ -51,6 +55,7 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
   @override
   void dispose() {
     _ticketCode.dispose();
+    _attendeeSearch.dispose();
     super.dispose();
   }
 
@@ -335,7 +340,15 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
       _requireVerifiedOrToast();
       return;
     }
-    await _showEventForm();
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => EventCreateEditScreen(hostInfo: _host),
+      ),
+    );
+    if (ok == true && mounted) {
+      setState(() => _tab = 1);
+      await _load();
+    }
   }
 
   // ── Event form (create / edit) ────────────────────────────────────────────
@@ -859,6 +872,91 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
       if (mounted) _toast('$e', error: true);
     }
     if (mounted) setState(() => _checkingIn = false);
+  }
+
+  Future<void> _toggleAttendance(Map<String, dynamic> reg) async {
+    final eventId = _selectedEventId;
+    final regId = reg['id'];
+    if (eventId == null || regId == null) return;
+    final idNum = (regId is num) ? regId.toInt() : int.tryParse('$regId');
+    if (idNum == null) return;
+
+    try {
+      final res = await _svc.toggleAttendance(eventId, idNum);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        _toast(res['message']?.toString() ?? 'Attendance updated');
+        await _loadRegistrations(eventId);
+      } else {
+        _toast(res['error']?.toString() ?? 'Update failed', error: true);
+      }
+    } catch (e) {
+      if (mounted) _toast('$e', error: true);
+    }
+  }
+
+  Future<void> _scanTicketQr() async {
+    final eventId = _selectedEventId;
+    if (eventId == null) {
+      _toast('Select an event first', error: true);
+      return;
+    }
+    var scanned = false;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.black,
+      builder: (ctx) {
+        return SizedBox(
+          height: 480,
+          child: Stack(
+            children: [
+              MobileScanner(
+                onDetect: (capture) async {
+                  if (scanned) return;
+                  final barcodes = capture.barcodes;
+                  if (barcodes.isEmpty) return;
+                  final raw = barcodes.first.rawValue?.trim();
+                  if (raw == null || raw.isEmpty) return;
+                  scanned = true;
+                  Navigator.of(ctx).pop();
+                  _ticketCode.text = raw;
+                  await _checkIn();
+                },
+              ),
+              Positioned(
+                top: 16,
+                right: 16,
+                child: CircleAvatar(
+                  backgroundColor: Colors.black54,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 24,
+                left: 20,
+                right: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Point camera at attendee ticket QR code',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -1798,12 +1896,19 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
               OutlinedButton(
                 onPressed: cancelled
                     ? null
-                    : () {
+                    : () async {
                         if (!_verified) {
                           _requireVerifiedOrToast();
                           return;
                         }
-                        _showEventForm(existing: e);
+                        final ok = await Navigator.of(context).push<bool>(
+                          MaterialPageRoute(
+                            builder: (_) => EventCreateEditScreen(existing: e, hostInfo: _host),
+                          ),
+                        );
+                        if (ok == true && mounted) {
+                          await _load();
+                        }
                       },
                 child: const Text('Edit'),
               ),
@@ -1831,16 +1936,44 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
   // ── Attendees tab ─────────────────────────────────────────────────────────
 
   Widget _attendeesTab() {
+    final query = _attendeeSearch.text.trim().toLowerCase();
+    final filteredRegs = _selectedRegs.where((r) {
+      if (query.isEmpty) return true;
+      final name = (r['userName']?.toString() ?? '').toLowerCase();
+      final email = (r['userEmail']?.toString() ?? '').toLowerCase();
+      final phone = (r['userPhone']?.toString() ?? '').toLowerCase();
+      final ticket = (r['ticketCode']?.toString() ?? '').toLowerCase();
+      return name.contains(query) || email.contains(query) || phone.contains(query) || ticket.contains(query);
+    }).toList();
+
+    final totalRegs = _selectedRegs.length;
+    final presentCount = _selectedRegs.where((r) => r['checkedIn'] == true || (r['status']?.toString().toUpperCase() == 'ATTENDED')).length;
+    final pendingCount = totalRegs - presentCount;
+    final capacityVal = _selectedEvent?['maxParticipants'] ?? _selectedEvent?['capacity'];
+    final capacityStr = (capacityVal != null && capacityVal != 0) ? '$capacityVal' : '∞';
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
       children: [
-        const Text(
-          'Attendees',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: EventHostDashboardScreen.navy,
-          ),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Attendees & Roster',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: EventHostDashboardScreen.navy,
+                ),
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                if (_selectedEventId != null) _loadRegistrations(_selectedEventId!);
+              },
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         if (_events.isEmpty)
@@ -1855,7 +1988,7 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
         else ...[
           DropdownButtonFormField<int>(
             key: ValueKey('event-$_selectedEventId'),
-            initialValue: _selectedEventId,
+            value: _selectedEventId,
             isExpanded: true,
             decoration: const InputDecoration(
               labelText: 'Select event',
@@ -1882,20 +2015,51 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
             },
           ),
           const SizedBox(height: 14),
+
+          // Attendance Stat Cards (matching web attendees.jsp)
+          Row(
+            children: [
+              _attendeeStatCard('Registered', '$totalRegs', EventHostDashboardScreen.navy),
+              const SizedBox(width: 8),
+              _attendeeStatCard('Present', '$presentCount', const Color(0xFF16A34A)),
+              const SizedBox(width: 8),
+              _attendeeStatCard('Awaiting', '$pendingCount', const Color(0xFF64748B)),
+              const SizedBox(width: 8),
+              _attendeeStatCard('Capacity', capacityStr, EventHostDashboardScreen.primary),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Quick Ticket Verification & QR Scan Box
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: _card(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Check-in',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: EventHostDashboardScreen.navy,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Ticket Verification & Check-in',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: EventHostDashboardScreen.navy,
+                        fontSize: 14,
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: _scanTicketQr,
+                      icon: const Icon(Icons.qr_code_scanner, size: 16),
+                      label: const Text('Scan QR', style: TextStyle(fontSize: 12)),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: EventHostDashboardScreen.navy,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -1903,9 +2067,10 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
                         controller: _ticketCode,
                         textCapitalization: TextCapitalization.characters,
                         decoration: const InputDecoration(
-                          labelText: 'Ticket code',
+                          hintText: 'Enter 12-char ticket code...',
                           border: OutlineInputBorder(),
                           isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         ),
                         onSubmitted: (_) => _checkIn(),
                       ),
@@ -1915,18 +2080,15 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
                       onPressed: _checkingIn ? null : _checkIn,
                       style: FilledButton.styleFrom(
                         backgroundColor: EventHostDashboardScreen.primary,
-                        minimumSize: const Size(96, 48),
+                        minimumSize: const Size(80, 42),
                       ),
                       child: _checkingIn
                           ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Text('Check in'),
+                          : const Text('Verify'),
                     ),
                   ],
                 ),
@@ -1934,6 +2096,38 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
             ),
           ),
           const SizedBox(height: 14),
+
+          // Search Attendee Box
+          TextField(
+            controller: _attendeeSearch,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'Search attendee by name, email, phone, ticket...',
+              prefixIcon: const Icon(Icons.search, size: 20),
+              suffixIcon: _attendeeSearch.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () {
+                        _attendeeSearch.clear();
+                        setState(() {});
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              isDense: true,
+            ),
+          ),
+          const SizedBox(height: 14),
+
           if (_loadingRegs)
             const Padding(
               padding: EdgeInsets.all(24),
@@ -1945,15 +2139,10 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
               decoration: _card(),
               child: Column(
                 children: [
-                  Text(
-                    _regsError!,
-                    style: TextStyle(color: Colors.red.shade700),
-                  ),
+                  Text(_regsError!, style: TextStyle(color: Colors.red.shade700)),
                   const SizedBox(height: 8),
                   TextButton(
-                    onPressed: _selectedEventId == null
-                        ? null
-                        : () => _loadRegistrations(_selectedEventId!),
+                    onPressed: _selectedEventId == null ? null : () => _loadRegistrations(_selectedEventId!),
                     child: const Text('Retry'),
                   ),
                 ],
@@ -1970,67 +2159,235 @@ class _EventHostDashboardScreenState extends State<EventHostDashboardScreen> {
                 style: const TextStyle(color: EventHostDashboardScreen.muted),
               ),
             )
+          else if (filteredRegs.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: _card(),
+              child: const Text(
+                'No matching attendees found.',
+                style: TextStyle(color: EventHostDashboardScreen.muted),
+              ),
+            )
           else
-            ..._selectedRegs.map(_regTile),
+            ...filteredRegs.map(_regTile),
         ],
       ],
     );
   }
 
-  Widget _regTile(Map<String, dynamic> r) {
-    final paid = r['paid'] == true;
-    final checkedIn = r['checkedIn'] == true;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: _card(),
-      child: ListTile(
-        title: Text(
-          r['userName']?.toString() ?? 'Attendee',
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: EventHostDashboardScreen.navy,
-          ),
+  Widget _attendeeStatCard(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        subtitle: Text(
-          '${r['userEmail'] ?? ''} · ${r['ticketCode'] ?? ''}',
-          style: const TextStyle(fontSize: 12),
-        ),
-        onTap: () => _editNotes(r),
-        trailing: Wrap(
-          spacing: 4,
+        child: Column(
           children: [
-            Chip(
-              label: Text(
-                paid ? 'Paid' : 'Unpaid',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: paid ? const Color(0xFF166534) : const Color(0xFF9A3412),
-                ),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: color,
               ),
-              backgroundColor:
-                  paid ? const Color(0xFFDCFCE7) : const Color(0xFFFFEDD5),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
             ),
-            Chip(
-              label: Text(
-                checkedIn ? 'Checked in' : 'Not in',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: checkedIn
-                      ? const Color(0xFF1D4ED8)
-                      : EventHostDashboardScreen.muted,
-                ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: EventHostDashboardScreen.muted,
               ),
-              backgroundColor:
-                  checkedIn ? const Color(0xFFDBEAFE) : const Color(0xFFF1F5F9),
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _regTile(Map<String, dynamic> r) {
+    final paid = r['paid'] == true;
+    final checkedIn = r['checkedIn'] == true || (r['status']?.toString().toUpperCase() == 'ATTENDED');
+    final name = r['userName']?.toString() ?? 'Attendee';
+    final email = r['userEmail']?.toString() ?? '';
+    final phone = r['userPhone']?.toString() ?? '';
+    final ticketCode = r['ticketCode']?.toString() ?? '';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: _card(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: EventCreateEditScreen.primary,
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : 'A',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: EventHostDashboardScreen.navy,
+                      ),
+                    ),
+                    if (ticketCode.isNotEmpty)
+                      Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFFFECDD3)),
+                        ),
+                        child: Text(
+                          ticketCode,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: EventCreateEditScreen.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: checkedIn ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: checkedIn ? const Color(0xFF86EFAC) : const Color(0xFFCBD5E1),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          checkedIn ? Icons.check_circle : Icons.schedule,
+                          size: 12,
+                          color: checkedIn ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          checkedIn ? 'Present' : 'Awaiting',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: checkedIn ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    paid ? 'Paid' : 'Unpaid',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: paid ? const Color(0xFF16A34A) : const Color(0xFFB45309),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Contact details: Email & Phone
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              if (email.isNotEmpty)
+                InkWell(
+                  onTap: () async {
+                    final uri = Uri.parse('mailto:$email');
+                    if (await canLaunchUrl(uri)) await launchUrl(uri);
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.email_outlined, size: 14, color: EventHostDashboardScreen.muted),
+                      const SizedBox(width: 4),
+                      Text(email, style: const TextStyle(fontSize: 12, color: Color(0xFF3B82F6))),
+                    ],
+                  ),
+                ),
+              if (phone.isNotEmpty)
+                InkWell(
+                  onTap: () async {
+                    final uri = Uri.parse('tel:$phone');
+                    if (await canLaunchUrl(uri)) await launchUrl(uri);
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.phone_outlined, size: 14, color: EventHostDashboardScreen.muted),
+                      const SizedBox(width: 4),
+                      Text(phone, style: const TextStyle(fontSize: 12, color: Color(0xFF16A34A), fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // Action buttons: Mark Present / Unmark & Notes
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _toggleAttendance(r),
+                  icon: Icon(
+                    checkedIn ? Icons.undo : Icons.how_to_reg,
+                    size: 16,
+                  ),
+                  label: Text(checkedIn ? 'Unmark Present' : 'Mark Present'),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    foregroundColor: checkedIn ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+                    side: BorderSide(
+                      color: checkedIn ? const Color(0xFFFECACA) : const Color(0xFF86EFAC),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                onPressed: () => _editNotes(r),
+                icon: const Icon(Icons.edit_note, size: 16),
+                label: const Text('Notes'),
+                style: OutlinedButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

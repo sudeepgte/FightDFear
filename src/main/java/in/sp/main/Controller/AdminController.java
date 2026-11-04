@@ -2258,6 +2258,12 @@ public class AdminController {
         return "redirect:/admin/event-hosts/" + id + "/profile";
     }
 
+    @GetMapping("/women-events/{id}")
+    public String viewWomenEventFromAdmin(@PathVariable("id") Long id, HttpSession session) {
+        if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";
+        return "redirect:/women-events/" + id;
+    }
+
     @PostMapping("/women-events/{id}/approve")
     public String approveWomenEventFromAdmin(@PathVariable("id") Long id, HttpSession session, RedirectAttributes ra) {
         if (session.getAttribute("admin") == null) return "redirect:/admin/loginAdmin";

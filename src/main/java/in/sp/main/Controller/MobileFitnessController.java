@@ -41,6 +41,8 @@ public class MobileFitnessController {
     private in.sp.main.Repository.FitnessAttendanceRepository fitnessAttendanceRepo;
     @Autowired
     private in.sp.main.Repository.FitnessClassRepository fitnessClassRepo;
+    @Autowired
+    private in.sp.main.Service.FitnessNotificationService fitnessNotificationService;
 
 
     @GetMapping("/categories")
@@ -97,7 +99,47 @@ public class MobileFitnessController {
         dto.put("serviceType", t.getServiceType());
         dto.put("city", t.getCity());
         dto.put("onlineAvailable", t.isOnlineAvailable());
-        dto.put("packages", packageOptions(t.getSessionFees()));
+
+        // Custom Packages
+        List<FitnessPackage> customPackages = fitnessPackageRepo.findByTrainer_IdAndActiveTrue(id);
+        List<Map<String, Object>> pkgDtos = customPackages.stream().map(p -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", p.getId());
+            m.put("packageName", p.getPackageName());
+            m.put("category", p.getCategory());
+            m.put("description", p.getDescription());
+            m.put("sessionCount", p.getSessionCount());
+            m.put("durationDays", p.getDurationDays());
+            m.put("price", p.getPrice());
+            m.put("sessionType", p.getSessionType());
+            m.put("active", p.isActive());
+            return m;
+        }).toList();
+        dto.put("customPackages", pkgDtos);
+
+        // Group Classes
+        List<FitnessClass> classes = fitnessClassRepo.findByTrainer_IdOrderByClassDateAsc(id).stream()
+                .filter(fc -> "ACTIVE".equalsIgnoreCase(fc.getStatus()) && fc.getClassDate() != null && !fc.getClassDate().isBefore(LocalDate.now()) && (fc.getCurrentEnrollment() == null || fc.getMaxCapacity() == null || fc.getCurrentEnrollment() < fc.getMaxCapacity()))
+                .toList();
+        dto.put("classes", classes.stream().map(this::classSummaryDto).toList());
+
+        // Client Reviews
+        List<FitnessReview> reviews = reviewRepo.findByBooking_Trainer_Id(id);
+        List<Map<String, Object>> reviewDtos = reviews.stream().map(r -> {
+            Map<String, Object> rm = new LinkedHashMap<>();
+            rm.put("id", r.getId());
+            rm.put("rating", r.getRating());
+            rm.put("comment", r.getComment());
+            rm.put("createdAt", r.getCreatedAt() != null ? r.getCreatedAt().toString() : "");
+            if (r.getBooking() != null && r.getBooking().getUser() != null) {
+                rm.put("userName", r.getBooking().getUser().getFullName());
+            }
+            return rm;
+        }).toList();
+        dto.put("reviews", reviewDtos);
+
+        // Standard subscription packages
+        dto.put("packages", packageOptions(t.getSessionFees() != null ? t.getSessionFees() : t.getTypicalPrice()));
         dto.put("timeSlots", defaultTimeSlots());
         return ResponseEntity.ok(ok(Map.of("trainer", dto)));
     }
@@ -222,8 +264,24 @@ public class MobileFitnessController {
             return badRequest("The timing slot " + bookingTime + " is already booked for " + bookingDate + ". Please choose an available slot.");
         }
 
-        double baseFees = t.getSessionFees() == null ? 0.0 : Math.max(0, t.getSessionFees());
+        double baseFees = t.getTypicalPrice() != null && t.getTypicalPrice() > 0 ? t.getTypicalPrice() : (t.getSessionFees() == null ? 0.0 : Math.max(0, t.getSessionFees()));
         PackagePricing pricing = resolvePackagePricing(baseFees, duration);
+
+        String paymentMethod = trim(body == null ? null : body.get("paymentMethod"));
+        boolean paid = false;
+        String mode = "RAZORPAY";
+
+        if ("WALLET".equalsIgnoreCase(paymentMethod)) {
+            mode = "WALLET";
+            Double walletBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
+            if (walletBalance < pricing.fees()) {
+                return badRequest("Insufficient wallet balance to complete this booking.");
+            }
+            user.setWalletBalance(walletBalance - pricing.fees());
+            userRepo.save(user);
+            session.setAttribute("user", user);
+            paid = true;
+        }
 
         FitnessBooking b = new FitnessBooking();
         b.setUser(user);
@@ -235,11 +293,25 @@ public class MobileFitnessController {
         b.setBookingTime(bookingTime);
         b.setSessionType(sessionType);
         b.setStatus("PENDING");
-        b.setPaymentStatus("PENDING");
+        b.setPaymentMode(mode);
+        b.setPaymentStatus(paid ? "PAID" : "PENDING");
         b.setPaymentAmount(pricing.fees());
         b.setDuration(duration);
         b.setTotalSessions(pricing.totalSessions());
         b.setCompletedSessions(0);
+        b.setRemainingSessions(pricing.totalSessions());
+
+        String razorpayOrderId = trim(body == null ? null : body.get("razorpayOrderId"));
+        String razorpayPaymentId = trim(body == null ? null : body.get("razorpayPaymentId"));
+        String razorpaySignature = trim(body == null ? null : body.get("razorpaySignature"));
+        if (!razorpayPaymentId.isBlank()) {
+            b.setRazorpayOrderId(razorpayOrderId);
+            b.setRazorpayPaymentId(razorpayPaymentId);
+            b.setRazorpaySignature(razorpaySignature);
+            b.setPaymentStatus("PAID");
+            paid = true;
+        }
+
         bookingRepo.save(b);
         fitnessCareService.notifyBooked(b);
 
@@ -250,10 +322,10 @@ public class MobileFitnessController {
         }
 
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("message", "Booking requested. Complete payment if required; trainer will confirm your session.");
+        data.put("message", paid ? "Booking confirmed with payment! Pending trainer acceptance." : "Booking requested. Complete payment to confirm session.");
         data.put("bookingId", b.getId());
         data.put("amount", fee);
-        data.put("paymentRequired", fee > 0);
+        data.put("paymentRequired", fee > 0 && !paid);
         data.put("paymentStatus", b.getPaymentStatus());
         data.put("status", b.getStatus());
         data.put("duration", duration);
@@ -406,10 +478,28 @@ public class MobileFitnessController {
             return badRequest("Package is unavailable");
         }
 
-        Double walletBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
-        user.setWalletBalance(walletBalance - pkg.getPrice());
-        userRepo.save(user);
-        session.setAttribute("user", user);
+        double price = pkg.getPrice() != null ? Math.max(0, pkg.getPrice()) : 0.0;
+        String payMethod = body != null && body.containsKey("paymentMethod")
+                ? String.valueOf(body.get("paymentMethod")).toUpperCase(Locale.ROOT) : "WALLET";
+
+        boolean paid = false;
+        if (price <= 0) {
+            paid = true;
+        } else if ("WALLET".equalsIgnoreCase(payMethod)) {
+            Double walletBalance = user.getWalletBalance() != null ? user.getWalletBalance() : 0.0;
+            if (walletBalance < price) {
+                return badRequest("Insufficient wallet balance. Please add funds or pay via Razorpay.");
+            }
+            user.setWalletBalance(walletBalance - price);
+            userRepo.save(user);
+            session.setAttribute("user", user);
+            paid = true;
+        } else if ("RAZORPAY".equalsIgnoreCase(payMethod)) {
+            String razorpayPaymentId = trim(body == null ? null : body.get("razorpayPaymentId"));
+            if (!razorpayPaymentId.isBlank()) {
+                paid = true;
+            }
+        }
 
         FitnessBooking booking = new FitnessBooking();
         booking.setUser(user);
@@ -420,8 +510,8 @@ public class MobileFitnessController {
         booking.setBookingTime("Package Membership");
         booking.setSessionType(pkg.getSessionType());
         booking.setStatus("APPROVED");
-        booking.setPaymentAmount(pkg.getPrice());
-        booking.setPaymentStatus("PAID");
+        booking.setPaymentAmount(price);
+        booking.setPaymentStatus(paid ? "PAID" : "PENDING");
         booking.setTotalSessions(pkg.getSessionCount());
         booking.setRemainingSessions(pkg.getSessionCount());
         booking.setCompletedSessions(0);
@@ -429,14 +519,32 @@ public class MobileFitnessController {
         booking.setValidUntil(LocalDate.now().plusDays(pkg.getDurationDays()));
         booking.setEndDate(LocalDate.now().plusDays(pkg.getDurationDays()));
 
+        String razorpayOrderId = trim(body == null ? null : body.get("razorpayOrderId"));
+        String razorpayPaymentId = trim(body == null ? null : body.get("razorpayPaymentId"));
+        String razorpaySignature = trim(body == null ? null : body.get("razorpaySignature"));
+        if (!razorpayPaymentId.isBlank()) {
+            booking.setRazorpayOrderId(razorpayOrderId);
+            booking.setRazorpayPaymentId(razorpayPaymentId);
+            booking.setRazorpaySignature(razorpaySignature);
+        }
+
         bookingRepo.save(booking);
+
+        if (paid && pkg.getTrainer() != null) {
+            fitnessCareService.creditPayout(booking);
+        }
+
+        try {
+            fitnessNotificationService.notifyPackageSubscribed(booking, pkg);
+        } catch (Exception ignored) {}
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
-        res.put("message", "Subscribed to " + pkg.getPackageName());
+        res.put("message", paid ? "Subscribed to " + pkg.getPackageName() : "Package order created, payment pending.");
         res.put("bookingId", booking.getId());
         res.put("totalSessions", booking.getTotalSessions());
         res.put("validUntil", booking.getValidUntil().toString());
+        res.put("paymentStatus", booking.getPaymentStatus());
         return ResponseEntity.ok(res);
     }
 
@@ -472,6 +580,8 @@ public class MobileFitnessController {
         m.put("designation", t.getDesignation());
         m.put("sessionMode", t.getSessionMode());
         m.put("typicalPrice", t.getTypicalPrice() != null ? t.getTypicalPrice() : t.getSessionFees());
+        m.put("certificationsPath", t.getCertificationsPath());
+        m.put("galleryPhotos", t.getGalleryPhotos());
         FitnessTrainerProfileService.putExtra(m, t);
         return m;
     }
@@ -624,6 +734,10 @@ public class MobileFitnessController {
         if (paid && fc.getTrainer() != null) {
             fitnessCareService.creditPayout(b);
         }
+
+        try {
+            fitnessNotificationService.notifyClassEnrolled(b, fc);
+        } catch (Exception ignored) {}
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
@@ -788,5 +902,5 @@ public class MobileFitnessController {
         return out;
     }
 
-    private static String trim(String v) { return v == null ? "" : v.trim(); }
+    private static String trim(Object v) { return v == null ? "" : String.valueOf(v).trim(); }
 }

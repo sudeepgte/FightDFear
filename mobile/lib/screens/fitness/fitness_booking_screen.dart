@@ -36,6 +36,7 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
   String? _category;
   String _duration = 'SINGLE';
   String _sessionType = 'ONLINE';
+  String _paymentMethod = 'RAZORPAY';
   String? _timeSlot;
   DateTime? _date;
   final _noteCtrl = TextEditingController();
@@ -210,6 +211,29 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
 
     setState(() => _error = null);
     try {
+      if (_paymentMethod == 'WALLET') {
+        final res = await _svc.book(
+          widget.trainerId,
+          category: _category!,
+          bookingDate: dateStr,
+          bookingTime: _timeSlot!,
+          sessionType: _sessionType,
+          duration: _duration,
+          note: _noteCtrl.text.trim(),
+          paymentMethod: 'WALLET',
+        );
+        if (!mounted) return;
+        if (res['success'] != true) {
+          setState(() => _error = res['error']?.toString() ?? 'Wallet booking failed');
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking confirmed using Wallet! Pending coach acceptance.')),
+        );
+        Navigator.of(context).pop(true);
+        return;
+      }
+
       final res = await _svc.book(
         widget.trainerId,
         category: _category!,
@@ -218,6 +242,7 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
         sessionType: _sessionType,
         duration: _duration,
         note: _noteCtrl.text.trim(),
+        paymentMethod: 'RAZORPAY',
       );
       if (!mounted) return;
       if (res['success'] != true) {
@@ -395,6 +420,16 @@ class _FitnessBookingScreenState extends State<FitnessBookingScreen> {
                       ],
                       selected: {_sessionType},
                       onSelectionChanged: (s) => setState(() => _sessionType = s.first),
+                    ),
+                    const SizedBox(height: 16),
+                    _section('Payment method'),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'RAZORPAY', label: Text('Razorpay (UPI/Card)'), icon: Icon(Icons.payment)),
+                        ButtonSegment(value: 'WALLET', label: Text('Wallet Balance'), icon: Icon(Icons.account_balance_wallet_outlined)),
+                      ],
+                      selected: {_paymentMethod},
+                      onSelectionChanged: (s) => setState(() => _paymentMethod = s.first),
                     ),
                     const SizedBox(height: 16),
                     _section('Notes (optional)'),

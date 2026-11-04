@@ -149,6 +149,7 @@ public class MarketplaceController {
     @ResponseBody
     public List<Map<String, String>> getCategories() {
         return java.util.Arrays.stream(ProviderCategory.values())
+                .filter(c -> c != ProviderCategory.WOMEN_LAWYER)
                 .map(c -> Map.of("code", c.name(), "displayName", c.getDisplayName()))
                 .collect(java.util.stream.Collectors.toList());
     }
@@ -744,7 +745,10 @@ public class MarketplaceController {
     public String categories(Model model) {
         List<String> dynamicCategories = jobAppRepo.findDistinctJobCategoriesByStatus(VerificationStatus.VERIFIED);
         model.addAttribute("dynamicCategories", dynamicCategories);
-        model.addAttribute("providerCategories", ProviderCategory.values());
+        List<ProviderCategory> filteredCategories = java.util.Arrays.stream(ProviderCategory.values())
+                .filter(c -> c != ProviderCategory.WOMEN_LAWYER)
+                .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("providerCategories", filteredCategories);
         return "marketplace/marketplace-home";
     }
 
@@ -874,9 +878,31 @@ public class MarketplaceController {
             redirectAttributes.addFlashAttribute("error", "Invalid marketplace category.");
             return "redirect:/marketplace";
         }
+
+        List<ProviderBooking> myLawyerBookings = bookingRepo.findByUserOrderByRequestedTimeDesc(u).stream()
+                .filter(b -> {
+                    if (b.getProvider() == null) return false;
+                    ProviderCategory pCat = b.getProvider().getCategory();
+                    if (cat == ProviderCategory.WOMEN_LAWYER) {
+                        return pCat == ProviderCategory.WOMEN_LAWYER || pCat == null || (pCat.name() != null && pCat.name().contains("LAWYER"));
+                    }
+                    return pCat == cat || (pCat != null && pCat.name().equalsIgnoreCase(cat.name()));
+                })
+                .collect(java.util.stream.Collectors.toList());
+        model.addAttribute("myLawyerBookings", myLawyerBookings);
+
+        List<ServiceProvider> activeProviders = providerRepo.findByCategory(cat).stream()
+                .filter(p -> p.getVerificationStatus() == VerificationStatus.VERIFIED
+                        || p.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED
+                        || p.getPartnerProfileStatus() == PartnerProfileStatus.PENDING_ADMIN_APPROVAL)
+                .collect(java.util.stream.Collectors.toList());
+        if (activeProviders.isEmpty()) {
+            activeProviders = providerRepo.findByCategoryAndVerificationStatus(cat, VerificationStatus.VERIFIED);
+        }
+
         model.addAttribute("category", cat);
         model.addAttribute("categoryLabel", formatCategoryLabel(cat));
-        model.addAttribute("providers", providerRepo.findByCategoryAndVerificationStatus(cat, VerificationStatus.VERIFIED));
+        model.addAttribute("providers", activeProviders);
         return "marketplace/provider-list";
     }
 
@@ -1095,28 +1121,42 @@ public class MarketplaceController {
         if (u == null) return "redirect:/login";
 
         ServiceProvider p = providerRepo.findById(providerId).orElse(null);
-        if (p == null || p.getVerificationStatus() != VerificationStatus.VERIFIED) {
-            redirectAttributes.addFlashAttribute("error", "Provider not available.");
+        if (p == null) {
+            redirectAttributes.addFlashAttribute("error", "Provider profile not found.");
             return "redirect:/marketplace";
         }
 
-        LocalDateTime reqTime;
-        try {
-            reqTime = LocalDateTime.parse(requestedTime, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Invalid date format.");
+        LocalDateTime reqTime = null;
+        if (requestedTime != null) {
+            String trimmed = requestedTime.trim();
+            for (String pattern : new String[]{"yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm"}) {
+                try {
+                    reqTime = LocalDateTime.parse(trimmed, DateTimeFormatter.ofPattern(pattern));
+                    break;
+                } catch (Exception ignored) {}
+            }
+            if (reqTime == null) {
+                try {
+                    reqTime = LocalDateTime.parse(trimmed, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (reqTime == null) {
+            redirectAttributes.addFlashAttribute("error", "Please select a valid consultation date and time.");
             return "redirect:/marketplace/view/" + providerId;
         }
 
-        if (reqTime.isBefore(LocalDateTime.now())) {
+        if (reqTime.isBefore(LocalDateTime.now().minusMinutes(5))) {
             redirectAttributes.addFlashAttribute("error", "Booking date/time cannot be in the past.");
             return "redirect:/marketplace/view/" + providerId;
         }
 
+        final LocalDateTime finalReqTime = reqTime;
         boolean slotTaken = bookingRepo.findByProviderOrderByRequestedTimeDesc(p).stream()
                 .filter(b -> b.getStatus() != ProviderBookingStatus.CANCELLED)
                 .anyMatch(b -> b.getRequestedTime() != null
-                        && java.time.Duration.between(b.getRequestedTime(), reqTime).abs().toMinutes() < 60);
+                        && java.time.Duration.between(b.getRequestedTime(), finalReqTime).abs().toMinutes() < 60);
         if (slotTaken) {
             redirectAttributes.addFlashAttribute("error", "This time slot is already booked. Please choose another time.");
             return "redirect:/marketplace/view/" + providerId;
@@ -1126,11 +1166,14 @@ public class MarketplaceController {
         b.setUser(u);
         b.setProvider(p);
         b.setRequestedTime(reqTime);
-        b.setNote(note);
+        b.setNote(note != null ? note.trim() : "");
         b.setStatus(ProviderBookingStatus.PENDING);
         bookingRepo.save(b);
 
-        redirectAttributes.addFlashAttribute("message", "Booking request sent.");
+        redirectAttributes.addFlashAttribute("message", "Appointment booking request submitted successfully!");
+        if (p.getCategory() == ProviderCategory.WOMEN_LAWYER) {
+            return "redirect:/marketplace/list?category=WOMEN_LAWYER#myBookings";
+        }
         return "redirect:/marketplace/myBookings";
     }
 

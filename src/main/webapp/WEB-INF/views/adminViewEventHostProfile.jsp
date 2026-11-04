@@ -112,13 +112,14 @@
   .section-header i { color: var(--primary); font-size: 1.2rem; }
   .section-header h3 { font-family: 'Outfit', sans-serif; font-size: 1.08rem; font-weight: 700; color: var(--navy); margin: 0; }
 
-  .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; width: 100%; box-sizing: border-box; }
+  .info-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; width: 100%; box-sizing: border-box; }
+  @media (min-width: 576px) { .info-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); } }
   .info-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; overflow-wrap: anywhere; word-break: break-word; }
   .info-field.span-all { grid-column: 1 / -1; }
   .info-field-label {
     font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.55px; color: var(--text-muted);
   }
-  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--navy-mid); overflow-wrap: anywhere; word-break: break-word; max-width: 100%; min-width: 0; }
+  .info-field-value { font-size: 0.95rem; font-weight: 600; color: var(--navy-mid); overflow-wrap: anywhere; word-break: break-word; max-width: 100%; min-width: 0; white-space: normal; }
   .empty-text { color: var(--text-muted); font-style: italic; font-weight: 500; font-size: 0.9rem; }
   .bio-box {
     background: var(--rose-soft); border: 1px solid #fecdd3; border-radius: 12px;
@@ -135,12 +136,13 @@
   .doc-row {
     display: flex; align-items: center; gap: 14px; padding: 14px 16px;
     border: 1px solid var(--border); border-radius: 12px; background: #fff; margin-bottom: 10px;
+    max-width: 100%; box-sizing: border-box;
   }
   .doc-icon {
     width: 46px; height: 46px; border-radius: 10px; background: var(--rose-soft); color: var(--primary);
     display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
   }
-  .doc-link { color: var(--primary); font-weight: 700; text-decoration: none; }
+  .doc-link { color: var(--primary); font-weight: 700; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block; }
   .doc-link:hover { text-decoration: underline; }
 
   .reason-checks label {
@@ -289,7 +291,7 @@
 
     /* 7. Info grid — single column */
     .info-grid {
-      grid-template-columns: 1fr !important;
+      grid-template-columns: minmax(0, 1fr) !important;
       gap: 12px !important;
     }
     .info-field-value {
@@ -299,9 +301,13 @@
 
     /* 8. Document rows */
     .doc-row {
-      flex-wrap: wrap !important;
+      flex-wrap: nowrap !important;
       gap: 10px !important;
       padding: 12px !important;
+    }
+    .doc-row > div:last-child {
+      min-width: 0;
+      flex: 1;
     }
     .doc-icon {
       width: 40px !important;
@@ -310,7 +316,11 @@
     }
     .doc-link {
       font-size: 0.85rem !important;
-      word-break: break-all !important;
+      word-break: normal !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      display: block !important;
     }
 
     /* 9. Bio box */
@@ -809,7 +819,7 @@
         <c:if test="${portOk}">
           <div class="doc-row mb-0">
             <div class="doc-icon"><i class="bi bi-folder2-open"></i></div>
-            <div>
+            <div class="flex-grow-1" style="min-width: 0;">
               <div class="info-field-label">Portfolio / Past Work</div>
               <a href="${fn:startsWith(portPath, 'http') ? portPath : pageContext.request.contextPath.concat(portPath)}" target="_blank" class="doc-link"><i class="fas fa-external-link-alt"></i> View Portfolio</a>
             </div>

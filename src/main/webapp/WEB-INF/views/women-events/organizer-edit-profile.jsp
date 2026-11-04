@@ -675,10 +675,12 @@
             backdrop-filter: blur(4px);
             z-index: 1000;
             display: none;
-            align-items: center;
+            align-items: center; /* Center horizontally & vertically */
             justify-content: center;
             padding: 16px;
-            overflow-y: auto;
+            overflow-y: hidden; /* Prevent background scroll */
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .map-modal-card {
@@ -814,15 +816,16 @@
         .review-modal-card {
             background: #FFFFFF;
             border-radius: 18px;
-            width: 100%;
+            width: 95%; /* Responsive width */
             max-width: 860px;
-            max-height: 90vh;
+            max-height: 85vh; /* Ensure it doesn't span entire height on small devices */
             display: flex;
             flex-direction: column;
             overflow: hidden;
             box-shadow: var(--shadow-float);
             animation: modalPop 0.2s ease-out;
             position: relative;
+            margin: auto; /* Absolute center across X and Y if within flex container */
         }
 
         .review-modal-body {
@@ -846,6 +849,7 @@
             position: sticky;
             bottom: 0;
             z-index: 20;
+            width: 100%;
         }
 
         .review-summary-banner {

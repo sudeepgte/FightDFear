@@ -1220,14 +1220,25 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
             trailing: id == null
                 ? null
                 : PopupMenuButton<String>(
-                    onSelected: (status) async {
-                      await _svc.updateBookingStatus(id, status);
-                      await _reload();
+                    onSelected: (action) async {
+                      if (action == 'RESCHEDULE') {
+                        _rescheduleBookingDialog(id, b);
+                      } else if (action == 'ATTENDANCE') {
+                        _markAttendanceDialog(id, b['clientName']?.toString() ?? 'Client');
+                      } else if (action == 'NOTES') {
+                        _notesDialog(id, b['coachNotes']?.toString() ?? '');
+                      } else {
+                        await _svc.updateBookingStatus(id, action);
+                        await _reload();
+                      }
                     },
                     itemBuilder: (_) => const [
                       PopupMenuItem(value: 'APPROVED', child: Text('Approve')),
-                      PopupMenuItem(value: 'REJECTED', child: Text('Reject')),
+                      PopupMenuItem(value: 'ATTENDANCE', child: Text('Check In / Mark Attendance')),
+                      PopupMenuItem(value: 'RESCHEDULE', child: Text('Reschedule Session')),
+                      PopupMenuItem(value: 'NOTES', child: Text('Coach Notes')),
                       PopupMenuItem(value: 'COMPLETED', child: Text('Complete')),
+                      PopupMenuItem(value: 'REJECTED', child: Text('Reject & Refund')),
                       PopupMenuItem(value: 'CANCELLED', child: Text('Cancel')),
                     ],
                   ),
@@ -1655,6 +1666,120 @@ class _FitnessTrainerDashboardScreenState extends State<FitnessTrainerDashboardS
           },
         );
       },
+    );
+  }
+
+  void _rescheduleBookingDialog(int bookingId, Map<String, dynamic> b) {
+    final clientName = b['clientName']?.toString() ?? 'Client';
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    final timeCtrl = TextEditingController(text: b['bookingTime']?.toString() ?? '09:00 AM - 10:00 AM');
+
+    showDialog(
+      context: context,
+      builder: (dCtx) {
+        return StatefulBuilder(
+          builder: (context, setDState) {
+            final dateStr =
+                '${selectedDate.year.toString().padLeft(4, '0')}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+            return AlertDialog(
+              title: Text('Reschedule: $clientName'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Select a new date and time for this session.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.calendar_month, color: FitnessTrainerDashboardScreen.primary),
+                    title: const Text('New Session Date', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                    subtitle: Text(dateStr, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                    trailing: const Icon(Icons.arrow_drop_down),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 90)),
+                      );
+                      if (picked != null) {
+                        setDState(() => selectedDate = picked);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: timeCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'New Session Time Slot',
+                      hintText: 'e.g. 09:00 AM - 10:00 AM',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel')),
+                FilledButton(
+                  style: FilledButton.styleFrom(backgroundColor: FitnessTrainerDashboardScreen.primary),
+                  onPressed: () async {
+                    final res = await _svc.rescheduleBooking(
+                      bookingId,
+                      newDate: dateStr,
+                      newTime: timeCtrl.text.trim(),
+                    );
+                    Navigator.pop(dCtx);
+                    if (res['success'] == true) {
+                      _snack('Session rescheduled successfully');
+                      _reload();
+                    } else {
+                      _snack(res['error']?.toString() ?? 'Reschedule failed');
+                    }
+                  },
+                  child: const Text('Reschedule'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _notesDialog(int bookingId, String currentNotes) {
+    final notesCtrl = TextEditingController(text: currentNotes);
+    showDialog(
+      context: context,
+      builder: (dCtx) => AlertDialog(
+        title: const Text('Coach Notes'),
+        content: TextField(
+          controller: notesCtrl,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            labelText: 'Notes & Advice for Client',
+            hintText: 'e.g. Focus on hamstring stretches and maintain hydration.',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dCtx), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: FitnessTrainerDashboardScreen.primary),
+            onPressed: () async {
+              final res = await _svc.updateBookingNotes(bookingId, notesCtrl.text.trim());
+              Navigator.pop(dCtx);
+              if (res['success'] == true) {
+                _snack('Notes updated');
+                _reload();
+              } else {
+                _snack(res['error']?.toString() ?? 'Failed to save notes');
+              }
+            },
+            child: const Text('Save Notes'),
+          ),
+        ],
+      ),
     );
   }
 

@@ -256,21 +256,22 @@ class _EventHostProfileCompletionScreenState
     };
   }
 
-  String? _validate({bool forSubmit = false}) {
-    if (_name.text.trim().isEmpty) return '1.1 Full name is required';
-    if (_orgName.text.trim().isEmpty) return '1.3 Organizer name is required';
-    if ((_designation ?? '').isEmpty) return '1.2 Organizer type is required';
+  List<String> _validate({bool forSubmit = false}) {
+    final List<String> errs = [];
+    if (_name.text.trim().isEmpty) errs.add('1.1 Full name is required');
+    if (_orgName.text.trim().isEmpty) errs.add('1.3 Organization name is required');
+    if ((_designation ?? '').isEmpty) errs.add('1.2 Organizer type is required');
     final expErr = RegValidators.experienceError(_years.text);
-    if (expErr != null) return '1.7 $expErr';
-    if (_phone.text.trim().length != 10) return '1.5 Official phone must be 10 digits';
-    if (_address.text.trim().isEmpty) return '2.1 Address is required';
-    if (_city.text.trim().isEmpty) return '2.3 City is required';
-    if ((_state ?? '').isEmpty) return '2.4 State is required';
-    if (_state == 'Other' && _stateOther.text.trim().isEmpty) return '2.4 Enter state';
-    if (_pincode.text.trim().length != 6) return '2.5 Pincode must be 6 digits';
+    if (expErr != null) errs.add('1.7 $expErr');
+    if (_phone.text.trim().length != 10) errs.add('1.5 Official phone must be 10 digits');
+    if (_address.text.trim().isEmpty) errs.add('2.1 Address is required');
+    if (_city.text.trim().isEmpty) errs.add('2.3 City is required');
+    if ((_state ?? '').isEmpty) errs.add('2.4 State is required');
+    if (_state == 'Other' && _stateOther.text.trim().isEmpty) errs.add('2.4 Enter state');
+    if (_pincode.text.trim().length != 6) errs.add('2.5 Pincode must be 6 digits');
     final credText = _credential.text.trim();
-    if (credText.isEmpty) return '1.8 GST / NGO / CIN number is required';
-    if (credText.length < 3) return '1.8 GST / NGO / CIN number must be at least 3 characters';
+    if (credText.isEmpty) errs.add('1.8 GST / NGO / CIN number is required');
+    if (credText.length < 3) errs.add('1.8 GST / NGO / CIN number must be at least 3 characters');
     final bankErr = BankDetailsSection.validateBankDetails(
       accountHolderController: _accountHolder,
       accountNumberController: _accountNumber,
@@ -280,19 +281,99 @@ class _EventHostProfileCompletionScreenState
       branchNameController: _branchName,
       upiController: _upi,
     );
-    if (bankErr != null) return '9. $bankErr';
-    if (_categories.isEmpty) return '3.1 Select at least one category';
-    if (_audience.isEmpty) return '4.1 Who I serve is required';
-    if (_days.isEmpty) return '6.1 Open days are required';
-    if (_openTime == null) return '6.2 Open time is required';
-    if (_closeTime == null) return '6.3 Close time is required';
-    if (_bio.text.trim().isEmpty) return '7.1 About is required';
-    if ((_sessionMode ?? '').isEmpty) return '8. Session mode is required';
-    if (double.tryParse(_rate.text.trim()) == null) return '8. Typical ticket is required';
+    if (bankErr != null) errs.add('9. $bankErr');
+    if (_categories.isEmpty) errs.add('3.1 Select at least one category');
+    if (_audience.isEmpty) errs.add('4.1 Target audience is required');
+    if (_days.isEmpty) errs.add('6.1 Open days are required');
+    if (_openTime == null) errs.add('6.2 Open time is required');
+    if (_closeTime == null) errs.add('6.3 Close time is required');
+    if (_bio.text.trim().isEmpty) errs.add('7.1 About organization is required');
+    if ((_sessionMode ?? '').isEmpty) errs.add('8. Session mode is required');
+    if (double.tryParse(_rate.text.trim()) == null) errs.add('8. Typical ticket price is required');
     if (forSubmit && _profile['canSubmitForVerification'] == false) {
-      return _profile['nextStepGuidance']?.toString();
+      final msg = _profile['nextStepGuidance']?.toString();
+      if (msg != null && msg.isNotEmpty) errs.add(msg);
     }
-    return null;
+    return errs;
+  }
+
+  void _showValidationPopup(List<String> errors) {
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.error_outline_rounded, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Incomplete Required Fields',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: EventHostProfileCompletionScreen.navy,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Please complete the following required fields before submitting:',
+              style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+            ),
+            const SizedBox(height: 12),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: errors
+                      .map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• ', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                              Expanded(
+                                child: Text(
+                                  e,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1E293B),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: EventHostProfileCompletionScreen.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _finish() {
@@ -308,9 +389,9 @@ class _EventHostProfileCompletionScreenState
   }
 
   Future<void> _saveProfile() async {
-    final err = _validate();
-    if (err != null) {
-      setState(() => _error = err);
+    final errs = _validate();
+    if (errs.isNotEmpty) {
+      _showValidationPopup(errs);
       return;
     }
     setState(() {
@@ -339,9 +420,9 @@ class _EventHostProfileCompletionScreenState
   }
 
   Future<void> _submit() async {
-    final err = _validate(forSubmit: true);
-    if (err != null) {
-      setState(() => _error = err);
+    final errs = _validate(forSubmit: true);
+    if (errs.isNotEmpty) {
+      _showValidationPopup(errs);
       return;
     }
     setState(() {

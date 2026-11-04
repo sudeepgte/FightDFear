@@ -645,8 +645,18 @@
             background: #fff !important;
             box-shadow: 10px 0 30px rgba(0,0,0,0.12) !important;
             transition: left 0.3s ease !important;
+            flex-shrink: 0 !important;
         }
         .sidebar.active { left: 0 !important; }
+        
+        .layout {
+            display: block !important;
+        }
+        
+        .main {
+            width: 100% !important;
+            margin-left: 0 !important;
+        }
     }
 </style>
 

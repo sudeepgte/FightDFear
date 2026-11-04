@@ -26,6 +26,7 @@ public class FitnessCareService {
     @Autowired private FitnessBookingRepository bookingRepository;
     @Autowired private FitnessTrainerRepository trainerRepository;
     @Autowired private PushNotificationService pushNotificationService;
+    @Autowired private FitnessNotificationService fitnessNotificationService;
 
     public LocalDateTime sessionStart(FitnessBooking b) {
         if (b == null || b.getBookingDate() == null) return null;
@@ -57,7 +58,11 @@ public class FitnessCareService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, CANCEL_POLICY);
         }
         b.setStatus("CANCELLED");
-        return bookingRepository.save(b);
+        FitnessBooking saved = bookingRepository.save(b);
+        try {
+            fitnessNotificationService.notifyBookingCancelled(saved, false);
+        } catch (Exception ignored) {}
+        return saved;
     }
 
     @Transactional
@@ -104,6 +109,9 @@ public class FitnessCareService {
                     "Fitness",
                     "Session booked. " + CANCEL_POLICY,
                     Map.of("type", "FITNESS", "bookingId", String.valueOf(b.getId())));
+        } catch (Exception ignored) {}
+        try {
+            fitnessNotificationService.notifyPersonalBookingCreated(b);
         } catch (Exception ignored) {}
     }
 }

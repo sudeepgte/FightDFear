@@ -248,9 +248,12 @@
                 <a href="${pageContext.request.contextPath}/centres/allacceptedcentres" class="sidebar-list-group-item ${fn:contains(currentUri,'/centres') ? 'active' : ''}">
                     <i class="bi bi-shield-check"></i> Martial Arts Centres
                 </a>
+                <%-- Hidden for future updates: View Videos --%>
+                <%--
                 <a href="${pageContext.request.contextPath}/video/allVideos" class="sidebar-list-group-item ${fn:contains(currentUri,'/video/allVideos') ? 'active' : ''}">
                     <i class="bi bi-play-circle"></i> View Videos
                 </a>
+                --%>
 
                 <a href="${pageContext.request.contextPath}/index/templates" class="sidebar-list-group-item ${fn:contains(currentUri,'/templates') ? 'active' : ''}">
                     <i class="bi bi-stars"></i> Glow Space
@@ -268,12 +271,18 @@
                 <a href="${pageContext.request.contextPath}/doctors/myAppointments" class="sidebar-list-group-item ${fn:contains(currentUri,'/doctors/myAppointments') ? 'active' : ''}">
                     <i class="bi bi-calendar-check"></i> My Appointments
                 </a>
+                <%-- Hidden for future updates: Women Marketplace --%>
+                <%--
                 <a href="${pageContext.request.contextPath}/marketplace" class="sidebar-list-group-item ${fn:contains(currentUri, '/marketplace') && (empty requestScope['javax.servlet.forward.query_string'] || !fn:contains(requestScope['javax.servlet.forward.query_string'], 'category=')) && !fn:contains(currentUri, '/marketplace/earn') ? 'active' : ''}">
                     <i class="bi bi-shop"></i> Women Marketplace
                 </a>
+                --%>
+                <%-- Hidden for future updates: Financial Literacy Hub --%>
+                <%--
                 <a href="${pageContext.request.contextPath}/financial-literacy" class="sidebar-list-group-item ${fn:contains(currentUri,'/financial-literacy') ? 'active' : ''}">
                     <i class="bi bi-book"></i> Financial Literacy Hub
                 </a>
+                --%>
                 <c:if test="${not empty loggedEntrepreneur}">
                     <a href="${pageContext.request.contextPath}/entrepreneur/dashboard" class="sidebar-list-group-item fw-bold">
                         <i class="bi bi-briefcase"></i> Entrepreneur Portal
@@ -293,9 +302,12 @@
                 <a href="${pageContext.request.contextPath}/women-events" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-events') ? 'active' : ''}">
                     <i class="bi bi-calendar-event"></i> Women Events
                 </a>
+                <%-- Hidden for future updates: Women Jobs --%>
+                <%--
                 <a href="${pageContext.request.contextPath}/marketplace/earn" class="sidebar-list-group-item ${fn:contains(currentUri,'/marketplace/earn') ? 'active' : ''}">
                     <i class="bi bi-briefcase-fill"></i> Women Jobs
                 </a>
+                --%>
                 <a href="${pageContext.request.contextPath}/women-products" class="sidebar-list-group-item ${fn:contains(currentUri,'/women-products') ? 'active' : ''}">
                     <i class="bi bi-bag-heart"></i> Women Products
                 </a>

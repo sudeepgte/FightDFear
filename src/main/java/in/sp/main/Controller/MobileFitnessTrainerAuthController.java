@@ -468,13 +468,77 @@ public class MobileFitnessTrainerAuthController {
         if (!ALLOWED_BOOKING_STATUSES.contains(statusRaw)) {
             return badRequest("Invalid booking status");
         }
-        b.setStatus(statusRaw);
+
+        if ("REJECTED".equals(statusRaw) || "CANCELLED".equals(statusRaw)) {
+            b.setStatus(statusRaw);
+            if ("PAID".equalsIgnoreCase(b.getPaymentStatus()) && b.getUser() != null && b.getPaymentAmount() != null && b.getPaymentAmount() > 0) {
+                User u = b.getUser();
+                double currentBal = u.getWalletBalance() != null ? u.getWalletBalance() : 0.0;
+                u.setWalletBalance(currentBal + b.getPaymentAmount());
+                userRepo.save(u);
+                b.setPaymentStatus("REFUNDED");
+            }
+        } else if ("COMPLETED".equals(statusRaw)) {
+            int total = b.getTotalSessions() != null && b.getTotalSessions() > 0 ? b.getTotalSessions() : 1;
+            int completed = b.getCompletedSessions() != null ? b.getCompletedSessions() : 0;
+            completed++;
+            b.setCompletedSessions(completed);
+            if (completed >= total) {
+                b.setStatus("COMPLETED");
+                if (!"PAID".equalsIgnoreCase(b.getPaymentStatus())) {
+                    b.setPaymentStatus("PAID");
+                }
+            } else {
+                b.setStatus("APPROVED"); // Still has remaining sessions
+            }
+        } else {
+            b.setStatus(statusRaw);
+        }
+
         bookingRepo.save(b);
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);
         res.put("message", "Booking updated");
-        res.put("status", statusRaw);
+        res.put("status", b.getStatus());
+        res.put("completedSessions", b.getCompletedSessions());
+        res.put("totalSessions", b.getTotalSessions());
         return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/bookings/{id}/reschedule")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> rescheduleBooking(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Object> body,
+            HttpSession session) {
+        FitnessTrainer t = requireTrainer(session);
+        if (t == null) return unauthorized();
+        FitnessBooking b = bookingRepo.findById(id).orElse(null);
+        if (b == null || b.getTrainer() == null || !b.getTrainer().getId().equals(t.getId())) {
+            return badRequest("Booking not found");
+        }
+
+        String newDateStr = str(body, "newDate");
+        String newTime = str(body, "newTime");
+        if (newDateStr.isBlank() || newTime.isBlank()) {
+            return badRequest("newDate and newTime are required");
+        }
+
+        try {
+            LocalDate newDate = LocalDate.parse(newDateStr);
+            b.setBookingDate(newDate);
+            b.setBookingTime(newTime);
+            bookingRepo.save(b);
+
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Session rescheduled to " + newDateStr + " at " + newTime);
+            res.put("bookingDate", newDateStr);
+            res.put("bookingTime", newTime);
+            return ResponseEntity.ok(res);
+        } catch (Exception ex) {
+            return badRequest("Invalid date or time: " + ex.getMessage());
+        }
     }
 
     @PostMapping("/payout/request")

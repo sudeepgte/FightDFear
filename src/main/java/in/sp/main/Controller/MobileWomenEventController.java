@@ -1,6 +1,7 @@
 package in.sp.main.Controller;
 
 import in.sp.main.Entities.EventFavorite;
+import in.sp.main.Entities.EventFormat;
 import in.sp.main.Entities.User;
 import in.sp.main.Entities.WomenEvent;
 import in.sp.main.Entities.WomenEventCategory;
@@ -61,18 +62,32 @@ public class MobileWomenEventController {
             @RequestParam(value = "category", required = false) String category,
             @RequestParam(value = "city", required = false) String city,
             @RequestParam(value = "sort", required = false) String sort,
+            @RequestParam(value = "format", required = false) String format,
+            @RequestParam(value = "free", required = false) Boolean free,
+            @RequestParam(value = "search", required = false) String search,
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
         WomenEventCategory filterCat = WomenEventCategory.fromFlexible(category);
         String cityFilter = city == null ? "" : city.trim().toLowerCase(Locale.ROOT);
         String sortKey = sort == null ? "newest" : sort.trim().toLowerCase(Locale.ROOT);
+        String searchFilter = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        EventFormat formatFilter = format == null || format.isBlank() || "all".equalsIgnoreCase(format) ? null : EventFormat.fromFlexible(format);
+
         List<WomenEvent> filtered = eventRepo.findListedEvents().stream()
                 .filter(WomenEventSupport::isPubliclyListed)
                 .filter(e -> e.getOrganizer() == null || EventHostProfileService.isApproved(e.getOrganizer()))
                 .filter(e -> filterCat == null || filterCat.equals(e.getCategory()))
                 .filter(e -> cityFilter.isBlank()
-                        || (e.getCity() != null && e.getCity().toLowerCase(Locale.ROOT).contains(cityFilter)))
+                        || (e.getCity() != null && e.getCity().toLowerCase(Locale.ROOT).contains(cityFilter))
+                        || (e.getVenueState() != null && e.getVenueState().toLowerCase(Locale.ROOT).contains(cityFilter)))
+                .filter(e -> formatFilter == null || e.getEventFormat() == formatFilter)
+                .filter(e -> free == null || (free ? (e.isFree() || e.getEntryFee() == null || e.getEntryFee() <= 0) : (e.getEntryFee() != null && e.getEntryFee() > 0)))
+                .filter(e -> searchFilter.isBlank()
+                        || (e.getName() != null && e.getName().toLowerCase(Locale.ROOT).contains(searchFilter))
+                        || (e.getDescription() != null && e.getDescription().toLowerCase(Locale.ROOT).contains(searchFilter))
+                        || (e.getVenue() != null && e.getVenue().toLowerCase(Locale.ROOT).contains(searchFilter))
+                        || (e.getCity() != null && e.getCity().toLowerCase(Locale.ROOT).contains(searchFilter)))
                 .sorted((a, b) -> {
                     if ("rating".equals(sortKey)) {
                         double ra = a.getOrganizer() == null ? 0 : a.getOrganizer().getRating();
@@ -211,11 +226,14 @@ public class MobileWomenEventController {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", r.getId());
             m.put("registrationId", r.getId());
+            m.put("ticketCode", r.getTicketCode());
+            m.put("ticketTypeName", r.getTicketTypeName());
             m.put("status", r.getStatus());
-            m.put("qrToken", r.getQrToken());
+            m.put("qrToken", r.getQrToken() != null && !r.getQrToken().isBlank() ? r.getQrToken() : r.getTicketCode());
             m.put("coinsUsed", r.getCoinsUsed());
             m.put("payableAmount", bookingService.payableOf(r));
             m.put("checkedIn", r.isCheckedIn());
+            m.put("checkedInAt", r.getCheckedInAt() == null ? null : r.getCheckedInAt().toString());
             m.put("registeredAt", r.getRegisteredAt() == null ? null : r.getRegisteredAt().toString());
             m.put("paid", r.isPaid());
             m.put("amountPaid", r.getAmountPaid());
@@ -244,9 +262,13 @@ public class MobileWomenEventController {
         m.put("eventTime", e.getEventTime() == null ? null : e.getEventTime().toString());
         m.put("venue", e.getVenue());
         m.put("city", e.getCity());
+        m.put("venueState", e.getVenueState());
+        m.put("venuePincode", e.getVenuePincode());
+        m.put("venueArea", e.getVenueArea());
         m.put("mapsLocation", e.getMapsLocation());
         m.put("entryFee", e.getEntryFee());
         m.put("free", e.isFree());
+        m.put("boothFee", e.getBoothFee());
         m.put("maxParticipants", e.getMaxParticipants());
         m.put("capacity", e.getMaxParticipants());
         m.put("bannerImage", e.getBannerImage());
@@ -260,6 +282,14 @@ public class MobileWomenEventController {
         m.put("virtual", e.isVirtual());
         m.put("eventFormat", e.getEventFormat() == null ? null : e.getEventFormat().name());
         m.put("shortDescription", e.getShortDescription());
+        m.put("cancellationPolicy", e.getCancellationPolicy() != null ? e.getCancellationPolicy() : EventsCareService.CANCEL_POLICY);
+        m.put("refundPolicy", e.getRefundPolicy());
+        m.put("ageRestriction", e.getAgeRestriction());
+        m.put("participantRequirements", e.getParticipantRequirements());
+        m.put("whatToBring", e.getWhatToBring());
+        m.put("endDate", e.getEndsAt() == null ? null : e.getEndsAt().toLocalDate().toString());
+        m.put("endTime", e.getEndsAt() == null ? null : e.getEndsAt().toLocalTime().toString());
+        m.put("registrationClosesAt", e.getRegistrationClosesAt() == null ? null : e.getRegistrationClosesAt().toString());
         boolean eligible = false;
         if (user != null) {
             eligible = registrationRepo.findActiveByEventAndUser(e, user)

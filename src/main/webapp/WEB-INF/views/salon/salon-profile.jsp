@@ -9,37 +9,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Profile | Fight D Fear</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     
     <style>
         :root {
-            --sidebar-width: 280px;
-            --dashboard-bg: #f8f9fc;
-            --fdf-burgundy: #1E1B4B;
-            --fdf-burgundy-dark: #0f0d26;
+            --primary: #F43F5E;
+            --primary-hover: #E11D48;
+            --rose-soft: #FFF1F2;
+            --rose-light: #FFE4E6;
+            --rose-border: #FECDD3;
+            --navy: #0F172A;
+            --text-gray: #64748B;
+            --bg-page: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --success: #16A34A;
+            --success-bg: #F0FDF4;
+            --error: #DC2626;
+            --error-bg: #FEF2F2;
+            --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.03);
+
+            --sidebar-width: 0px;
+            --dashboard-bg: #F8FAFC;
+            --fdf-burgundy: #0F172A;
             --fdf-pink: #F43F5E;
             --fdf-pink-light: #FFE4E6;
             --fdf-rose: #E11D48;
-            --fdf-lavender: #f3e8ff;
-            --fdf-text-dark: #1e1b4b;
-            --fdf-text-muted: #64748b;
-            --fdf-border: #f1e9f0;
-            --card-shadow: 0 10px 30px rgba(79, 70, 229, 0.04);
-            
-            --brand-pink: var(--fdf-pink);
-            --brand-pink-light: var(--fdf-pink-light);
-            --border-color: #E2E8F0;
-            --text-dark: var(--fdf-text-dark);
-            --text-muted: var(--fdf-text-muted);
-            --bg-color: var(--dashboard-bg);
+            --fdf-text-dark: #0F172A;
+            --fdf-text-muted: #64748B;
+            --fdf-border: #E2E8F0;
+            --brand-pink: #F43F5E;
+            --brand-pink-light: #FFE4E6;
+            --text-dark: #0F172A;
+            --text-muted: #64748B;
+            --bg-color: #F8FAFC;
         }
 
         html, body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--dashboard-bg);
-            color: var(--fdf-text-dark);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--navy);
             margin: 0;
             padding: 0;
             width: 100%;
@@ -51,354 +62,482 @@
             box-sizing: border-box;
         }
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(30, 27, 75, 0.1); border-radius: 10px; }
-
-        /* Unified Premium Sidebar */
-        .sidebar {
-            background: linear-gradient(180deg, var(--fdf-burgundy) 0%, var(--fdf-burgundy-dark) 100%);
-            color: white;
+        /* App Header matching Doctor completion page */
+        .app-header {
+            background: #FFFFFF;
+            padding: 14px 24px;
             display: flex;
-            flex-direction: column;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            gap: 12px;
+            flex-wrap: wrap;
         }
-
-        .sidebar-brand-wrapper {
-            padding: 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            margin-bottom: 20px;
-        }
-
-        .sidebar-brand {
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 800;
-            font-size: 1.15rem;
-            color: white;
-            text-decoration: none;
+        .header-brand {
             display: flex;
             align-items: center;
             gap: 12px;
+            font-weight: 800;
+            color: var(--navy);
+            text-decoration: none;
+            font-size: 1.1rem;
         }
-        
-        .sidebar-brand i {
-            color: var(--fdf-pink);
-            font-size: 1.5rem;
+        .header-brand img {
+            height: 44px;
+            width: 44px;
+            border-radius: 10px;
+            object-fit: cover;
         }
-
-        .sidebar-brand-wrapper .subtitle {
-            font-size: 0.72rem;
-            color: rgba(255,255,255,0.4);
-            margin-top: 4px;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-
-        .nav-container {
-            flex: 1;
-            padding: 0 16px;
-            overflow-y: auto;
-        }
-
-        .nav-link-custom {
+        .header-actions {
             display: flex;
             align-items: center;
-            gap: 14px;
-            padding: 11px 16px;
-            color: rgba(255,255,255,0.65);
-            text-decoration: none;
-            border-radius: 12px;
-            margin-bottom: 4px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            font-size: 0.88rem;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-
-        .nav-link-custom:hover {
-            background: rgba(255,255,255,0.05);
-            color: white;
-            transform: translateX(4px);
-        }
-
-        .nav-link-custom.active {
-            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(219, 39, 119, 0.25);
-            font-weight: 600;
-        }
-
-        .nav-link-custom i {
-            font-size: 1.15rem;
-        }
-
-        /* Upgrade card in sidebar */
-        .upgrade-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 16px;
-            margin: 20px 16px;
-            font-size: 0.8rem;
-        }
-        .upgrade-card h6 {
-            color: white;
-            font-weight: 700;
+        .btn-skip {
+            padding: 8px 16px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            color: var(--navy);
+            border-radius: 10px;
             font-size: 0.85rem;
-            margin-bottom: 8px;
-        }
-        .upgrade-card ul {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 12px 0;
-            color: rgba(255,255,255,0.5);
-        }
-        .upgrade-card ul li {
-            margin-bottom: 4px;
-            display: flex;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
             align-items: center;
             gap: 6px;
+            transition: all 0.2s ease;
         }
-        .upgrade-card ul li::before {
-            content: "•";
-            color: var(--fdf-pink);
-            font-weight: bold;
+        .btn-skip:hover {
+            background: var(--bg-page);
         }
-        .btn-upgrade {
-            background: linear-gradient(90deg, var(--fdf-pink) 0%, var(--fdf-rose) 100%);
-            color: white;
+        .btn-header-save {
+            padding: 8px 20px;
+            background: var(--primary);
+            color: #FFFFFF;
             border: none;
-            padding: 8px;
-            width: 100%;
-            border-radius: 8px;
+            border-radius: 10px;
+            font-size: 0.85rem;
             font-weight: 700;
-            font-size: 0.8rem;
             cursor: pointer;
-            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
         }
-        .btn-upgrade:hover {
-            filter: brightness(1.1);
+        .btn-header-save:hover {
+            background: var(--primary-hover);
         }
 
-        /* Main Content */
         .main-content {
-            padding: 24px 32px;
+            margin-left: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 20px clamp(16px, 2.5vw, 32px) 80px !important;
+            box-sizing: border-box !important;
             min-height: 100vh;
         }
 
-        @media (min-width: 992px) {
-            .sidebar {
-                width: var(--sidebar-width);
-                height: 100vh;
-                position: fixed;
-                left: 0;
-                top: 0;
-                z-index: 1000;
-                box-shadow: 10px 0 35px rgba(0,0,0,0.05);
-            }
-            .main-content {
-                margin-left: var(--sidebar-width);
-            }
-        }
-
-        .main-content { margin-left: var(--sidebar-width); padding: 25px 35px 80px; }
-        
-        /* Top Header */
-        .top-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .header-title h2 { font-size: 1.4rem; font-weight: 600; margin: 0; color: #111827; }
-        .header-title p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
-        
-        .header-actions { display: flex; align-items: center; gap: 15px; }
-        .btn-preview { background-color: var(--brand-pink); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.8rem; display: flex; align-items: center; gap: 8px; }
-        .bell-icon { position: relative; width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--text-muted); }
-        .bell-badge { position: absolute; top: -2px; right: -2px; background: var(--brand-pink); color: white; font-size: 0.6rem; width: 14px; height: 14px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-        
-        .profile-badge { display: flex; align-items: center; gap: 10px; }
-        .profile-badge img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
-        
-        /* Dropdowns */
-        .dropdown-menu { border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; font-size: 0.8rem; }
-        .dropdown-item { padding: 8px 15px; font-weight: 500; }
-        .dropdown-item i { margin-right: 8px; color: var(--brand-pink); }
-        .notif-item { padding: 10px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer; }
-        .notif-item:hover { background-color: var(--bg-color); }
-        .notif-item .n-title { font-weight: 600; color: var(--text-dark); margin-bottom: 3px; }
-        .notif-item .n-desc { font-size: 0.7rem; color: var(--text-muted); }
-        
         /* Hero Section */
-        .hero-section { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .hero-top-row { display: flex; gap: 30px; margin-bottom: 20px;}
+        .hero-section {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: clamp(20px, 2.5vw, 28px);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-card);
+        }
+        .hero-top-row { display: flex; gap: 30px; margin-bottom: 20px; }
         
-        /* Left: Logo & Info */
         .hero-info-box { width: 35%; display: flex; gap: 20px; align-items: flex-start; }
-        .logo-container { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
-        .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .cam-icon { position: absolute; bottom: 0; right: 0; background: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); color: var(--text-dark); cursor: pointer; font-size: 1.1rem;}
+        .logo-container { position: relative; width: 130px; height: 130px; flex-shrink: 0; }
+        .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 4px 14px rgba(0,0,0,0.08); border: 2px solid #FFFFFF; }
+        .cam-icon { position: absolute; bottom: 0; right: 0; background: white; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); color: var(--navy); cursor: pointer; font-size: 1.1rem; border: 1px solid var(--border-color); }
         
         .info-details { padding-top: 5px; }
-        .info-details h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; color: #111827; }
-        .verified-badge { color: var(--brand-pink); font-size: 1.1rem; }
-        .subtitle { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;}
-        .women-pill { color: var(--brand-pink); font-weight: 500; }
+        .info-details h3 { font-size: 1.35rem; font-weight: 800; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; color: var(--navy); }
+        .verified-badge { color: var(--primary); font-size: 1.1rem; }
+        .subtitle { font-size: 0.8rem; color: var(--text-gray); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-weight: 600; }
+        .women-pill { color: var(--primary); font-weight: 700; background: var(--rose-soft); border: 1px solid var(--rose-border); padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; }
         
-        .contact-list { list-style: none; padding: 0; margin: 0; font-size: 0.8rem; color: var(--text-dark); font-weight: 500;}
+        .contact-list { list-style: none; padding: 0; margin: 0; font-size: 0.84rem; color: var(--navy); font-weight: 600; }
         .contact-list li { margin-bottom: 6px; display: flex; align-items: flex-start; gap: 10px; }
-        .contact-list i { color: var(--brand-pink); font-size: 0.9rem; margin-top: 2px; }
-        .contact-list .text-muted { font-weight: 400; font-size: 0.75rem; }
+        .contact-list i { color: var(--primary); font-size: 0.95rem; margin-top: 2px; }
+        .contact-list .text-muted { font-weight: 500; font-size: 0.8rem; color: var(--text-gray) !important; }
         
         /* Right: Cover & Photos */
         .hero-photos-box { width: 65%; display: flex; flex-direction: column; gap: 12px; }
-        .cover-img-container { position: relative; width: 100%; height: 130px; border-radius: 12px; overflow: hidden; }
+        .cover-img-container { position: relative; width: 100%; height: 130px; border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); }
         .cover-img { width: 100%; height: 100%; object-fit: cover; }
         
         .thumb-row { display: flex; gap: 10px; align-items: center; overflow-x: auto; padding-bottom: 5px; }
-        .thumb-img { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-        .btn-add-photo { height: 60px; border: 1px dashed var(--brand-pink); border-radius: 8px; background: var(--brand-pink-light); color: var(--brand-pink); display: flex; align-items: center; justify-content: center; font-weight: 500; font-size: 0.8rem; cursor: pointer; padding: 0 15px; flex-shrink: 0; gap: 8px; white-space: nowrap; }
+        .thumb-img { width: 64px; height: 64px; border-radius: 10px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-color); }
+        .btn-add-photo { height: 64px; border: 1px dashed var(--rose-border); border-radius: 10px; background: var(--rose-soft); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem; cursor: pointer; padding: 0 16px; flex-shrink: 0; gap: 8px; white-space: nowrap; }
 
-        .hero-bottom-actions { display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid var(--border-color); }
-        .rating-box { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; font-weight: 500; }
+        .hero-bottom-actions { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid var(--border-color); }
+        .rating-box { display: flex; align-items: center; gap: 15px; font-size: 0.88rem; font-weight: 700; color: var(--navy); }
         .rating-box .star { color: #f59e0b; font-size: 1.1rem; }
-        .rating-box .open-status { color: #10b981; }
+        .rating-box .open-status { color: #16a34a; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 2px 10px; border-radius: 999px; font-size: 0.75rem; }
         .action-btns { display: flex; gap: 10px; }
-        .btn-edit { border: 1px solid var(--brand-pink); color: var(--brand-pink); background: white; padding: 6px 16px; border-radius: 6px; font-weight: 500; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;}
-        
-        /* Tabs */
-        .custom-tabs { display: flex; gap: 30px; border-bottom: 1px solid var(--border-color); margin-bottom: 25px; overflow-x: auto; background: transparent;}
-        .custom-tab { text-decoration: none; padding: 10px 0; color: var(--text-muted); font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: 0.2s; font-size: 0.85rem;}
-        .custom-tab:hover { color: var(--brand-pink); }
-        .custom-tab i { font-size: 1rem; }
-        .custom-tab.active { color: var(--brand-pink); border-bottom-color: var(--brand-pink); }
-        
-        /* 3-Column Form Layout */
-        .form-grid-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
-        
-        .form-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .section-header i { background: var(--brand-pink-light); color: var(--brand-pink); width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-        .section-header h4 { font-size: 0.95rem; font-weight: 600; margin: 0; color: var(--text-dark); }
-        
-        .f-group { margin-bottom: 15px; }
-        .f-label { display: block; font-weight: 500; margin-bottom: 6px; color: var(--text-dark); font-size: 0.75rem; }
-        .f-label .req { color: var(--brand-pink); }
-        
-        .f-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; color: var(--text-dark); background: white; transition: 0.2s; font-family: inherit;}
-        .f-control:focus { outline: none; border-color: var(--brand-pink); }
-        select.f-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
-        
-        .f-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .f-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        
-        .char-count { font-size: 0.7rem; color: var(--text-muted); text-align: left; margin-top: 4px; }
-        
-        .toggle-switch { display: flex; align-items: center; gap: 8px; }
-        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 18px; }
-        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--brand-pink); }
-        input:checked + .slider:before { transform: translateX(16px); }
-        
-        .chip-container { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; border: 1px solid var(--border-color); border-radius: 6px; min-height: 38px; align-items: center; }
-        .chip { background: var(--brand-pink-light); color: var(--brand-pink); font-size: 0.7rem; padding: 3px 8px; border-radius: 4px; display: flex; align-items: center; gap: 6px; font-weight: 500; }
-        .chip i { cursor: pointer; font-size: 0.8rem; }
-        
-        /* Documents Section */
-        .doc-section { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .doc-header-text { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px; margin-top: -10px; padding-left: 40px;}
-        .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        
-        .doc-card { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px 10px; display: flex; align-items: center; gap: 10px; position: relative; transition: 0.2s; }
-        .doc-card:hover { border-color: var(--brand-pink); }
-        
-        .doc-icon-wrapper { width: 35px; height: 35px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0;}
-        .doc-info { flex-grow: 1; }
-        .doc-title { font-size: 0.7rem; font-weight: 600; color: var(--text-dark); line-height: 1.2; margin-bottom: 4px; }
-        .doc-action { color: var(--brand-pink); font-size: 0.7rem; font-weight: 500; text-decoration: none; cursor: pointer; }
-        .doc-check { position: absolute; top: -6px; right: -6px; color: white; background: #10b981; font-size: 0.6rem; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white;}
+        .btn-edit { border: 1px solid var(--border-color); color: var(--navy); background: white; padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+        .btn-preview { background-color: var(--primary); color: white; border: none; padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.84rem; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25); text-decoration: none; }
+        .btn-preview:hover { background-color: var(--primary-hover); color: white; }
 
-        /* Bottom Fixed Bar */
-        .bottom-action-bar { position: fixed; bottom: 0; left: var(--sidebar-width); right: 0; background: transparent; padding: 15px 35px; display: flex; justify-content: flex-end; gap: 15px; z-index: 99; }
-        .btn-cancel { background: white; border: 1px solid var(--border-color); padding: 8px 24px; border-radius: 6px; font-weight: 500; color: var(--text-dark); font-size: 0.85rem; cursor: pointer; }
-        .btn-save { background: var(--brand-pink); border: 1px solid var(--brand-pink); padding: 8px 24px; border-radius: 6px; font-weight: 500; color: white; font-size: 0.85rem; cursor: pointer; }
-
-        /* Profile Tracker */
-        .profile-tracker { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+        /* Profile Tracker / Completion Bar matching Doctor */
+        .profile-tracker {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: clamp(20px, 2.5vw, 28px);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
         .pt-left { display: flex; align-items: center; gap: 20px; width: 25%; }
-        .pt-circle-wrap { position: relative; width: 65px; height: 65px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; }
-        .pt-circle-inner { width: 55px; height: 55px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; color: #111827; position: absolute; }
-        .pt-text h4 { font-size: 0.95rem; font-weight: 600; margin: 0 0 5px 0; color: #111827; }
-        .pt-text p { font-size: 0.65rem; color: var(--text-muted); margin: 0; line-height: 1.3; }
+        .pt-circle-wrap { position: relative; width: 68px; height: 68px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .pt-circle-inner { width: 56px; height: 56px; border-radius: 50%; background: white; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; color: var(--navy); position: absolute; }
+        .pt-text h4 { font-size: 1rem; font-weight: 800; margin: 0 0 4px 0; color: var(--navy); }
+        .pt-text p { font-size: 0.8rem; color: var(--text-gray); margin: 0; line-height: 1.35; }
         
         .pt-steps { flex-grow: 1; display: flex; justify-content: space-between; position: relative; --progress: 0%; }
-        .pt-steps::before { content: ""; position: absolute; top: 12px; left: 20px; right: 20px; height: 2px; background: linear-gradient(to right, var(--brand-pink) var(--progress), var(--brand-pink-light) var(--progress)); z-index: 1; }
-        .pt-step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 70px; }
-        .pt-icon { width: 26px; height: 26px; border-radius: 50%; background: white; border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--border-color); }
-        .pt-step.done .pt-icon { border-color: var(--brand-pink); color: white; background: var(--brand-pink); }
-        .pt-label { font-size: 0.65rem; font-weight: 600; color: #111827; text-align: center; line-height: 1.2; }
-        .pt-status { font-size: 0.6rem; color: var(--text-muted); }
-        .pt-step.done .pt-status { color: #10b981; }
+        .pt-steps::before { content: ""; position: absolute; top: 12px; left: 20px; right: 20px; height: 2px; background: linear-gradient(to right, var(--primary) var(--progress), var(--rose-light) var(--progress)); z-index: 1; }
+        .pt-step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 70px; }
+        .pt-icon { width: 26px; height: 26px; border-radius: 50%; background: white; border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-gray); }
+        .pt-step.done .pt-icon { border-color: var(--primary); color: white; background: var(--primary); }
+        .pt-label { font-size: 0.7rem; font-weight: 700; color: var(--navy); text-align: center; line-height: 1.25; }
+        .pt-status { font-size: 0.65rem; color: var(--text-gray); font-weight: 600; }
+        .pt-step.done .pt-status { color: var(--success); }
         
-        .btn-visibility { background: white; border: 1px solid var(--brand-pink); color: var(--brand-pink); padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: 0.2s;}
-        .btn-visibility:hover { background: var(--brand-pink-light); color: var(--brand-pink); }
+        .btn-visibility { background: white; border: 1px solid var(--rose-border); color: var(--primary); padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: 0.2s;}
+        .btn-visibility:hover { background: var(--rose-soft); color: var(--primary); }
 
-        /* Enhanced Validation and Helper Styling */
-        .f-control.is-invalid {
-            border-color: #ef4444 !important;
-            background-color: #fffbfa !important;
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        /* Tabs Navigation Bar */
+        .custom-tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding: 8px 0;
+            background: var(--bg-page);
+            position: sticky;
+            top: 70px;
+            z-index: 40;
+            -webkit-overflow-scrolling: touch;
         }
-        .f-control.is-valid {
-            border-color: #10b981 !important;
+        .custom-tab {
+            text-decoration: none;
+            padding: 10px 18px;
+            color: var(--text-gray);
+            font-weight: 700;
+            font-size: 0.88rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: transparent;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .error-msg {
+        .custom-tab:hover {
+            color: var(--primary);
+            background: var(--rose-soft);
+        }
+        .custom-tab.active {
+            color: var(--primary);
+            background: var(--rose-soft);
+            border-color: var(--rose-border);
+        }
+
+        .tab-pane {
+            display: block !important;
+            margin-bottom: 24px;
+            scroll-margin-top: 130px;
+        }
+
+        /* Custom Multi-Select Dropdowns matching Doctor Profile Completion */
+        .fdf-multiselect {
+            position: relative;
+            width: 100%;
+        }
+        .fdf-multiselect-trigger {
+            min-height: 44px;
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .fdf-multiselect-trigger:hover {
+            border-color: #cbd5e1;
+        }
+        .fdf-multiselect-trigger:focus, .fdf-multiselect.open .fdf-multiselect-trigger {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+            outline: none;
+        }
+        .fdf-multiselect-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            flex: 1;
+        }
+        .fdf-multiselect-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--rose-light);
+            color: var(--primary);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+            border-radius: 6px;
+            padding: 3px 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .fdf-multiselect-chip-remove {
+            cursor: pointer;
+            font-size: 1.1rem;
+            line-height: 0.8;
+            color: var(--primary);
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+        .fdf-multiselect-chip-remove:hover {
+            opacity: 1;
+        }
+        .fdf-multiselect-placeholder {
+            color: #94a3b8;
+            font-size: 0.88rem;
+            user-select: none;
+        }
+        .fdf-multiselect-dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            z-index: 1000;
             display: none;
-            font-size: 0.72rem;
-            color: #ef4444;
-            font-weight: 500;
-            margin-top: 4px;
-            align-items: center;
-            gap: 4px;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .error-msg.show {
+        .fdf-multiselect.open .fdf-multiselect-dropdown {
             display: flex;
         }
-        .field-hint {
-            font-size: 0.72rem;
-            color: #64748b;
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .fdf-multiselect-search-wrap {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f1f5f9;
+            background: #f8fafc;
         }
-        .cascade-info {
-            font-size: 0.72rem;
-            color: var(--brand-pink);
-            font-weight: 500;
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .validation-alert-toast {
-            display: none;
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            background: #ef4444;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        .fdf-multiselect-search {
+            width: 100%;
+            padding: 7px 10px;
             font-size: 0.85rem;
-            font-weight: 500;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .fdf-multiselect-search:focus {
+            border-color: var(--primary);
+        }
+        .fdf-multiselect-list {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .fdf-multiselect-item {
+            display: flex;
             align-items: center;
             gap: 10px;
-            animation: slideDown 0.3s ease;
+            padding: 8px 14px;
+            font-size: 0.88rem;
+            color: var(--navy);
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
         }
-        @keyframes slideDown {
-            from { transform: translateY(-20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        .fdf-multiselect-item:hover {
+            background: #fff1f2;
+        }
+        .fdf-multiselect-item input[type="checkbox"] {
+            accent-color: var(--primary);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .fdf-multiselect-custom-wrap {
+            display: flex;
+            gap: 6px;
+            padding: 8px 10px;
+            border-top: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+        .fdf-multiselect-custom-input {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            outline: none;
+        }
+        .fdf-multiselect-custom-input:focus {
+            border-color: var(--primary);
+        }
+        .fdf-multiselect-custom-btn {
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            background: var(--navy);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .fdf-multiselect-custom-btn:hover {
+            background: #0f172a;
+        }
+
+        /* Document Status Wrap matching Doctor Profile Completion */
+        .doc-file-input {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .doc-status-wrap {
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+        }
+        .doc-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+        .doc-badge.uploaded {
+            background: #ECFDF5; color: #059669; border: 1px solid #A7F3D0;
+        }
+        .doc-badge.selected {
+            background: #EFF6FF; color: #1D4ED8; border: 1px solid #BFDBFE;
+        }
+        .doc-badge.not-uploaded {
+            background: #F1F5F9; color: #64748B; border: 1px solid #CBD5E1;
+        }
+        .doc-preview-box {
+            margin-top: 4px;
+        }
+        .doc-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .doc-link:hover { text-decoration: underline; color: var(--navy); }
+
+        /* Form Cards & Input Controls */
+        .form-section {
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: clamp(20px, 2.5vw, 28px);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-card);
+        }
+        .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .section-header i { background: var(--rose-soft); color: var(--primary); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .section-header h4 { font-size: 1rem; font-weight: 800; margin: 0; color: var(--navy); }
+
+        .f-group { margin-bottom: 16px; }
+        .f-label { display: block; font-weight: 700; margin-bottom: 6px; color: var(--navy); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.4px; }
+        .f-label .req { color: var(--primary); }
+
+        .f-control { width: 100%; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 0.88rem; color: var(--navy); background: white; transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit;}
+        .f-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15); }
+        select.f-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' class='bi bi-chevron-down' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+        .f-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .f-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+        .top-header { display: none !important; }
+        .bottom-action-bar { display: none !important; }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 991px) {
+            .app-header {
+                padding: 12px 16px;
+                gap: 10px;
+            }
+            .header-brand {
+                font-size: 1rem;
+            }
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+            }
+            .main-content {
+                padding: 16px 12px 120px 12px !important;
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .hero-top-row {
+                flex-direction: column !important;
+                gap: 16px !important;
+            }
+            .hero-info-box, .hero-photos-box {
+                width: 100% !important;
+            }
+            .form-grid-3col, .form-grid-2col, .f-row-2, .f-row-3 {
+                grid-template-columns: 1fr !important;
+            }
+            .profile-tracker {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 16px;
+            }
+            .pt-left {
+                width: 100%;
+            }
+            .pt-steps {
+                width: 100%;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .pt-step {
+                width: calc(50% - 12px);
+            }
+            .pt-steps::before {
+                display: none;
+            }
         }
     </style>
 
@@ -456,7 +595,109 @@
         
         /* Hide existing top header and bottom save bar since we have the top header */
         .top-header { display: none !important; }
-        .bottom-action-bar { display: none !important; }
+
+        .bottom-action-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            padding: 12px 24px;
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            display: flex !important;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+        }
+
+        /* Modal Overlay & Card Styling (Doctor Parity) */
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; padding: 16px;
+        }
+        .review-modal-card {
+            background: #FFFFFF; border-radius: 20px; max-width: 800px; width: 100%;
+            max-height: 92vh; display: flex; flex-direction: column; padding: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        .review-modal-body {
+            overflow-y: auto; padding-right: 6px; margin: 12px 0 16px; flex: 1;
+        }
+        .review-section-block {
+            background: #F8FAFC; border: 1px solid #E2E8F0;
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
+        }
+        .review-section-title {
+            font-size: 0.95rem; font-weight: 800; color: #0f172a; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #E2E8F0;
+            padding-bottom: 6px;
+        }
+        .review-section-title .num {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%; background: var(--fdf-pink, #db2777);
+            color: #fff; font-size: 0.75rem; font-weight: 700;
+        }
+        .review-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px 14px;
+        }
+        .review-item {
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        .review-item.full {
+            grid-column: 1 / -1;
+        }
+        .review-item-label {
+            font-size: 0.75rem; text-transform: uppercase; font-weight: 700;
+            color: #64748b; letter-spacing: 0.5px;
+        }
+        .review-item-value {
+            font-size: 0.9rem; font-weight: 600; color: #0f172a; word-break: break-word;
+        }
+        .review-modal-actions {
+            display: flex; align-items: center; justify-content: flex-end;
+            gap: 10px; padding-top: 14px; border-top: 1px solid #E2E8F0; flex-wrap: wrap;
+        }
+        .modal-header {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+        }
+        .modal-header .icon-wrap {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: #fce7f3; color: var(--fdf-pink, #db2777);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; flex-shrink: 0;
+        }
+        .btn-close-modal {
+            background: transparent; border: none; font-size: 1.5rem; line-height: 1;
+            color: #64748b; cursor: pointer; padding: 4px; border-radius: 8px;
+            transition: color 0.15s, background 0.15s; margin-left: auto;
+        }
+        .btn-close-modal:hover { color: #0f172a; background: #F1F5F9; }
+        .btn-modal-cancel {
+            padding: 10px 18px; border-radius: 10px; border: 1px solid #cbd5e1;
+            background: #F1F5F9; color: #0f172a; font-weight: 700; font-size: 0.88rem; cursor: pointer;
+        }
+        .btn-modal-confirm {
+            padding: 10px 20px; border-radius: 10px; border: none;
+            background: var(--fdf-pink, #db2777); color: #FFFFFF; font-weight: 700; font-size: 0.88rem;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .btn-modal-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary-modal {
+            padding: 9px 14px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;
+            border: 1px solid #cbd5e1; background: #F1F5F9; color: #0f172a;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+        }
+        .btn-secondary-modal:hover { background: #E2E8F0; color: #0f172a; }
         
         /* Mobile Responsive Adjustments */
         @media (max-width: 991px) {
@@ -561,7 +802,8 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
         <div class="header-actions">
             <a href="${pageContext.request.contextPath}/" class="btn-skip" style="margin-right:6px;"><i class="bi bi-house-door"></i> Home</a>
             <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn-skip" style="margin-right:6px;"><i class="bi bi-speedometer2"></i> Dashboard</a>
-            <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn-skip">Skip for now</a>
+            <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn-skip" style="margin-right:6px;">Skip for now</a>
+            <button type="button" class="btn-header-preview" id="btnHeaderPreview" onclick="openSalonPreviewModal()" style="padding:8px 16px; background:#f1f5f9; border:1px solid #cbd5e1; color:#334155; border-radius:8px; font-size:0.85rem; font-weight:700; cursor:pointer; margin-right:6px;"><i class="bi bi-eye"></i> Preview Profile</button>
             <button type="button" class="btn-header-save" id="btnHeaderSave" onclick="handleProfileSave(event)">Save Profile</button>
         </div>
     </header>
@@ -588,7 +830,7 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                 <div class="header-actions">
                     <a href="${pageContext.request.contextPath}/" class="btn btn-outline-secondary btn-sm text-decoration-none me-1"><i class="bi bi-house-door"></i> Home</a>
                     <a href="${pageContext.request.contextPath}/salon/salon-dashboard" class="btn btn-outline-secondary btn-sm text-decoration-none me-1"><i class="bi bi-arrow-left"></i> Dashboard</a>
-                    <a href="${pageContext.request.contextPath}/salons/preview" target="_blank" class="btn-preview text-decoration-none"><i class="bi bi-eye"></i> Preview Salon Profile</a>
+                    <button type="button" class="btn-preview" onclick="openSalonPreviewModal()" style="padding:6px 14px; background:#f1f5f9; border:1px solid #cbd5e1; color:#334155; border-radius:8px; font-size:0.85rem; font-weight:700; cursor:pointer;"><i class="bi bi-eye"></i> Preview Profile</button>
                     
                     <!-- Notifications Dropdown -->
                     <div class="dropdown">
@@ -720,7 +962,7 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                     </div>
                     <div class="action-btns">
                         <button type="button" class="btn-edit" id="btnEditProfile" onclick="openEditMode()"><i class="bi bi-pencil"></i> Edit Profile</button>
-                        <a href="${pageContext.request.contextPath}/salons/preview" target="_blank" class="btn-preview text-decoration-none"><i class="bi bi-eye"></i> Preview Salon Profile</a>
+                        <button type="button" class="btn-preview" onclick="openSalonPreviewModal()" style="padding:8px 18px; background:#f1f5f9; border:1px solid #cbd5e1; color:#334155; border-radius:8px; font-size:0.88rem; font-weight:700; cursor:pointer;"><i class="bi bi-eye"></i> Preview Profile</button>
                     </div>
                 </div>
             </div>
@@ -773,11 +1015,6 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                         <div class="pt-label">Social<br>Media</div>
                         <div class="pt-status" id="statusSocial">${socialCount}/${socialTotal} Completed</div>
                     </div>
-                    <div class="pt-step ${stepPref ? 'done' : ''}" id="stepPref" onclick="openEditMode('tab-preferences')" style="cursor:pointer;">
-                        <div class="pt-icon"><i class="bi bi-check2"></i></div>
-                        <div class="pt-label">Preferences</div>
-                        <div class="pt-status" id="statusPref">${stepPref ? 'Completed' : 'Pending'}</div>
-                    </div>
                 </div>
                 
                 <a href="javascript:void(0)" onclick="openEditMode()" class="btn-visibility">Increase Visibility <i class="bi bi-arrow-right"></i></a>
@@ -787,15 +1024,13 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
             <div class="custom-tabs" id="profileTabs">
                 <a href="#" class="custom-tab active" data-target="tab-business">Business Information</a>
                 <a href="#" class="custom-tab" data-target="tab-details">Salon Details</a>
-                <a href="#" class="custom-tab" data-target="tab-services"><i class="bi bi-scissors"></i> Services Offered</a>
-                <a href="#" class="custom-tab" data-target="tab-facilities">Facilities & Amenities</a>
+                <a href="#" class="custom-tab" data-target="tab-facilities">Facilities &amp; Amenities</a>
                 <a href="#" class="custom-tab" data-target="tab-documents">Documents</a>
                 <a href="#" class="custom-tab" data-target="tab-social">Social Media</a>
-                <a href="#" class="custom-tab" data-target="tab-preferences">Preferences</a>
             </div>
 
-            <!-- Wrapper to hide form until edit is clicked -->
-            <div id="editableSections" style="display: none;">
+            <!-- All Sections Container -->
+            <div id="editableSections">
                 
                 <!-- Tab Content Area -->
                 <div class="tab-content-container">
@@ -981,7 +1216,7 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                 </div> <!-- End Tab Business -->
 
                 <!-- Tab: Salon Details -->
-                <div class="tab-pane" id="tab-details" style="display:none;">
+                <div class="tab-pane" id="tab-details">
                 <div class="form-section">
                     <div class="section-header">
                         <i class="bi bi-gem"></i>
@@ -1093,84 +1328,33 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                             <div class="field-hint"><i class="bi bi-info-circle"></i> Sanitation protocol and hygiene level followed</div>
                         </div>
                         <div class="f-group">
-                            <label class="f-label" for="languagesSpoken">Languages Spoken</label>
-                            <input type="text" class="f-control" id="languagesSpoken" name="languagesSpoken" value="${salon.languagesSpoken}" placeholder="English, Hindi, Kannada" maxlength="150">
-                            <div class="field-hint"><i class="bi bi-info-circle"></i> Languages spoken by styling & front-desk staff</div>
-                            <div class="error-msg" id="err-languagesSpoken"><i class="bi bi-exclamation-circle-fill"></i> Languages list cannot exceed 150 characters.</div>
+                            <label class="f-label">Languages Spoken</label>
+                            <input type="hidden" name="languagesSpoken" id="languagesSpoken" value="${salon.languagesSpoken}">
+                            <div class="fdf-multiselect" id="languagesMultiselect" tabindex="0">
+                                <div class="fdf-multiselect-trigger">
+                                    <div class="fdf-multiselect-chips" id="languagesChips">
+                                        <span class="fdf-multiselect-placeholder">Select or type languages spoken...</span>
+                                    </div>
+                                    <i class="bi bi-chevron-down" style="color:var(--text-gray);font-size:0.85rem;margin-left:8px;"></i>
+                                </div>
+                                <div class="fdf-multiselect-dropdown">
+                                    <div class="fdf-multiselect-search-wrap">
+                                        <input type="text" class="fdf-multiselect-search" placeholder="Search language...">
+                                    </div>
+                                    <div class="fdf-multiselect-list"></div>
+                                    <div class="fdf-multiselect-custom-wrap">
+                                        <input type="text" class="fdf-multiselect-custom-input" placeholder="Other language...">
+                                        <button type="button" class="fdf-multiselect-custom-btn">+ Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Select or type languages spoken by styling &amp; front-desk staff</div>
                         </div>
                     </div>
                 </div>
                 </div> <!-- End Tab Details -->
 
-                <!-- Tab: Services Offered -->
-                <div class="tab-pane" id="tab-services" style="display:none;">
-                <div class="form-section">
-                    <div class="section-header">
-                        <i class="bi bi-scissors"></i>
-                        <h4>Services Offered</h4>
-                    </div>
-                    
-                    <div class="f-row-2 mt-3">
-                        <div class="f-group">
-                            <label class="f-label" for="serviceCategory">Service Category</label>
-                            <select name="serviceCategory" id="serviceCategory" class="f-control">
-                                <option value="Haircut">Haircut</option>
-                                <option value="Hair Styling">Hair Styling</option>
-                                <option value="Hair Coloring">Hair Coloring</option>
-                                <option value="Facial">Facial</option>
-                                <option value="Massage">Massage</option>
-                                <option value="Manicure">Manicure</option>
-                                <option value="Pedicure">Pedicure</option>
-                                <option value="Makeup">Makeup</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            <div class="field-hint"><i class="bi bi-info-circle"></i> Select category under which this service will be listed</div>
-                        </div>
-                        <div class="f-group">
-                            <label class="f-label" for="serviceName">Service Name</label>
-                            <input type="text" name="serviceName" id="serviceName" class="f-control" placeholder="e.g. Premium Hair Spa & Scalp Therapy" maxlength="100">
-                            <div class="field-hint"><i class="bi bi-info-circle"></i> Distinctive service or treatment name</div>
-                            <div class="error-msg" id="err-serviceName"><i class="bi bi-exclamation-circle-fill"></i> Service name must be at least 2 characters.</div>
-                        </div>
-                    </div>
-
-                    <div class="f-row-2 mt-2">
-                        <div class="f-group">
-                            <label class="f-label" for="servicePrice">Price (₹)</label>
-                            <input type="text" inputmode="numeric" name="servicePrice" id="servicePrice" class="f-control" placeholder="e.g. 799" maxlength="6">
-                            <div class="field-hint"><i class="bi bi-info-circle"></i> Price charged in Indian Rupees (₹)</div>
-                            <div class="error-msg" id="err-servicePrice"><i class="bi bi-exclamation-circle-fill"></i> Enter a valid price (₹ 0 or more).</div>
-                        </div>
-                        <div class="f-group">
-                            <label class="f-label" for="serviceDuration">Duration (Minutes)</label>
-                            <input type="text" inputmode="numeric" name="serviceDuration" id="serviceDuration" class="f-control" placeholder="e.g. 45" maxlength="3">
-                            <div class="field-hint"><i class="bi bi-info-circle"></i> Estimated service duration in minutes (5–480)</div>
-                            <div class="error-msg" id="err-serviceDuration"><i class="bi bi-exclamation-circle-fill"></i> Duration must be between 5 and 480 minutes.</div>
-                        </div>
-                    </div>
-
-                    <div class="f-row-2 mt-2">
-                        <div class="f-group">
-                            <label class="f-label" for="serviceIngredients">Ingredients / Products Used</label>
-                            <input type="text" name="serviceIngredients" id="serviceIngredients" class="f-control" placeholder="e.g. Argan oil, Keratin complex, L'Oreal Professional" maxlength="200">
-                            <div class="field-hint"><i class="bi bi-info-circle"></i> Primary brand products or active ingredients</div>
-                        </div>
-                        <div class="f-group">
-                            <label class="f-label" for="serviceAllergenInfo">Allergen Information</label>
-                            <input type="text" name="serviceAllergenInfo" id="serviceAllergenInfo" class="f-control" placeholder="e.g. Contains almond extracts, patch test recommended" maxlength="200">
-                            <div class="field-hint"><i class="bi bi-info-circle"></i> Sensitive skin notices or contraindications</div>
-                        </div>
-                    </div>
-                    
-                    <div class="f-group mt-3">
-                        <label class="f-label" for="servicePhoto">Service Photo</label>
-                        <input type="file" name="servicePhoto" id="servicePhoto" accept="image/*" class="f-control">
-                        <div class="field-hint"><i class="bi bi-info-circle"></i> Showcase image for this service (PNG, JPG, max 5MB)</div>
-                    </div>
-                </div>
-                </div> <!-- End Tab Services -->
-
-                <div class="tab-pane" id="tab-facilities" style="display:none;">
+                <div class="tab-pane" id="tab-facilities">
                 <div class="form-section">
                     <div class="section-header">
                         <i class="bi bi-star"></i>
@@ -1214,11 +1398,22 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                             <div class="field-hint"><i class="bi bi-info-circle"></i> Inverter or generator backup to avoid service interruptions</div>
                         </div>
                     </div>
+
+                    <div class="f-row-2 mt-2">
+                        <div class="f-group">
+                            <label class="f-label" for="isWheelchairAccessible">Wheelchair Accessible</label>
+                            <select class="f-control" id="isWheelchairAccessible" name="isWheelchairAccessible">
+                                <option value="true" ${salon.isWheelchairAccessible ? 'selected' : ''}>Yes</option>
+                                <option value="false" ${!salon.isWheelchairAccessible ? 'selected' : ''}>No</option>
+                            </select>
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Ramp or ground floor access for differently abled guests</div>
+                        </div>
+                    </div>
                 </div>
                 </div> <!-- End Tab Facilities -->
                 
                 <!-- Tab: Social Media -->
-                <div class="tab-pane" id="tab-social" style="display:none;">
+                <div class="tab-pane" id="tab-social">
                 <div class="form-section">
                     <div class="section-header">
                         <i class="bi bi-share"></i>
@@ -1250,163 +1445,139 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                     </div>
                 </div>
                 </div> <!-- End Tab Social Media -->
-                
-                <!-- Tab: Preferences -->
-                <div class="tab-pane" id="tab-preferences" style="display:none;">
-                <div class="form-section">
-                    <div class="section-header">
-                        <i class="bi bi-sliders"></i>
-                        <h4>Preferences</h4>
-                    </div>
-                    
-                    <style>
-                    .pref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
-                    .pref-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; }
-                    .pref-box h5 { font-size: 1rem; font-weight: 600; color: #111827; margin-bottom: 15px; border-bottom: 1px solid #e9ecef; padding-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-                    .pref-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.9rem; color: #4b5563; }
-                    .pref-row:last-child { margin-bottom: 0; }
-                    .pref-input { width: 90px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; }
-                    .pref-select { width: 90px; padding: 4px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; background: white; }
-                    </style>
-
-                    <div class="pref-grid">
-                        <!-- Box 1 -->
-                        <div class="pref-box">
-                            <h5>📅 Booking Preferences</h5>
-                            <div class="pref-row"><span>Online Booking</span><select class="pref-select" name="pref_onlineBooking"><option value="ON" ${salonPrefs['pref_onlineBooking'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_onlineBooking'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Walk-ins</span><select class="pref-select" name="pref_walkins"><option value="ON" ${salonPrefs['pref_walkins'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_walkins'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Same-Day Booking</span><select class="pref-select" name="pref_sameDayBooking"><option value="ON" ${salonPrefs['pref_sameDayBooking'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_sameDayBooking'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Multiple Services</span><select class="pref-select" name="pref_multipleServices"><option value="ON" ${salonPrefs['pref_multipleServices'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_multipleServices'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                        </div>
-                        
-                        <!-- Box 2 -->
-                        <div class="pref-box">
-                            <h5>🚫 Cancellation & Rescheduling</h5>
-                            <div class="pref-row"><span>Cancellation Allowed</span><select class="pref-select" name="pref_cancelAllowed"><option value="ON" ${salonPrefs['pref_cancelAllowed'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_cancelAllowed'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Notice Period</span><input type="text" class="pref-input" name="pref_noticePeriod" value="${salonPrefs['pref_noticePeriod']}" placeholder="24 hrs"></div>
-                            <div class="pref-row"><span>Rescheduling</span><select class="pref-select" name="pref_rescheduling"><option value="ON" ${salonPrefs['pref_rescheduling'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_rescheduling'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Advance Payment</span><input type="text" class="pref-input" name="pref_advancePayment" value="${salonPrefs['pref_advancePayment']}" placeholder="20%"></div>
-                        </div>
-                        
-                        <!-- Box 3 -->
-                        <div class="pref-box">
-                            <h5>👩 Customer Preferences</h5>
-                            <!-- Legacy isWomenOnly preserved as part of the entity but represented here -->
-                            <div class="pref-row"><span>Women Only</span><select class="pref-select" name="isWomenOnly"><option value="true" ${salon.isWomenOnly ? 'selected' : ''}>ON</option><option value="false" ${!salon.isWomenOnly ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>New Customers</span><select class="pref-select" name="pref_newCustomers"><option value="ON" ${salonPrefs['pref_newCustomers'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_newCustomers'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Select Preferred Staff</span><select class="pref-select" name="pref_selectStaff"><option value="ON" ${salonPrefs['pref_selectStaff'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_selectStaff'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Female Staff Request</span><select class="pref-select" name="pref_femaleStaff"><option value="ON" ${salonPrefs['pref_femaleStaff'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_femaleStaff'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                        </div>
-
-                        <!-- Box 4 -->
-                        <div class="pref-box">
-                            <h5>🔔 Notifications</h5>
-                            <div class="pref-row"><span>Booking Alerts</span><select class="pref-select" name="pref_bookingAlerts"><option value="ON" ${salonPrefs['pref_bookingAlerts'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_bookingAlerts'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>WhatsApp</span><select class="pref-select" name="pref_whatsapp"><option value="ON" ${salonPrefs['pref_whatsapp'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_whatsapp'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>SMS</span><select class="pref-select" name="pref_sms"><option value="ON" ${salonPrefs['pref_sms'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_sms'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Email</span><select class="pref-select" name="pref_email"><option value="ON" ${salonPrefs['pref_email'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_email'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                        </div>
-                        
-                        <!-- Box 5 -->
-                        <div class="pref-box">
-                            <h5>🕐 Availability</h5>
-                            <div class="pref-row"><span>Buffer Time</span><input type="text" class="pref-input" name="pref_bufferTime" value="${salonPrefs['pref_bufferTime']}" placeholder="10 min"></div>
-                            <div class="pref-row"><span>Walk-in Queue</span><select class="pref-select" name="pref_walkinQueue"><option value="ON" ${salonPrefs['pref_walkinQueue'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_walkinQueue'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Holiday Mode</span><select class="pref-select" name="pref_holidayMode"><option value="ON" ${salonPrefs['pref_holidayMode'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_holidayMode'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                        </div>
-
-                        <!-- Box 6 -->
-                        <div class="pref-box">
-                            <h5>🛡 Hygiene & Privacy</h5>
-                            <div class="pref-row"><span>Treatment Consultation</span><select class="pref-select" name="pref_consultation"><option value="ON" ${salonPrefs['pref_consultation'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_consultation'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Patch Test Required</span><select class="pref-select" name="pref_patchTest"><option value="ON" ${salonPrefs['pref_patchTest'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_patchTest'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <!-- Legacy isWheelchairAccessible preserved as part of the entity but moved here for privacy or elsewhere, wait we already have it in entity, just mapping to private treatment rooms for now -->
-                            <div class="pref-row"><span>Private Treatment Rooms</span><select class="pref-select" name="pref_privateRooms"><option value="ON" ${salonPrefs['pref_privateRooms'] == 'ON' ? 'selected' : ''}>ON</option><option value="OFF" ${salonPrefs['pref_privateRooms'] == 'OFF' ? 'selected' : ''}>OFF</option></select></div>
-                            <div class="pref-row"><span>Wheelchair Accessible</span><select class="pref-select" name="isWheelchairAccessible"><option value="true" ${salon.isWheelchairAccessible ? 'selected' : ''}>ON</option><option value="false" ${!salon.isWheelchairAccessible ? 'selected' : ''}>OFF</option></select></div>
-                        </div>
-
-                    </div>
-                </div>
-                </div> <!-- End Tab Facilities -->
 
                 <!-- Tab: Documents -->
-                <div class="tab-pane" id="tab-documents" style="display:none;">
-                <!-- Documents Section -->
-                <div class="doc-section">
-                <div class="section-header mb-0">
-                    <i class="bi bi-building"></i>
-                    <h4>Documents & Certificates</h4>
+                <div class="tab-pane" id="tab-documents">
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                        <h4>Verification Documents (Optional)</h4>
+                    </div>
+                    <div class="field-hint mb-3"><i class="bi bi-info-circle"></i> JPG, PNG or PDF up to 5 MB. Existing uploads are kept if you do not replace them.</div>
+
+                    <div class="f-row-2">
+                        <!-- Doc 1: Business Registration -->
+                        <div class="f-group">
+                            <label class="f-label">Business Registration Certificate</label>
+                            <input type="file" name="businessRegistration" id="fileBus" accept="image/jpeg,image/png,application/pdf" class="f-control doc-file-input">
+                            <c:set var="docBus" value="${salon.businessRegistrationUrl}" />
+                            <div class="doc-status-wrap mt-2">
+                                <c:choose>
+                                    <c:when test="${not empty docBus}">
+                                        <div class="doc-badge uploaded"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                        <div class="doc-preview-box">
+                                            <a href="${pageContext.request.contextPath}${docBus}" target="_blank" class="doc-link">
+                                                <i class="bi bi-box-arrow-up-right"></i> View Document
+                                            </a>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="doc-badge not-uploaded"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+
+                        <!-- Doc 2: Salon License -->
+                        <div class="f-group">
+                            <label class="f-label">Salon Trade License</label>
+                            <input type="file" name="salonLicense" id="fileLic" accept="image/jpeg,image/png,application/pdf" class="f-control doc-file-input">
+                            <c:set var="docLic" value="${salon.salonLicenseUrl}" />
+                            <div class="doc-status-wrap mt-2">
+                                <c:choose>
+                                    <c:when test="${not empty docLic}">
+                                        <div class="doc-badge uploaded"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                        <div class="doc-preview-box">
+                                            <a href="${pageContext.request.contextPath}${docLic}" target="_blank" class="doc-link">
+                                                <i class="bi bi-box-arrow-up-right"></i> View Document
+                                            </a>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="doc-badge not-uploaded"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+
+                        <!-- Doc 3: GST Certificate -->
+                        <div class="f-group">
+                            <label class="f-label">GST Certificate (Optional)</label>
+                            <input type="file" name="gstCertificate" id="fileGst" accept="image/jpeg,image/png,application/pdf" class="f-control doc-file-input">
+                            <c:set var="docGst" value="${salon.gstCertificateUrl}" />
+                            <div class="doc-status-wrap mt-2">
+                                <c:choose>
+                                    <c:when test="${not empty docGst}">
+                                        <div class="doc-badge uploaded"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                        <div class="doc-preview-box">
+                                            <a href="${pageContext.request.contextPath}${docGst}" target="_blank" class="doc-link">
+                                                <i class="bi bi-box-arrow-up-right"></i> View Document
+                                            </a>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="doc-badge not-uploaded"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+
+                        <!-- Doc 4: Hygiene Certificate -->
+                        <div class="f-group">
+                            <label class="f-label">Hygiene &amp; Safety Certificate</label>
+                            <input type="file" name="hygieneCertificate" id="fileHyg" accept="image/jpeg,image/png,application/pdf" class="f-control doc-file-input">
+                            <c:set var="docHyg" value="${salon.hygieneCertificateUrl}" />
+                            <div class="doc-status-wrap mt-2">
+                                <c:choose>
+                                    <c:when test="${not empty docHyg}">
+                                        <div class="doc-badge uploaded"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                        <div class="doc-preview-box">
+                                            <a href="${pageContext.request.contextPath}${docHyg}" target="_blank" class="doc-link">
+                                                <i class="bi bi-box-arrow-up-right"></i> View Document
+                                            </a>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="doc-badge not-uploaded"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+
+                        <!-- Doc 5: Fire Safety NOC -->
+                        <div class="f-group">
+                            <label class="f-label">Fire Safety Certificate / NOC</label>
+                            <input type="file" name="fireSafety" id="fileFire" accept="image/jpeg,image/png,application/pdf" class="f-control doc-file-input">
+                            <c:set var="docFire" value="${salon.fireSafetyUrl}" />
+                            <div class="doc-status-wrap mt-2">
+                                <c:choose>
+                                    <c:when test="${not empty docFire}">
+                                        <div class="doc-badge uploaded"><i class="bi bi-check-circle-fill"></i> Uploaded</div>
+                                        <div class="doc-preview-box">
+                                            <a href="${pageContext.request.contextPath}${docFire}" target="_blank" class="doc-link">
+                                                <i class="bi bi-box-arrow-up-right"></i> View Document
+                                            </a>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="doc-badge not-uploaded"><i class="bi bi-dash-circle"></i> Not uploaded</div>
+                                    </c:otherwise>
+                                </c:choose>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <p class="doc-header-text">Upload necessary documents and certificates</p>
-                
-                <div class="doc-grid">
-                    <!-- Doc 1 -->
-                    <div class="doc-card">
-                        <c:if test="${not empty salon.businessRegistrationUrl}"><i class="bi bi-check doc-check"></i></c:if>
-                        <div class="doc-icon-wrapper" style="color:#a855f7; background:#f3e8ff;"><i class="bi bi-file-earmark-text"></i></div>
-                        <div class="doc-info">
-                            <div class="doc-title">Business Registration <br>Certificate</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> PDF, PNG, JPG (max 5 MB)</div>
-                            <div class="doc-action" onclick="document.getElementById('fileBus').click()">View / Upload</div>
-                        </div>
-                        <input type="file" name="businessRegistration" style="display:none;" id="fileBus">
-                    </div>
-                    <!-- Doc 2 -->
-                    <div class="doc-card">
-                        <c:if test="${not empty salon.salonLicenseUrl}"><i class="bi bi-check doc-check"></i></c:if>
-                        <div class="doc-icon-wrapper" style="color:#3b82f6; background:#eff6ff;"><i class="bi bi-file-text"></i></div>
-                        <div class="doc-info">
-                            <div class="doc-title"><br>Salon License</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Trade license copy (max 5 MB)</div>
-                            <div class="doc-action" onclick="document.getElementById('fileLic').click()">View / Upload</div>
-                        </div>
-                        <input type="file" name="salonLicense" style="display:none;" id="fileLic">
-                    </div>
-                    <!-- Doc 3 -->
-                    <div class="doc-card">
-                        <c:if test="${not empty salon.gstCertificateUrl}"><i class="bi bi-check doc-check"></i></c:if>
-                        <div class="doc-icon-wrapper" style="color:#10b981; background:#ecfdf5;"><i class="bi bi-receipt"></i></div>
-                        <div class="doc-info">
-                            <div class="doc-title">GST Certificate <br><span class="text-muted fw-normal" style="font-size:0.6rem">(If Applicable)</span></div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> GST registration certificate</div>
-                            <div class="doc-action" onclick="document.getElementById('fileGst').click()">View / Upload</div>
-                        </div>
-                        <input type="file" name="gstCertificate" style="display:none;" id="fileGst">
-                    </div>
-                    <!-- Doc 4 -->
-                    <div class="doc-card">
-                        <c:if test="${not empty salon.hygieneCertificateUrl}"><i class="bi bi-check doc-check"></i></c:if>
-                        <div class="doc-icon-wrapper" style="color:#ec4899; background:#fdf2f8;"><i class="bi bi-droplet"></i></div>
-                        <div class="doc-info">
-                            <div class="doc-title"><br>Hygiene Certificate</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Safety inspection certificate</div>
-                            <div class="doc-action" onclick="document.getElementById('fileHyg').click()">View / Upload</div>
-                        </div>
-                        <input type="file" name="hygieneCertificate" style="display:none;" id="fileHyg">
-                    </div>
-                    <!-- Doc 5 -->
-                    <div class="doc-card">
-                        <c:if test="${not empty salon.fireSafetyUrl}"><i class="bi bi-check doc-check"></i></c:if>
-                        <div class="doc-icon-wrapper" style="color:#ef4444; background:#fef2f2;"><i class="bi bi-fire"></i></div>
-                        <div class="doc-info">
-                            <div class="doc-title"><br>Fire Safety Certificate</div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Fire NOC or safety certificate</div>
-                            <div class="doc-action" onclick="document.getElementById('fileFire').click()">View / Upload</div>
-                        </div>
-                        <input type="file" name="fireSafety" style="display:none;" id="fileFire">
-                    </div>
-                    <!-- Doc 6 -->
-                    <div class="doc-card">
-                        <div class="doc-icon-wrapper" style="color:#0ea5e9; background:#f0f9ff;"><i class="bi bi-shield-check"></i></div>
-                        <div class="doc-info">
-                            <div class="doc-title">Insurance Certificate <br><span class="text-muted fw-normal" style="font-size:0.6rem">(Optional)</span></div><div class="field-hint" style="font-size:0.62rem; margin-top:2px;"><i class="bi bi-file-earmark-arrow-up"></i> Liability / property insurance</div>
-                            <div class="doc-action">View / Upload</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
                 </div> <!-- End Tab Documents -->
                 </div> <!-- End Tab Content Container -->
 
-                <!-- Fixed Bottom Action Bar -->
+                <!-- Fixed Bottom Action Bar (Single Set of Action Buttons) -->
                 <div class="bottom-action-bar">
-                    <button type="button" class="btn-cancel" id="btnCancelEdit">Cancel</button>
-                    <button type="submit" class="btn-save" id="btnBottomSave">Save Changes</button>
+                    <button type="button" class="btn-preview-bottom" id="btnBottomPreview" onclick="openSalonPreviewModal()" style="padding:10px 20px; border-radius:10px; font-weight:700; background:#f1f5f9; border:1px solid #cbd5e1; color:#334155; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="bi bi-eye"></i> Preview Profile
+                    </button>
+                    <button type="submit" class="btn-save-bottom" id="btnBottomSave" onclick="handleProfileSave(event)" style="padding:10px 24px; border-radius:10px; font-weight:700; background:var(--fdf-pink, #db2777); color:white; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                        <i class="bi bi-check2-circle"></i> Save Profile
+                    </button>
                 </div>
             </div> <!-- End editableSections wrapper -->
             
@@ -1425,25 +1596,12 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
 
     <script>
         function openEditMode(tabId) {
-            document.getElementById('editableSections').style.display = 'block';
-            if(tabId) {
-                var targetTab = document.querySelector('.custom-tab[data-target="' + tabId + '"]');
-                if(targetTab) targetTab.click();
-            } else {
-                var firstTab = document.querySelector('.custom-tab[data-target]');
-                if(firstTab) firstTab.click();
+            const targetId = tabId || 'tab-business';
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            setTimeout(function() {
-                var tabsSection = document.getElementById('profileTabs');
-                if(tabsSection) {
-                    window.scrollTo({top: tabsSection.offsetTop - 20, behavior: 'smooth'});
-                }
-            }, 50);
         }
-
-        document.getElementById('btnCancelEdit').addEventListener('click', function() {
-            document.getElementById('editableSections').style.display = 'none';
-        });
 
         function previewImage(input, imgId) {
             if (input.files && input.files[0]) {
@@ -1498,7 +1656,7 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
             }
         }
 
-        // Tab Switching Logic
+        // Tab Smooth Scroll & ScrollSpy Logic
         document.addEventListener("DOMContentLoaded", function() {
             const tabs = document.querySelectorAll("#profileTabs .custom-tab[data-target]");
             const panes = document.querySelectorAll(".tab-pane");
@@ -1507,20 +1665,36 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                 tab.addEventListener("click", function(e) {
                     e.preventDefault();
                     
-                    // Remove active from all tabs
                     tabs.forEach(t => t.classList.remove("active"));
-                    // Add active to clicked tab
                     this.classList.add("active");
 
-                    // Hide all panes
-                    panes.forEach(pane => pane.style.display = "none");
-                    
-                    // Show target pane
                     const targetId = this.getAttribute("data-target");
-                    document.getElementById(targetId).style.display = "block";
+                    const targetEl = document.getElementById(targetId);
+                    if (targetEl) {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 });
             });
-            
+
+            // ScrollSpy: highlight active tab pill as user scrolls
+            window.addEventListener("scroll", function() {
+                let current = "";
+                panes.forEach(pane => {
+                    const paneTop = pane.offsetTop - 140;
+                    if (window.scrollY >= paneTop) {
+                        current = pane.getAttribute("id");
+                    }
+                });
+                if (current) {
+                    tabs.forEach(tab => {
+                        tab.classList.remove("active");
+                        if (tab.getAttribute("data-target") === current) {
+                            tab.classList.add("active");
+                        }
+                    });
+                }
+            }, { passive: true });
+
         });
     </script>
 
@@ -1637,10 +1811,9 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
         const hasExistingServices = ${stepServices ? 'true' : 'false'};
         const hasExistingProfilePhoto = ${(not empty salon.profileImageUrl and not fn:contains(salon.profileImageUrl, 'ui-avatars')) ? 'true' : 'false'};
         const hasExistingCover = ${(not empty salon.coverImageUrl or (not empty salon.interiorImagesJson and salon.interiorImagesJson != '[]')) ? 'true' : 'false'};
-        const hasExistingFacilities = ${(salon.hasAc or salon.hasWifi or salon.hasParking or salon.hasPowerBackup) ? 'true' : 'false'};
+        const hasExistingFacilities = ${(salon.hasAc or salon.hasWifi or salon.hasParking or salon.hasPowerBackup or salon.isWheelchairAccessible) ? 'true' : 'false'};
         const initialDocsCount = ${docsCount};
         const initialSocialCount = ${socialCount};
-        const hasExistingPreferences = ${(not empty salon.preferencesJson and salon.preferencesJson != '{}') ? 'true' : 'false'};
 
 
         const locationData = {
@@ -1951,7 +2124,7 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
 
         function recalculateSalonProgress() {
             let filled = 0;
-            const total = 20;
+            const total = 19;
 
             // 1. Salon Name (>= 3 chars)
             const hasName = val('salonName').length >= 3;
@@ -2014,14 +2187,13 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
             const hasSize = !isNaN(sizeVal) && sizeVal >= 50 && sizeVal <= 50000;
             if (hasSize) filled++;
 
-            // Step 2: Salon Details Done Flag
-            const detailsDone = hasCategory && hasChairs && hasSize;
-            updateStepStatus('stepSalonDetails', 'statusSalonDetails', detailsDone);
+            // 13. Languages Spoken
+            const hasLang = val('languagesSpoken').trim().length > 0;
+            if (hasLang) filled++;
 
-            // 13. Services Offered (at least 1 service)
-            const hasService = hasExistingServices || val('serviceName').length >= 2;
-            if (hasService) filled++;
-            updateStepStatus('stepServices', 'statusServices', hasService);
+            // Step 2: Salon Details Done Flag
+            const detailsDone = hasCategory && hasChairs && hasSize && hasLang;
+            updateStepStatus('stepSalonDetails', 'statusSalonDetails', detailsDone);
 
             // 14. Profile Photo / Logo
             const profileInput = document.getElementById('profileImageInput');
@@ -2044,6 +2216,7 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
             // 16. Facilities & Amenities
             const hasFacilities = val('hasAc') === 'true' || val('hasWifi') === 'true' ||
                                   val('hasParkingFacility') === 'true' || val('hasPowerBackup') === 'true' ||
+                                  val('isWheelchairAccessible') === 'true' ||
                                   hasExistingFacilities;
             if (hasFacilities) filled++;
             updateStepStatus('stepFacilities', 'statusFacilities', hasFacilities);
@@ -2068,12 +2241,7 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
             if (totalSocialCount > 0) filled++;
             updateStepStatus('stepSocial', 'statusSocial', totalSocialCount > 0, Math.min(3, totalSocialCount) + '/3 Completed');
 
-            // 20. Preferences
-            const hasPref = hasExistingPreferences || val('pref_onlineBooking') !== '' || val('pref_cancelAllowed') !== '';
-            if (hasPref) filled++;
-            updateStepStatus('stepPref', 'statusPref', hasPref);
-
-            // Accurate Percentage: 20 milestones, each 5%
+            // Accurate Percentage: 19 milestones
             const pct = Math.min(100, Math.round((100 * filled) / total));
 
             // Update UI elements
@@ -2178,6 +2346,198 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
                     recalculateSalonProgress();
                 });
             }
+
+            // Reusable Multiselect Component Engine
+            function initMultiSelect(config) {
+                const container = document.getElementById(config.containerId);
+                if (!container) return;
+                const hiddenInput = document.getElementById(config.hiddenInputId);
+                const chipsContainer = document.getElementById(config.chipsId);
+                const trigger = container.querySelector('.fdf-multiselect-trigger');
+                const searchInput = container.querySelector('.fdf-multiselect-search');
+                const listContainer = container.querySelector('.fdf-multiselect-list');
+                const customInput = container.querySelector('.fdf-multiselect-custom-input');
+                const customBtn = container.querySelector('.fdf-multiselect-custom-btn');
+
+                let allOptions = [...config.options];
+                let selectedValues = [];
+
+                if (hiddenInput && hiddenInput.value) {
+                    selectedValues = hiddenInput.value.split(',')
+                        .map(s => s.trim())
+                        .filter(Boolean);
+                    selectedValues.forEach(v => {
+                        if (!allOptions.includes(v)) allOptions.push(v);
+                    });
+                }
+
+                function syncValue() {
+                    if (hiddenInput) {
+                        hiddenInput.value = selectedValues.join(', ');
+                        hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                    renderChips();
+                    renderList(searchInput ? searchInput.value : '');
+                }
+
+                function renderChips() {
+                    if (!chipsContainer) return;
+                    chipsContainer.innerHTML = '';
+                    if (selectedValues.length === 0) {
+                        const placeholder = document.createElement('span');
+                        placeholder.className = 'fdf-multiselect-placeholder';
+                        placeholder.textContent = config.placeholder || 'Select...';
+                        chipsContainer.appendChild(placeholder);
+                        return;
+                    }
+
+                    selectedValues.forEach(val => {
+                        const chip = document.createElement('span');
+                        chip.className = 'fdf-multiselect-chip';
+                        chip.textContent = val;
+
+                        const removeBtn = document.createElement('span');
+                        removeBtn.className = 'fdf-multiselect-chip-remove';
+                        removeBtn.innerHTML = '&times;';
+                        removeBtn.title = 'Remove ' + val;
+                        removeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            selectedValues = selectedValues.filter(x => x !== val);
+                            syncValue();
+                        });
+
+                        chip.appendChild(removeBtn);
+                        chipsContainer.appendChild(chip);
+                    });
+                }
+
+                function renderList(query) {
+                    if (!listContainer) return;
+                    listContainer.innerHTML = '';
+                    const q = (query || '').toLowerCase().trim();
+                    const filtered = allOptions.filter(opt => opt.toLowerCase().includes(q));
+
+                    if (filtered.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.style.padding = '8px 14px';
+                        empty.style.fontSize = '0.85rem';
+                        empty.style.color = '#94a3b8';
+                        empty.textContent = 'No matching options';
+                        listContainer.appendChild(empty);
+                        return;
+                    }
+
+                    filtered.forEach(opt => {
+                        const item = document.createElement('label');
+                        item.className = 'fdf-multiselect-item';
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = selectedValues.includes(opt);
+                        checkbox.addEventListener('change', () => {
+                            if (checkbox.checked) {
+                                if (!selectedValues.includes(opt)) selectedValues.push(opt);
+                            } else {
+                                selectedValues = selectedValues.filter(x => x !== opt);
+                            }
+                            syncValue();
+                        });
+
+                        const text = document.createElement('span');
+                        text.textContent = opt;
+
+                        item.appendChild(checkbox);
+                        item.appendChild(text);
+                        listContainer.appendChild(item);
+                    });
+                }
+
+                function addCustomOption() {
+                    if (!customInput) return;
+                    const val = customInput.value.trim();
+                    if (!val) return;
+                    if (!allOptions.includes(val)) allOptions.push(val);
+                    if (!selectedValues.includes(val)) selectedValues.push(val);
+                    customInput.value = '';
+                    syncValue();
+                }
+
+                if (customBtn) {
+                    customBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        addCustomOption();
+                    });
+                }
+                if (customInput) {
+                    customInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            addCustomOption();
+                        }
+                    });
+                }
+
+                if (searchInput) {
+                    searchInput.addEventListener('input', () => {
+                        renderList(searchInput.value);
+                    });
+                    searchInput.addEventListener('click', (e) => e.stopPropagation());
+                }
+
+                if (trigger) {
+                    trigger.addEventListener('click', (e) => {
+                        const isOpen = container.classList.contains('open');
+                        document.querySelectorAll('.fdf-multiselect.open').forEach(el => {
+                            if (el !== container) el.classList.remove('open');
+                        });
+                        container.classList.toggle('open', !isOpen);
+                        if (!isOpen && searchInput) {
+                            setTimeout(() => searchInput.focus(), 50);
+                        }
+                    });
+                }
+
+                renderChips();
+                renderList('');
+            }
+
+            document.addEventListener('click', function(e) {
+                document.querySelectorAll('.fdf-multiselect.open').forEach(function(el) {
+                    if (!el.contains(e.target)) {
+                        el.classList.remove('open');
+                    }
+                });
+            });
+
+            // Languages Multiselect Component Initialization
+            initMultiSelect({
+                containerId: 'languagesMultiselect',
+                hiddenInputId: 'languagesSpoken',
+                chipsId: 'languagesChips',
+                options: ['English', 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'Malayalam', 'Marathi', 'Gujarati', 'Bengali', 'Punjabi', 'Urdu', 'French', 'German', 'Spanish'],
+                placeholder: 'Select or type languages spoken...'
+            });
+
+            // Dynamic Document File Selection Feedback Handler
+            document.querySelectorAll('.doc-file-input').forEach(function(input) {
+                input.addEventListener('change', function() {
+                    const wrap = this.closest('.f-group') ? this.closest('.f-group').querySelector('.doc-status-wrap') : null;
+                    if (!wrap) return;
+
+                    if (this.files && this.files.length > 0) {
+                        const file = this.files[0];
+                        const fileName = file.name;
+                        wrap.innerHTML = '<div class="doc-badge selected"><i class="bi bi-file-earmark-check-fill"></i> Selected: <strong>' + fileName + '</strong></div><div class="doc-preview-box"><span class="doc-file-info" style="font-size:0.8rem; color:#1d4ed8; font-weight:600;"><i class="bi bi-paperclip me-1"></i> Ready to upload on Save</span></div>';
+                    } else {
+                        wrap.innerHTML = '<div class="doc-badge not-uploaded"><i class="bi bi-dash-circle"></i> Not uploaded</div>';
+                    }
+                    if (typeof recalculateSalonProgress === 'function') {
+                        recalculateSalonProgress();
+                    }
+                });
+            });
         }
 
         // Master Save Validation Handler
@@ -2457,7 +2817,270 @@ style="height: 44px; width: 44px; border-radius: 10px; object-fit: cover;"> Figh
 
             recalculateSalonProgress();
         });
+
+        function openSalonPreviewModal() {
+            function val(idOrName) {
+                const el = document.getElementById(idOrName) || document.querySelector('[name="' + idOrName + '"]');
+                return el ? el.value.trim() : '';
+            }
+            function checked(idOrName) {
+                const el = document.getElementById(idOrName) || document.querySelector('[name="' + idOrName + '"]');
+                return el && el.checked ? 'Yes' : 'No';
+            }
+            function prefVal(name, defaultVal) {
+                const el = document.querySelector('[name="' + name + '"]');
+                return el ? el.value : (defaultVal || '—');
+            }
+
+            // Hero Photos & Title
+            const nameVal = val('salonName') || val('name') || '${salon.name}' || 'Your Salon Name';
+            const pvHeroName = document.getElementById('pvHeroName');
+            if (pvHeroName) pvHeroName.textContent = nameVal;
+            const pvSalonName = document.getElementById('pvSalonName');
+            if (pvSalonName) pvSalonName.textContent = nameVal;
+
+            const catVal = val('salonCategory') || '${salon.salonCategory}' || 'Category Not Set';
+            const pvHeroCategory = document.getElementById('pvHeroCategory');
+            if (pvHeroCategory) pvHeroCategory.textContent = catVal;
+            const pvSalonCategory = document.getElementById('pvSalonCategory');
+            if (pvSalonCategory) pvSalonCategory.textContent = catVal;
+
+            const typeVal = val('salonType') || '${salon.salonType}' || 'Unisex';
+            const pvHeroType = document.getElementById('pvHeroType');
+            if (pvHeroType) pvHeroType.textContent = typeVal;
+            const pvSalonType = document.getElementById('pvSalonType');
+            if (pvSalonType) pvSalonType.textContent = typeVal;
+
+            const statusVal = val('currentStatus') || '${salon.currentStatus}' || 'Active';
+            const pvHeroStatus = document.getElementById('pvHeroStatus');
+            if (pvHeroStatus) pvHeroStatus.textContent = statusVal;
+            const pvCurrentStatus = document.getElementById('pvCurrentStatus');
+            if (pvCurrentStatus) pvCurrentStatus.textContent = statusVal;
+
+            // Profile & Cover Image Previews
+            const logoImg = document.getElementById('logoPreview');
+            const pvLogoImg = document.getElementById('pvProfileImage');
+            if (logoImg && logoImg.src && pvLogoImg) {
+                pvLogoImg.src = logoImg.src;
+            }
+
+            const coverImg = document.getElementById('coverPreview');
+            const pvCoverBanner = document.getElementById('pvCoverBanner');
+            if (coverImg && coverImg.src && pvCoverBanner) {
+                pvCoverBanner.style.backgroundImage = 'url("' + coverImg.src + '")';
+            }
+
+            // Basic & Business Overview
+            document.getElementById('pvEstablishedYear').textContent = val('establishedYear') || '${salon.establishedYear}' || '—';
+            const wOnly = document.getElementById('isWomenOnly');
+            const isWOnly = (wOnly && wOnly.checked) || prefVal('isWomenOnly') === 'true' || '${salon.isWomenOnly}' === 'true';
+            document.getElementById('pvWomenOnly').textContent = isWOnly ? 'Yes' : 'No';
+            document.getElementById('pvBio').textContent = val('bio') || '${salon.bio}' || 'No description provided yet.';
+
+            // Contact & Location
+            document.getElementById('pvEmail').textContent = val('email') || '${salon.email}' || '—';
+            document.getElementById('pvPhone').textContent = val('phone') || '${salon.phone}' || '—';
+            document.getElementById('pvAltPhone').textContent = val('alternateNumber') || '${salon.alternateNumber}' || '—';
+            document.getElementById('pvWebsite').textContent = val('website') || '${salon.website}' || '—';
+            document.getElementById('pvAddress').textContent = val('address') || '${salon.address}' || '—';
+
+            const distVal = val('districtSelect');
+            const customCity = val('customCityInput');
+            const city = (distVal && distVal !== 'Other') ? distVal : (customCity || val('city') || '${salon.city}');
+            const state = val('stateSelect') || val('state') || '${salon.state}';
+            const pincode = val('pincode') || '${salon.pincode}';
+            document.getElementById('pvLocation').textContent = [city, state, pincode].filter(Boolean).join(', ') || '—';
+            document.getElementById('pvLandmark').textContent = val('landmark') || '${salon.landmark}' || '—';
+
+            // Operating Hours Schedule
+            const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+            const hoursListHtml = days.map(day => {
+                const dayCap = day.charAt(0).toUpperCase() + day.slice(1);
+                const isClosed = document.getElementById('hours_' + day + '_closed')?.checked;
+                const openTime = val('hours_' + day + '_open');
+                const closeTime = val('hours_' + day + '_close');
+                let timeStr = 'Not set';
+                if (isClosed) {
+                    timeStr = '<span style="color:#ef4444;font-weight:700;">Closed</span>';
+                } else if (openTime && closeTime) {
+                    timeStr = openTime + ' - ' + closeTime;
+                }
+                return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e2e8f0;font-size:0.85rem;"><span style="font-weight:600;color:#334155;">' + dayCap + '</span><span style="color:#0f172a;font-weight:700;">' + timeStr + '</span></div>';
+            }).join('');
+            document.getElementById('pvOperatingHours').innerHTML = hoursListHtml;
+
+            // Facilities & Capacity
+            const sizeSq = val('salonSizeSqFt') || '${salon.salonSizeSqFt}';
+            document.getElementById('pvSizeSqFt').textContent = sizeSq ? sizeSq + ' Sq Ft' : '—';
+            document.getElementById('pvTotalChairs').textContent = val('totalChairs') || '${salon.totalChairs}' || '—';
+            document.getElementById('pvTreatmentRooms').textContent = val('treatmentRooms') || '${salon.treatmentRooms}' || '—';
+            document.getElementById('pvWashrooms').textContent = val('washrooms') || '${salon.washrooms}' || '—';
+            document.getElementById('pvTotalFloors').textContent = val('totalFloors') || '${salon.totalFloors}' || '—';
+            document.getElementById('pvHygieneStandard').textContent = val('hygieneStandard') || '${salon.hygieneStandard}' || '—';
+
+            const amenities = [];
+            if (checked('hasAc') === 'Yes' || prefVal('hasAc') === 'true' || val('hasAc') === 'true') amenities.push('Air Conditioning');
+            if (checked('hasWifi') === 'Yes' || prefVal('hasWifi') === 'true' || val('hasWifi') === 'true') amenities.push('Wi-Fi');
+            if (checked('hasParking') === 'Yes' || prefVal('hasParking') === 'true' || val('hasParking') === 'true' || val('hasParkingFacility') === 'true') amenities.push('Parking Space');
+            if (checked('hasPowerBackup') === 'Yes' || prefVal('hasPowerBackup') === 'true' || val('hasPowerBackup') === 'true') amenities.push('Power Backup');
+            if (checked('isWheelchairAccessible') === 'Yes' || prefVal('isWheelchairAccessible') === 'true' || val('isWheelchairAccessible') === 'true' || '${salon.isWheelchairAccessible}' === 'true') amenities.push('Wheelchair Accessible');
+            if (checked('hasReceptionArea') === 'Yes' || prefVal('hasReceptionArea') === 'true') amenities.push('Reception Area');
+            if (checked('hasWaitingArea') === 'Yes' || prefVal('hasWaitingArea') === 'true') amenities.push('Waiting Area');
+            document.getElementById('pvAmenities').textContent = amenities.length > 0 ? amenities.join(' · ') : 'None specified';
+
+            // Social Media Links
+            const socials = [];
+            const insta = val('socialInstagram');
+            if (insta) socials.push('Instagram: ' + insta);
+            const fb = val('socialFacebook');
+            if (fb) socials.push('Facebook: ' + fb);
+            const socWeb = val('socialWebsite');
+            if (socWeb) socials.push('Website: ' + socWeb);
+            document.getElementById('pvSocialLinks').textContent = socials.length > 0 ? socials.join(' | ') : 'None added';
+
+            // Documents Status
+            document.getElementById('pvBusinessRegNo').textContent = val('businessRegistrationNo') || '${salon.businessRegistrationNo}' || '—';
+            document.getElementById('pvGstNumber').textContent = val('gstNumber') || '${salon.gstNumber}' || '—';
+            document.getElementById('pvLicenseNo').textContent = val('salonLicenseNo') || '${salon.salonLicenseNo}' || '—';
+
+            function docStatusLabel(fileId, existingPath) {
+                const fileInput = document.getElementById(fileId);
+                if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                    return '<span style="color:#059669;font-weight:700;"><i class="bi bi-file-earmark-check-fill"></i> Selected: ' + fileInput.files[0].name + '</span>';
+                }
+                if (existingPath && existingPath.trim() !== '') {
+                    return '<span style="color:#2563eb;font-weight:700;"><i class="bi bi-check-circle-fill"></i> Uploaded (On File)</span>';
+                }
+                return '<span style="color:#94a3b8;"><i class="bi bi-dash-circle"></i> Not Uploaded</span>';
+            }
+
+            document.getElementById('pvDocBusinessReg').innerHTML = docStatusLabel('fileReg', '${salon.businessRegistrationUrl}');
+            document.getElementById('pvDocLicense').innerHTML = docStatusLabel('fileLic', '${salon.salonLicenseUrl}');
+            document.getElementById('pvDocFireSafety').innerHTML = docStatusLabel('fileFire', '${salon.fireSafetyUrl}');
+            document.getElementById('pvDocGstCert').innerHTML = docStatusLabel('fileGst', '${salon.gstCertificateUrl}');
+            document.getElementById('pvDocHygieneCert').innerHTML = docStatusLabel('fileHyg', '${salon.hygieneCertificateUrl}');
+
+            const modal = document.getElementById('salonPreviewModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeSalonPreviewModal() {
+            const modal = document.getElementById('salonPreviewModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('salonPreviewModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) closeSalonPreviewModal();
+                });
+            }
+        });
     </script>
+
+    <!-- Salon Profile Preview Modal -->
+    <div id="salonPreviewModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="previewModalTitle" style="display:none;">
+        <div class="review-modal-card">
+            <div class="modal-header" style="border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:14px;">
+                <div class="icon-wrap"><i class="bi bi-shop"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="previewModalTitle" style="font-size:1.18rem;font-weight:800;color:#0f172a;margin:0;">Live Salon Profile Preview</h3>
+                    <p style="font-size:0.83rem;color:#64748b;margin:2px 0 0;">Complete snapshot of your salon profile as seen by customers.</p>
+                </div>
+                <button type="button" class="btn-close-modal" id="btnClosePreviewModal" onclick="closeSalonPreviewModal()" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="review-modal-body">
+                <!-- Top Hero Card Preview -->
+                <div style="position:relative; background:#1e293b; border-radius:14px; overflow:hidden; margin-bottom:16px; color:#fff;">
+                    <div id="pvCoverBanner" style="height:120px; background-size:cover; background-position:center; background-image:url('${not empty salon.coverImageUrl ? pageContext.request.contextPath.concat(salon.coverImageUrl) : "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"}');"></div>
+                    <div style="padding:16px; display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-top:-35px;">
+                        <img id="pvProfileImage" src="${not empty salon.profileImageUrl ? pageContext.request.contextPath.concat(salon.profileImageUrl) : "https://ui-avatars.com/api/?name=".concat(salon.name).concat("&background=db2777&color=fff")}" alt="Profile Photo" style="width:70px; height:70px; border-radius:50%; object-fit:cover; border:3px solid #fff; background:#fff; flex-shrink:0;">
+                        <div style="flex:1; min-width:180px;">
+                            <h4 id="pvHeroName" style="font-size:1.1rem; font-weight:800; margin:0 0 4px 0; color:#fff;">${salon.name}</h4>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <span id="pvHeroCategory" class="badge" style="background:#db2777; color:#fff; font-size:0.75rem; font-weight:700;">${salon.salonCategory}</span>
+                                <span id="pvHeroType" class="badge" style="background:#3b82f6; color:#fff; font-size:0.75rem; font-weight:700;">${salon.salonType}</span>
+                                <span id="pvHeroStatus" class="badge" style="background:#10b981; color:#fff; font-size:0.75rem; font-weight:700;">${salon.currentStatus}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 1: Overview -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">1</span> Salon Overview &amp; Bio</div>
+                    <div class="review-grid">
+                        <div class="review-item"><span class="review-item-label">Salon Name</span><span class="review-item-value" id="pvSalonName">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Category</span><span class="review-item-value" id="pvSalonCategory">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Salon Type</span><span class="review-item-value" id="pvSalonType">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Established Year</span><span class="review-item-value" id="pvEstablishedYear">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Operating Status</span><span class="review-item-value" id="pvCurrentStatus">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Women Only Salon</span><span class="review-item-value" id="pvWomenOnly">—</span></div>
+                        <div class="review-item full"><span class="review-item-label">Overview &amp; Bio</span><span class="review-item-value" id="pvBio">—</span></div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Contact & Address -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">2</span> Contact &amp; Location</div>
+                    <div class="review-grid">
+                        <div class="review-item"><span class="review-item-label">Email Address</span><span class="review-item-value" id="pvEmail">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Phone Number</span><span class="review-item-value" id="pvPhone">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Alternate Phone</span><span class="review-item-value" id="pvAltPhone">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Website</span><span class="review-item-value" id="pvWebsite">—</span></div>
+                        <div class="review-item full"><span class="review-item-label">Address</span><span class="review-item-value" id="pvAddress">—</span></div>
+                        <div class="review-item"><span class="review-item-label">City / State / Pincode</span><span class="review-item-value" id="pvLocation">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Landmark</span><span class="review-item-value" id="pvLandmark">—</span></div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Daily Operating Hours -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">3</span> Daily Operating Hours (Mon – Sun)</div>
+                    <div id="pvOperatingHours" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+                        <!-- Dynamically generated per day -->
+                    </div>
+                </div>
+
+                <!-- Section 4: Facilities & Capacity -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">4</span> Facilities, Capacity &amp; Amenities</div>
+                    <div class="review-grid">
+                        <div class="review-item"><span class="review-item-label">Salon Size</span><span class="review-item-value" id="pvSizeSqFt">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Total Styling Chairs</span><span class="review-item-value" id="pvTotalChairs">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Treatment Rooms</span><span class="review-item-value" id="pvTreatmentRooms">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Washrooms</span><span class="review-item-value" id="pvWashrooms">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Total Floors</span><span class="review-item-value" id="pvTotalFloors">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Hygiene Rating</span><span class="review-item-value" id="pvHygieneStandard">—</span></div>
+                        <div class="review-item full"><span class="review-item-label">Amenities &amp; Features</span><span class="review-item-value" id="pvAmenities">—</span></div>
+                    </div>
+                </div>
+
+                <!-- Section 5: Social & Verification Documents -->
+                <div class="review-section-block">
+                    <div class="review-section-title"><span class="num">5</span> Verification Documents &amp; Social Links</div>
+                    <div class="review-grid">
+                        <div class="review-item full"><span class="review-item-label">Social Media Handles</span><span class="review-item-value" id="pvSocialLinks">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Business Reg No.</span><span class="review-item-value" id="pvBusinessRegNo">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Business Reg Document</span><span class="review-item-value" id="pvDocBusinessReg">—</span></div>
+                        <div class="review-item"><span class="review-item-label">GST Number</span><span class="review-item-value" id="pvGstNumber">—</span></div>
+                        <div class="review-item"><span class="review-item-label">GST Certificate</span><span class="review-item-value" id="pvDocGstCert">—</span></div>
+                        <div class="review-item"><span class="review-item-label">License Number</span><span class="review-item-value" id="pvLicenseNo">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Salon License Document</span><span class="review-item-value" id="pvDocLicense">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Fire Safety NOC</span><span class="review-item-value" id="pvDocFireSafety">—</span></div>
+                        <div class="review-item"><span class="review-item-label">Hygiene Certificate</span><span class="review-item-value" id="pvDocHygieneCert">—</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="review-modal-actions">
+                <button type="button" class="btn-modal-cancel" id="btnClosePreviewModalBtn" onclick="closeSalonPreviewModal()"><i class="bi bi-pencil"></i> Back &amp; Edit</button>
+                <button type="button" class="btn-modal-confirm" id="modalSaveProfileBtn" onclick="closeSalonPreviewModal(); handleProfileSave(event);"><i class="bi bi-check2-circle"></i> Save Profile</button>
+            </div>
+        </div>
+    </div>
 
     <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
 </body>

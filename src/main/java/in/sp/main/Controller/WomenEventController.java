@@ -176,13 +176,17 @@ public class WomenEventController {
     @GetMapping("/{id}")
     public String detail(@PathVariable("id") Long id, Model model, HttpSession session) {
         Optional<WomenEvent> opt = womenEventRepository.findById(id);
-        if (opt.isEmpty() || !WomenEventSupport.isPubliclyListed(opt.get())) {
-            return "redirect:/women-events";
-        }
+        if (opt.isEmpty()) return "redirect:/women-events";
         WomenEvent event = opt.get();
-        if (event.getOrganizer() != null && !EventHostProfileService.isApproved(event.getOrganizer())) {
-            return "redirect:/women-events";
+        boolean isAdmin = session.getAttribute("admin") != null;
+        EventHost loggedHost = (EventHost) session.getAttribute("loggedHost");
+        boolean isOrganizer = loggedHost != null && loggedHost.getId() != null
+                && event.getOrganizer() != null && loggedHost.getId().equals(event.getOrganizer().getId());
+        if (!isAdmin && !isOrganizer) {
+            if (!WomenEventSupport.isPubliclyListed(event)) return "redirect:/women-events";
+            if (event.getOrganizer() != null && !EventHostProfileService.isApproved(event.getOrganizer())) return "redirect:/women-events";
         }
+        model.addAttribute("isAdmin", isAdmin);
         User loggedUser = (User) session.getAttribute("user");
 
         List<WomenEventReview> reviews = womenEventReviewRepository.findByEventOrderByCreatedAtDesc(event);
@@ -234,9 +238,7 @@ public class WomenEventController {
         model.addAttribute("registrationOpen", WomenEventSupport.registrationWindowOpen(event, java.time.LocalDateTime.now()));
         model.addAttribute("savedEvent", loggedUser != null && eventFavoriteRepository.existsByEventAndUser(event, loggedUser));
         
-        EventHost loggedHost = (EventHost) session.getAttribute("loggedHost");
-        boolean isOrganizerView = loggedHost != null && event.getOrganizer() != null && event.getOrganizer().getId().equals(loggedHost.getId());
-        model.addAttribute("isOrganizerView", isOrganizerView);
+        model.addAttribute("isOrganizerView", isOrganizer);
 
         boolean eligibleAccess = alreadyRegistered;
         if (loggedUser != null) {

@@ -72,6 +72,103 @@ class _FitnessTrainerDetailScreenState extends State<FitnessTrainerDetailScreen>
     if (ok == true && mounted) Navigator.of(context).pop(true);
   }
 
+  Future<void> _subscribePackage(Map<String, dynamic> pkg) async {
+    final id = pkg['id'] is num ? (pkg['id'] as num).toInt() : int.tryParse('${pkg['id']}');
+    if (id == null) return;
+    final name = pkg['packageName']?.toString() ?? 'Pass';
+    final price = pkg['price']?.toString() ?? '0';
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Subscribe to $name'),
+        content: Text(
+          'Pass Details:\n'
+          '• Sessions: ${pkg['sessionCount'] == 0 ? "Unlimited" : "${pkg['sessionCount']} Sessions"}\n'
+          '• Validity: ${pkg['durationDays']} Days\n'
+          '• Category: ${pkg['category'] ?? "Fitness"}\n'
+          '• Total Fee: ₹$price\n\n'
+          'Payment will be processed via your wallet balance.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: FitnessTrainerDetailScreen.primary),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm & Subscribe'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      final res = await _svc.bookPackage(id);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Successfully subscribed to $name!')),
+        );
+        Navigator.of(context).pop(true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['error']?.toString() ?? 'Subscription failed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
+  Future<void> _enrollClass(Map<String, dynamic> cls) async {
+    final id = cls['id'] is num ? (cls['id'] as num).toInt() : int.tryParse('${cls['id']}');
+    if (id == null) return;
+    final name = cls['className']?.toString() ?? 'Class';
+    final price = cls['price'] is num ? (cls['price'] as num).toDouble() : 0.0;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Enroll in $name'),
+        content: Text(
+          'Class Details:\n'
+          '• Date: ${cls['classDate']} @ ${cls['classTime']}\n'
+          '• Duration: ${cls['durationMinutes']} mins\n'
+          '• Category: ${cls['category'] ?? "Fitness"}\n'
+          '• Format: ${cls['sessionType'] ?? "ONLINE"}\n'
+          '• Fee: ${price == 0 ? "FREE" : "₹${price.toStringAsFixed(0)}"}\n\n'
+          'Enrollment will be confirmed instantly.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: FitnessTrainerDetailScreen.primary),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm & Enroll'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      final res = await _svc.bookClass(id);
+      if (!mounted) return;
+      if (res['success'] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Successfully enrolled in $name!')),
+        );
+        Navigator.of(context).pop(true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['error']?.toString() ?? 'Enrollment failed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final name = _trainer['fullName']?.toString() ?? 'Trainer';
@@ -196,18 +293,183 @@ class _FitnessTrainerDetailScreenState extends State<FitnessTrainerDetailScreen>
                     ),
                     const SizedBox(height: 12),
                     _card(
-                      title: 'Packages',
+                      title: 'Packages & Memberships',
                       child: Column(
-                        children: ModuleTheme.toList(_trainer['packages']).map((p) {
-                          final m = Map<String, dynamic>.from(p as Map);
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(m['label']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w600)),
-                            trailing: Text('₹${m['fees']}', style: const TextStyle(fontWeight: FontWeight.w800)),
-                          );
-                        }).toList(),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (ModuleTheme.toList(_trainer['customPackages']).isNotEmpty) ...[
+                            const Text('Custom Passes', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF64748B))),
+                            const SizedBox(height: 6),
+                            ...ModuleTheme.toList(_trainer['customPackages']).map((cp) {
+                              final m = Map<String, dynamic>.from(cp as Map);
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF1F2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFFECDD3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(m['packageName']?.toString() ?? 'Pass', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                                          Text('${m['sessionCount'] == 0 ? "Unlimited" : "${m['sessionCount']} sessions"} · ${m['durationDays']} days',
+                                              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                          const SizedBox(height: 2),
+                                          Text('₹${m['price']}', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFF43F5E), fontSize: 15)),
+                                        ],
+                                      ),
+                                    ),
+                                    FilledButton(
+                                      style: FilledButton.styleFrom(
+                                        backgroundColor: FitnessTrainerDetailScreen.primary,
+                                        visualDensity: VisualDensity.compact,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      ),
+                                      onPressed: () => _subscribePackage(m),
+                                      child: const Text('Subscribe', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 10),
+                          ],
+                          const Text('Standard Packages', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF64748B))),
+                          const SizedBox(height: 6),
+                          ...ModuleTheme.toList(_trainer['packages']).map((p) {
+                            final m = Map<String, dynamic>.from(p as Map);
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(m['label']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                              trailing: Text('₹${m['fees']}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                            );
+                          }),
+                        ],
                       ),
                     ),
+                    if (ModuleTheme.toList(_trainer['classes']).isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _card(
+                        title: 'Scheduled Group Classes',
+                        child: Column(
+                          children: ModuleTheme.toList(_trainer['classes']).map((cls) {
+                            final cm = Map<String, dynamic>.from(cls as Map);
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(cm['className']?.toString() ?? 'Class', style: const TextStyle(fontWeight: FontWeight.w700)),
+                                        const SizedBox(height: 2),
+                                        Text('${cm['classDate']} @ ${cm['classTime']} · ${cm['category']}',
+                                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                        const SizedBox(height: 2),
+                                        Text('₹${cm['price']}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFFF43F5E))),
+                                      ],
+                                    ),
+                                  ),
+                                  FilledButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: FitnessTrainerDetailScreen.navy,
+                                      visualDensity: VisualDensity.compact,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    onPressed: () => _enrollClass(cm),
+                                    child: const Text('Enroll', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                    if (ModuleTheme.toList(_trainer['audience']).isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _card(
+                        title: 'Target Audience',
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: ModuleTheme.toList(_trainer['audience']).map((a) {
+                            return Chip(
+                              label: Text(a.toString(), style: const TextStyle(fontSize: 12)),
+                              backgroundColor: const Color(0xFFF1F5F9),
+                              side: BorderSide.none,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                    if (ModuleTheme.toList(_trainer['facilities']).isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _card(
+                        title: 'Studio Amenities & Facilities',
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: ModuleTheme.toList(_trainer['facilities']).map((f) {
+                            return Chip(
+                              avatar: const Icon(Icons.check, size: 14, color: Color(0xFF16A34A)),
+                              label: Text(f.toString(), style: const TextStyle(fontSize: 12)),
+                              backgroundColor: const Color(0xFFDCFCE7),
+                              side: BorderSide.none,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
+                    if (ModuleTheme.toList(_trainer['reviews']).isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _card(
+                        title: 'Client Reviews & Ratings',
+                        child: Column(
+                          children: ModuleTheme.toList(_trainer['reviews']).map((rev) {
+                            final rm = Map<String, dynamic>.from(rev as Map);
+                            final rVal = (rm['rating'] is num) ? (rm['rating'] as num).toInt() : 5;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(rm['userName']?.toString() ?? 'Verified Member', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                      Row(
+                                        children: List.generate(
+                                          rVal,
+                                          (_) => const Icon(Icons.star, size: 14, color: Color(0xFFF59E0B)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if ((rm['comment']?.toString() ?? '').isNotEmpty) ...[
+                                    const SizedBox(height: 3),
+                                    Text(rm['comment'].toString(), style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
+                                  ],
+                                  const Divider(height: 14),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
       bottomNavigationBar: SafeArea(

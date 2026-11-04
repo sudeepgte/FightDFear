@@ -272,7 +272,108 @@ class _WomenLawyerProfileCompletionScreenState
     };
   }
 
-  bool _validateForm({bool forSubmit = false}) {
+  void _showValidationPopup(List<String> errors) {
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.error_outline_rounded, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Incomplete Required Fields',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: WomenLawyerProfileCompletionScreen.navy,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Please complete the following required fields before submitting:',
+              style: TextStyle(fontSize: 13, color: Color(0xFF475569)),
+            ),
+            const SizedBox(height: 12),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: errors
+                      .map(
+                        (e) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('• ', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                              Expanded(
+                                child: Text(
+                                  e,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF1E293B),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: WomenLawyerProfileCompletionScreen.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _finish() {
+    if (!mounted) return;
+    if (widget.onFinished != null) {
+      widget.onFinished!(context);
+      return;
+    }
+    final status = (_profile['partnerProfileStatus'] ?? '').toString().toUpperCase();
+    final verificationStatus = (_profile['verificationStatus'] ?? '').toString().toUpperCase();
+
+    if (status == 'APPROVED' || verificationStatus == 'VERIFIED' || status == 'ACTIVE') {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const WomenLawyerDashboardScreen()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => WomenLawyerPendingApprovalScreen(initialProfile: _profile),
+        ),
+      );
+    }
+  }
+
+  bool _validateForm({bool forSubmit = false, bool showPopup = true}) {
     final errs = <String, String>{};
 
     if (_name.text.trim().isEmpty) {
@@ -339,12 +440,17 @@ class _WomenLawyerProfileCompletionScreenState
       }
     }
 
-    setState(() => _errors
-      ..clear()
-      ..addAll(errs));
+    setState(() {
+      _errors
+        ..clear()
+        ..addAll(errs);
+      _error = null;
+    });
 
     if (errs.isNotEmpty) {
-      _error = errs.values.first;
+      if (showPopup) {
+        _showValidationPopup(errs.values.toList());
+      }
       return false;
     }
     return true;
@@ -403,7 +509,7 @@ class _WomenLawyerProfileCompletionScreenState
   }
 
   Future<void> _saveProfile() async {
-    if (!_validateForm()) return;
+    if (!_validateForm(showPopup: true)) return;
 
     setState(() {
       _saving = true;
@@ -422,15 +528,20 @@ class _WomenLawyerProfileCompletionScreenState
           _applyProfile(Map<String, dynamic>.from(res));
         },
       );
+      if (mounted) {
+        _finish();
+      }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) {
+        _showValidationPopup([e.toString().replaceFirst('Exception: ', '')]);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _submit() async {
-    if (!_validateForm(forSubmit: true)) return;
+    if (!_validateForm(forSubmit: true, showPopup: true)) return;
 
     setState(() {
       _submitting = true;
@@ -458,22 +569,11 @@ class _WomenLawyerProfileCompletionScreenState
       await showVerificationSubmittedSheet(context);
       if (!mounted) return;
 
-      final status = (_profile['partnerProfileStatus'] ?? '').toString().toUpperCase();
-      final verificationStatus = (_profile['verificationStatus'] ?? '').toString().toUpperCase();
-
-      if (status == 'APPROVED' || verificationStatus == 'VERIFIED') {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const WomenLawyerDashboardScreen()),
-        );
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => WomenLawyerPendingApprovalScreen(initialProfile: _profile),
-          ),
-        );
-      }
+      _finish();
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) {
+        _showValidationPopup([e.toString().replaceFirst('Exception: ', '')]);
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -557,11 +657,11 @@ class _WomenLawyerProfileCompletionScreenState
 
                 // Submit For Verification Action
                 FilledButton.icon(
-                  onPressed: (_submitting || !canSubmit) ? null : _submit,
+                  onPressed: (_submitting || _saving) ? null : _submit,
                   icon: _submitting
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Icon(Icons.send_rounded, size: 18),
-                  label: Text(canSubmit ? 'Submit Profile for Admin Verification' : 'Complete Required Sections to Submit'),
+                  label: const Text('Submit Profile for Admin Verification'),
                   style: FilledButton.styleFrom(
                     backgroundColor: WomenLawyerProfileCompletionScreen.primary,
                     minimumSize: const Size.fromHeight(50),
@@ -840,11 +940,11 @@ class _WomenLawyerProfileCompletionScreenState
 
                 const SizedBox(height: 24),
                 FilledButton.icon(
-                  onPressed: (_loading || _saving) ? null : _saveProfile,
+                  onPressed: (_loading || _saving || _submitting) ? null : _saveProfile,
                   icon: _saving
                       ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                       : const Icon(Icons.check_circle_outline_rounded, size: 20),
-                  label: const Text('Save & Continue Later', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  label: const Text('Save & Continue to Dashboard', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   style: FilledButton.styleFrom(
                     backgroundColor: WomenLawyerProfileCompletionScreen.navy,
                     minimumSize: const Size.fromHeight(52),

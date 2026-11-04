@@ -40,6 +40,75 @@
     .eh-inline-forms { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .eh-inline-forms form { margin: 0; }
 
+    /* Pending Events Row & Modal */
+    .pending-event-row:hover td { background: #FFF1F2 !important; }
+    .pe-modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px); z-index: 2500;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .pe-modal-box {
+      background: #FFFFFF; border-radius: 18px; width: 100%; max-width: 640px;
+      max-height: 90vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+      animation: peModalFade 0.2s ease-out;
+    }
+    @keyframes peModalFade {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .pe-modal-hd {
+      padding: 18px 22px; border-bottom: 1px solid var(--ap-border);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+      background: #F8FAFC; border-radius: 18px 18px 0 0;
+    }
+    .pe-modal-close {
+      background: #fff; border: 1px solid var(--ap-border); color: var(--ap-muted);
+      width: 32px; height: 32px; border-radius: 8px; font-size: 18px; line-height: 1;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      flex-shrink: 0;
+    }
+    .pe-modal-close:hover { color: var(--ap-danger); border-color: #FECACA; }
+    .pe-modal-bd {
+      padding: 20px 22px; overflow-y: auto; flex: 1;
+    }
+    .pe-modal-ft {
+      padding: 14px 22px; border-top: 1px solid var(--ap-border);
+      background: #F8FAFC; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      border-radius: 0 0 18px 18px;
+    }
+    .pe-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+    @media (max-width: 540px) {
+      .pe-grid { grid-template-columns: 1fr; }
+    }
+    .pe-cell {
+      background: #F8FAFC; border: 1px solid var(--ap-border); border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .pe-lbl {
+      font-size: 0.72rem; font-weight: 700; color: var(--ap-muted); text-transform: uppercase;
+      letter-spacing: 0.3px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+    }
+    .pe-lbl i { color: var(--ap-accent); }
+    .pe-val {
+      font-size: 0.88rem; font-weight: 600; color: var(--ap-dark); word-break: break-word;
+    }
+    .pe-desc-box {
+      background: #F8FAFC; border: 1px solid var(--ap-border); border-radius: 10px;
+      padding: 12px 14px; font-size: 0.85rem; color: #334155; line-height: 1.5;
+      max-height: 180px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+    }
+    .pe-badge-cat {
+      background: #FFF1F2; color: #E11D48; border: 1px solid #FDA4AF;
+      font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+    }
+    .pe-badge-fmt {
+      background: #EFF6FF; color: #2563EB; border: 1px solid #BFDBFE;
+      font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+    }
+
     /* ── Tablet ── */
     @media (max-width: 992px) {
       .eh-bottom-grid { grid-template-columns: 1fr; }
@@ -517,22 +586,61 @@
               <tbody>
                 <c:choose>
                   <c:when test="${not empty pendingEvents}">
-                    <c:forEach var="e" items="${pendingEvents}" end="4">
-                      <tr>
+                    <c:forEach var="e" items="${pendingEvents}">
+                      <c:set var="bImg" value="${e.bannerImage}"/>
+                      <c:set var="fullBanner" value=""/>
+                      <c:if test="${not empty bImg}">
+                        <c:choose>
+                          <c:when test="${fn:startsWith(bImg, 'http')}"><c:set var="fullBanner" value="${bImg}"/></c:when>
+                          <c:when test="${fn:startsWith(bImg, '/')}"><c:set var="fullBanner" value="${pageContext.request.contextPath}${bImg}"/></c:when>
+                          <c:otherwise><c:set var="fullBanner" value="${pageContext.request.contextPath}/uploads/${bImg}"/></c:otherwise>
+                        </c:choose>
+                      </c:if>
+                      <tr class="pending-event-row" style="cursor:pointer;" onclick="openAdminPendingEventModalById('${e.id}')">
                         <td>
-                          <div style="font-weight:700;"><c:out value="${e.name}"/></div>
-                          <div class="ap-muted" style="font-size:0.78rem;"><c:out value="${e.city}"/> · <c:out value="${e.eventDate}"/></div>
+                          <div style="font-weight:700; color:var(--ap-dark);"><c:out value="${e.name}"/></div>
+                          <div class="ap-muted" style="font-size:0.78rem;">
+                            <c:out value="${e.city}"/> &middot; <c:out value="${e.eventDate}"/>
+                            <c:if test="${not empty e.category}"> &middot; <span class="pe-badge-cat" style="font-size:0.68rem; padding:1px 6px;"><c:out value="${e.category.displayName}"/></span></c:if>
+                          </div>
                         </td>
                         <td><span class="ap-badge ap-badge-pending"><c:out value="${e.status}"/></span></td>
                         <td onclick="event.stopPropagation();">
                           <div class="eh-inline-forms">
+                            <button type="button" class="ap-btn ap-btn-view" style="padding:7px 12px;font-size:0.78rem;"
+                                    id="peBtn-${e.id}"
+                                    data-id="${e.id}"
+                                    data-name="<c:out value='${e.name}'/>"
+                                    data-category="<c:out value='${e.category != null ? e.category.displayName : ""}'/>"
+                                    data-status="<c:out value='${e.status}'/>"
+                                    data-date="<c:out value='${e.eventDate}'/>"
+                                    data-time="<c:out value='${e.eventTime}'/>"
+                                    data-venue="<c:out value='${e.venue}'/>"
+                                    data-city="<c:out value='${e.city}'/>"
+                                    data-organizer="<c:out value='${e.organizerName}'/>"
+                                    data-orgtype="<c:out value='${e.organizerType}'/>"
+                                    data-fee="<c:out value='${e.free ? "Free" : ("&#8377;".concat(e.entryFee))}'/>"
+                                    data-capacity="<c:out value='${e.maxParticipants != null ? e.maxParticipants : "-"}'/>"
+                                    data-contact="<c:out value='${e.contactInfo}'/>"
+                                    data-desc="<c:out value='${e.description}'/>"
+                                    data-banner="<c:out value='${fullBanner}'/>"
+                                    data-format="<c:out value='${e.virtual ? "Virtual / Online" : "In-Person / Venue"}'/>"
+                                    data-stream="<c:out value='${e.streamLink}'/>"
+                                    onclick="openAdminPendingEventModal(this)"
+                                    title="View event details before accepting">
+                              <i class="fas fa-eye"></i> View
+                            </button>
+                            <a href="${pageContext.request.contextPath}/women-events/${e.id}" target="_blank"
+                               class="eh-more" style="width:30px;height:30px;" title="Open full event page in new tab">
+                              <i class="fas fa-external-link-alt" style="font-size:0.72rem;"></i>
+                            </a>
                             <form action="${pageContext.request.contextPath}/admin/women-events/${e.id}/approve" method="post">
                               <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                              <button type="submit" class="ap-btn ap-btn-approve" style="padding:7px 12px;font-size:0.78rem;">Approve</button>
+                              <button type="submit" class="ap-btn ap-btn-approve" style="padding:7px 12px;font-size:0.78rem;" title="Approve this event">Approve</button>
                             </form>
                             <form action="${pageContext.request.contextPath}/admin/women-events/${e.id}/reject" method="post">
                               <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-                              <button type="submit" class="ap-btn ap-btn-reject" style="padding:7px 12px;font-size:0.78rem;">Reject</button>
+                              <button type="submit" class="ap-btn ap-btn-reject" style="padding:7px 12px;font-size:0.78rem;" title="Reject this event">Reject</button>
                             </form>
                           </div>
                         </td>
@@ -552,6 +660,89 @@
   </main>
 </div>
 
+
+<!-- Pending Event Preview Modal -->
+<div id="pendingEventModal" class="pe-modal-overlay" style="display:none;" onclick="if(event.target===this)closePendingEventModal()">
+  <div class="pe-modal-box" role="dialog" aria-modal="true" aria-labelledby="pemName">
+    <div class="pe-modal-hd">
+      <div style="flex:1; min-width:0;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+          <span id="pemCategory" class="pe-badge-cat">Category</span>
+          <span id="pemStatus" class="ap-badge ap-badge-pending">PENDING</span>
+          <span id="pemFormat" class="pe-badge-fmt">In-Person</span>
+        </div>
+        <h3 id="pemName" style="margin:0; font-size:1.18rem; font-weight:800; color:var(--ap-dark); word-break:break-word;">Event Title</h3>
+      </div>
+      <button type="button" class="pe-modal-close" onclick="closePendingEventModal()" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="pe-modal-bd">
+      <div id="pemBannerWrap" style="display:none; margin-bottom:16px;">
+        <img id="pemBanner" src="" alt="Event Banner" style="width:100%; max-height:220px; object-fit:cover; border-radius:12px; border:1px solid var(--ap-border);">
+      </div>
+
+      <div class="pe-grid">
+        <div class="pe-cell">
+          <div class="pe-lbl"><i class="far fa-calendar-alt"></i> Date &amp; Time</div>
+          <div class="pe-val" id="pemDateTime">-</div>
+        </div>
+        <div class="pe-cell">
+          <div class="pe-lbl"><i class="fas fa-map-marker-alt"></i> Venue &amp; City</div>
+          <div class="pe-val" id="pemLocation">-</div>
+        </div>
+        <div class="pe-cell">
+          <div class="pe-lbl"><i class="fas fa-user-tie"></i> Organizer</div>
+          <div class="pe-val" id="pemOrganizer">-</div>
+        </div>
+        <div class="pe-cell">
+          <div class="pe-lbl"><i class="fas fa-building"></i> Organizer Type</div>
+          <div class="pe-val" id="pemOrgType">-</div>
+        </div>
+        <div class="pe-cell">
+          <div class="pe-lbl"><i class="fas fa-ticket-alt"></i> Entry Fee</div>
+          <div class="pe-val" id="pemFee">-</div>
+        </div>
+        <div class="pe-cell">
+          <div class="pe-lbl"><i class="fas fa-users"></i> Max Participants</div>
+          <div class="pe-val" id="pemCapacity">-</div>
+        </div>
+        <div class="pe-cell" style="grid-column: 1 / -1;">
+          <div class="pe-lbl"><i class="fas fa-phone-alt"></i> Contact Info</div>
+          <div class="pe-val" id="pemContact">-</div>
+        </div>
+        <div class="pe-cell" id="pemStreamWrap" style="grid-column: 1 / -1; display:none;">
+          <div class="pe-lbl"><i class="fas fa-video"></i> Stream Link</div>
+          <div class="pe-val" id="pemStream">-</div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;">
+        <div class="pe-lbl" style="margin-bottom:6px;"><i class="fas fa-align-left"></i> Description</div>
+        <div id="pemDesc" class="pe-desc-box"></div>
+      </div>
+    </div>
+
+    <div class="pe-modal-ft">
+      <a id="pemFullPageLink" href="#" target="_blank" class="ap-btn ap-btn-ghost" style="padding:8px 14px; font-size:0.82rem;">
+        <i class="fas fa-external-link-alt"></i> Open Full Page
+      </a>
+      <div style="flex:1;"></div>
+      <form id="pemApproveForm" method="post" action="" style="margin:0; display:inline;">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+        <button type="submit" class="ap-btn ap-btn-approve" style="padding:8px 16px; font-size:0.82rem;">
+          <i class="fas fa-check"></i> Approve
+        </button>
+      </form>
+      <form id="pemRejectForm" method="post" action="" style="margin:0; display:inline;">
+        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+        <button type="submit" class="ap-btn ap-btn-reject" style="padding:8px 16px; font-size:0.82rem;">
+          <i class="fas fa-times"></i> Reject
+        </button>
+      </form>
+      <button type="button" class="ap-btn ap-btn-ghost" style="padding:8px 14px; font-size:0.82rem;" onclick="closePendingEventModal()">Close</button>
+    </div>
+  </div>
+</div>
 <script>
 (function () {
   var ctx = '${pageContext.request.contextPath}';
@@ -679,6 +870,89 @@
       sidebar.classList.remove('active');
     });
   }
+
+  window.openAdminPendingEventModal = function (btn) {
+    if (!btn) return;
+    var id = btn.getAttribute('data-id') || '';
+    var name = btn.getAttribute('data-name') || '-';
+    var cat = btn.getAttribute('data-category') || 'Event';
+    var status = btn.getAttribute('data-status') || 'PENDING';
+    var date = btn.getAttribute('data-date') || '-';
+    var time = btn.getAttribute('data-time') || '';
+    var venue = btn.getAttribute('data-venue') || '';
+    var city = btn.getAttribute('data-city') || '';
+    var org = btn.getAttribute('data-organizer') || '-';
+    var orgType = btn.getAttribute('data-orgtype') || '-';
+    var fee = btn.getAttribute('data-fee') || 'Free';
+    var capacity = btn.getAttribute('data-capacity') || '-';
+    var contact = btn.getAttribute('data-contact') || '-';
+    var desc = btn.getAttribute('data-desc') || 'No description provided.';
+    var banner = btn.getAttribute('data-banner') || '';
+    var format = btn.getAttribute('data-format') || 'In-Person';
+    var stream = btn.getAttribute('data-stream') || '';
+
+    document.getElementById('pemName').textContent = name;
+    document.getElementById('pemCategory').textContent = cat;
+    document.getElementById('pemStatus').textContent = status;
+    document.getElementById('pemFormat').textContent = format;
+
+    var dtText = date;
+    if (time) dtText += ' · ' + time;
+    document.getElementById('pemDateTime').textContent = dtText;
+
+    var locText = venue;
+    if (city) locText = locText ? (locText + ', ' + city) : city;
+    document.getElementById('pemLocation').textContent = locText || '-';
+
+    document.getElementById('pemOrganizer').textContent = org;
+    document.getElementById('pemOrgType').textContent = orgType;
+    document.getElementById('pemFee').textContent = fee;
+    document.getElementById('pemCapacity').textContent = capacity;
+    document.getElementById('pemContact').textContent = contact;
+    document.getElementById('pemDesc').textContent = desc;
+
+    var bw = document.getElementById('pemBannerWrap');
+    var bi = document.getElementById('pemBanner');
+    if (banner) {
+      bi.src = banner;
+      bw.style.display = 'block';
+    } else {
+      bw.style.display = 'none';
+      bi.src = '';
+    }
+
+    var sw = document.getElementById('pemStreamWrap');
+    var st = document.getElementById('pemStream');
+    if (stream) {
+      st.innerHTML = '<a href="' + stream + '" target="_blank" style="color:var(--ap-accent);word-break:break-all;">' + stream + '</a>';
+      sw.style.display = 'block';
+    } else {
+      sw.style.display = 'none';
+    }
+
+    document.getElementById('pemFullPageLink').href = ctx + '/women-events/' + id;
+    document.getElementById('pemApproveForm').action = ctx + '/admin/women-events/' + id + '/approve';
+    document.getElementById('pemRejectForm').action = ctx + '/admin/women-events/' + id + '/reject';
+
+    var m = document.getElementById('pendingEventModal');
+    if (m) m.style.display = 'flex';
+  };
+
+  window.openAdminPendingEventModalById = function (id) {
+    var btn = document.getElementById('peBtn-' + id);
+    if (btn) openAdminPendingEventModal(btn);
+  };
+
+  window.closePendingEventModal = function () {
+    var m = document.getElementById('pendingEventModal');
+    if (m) m.style.display = 'none';
+  };
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      closePendingEventModal();
+    }
+  });
 })();
 </script>
 <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>

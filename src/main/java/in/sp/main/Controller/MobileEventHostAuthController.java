@@ -390,6 +390,12 @@ public class MobileEventHostAuthController {
         }
         event.setVenue(venue);
         event.setCity(city);
+        String venueState = trim(Objects.toString(body.get("venueState"), ""));
+        if (!venueState.isBlank()) event.setVenueState(venueState);
+        String venuePincode = trim(Objects.toString(body.get("venuePincode"), ""));
+        if (!venuePincode.isBlank()) event.setVenuePincode(venuePincode);
+        String venueArea = trim(Objects.toString(body.get("venueArea"), ""));
+        if (!venueArea.isBlank()) event.setVenueArea(venueArea);
         event.setEntryFee(parseDouble(body.get("entryFee"), 0.0));
         Object maxPart = body.get("maxParticipants");
         if (maxPart != null && !trim(Objects.toString(maxPart, "")).isBlank()) {
@@ -414,21 +420,79 @@ public class MobileEventHostAuthController {
             event.setEventFormat(EventFormat.fromFlexible(Objects.toString(body.get("eventFormat"), "OFFLINE")));
             event.setVirtual(event.getEventFormat() == EventFormat.ONLINE || event.getEventFormat() == EventFormat.HYBRID);
         }
+        if (body.get("meetingPlatform") != null) event.setMeetingPlatform(trim(Objects.toString(body.get("meetingPlatform"), "")));
         if (body.get("shortDescription") != null) event.setShortDescription(trim(Objects.toString(body.get("shortDescription"), "")));
         if (body.get("cancellationPolicy") != null) event.setCancellationPolicy(trim(Objects.toString(body.get("cancellationPolicy"), "")));
         if (body.get("refundPolicy") != null) event.setRefundPolicy(trim(Objects.toString(body.get("refundPolicy"), "")));
+        if (body.get("ageRestriction") != null) event.setAgeRestriction(trim(Objects.toString(body.get("ageRestriction"), "")));
+        if (body.get("participantRequirements") != null) event.setParticipantRequirements(trim(Objects.toString(body.get("participantRequirements"), "")));
+        if (body.get("whatToBring") != null) event.setWhatToBring(trim(Objects.toString(body.get("whatToBring"), "")));
+        String bannerImg = trim(Objects.toString(body.get("bannerImage"), ""));
+        if (!bannerImg.isBlank()) event.setBannerImage(bannerImg);
         event.setTimezone("Asia/Kolkata");
         if (event.getEventDate() != null) {
             LocalTime st = event.getEventTime() == null ? LocalTime.of(10, 0) : event.getEventTime();
             event.setStartsAt(java.time.LocalDateTime.of(event.getEventDate(), st));
-            event.setRegistrationClosesAt(event.getStartsAt());
+            String endDateRaw = trim(Objects.toString(body.get("endDate"), ""));
+            String endTimeRaw = trim(Objects.toString(body.get("endTime"), ""));
+            if (!endDateRaw.isBlank()) {
+                try {
+                    LocalDate ed = LocalDate.parse(endDateRaw);
+                    LocalTime et = (!endTimeRaw.isBlank()) ? LocalTime.parse(endTimeRaw) : st.plusHours(2);
+                    event.setEndsAt(java.time.LocalDateTime.of(ed, et));
+                } catch (Exception ignored) {}
+            }
+            String regClosesRaw = trim(Objects.toString(body.get("registrationCloses"), ""));
+            if (!regClosesRaw.isBlank()) {
+                try {
+                    String raw = regClosesRaw;
+                    if (raw.length() == 16) raw = raw + ":00";
+                    event.setRegistrationClosesAt(java.time.LocalDateTime.parse(raw.replace(" ", "T")));
+                } catch (Exception ignored) {
+                    event.setRegistrationClosesAt(event.getStartsAt());
+                }
+            } else {
+                event.setRegistrationClosesAt(event.getStartsAt());
+            }
         }
         eventRepo.save(event);
+        lifecycleService.transition(event,
+                draft ? EventLifecycleStatus.DRAFT : EventLifecycleStatus.SUBMITTED,
+                "EVENT_HOST", host.getId(), host.getEmail(), draft ? "Saved as draft" : "Submitted for approval");
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("message", draft ? "Draft saved" : "Event submitted for admin approval");
         data.put("event", eventDto(event));
         return ResponseEntity.status(HttpStatus.CREATED).body(ok(data));
+    }
+
+    @PostMapping(value = "/events/{id}/banner", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadEventBanner(
+            @PathVariable("id") Long id,
+            @RequestParam("bannerImage") org.springframework.web.multipart.MultipartFile bannerImage,
+            HttpSession session) {
+        EventHost host = requireHost(session);
+        if (host == null) return unauthorized();
+        WomenEvent event = eventRepo.findById(id).orElse(null);
+        if (event == null || event.getOrganizer() == null || !event.getOrganizer().getId().equals(host.getId())) {
+            return badRequest("Event not found");
+        }
+        if (bannerImage == null || bannerImage.isEmpty()) {
+            return badRequest("No banner image file provided");
+        }
+        try {
+            String path = fileUploadService.saveFile(bannerImage);
+            event.setBannerImage(path);
+            eventRepo.save(event);
+            return ResponseEntity.ok(ok(Map.of(
+                    "message", "Banner image uploaded successfully",
+                    "bannerImage", path,
+                    "event", eventDto(event)
+            )));
+        } catch (Exception ex) {
+            return badRequest("Upload failed: " + ex.getMessage());
+        }
     }
 
     @GetMapping("/organizer-types")
@@ -503,8 +567,20 @@ public class MobileEventHostAuthController {
             if (city.isBlank()) return badRequest("city is required");
             event.setCity(city);
         }
+        if (body.get("venueState") != null) {
+            event.setVenueState(trim(Objects.toString(body.get("venueState"), "")));
+        }
+        if (body.get("venuePincode") != null) {
+            event.setVenuePincode(trim(Objects.toString(body.get("venuePincode"), "")));
+        }
+        if (body.get("venueArea") != null) {
+            event.setVenueArea(trim(Objects.toString(body.get("venueArea"), "")));
+        }
         if (body.containsKey("entryFee")) {
             event.setEntryFee(parseDouble(body.get("entryFee"), 0.0));
+        }
+        if (body.containsKey("boothFee")) {
+            event.setBoothFee(parseDouble(body.get("boothFee"), 0.0));
         }
         if (body.containsKey("maxParticipants")) {
             Object maxPart = body.get("maxParticipants");
@@ -521,11 +597,65 @@ public class MobileEventHostAuthController {
         if (body.get("mapsLocation") != null) {
             event.setMapsLocation(trim(Objects.toString(body.get("mapsLocation"), "")));
         }
-        if (body.containsKey("virtual")) {
+        if (body.containsKey("eventFormat")) {
+            event.setEventFormat(EventFormat.fromFlexible(Objects.toString(body.get("eventFormat"), "OFFLINE")));
+            event.setVirtual(event.getEventFormat() == EventFormat.ONLINE || event.getEventFormat() == EventFormat.HYBRID);
+        } else if (body.containsKey("virtual")) {
             event.setVirtual(Boolean.parseBoolean(Objects.toString(body.get("virtual"), "false")));
         }
         if (body.get("streamLink") != null) {
             event.setStreamLink(trim(Objects.toString(body.get("streamLink"), "")));
+        }
+        if (body.get("meetingPlatform") != null) {
+            event.setMeetingPlatform(trim(Objects.toString(body.get("meetingPlatform"), "")));
+        }
+        if (body.get("shortDescription") != null) {
+            event.setShortDescription(trim(Objects.toString(body.get("shortDescription"), "")));
+        }
+        if (body.get("cancellationPolicy") != null) {
+            event.setCancellationPolicy(trim(Objects.toString(body.get("cancellationPolicy"), "")));
+        }
+        if (body.get("refundPolicy") != null) {
+            event.setRefundPolicy(trim(Objects.toString(body.get("refundPolicy"), "")));
+        }
+        if (body.get("ageRestriction") != null) {
+            event.setAgeRestriction(trim(Objects.toString(body.get("ageRestriction"), "")));
+        }
+        if (body.get("participantRequirements") != null) {
+            event.setParticipantRequirements(trim(Objects.toString(body.get("participantRequirements"), "")));
+        }
+        if (body.get("whatToBring") != null) {
+            event.setWhatToBring(trim(Objects.toString(body.get("whatToBring"), "")));
+        }
+        if (body.get("bannerImage") != null) {
+            String b = trim(Objects.toString(body.get("bannerImage"), ""));
+            if (!b.isBlank()) event.setBannerImage(b);
+        }
+
+        if (event.getEventDate() != null) {
+            LocalTime st = event.getEventTime() == null ? LocalTime.of(10, 0) : event.getEventTime();
+            event.setStartsAt(java.time.LocalDateTime.of(event.getEventDate(), st));
+            String endDateRaw = trim(Objects.toString(body.get("endDate"), ""));
+            String endTimeRaw = trim(Objects.toString(body.get("endTime"), ""));
+            if (!endDateRaw.isBlank()) {
+                try {
+                    LocalDate ed = LocalDate.parse(endDateRaw);
+                    LocalTime et = (!endTimeRaw.isBlank()) ? LocalTime.parse(endTimeRaw) : st.plusHours(2);
+                    event.setEndsAt(java.time.LocalDateTime.of(ed, et));
+                } catch (Exception ignored) {}
+            }
+            String regClosesRaw = trim(Objects.toString(body.get("registrationCloses"), ""));
+            if (!regClosesRaw.isBlank()) {
+                try {
+                    String raw = regClosesRaw;
+                    if (raw.length() == 16) raw = raw + ":00";
+                    event.setRegistrationClosesAt(java.time.LocalDateTime.parse(raw.replace(" ", "T")));
+                } catch (Exception ignored) {
+                    event.setRegistrationClosesAt(event.getStartsAt());
+                }
+            } else if (event.getRegistrationClosesAt() == null) {
+                event.setRegistrationClosesAt(event.getStartsAt());
+            }
         }
 
         if ("APPROVED".equalsIgnoreCase(event.getStatus())) {
@@ -613,6 +743,41 @@ public class MobileEventHostAuthController {
             }
             return ResponseEntity.ok(ok(Map.of(
                     "message", "Checked in successfully",
+                    "registration", attendee
+            )));
+        } catch (org.springframework.web.server.ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
+        }
+    }
+
+    @PostMapping("/events/{id}/registrations/{regId}/toggle-attendance")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> toggleAttendance(
+            @PathVariable("id") Long id,
+            @PathVariable("regId") Long regId,
+            HttpSession session) {
+        EventHost host = requireHost(session);
+        if (host == null) return unauthorized();
+        WomenEvent event = eventRepo.findById(id).orElse(null);
+        if (event == null || event.getOrganizer() == null || !event.getOrganizer().getId().equals(host.getId())) {
+            return badRequest("Event not found");
+        }
+        try {
+            WomenEventRegistration reg = bookingService.toggleAttendanceByOrganizer(regId, host);
+            Map<String, Object> attendee = new LinkedHashMap<>();
+            attendee.put("id", reg.getId());
+            attendee.put("ticketCode", reg.getTicketCode());
+            attendee.put("status", reg.getStatus());
+            attendee.put("checkedIn", reg.isCheckedIn());
+            attendee.put("paid", reg.isPaid());
+            if (reg.getUser() != null) {
+                attendee.put("userName", reg.getUser().getFullName());
+                attendee.put("userEmail", reg.getUser().getEmail());
+                attendee.put("userPhone", reg.getUser().getPhoneNumber());
+            }
+            return ResponseEntity.ok(ok(Map.of(
+                    "message", reg.isCheckedIn() ? "Marked as present" : "Attendance unmarked",
+                    "checkedIn", reg.isCheckedIn(),
                     "registration", attendee
             )));
         } catch (org.springframework.web.server.ResponseStatusException ex) {
@@ -836,12 +1001,23 @@ public class MobileEventHostAuthController {
         m.put("category", e.getCategory() == null ? null : e.getCategory().name());
         m.put("categoryLabel", e.getCategory() == null ? null : e.getCategory().getDisplayName());
         m.put("description", e.getDescription());
+        m.put("shortDescription", e.getShortDescription());
         m.put("eventDate", e.getEventDate() == null ? null : e.getEventDate().toString());
         m.put("eventTime", e.getEventTime() == null ? null : e.getEventTime().toString());
+        m.put("endDate", e.getEndsAt() == null ? null : e.getEndsAt().toLocalDate().toString());
+        m.put("endTime", e.getEndsAt() == null ? null : e.getEndsAt().toLocalTime().toString());
+        m.put("startsAt", e.getStartsAt() == null ? null : e.getStartsAt().toString());
+        m.put("endsAt", e.getEndsAt() == null ? null : e.getEndsAt().toString());
+        m.put("registrationClosesAt", e.getRegistrationClosesAt() == null ? null : e.getRegistrationClosesAt().toString());
         m.put("venue", e.getVenue());
         m.put("city", e.getCity());
+        m.put("venueState", e.getVenueState());
+        m.put("venuePincode", e.getVenuePincode());
+        m.put("venueArea", e.getVenueArea());
+        m.put("mapsLocation", e.getMapsLocation());
         m.put("entryFee", e.getEntryFee());
         m.put("free", e.isFree());
+        m.put("boothFee", e.getBoothFee());
         m.put("maxParticipants", e.getMaxParticipants());
         m.put("capacity", e.getMaxParticipants());
         m.put("contactInfo", e.getContactInfo());
@@ -849,6 +1025,14 @@ public class MobileEventHostAuthController {
         m.put("organizerType", e.getOrganizerType());
         m.put("status", e.getStatus());
         m.put("virtual", e.isVirtual());
+        m.put("eventFormat", e.getEventFormat() == null ? null : e.getEventFormat().name());
+        m.put("streamLink", e.getStreamLink());
+        m.put("meetingPlatform", e.getMeetingPlatform());
+        m.put("cancellationPolicy", e.getCancellationPolicy());
+        m.put("refundPolicy", e.getRefundPolicy());
+        m.put("ageRestriction", e.getAgeRestriction());
+        m.put("participantRequirements", e.getParticipantRequirements());
+        m.put("whatToBring", e.getWhatToBring());
         m.put("bannerImage", e.getBannerImage());
         m.put("imagePath", e.getBannerImage());
         m.put("bannerUrl", e.getBannerImage());

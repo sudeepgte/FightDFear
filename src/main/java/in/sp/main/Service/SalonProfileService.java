@@ -48,36 +48,24 @@ public class SalonProfileService {
     public List<String> missingItems(Salon salon) {
         List<String> missing = new ArrayList<>();
         if (PartnerLifecycleSupport.blank(salon.getName())) missing.add("1.1 Salon name");
-        if (PartnerLifecycleSupport.blank(salon.getSalonType())) missing.add("1.2 Salon type");
-        if (PartnerLifecycleSupport.blank(salon.getContactPerson())) missing.add("1.3 Owner / manager");
+        if (PartnerLifecycleSupport.blank(salon.getSalonType())) missing.add("1.2 Business type");
         if (PartnerLifecycleSupport.blank(salon.getPhone()) || !salon.getPhone().trim().matches("\\d{10}")) {
             missing.add("1.5 Official phone");
         }
-        if (PartnerLifecycleSupport.blank(salon.getAddress())) missing.add("2.1 Landmark / address");
-        if (PartnerLifecycleSupport.blank(salon.getCity())) missing.add("2.3 City");
+        if (PartnerLifecycleSupport.blank(salon.getAddress())) missing.add("2.1 Full address");
+        if (PartnerLifecycleSupport.blank(salon.getCity())) missing.add("2.3 City / District");
         if (PartnerLifecycleSupport.blank(salon.getState())) missing.add("2.4 State");
         if (PartnerLifecycleSupport.blank(salon.getPincode()) || !salon.getPincode().trim().matches("\\d{6}")) {
             missing.add("2.5 Pincode");
         }
-        if (PartnerLifecycleSupport.blank(salon.getCategoriesOffered())) missing.add("3.1 Categories");
-        if (PartnerLifecycleSupport.blank(salon.getAudience())) missing.add("4.1 Who we serve");
-        if (PartnerLifecycleSupport.blank(salon.getOpenDays())) missing.add("6.1 Open days");
-        if (salon.getOpenTime() == null) missing.add("6.2 Open time");
-        if (salon.getCloseTime() == null) missing.add("6.3 Close time");
-        if (PartnerLifecycleSupport.blank(salon.getBio())) missing.add("7.1 About the salon");
-        List<Service1> services = salon.getId() == null
-                ? List.of()
-                : serviceRepository.findBySalonId(salon.getId());
-        if (services == null || services.isEmpty()) {
-            missing.add("8. First service");
-        }
+        if (PartnerLifecycleSupport.blank(salon.getBio())) missing.add("7.1 Description / Bio");
         return missing;
     }
 
     public int calculateCompletionPct(Salon salon) {
         if (salon == null) return 0;
         int filled = 0;
-        final int total = 20;
+        final int total = 19;
 
         // Basic Information (8 milestones)
         if (salon.getName() != null && salon.getName().trim().length() >= 3) filled++;
@@ -90,18 +78,13 @@ public class SalonProfileService {
         if (salon.getState() != null && !salon.getState().isBlank()) filled++;
         if (salon.getCity() != null && !salon.getCity().isBlank()) filled++;
 
-        // Salon Details (4 milestones)
+        // Salon Details (5 milestones)
         if (salon.getSalonCategory() != null && !salon.getSalonCategory().isBlank()) filled++;
         int currentYear = java.time.Year.now().getValue();
         if (salon.getEstablishedYear() != null && salon.getEstablishedYear() >= 1900 && salon.getEstablishedYear() <= currentYear) filled++;
         if (salon.getTotalChairs() != null && salon.getTotalChairs() >= 1) filled++;
         if (salon.getSalonSizeSqFt() != null && salon.getSalonSizeSqFt() >= 50) filled++;
-
-        // Services (1 milestone)
-        List<Service1> services = salon.getId() == null
-                ? List.of()
-                : serviceRepository.findBySalonId(salon.getId());
-        if (services != null && !services.isEmpty()) filled++;
+        if (salon.getLanguagesSpoken() != null && !salon.getLanguagesSpoken().isBlank()) filled++;
 
         // Photos (2 milestones)
         if (salon.getProfileImageUrl() != null && !salon.getProfileImageUrl().isBlank() && !salon.getProfileImageUrl().contains("ui-avatars")) filled++;
@@ -110,7 +93,9 @@ public class SalonProfileService {
 
         // Facilities (1 milestone)
         if (Boolean.TRUE.equals(salon.getHasAc()) || Boolean.TRUE.equals(salon.getHasWifi())
-                || Boolean.TRUE.equals(salon.getHasParking()) || Boolean.TRUE.equals(salon.getHasPowerBackup())) filled++;
+                || Boolean.TRUE.equals(salon.getHasParking()) || Boolean.TRUE.equals(salon.getHasPowerBackup())
+                || Boolean.TRUE.equals(salon.getIsWheelchairAccessible())
+                || (salon.getWashrooms() != null && salon.getWashrooms() >= 1)) filled++;
 
         // Documents (2 milestones)
         int docsCount = 0;
@@ -127,9 +112,6 @@ public class SalonProfileService {
         boolean hasSocial = (smJson != null && !smJson.isBlank() && !smJson.contains("\"instagram\":\"\""))
                 || (salon.getWebsite() != null && !salon.getWebsite().isBlank());
         if (hasSocial) filled++;
-
-        // Preferences (1 milestone)
-        if (salon.getPreferencesJson() != null && !salon.getPreferencesJson().isBlank() && !salon.getPreferencesJson().equals("{}")) filled++;
 
         return Math.min(100, (int) Math.round((100.0 * filled) / total));
     }

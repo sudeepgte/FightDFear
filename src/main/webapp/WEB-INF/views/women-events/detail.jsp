@@ -477,6 +477,32 @@
     <jsp:include page="/WEB-INF/views/fragments/sidebar.jsp" />
     
     <div id="page-content-wrapper" style="min-height: 100vh; overflow-x: clip;" data-skip-global-back="true">
+        <!-- Admin Verification Review Bar -->
+        <c:if test="${(isAdmin || not empty sessionScope.admin) && event.status == 'PENDING'}">
+            <div style="background: linear-gradient(90deg, #FFFBEB, #FEF3C7); border: 1px solid #FCD34D; border-radius: 14px; margin: 16px auto; max-width: 1240px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; box-shadow: 0 4px 14px rgba(217,119,6,0.12);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #D97706; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;">Admin Preview</span>
+                    <span style="font-size: 0.88rem; font-weight: 600; color: #92400E;">This event is currently <strong>PENDING</strong> verification and not publicly listed.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <form action="${pageContext.request.contextPath}/admin/women-events/${event.id}/approve" method="post" style="margin:0;">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-success" style="font-weight: 700; border-radius: 8px; padding: 6px 14px; background:#16A34A; border-color:#16A34A;">
+                            <i class="bi bi-check-lg me-1"></i> Approve Event
+                        </button>
+                    </form>
+                    <form action="${pageContext.request.contextPath}/admin/women-events/${event.id}/reject" method="post" style="margin:0;">
+                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                        <button type="submit" class="btn btn-sm btn-danger" style="font-weight: 700; border-radius: 8px; padding: 6px 14px; background:#DC2626; border-color:#DC2626;">
+                            <i class="bi bi-x-lg me-1"></i> Reject Event
+                        </button>
+                    </form>
+                    <a href="${pageContext.request.contextPath}/admin/pending-event-hosts" class="btn btn-sm btn-outline-secondary" style="font-weight: 600; border-radius: 8px; padding: 6px 12px; background:#fff;">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Pending Queue
+                    </a>
+                </div>
+            </div>
+        </c:if>
         <!-- Top Action & Navigation Bar -->
         <div class="top-action-bar">
             <a href="${pageContext.request.contextPath}/women-events" class="btn-back-pill">

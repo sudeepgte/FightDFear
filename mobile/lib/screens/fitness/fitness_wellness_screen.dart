@@ -214,7 +214,7 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
       ),
     );
     if (booked == true && mounted) {
-      _tabs.animateTo(1);
+      _tabs.animateTo(2);
       await _loadBookings();
     }
   }
@@ -237,7 +237,7 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
         'amount': amount,
       },
       onSuccess: () async {
-        _tabs.animateTo(1);
+        _tabs.animateTo(2);
         await _loadBookings();
       },
     );
@@ -852,6 +852,7 @@ class _FitnessWellnessScreenState extends State<FitnessWellnessScreen>
                 );
                 _loadClasses();
                 _loadMyFitness();
+                _tabs.animateTo(2);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(res['error']?.toString() ?? 'Booking failed')),

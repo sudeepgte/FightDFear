@@ -835,6 +835,7 @@ public class MobileWomenProductsSellerAuthController {
 
     private static Double parseDoubleOrNull(Object value) {
         if (value == null) return null;
+        if (value instanceof Number) return ((Number) value).doubleValue();
         try {
             return Double.parseDouble(value.toString().trim());
         } catch (Exception e) {
@@ -888,8 +889,9 @@ public class MobileWomenProductsSellerAuthController {
 
     private static double parseDouble(Object value, double fallback) {
         if (value == null) return fallback;
+        if (value instanceof Number) return ((Number) value).doubleValue();
         try {
-            return Double.parseDouble(value.toString());
+            return Double.parseDouble(value.toString().trim());
         } catch (Exception e) {
             return fallback;
         }
@@ -897,10 +899,15 @@ public class MobileWomenProductsSellerAuthController {
 
     private static int parseInt(Object value, int fallback) {
         if (value == null) return fallback;
+        if (value instanceof Number) return ((Number) value).intValue();
         try {
-            return Integer.parseInt(value.toString());
+            return Integer.parseInt(value.toString().trim());
         } catch (Exception e) {
-            return fallback;
+            try {
+                return (int) Double.parseDouble(value.toString().trim());
+            } catch (Exception ex) {
+                return fallback;
+            }
         }
     }
 

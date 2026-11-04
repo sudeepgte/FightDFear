@@ -512,7 +512,8 @@ public class SalonController {
             @RequestParam(value = "availabilityHours", required = false) String availabilityHours,
             @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
             HttpSession session,
-            Model model) {
+            Model model,
+            RedirectAttributes redirectAttributes) {
 
         Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
         if (loggedSalon == null) {
@@ -628,10 +629,8 @@ public class SalonController {
 
         salonRepository.save(salon);
         session.setAttribute("loggedSalon", salon);
-        model.addAttribute("salon", salon);
-        addProfileImageUploadHints(model);
-        model.addAttribute("message", "Profile updated successfully!");
-        return "salon/salon-profile";
+        redirectAttributes.addFlashAttribute("message", "Profile saved successfully! Please sign in to access your dashboard.");
+        return "redirect:/salons/login";
     }
 
     private String profileFormError(Model model, Salon salon, String error) {
@@ -643,7 +642,7 @@ public class SalonController {
 
     private int calculateAccurateSalonCompletion(Salon salon, Model model) {
         int filled = 0;
-        final int total = 20;
+        final int total = 19;
 
         // Step 1: Basic Information (8 milestones)
         boolean hasName = salon.getName() != null && salon.getName().trim().length() >= 3;
@@ -676,7 +675,7 @@ public class SalonController {
         boolean stepBasicInfo = hasName && hasType && hasBio && hasPhone && hasAddress && hasState && hasCity && hasPincode;
         if (model != null) model.addAttribute("stepBasicInfo", stepBasicInfo);
 
-        // Step 2: Salon Details (4 milestones)
+        // Step 2: Salon Details (5 milestones)
         boolean hasCategory = salon.getSalonCategory() != null && !salon.getSalonCategory().isBlank();
         if (hasCategory) filled++;
 
@@ -690,15 +689,17 @@ public class SalonController {
         boolean hasSize = salon.getSalonSizeSqFt() != null && salon.getSalonSizeSqFt() >= 50;
         if (hasSize) filled++;
 
-        boolean stepSalonDetails = hasCategory && hasChairs && hasSize;
+        boolean hasLang = salon.getLanguagesSpoken() != null && !salon.getLanguagesSpoken().isBlank();
+        if (hasLang) filled++;
+
+        boolean stepSalonDetails = hasCategory && hasChairs && hasSize && hasLang;
         if (model != null) model.addAttribute("stepSalonDetails", stepSalonDetails);
 
-        // Step 3: Services (1 milestone)
+        // Step 3: Services (for tracker status)
         List<in.sp.main.Entities.Service1> services = (salon.getId() != null && serviceRepository != null)
                 ? serviceRepository.findBySalonId(salon.getId())
                 : List.of();
         boolean stepServices = services != null && !services.isEmpty();
-        if (stepServices) filled++;
         if (model != null) model.addAttribute("stepServices", stepServices);
 
         // Step 4: Photos (2 milestones)
@@ -716,7 +717,8 @@ public class SalonController {
         boolean stepFacilities = Boolean.TRUE.equals(salon.getHasAc())
                 || Boolean.TRUE.equals(salon.getHasWifi())
                 || Boolean.TRUE.equals(salon.getHasParking())
-                || Boolean.TRUE.equals(salon.getHasPowerBackup());
+                || Boolean.TRUE.equals(salon.getHasPowerBackup())
+                || Boolean.TRUE.equals(salon.getIsWheelchairAccessible());
         if (stepFacilities) filled++;
         if (model != null) model.addAttribute("stepFacilities", stepFacilities);
 
@@ -758,11 +760,6 @@ public class SalonController {
             model.addAttribute("socialCount", socialCount);
             model.addAttribute("socialTotal", 3);
         }
-
-        // Step 8: Preferences (1 milestone)
-        boolean stepPref = salon.getPreferencesJson() != null && !salon.getPreferencesJson().isBlank() && !salon.getPreferencesJson().equals("{}");
-        if (stepPref) filled++;
-        if (model != null) model.addAttribute("stepPref", stepPref);
 
         int pct = Math.min(100, (int) Math.round((100.0 * filled) / total));
         if (model != null) model.addAttribute("completionPercentage", pct);
@@ -811,54 +808,8 @@ public class SalonController {
     }
 
     @GetMapping("/salons/preview")
-    public String previewProfile(HttpSession session, Model model) {
-        Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
-        if (loggedSalon == null) return "redirect:/salons/login";
-        model.addAttribute("salon", loggedSalon);
-        
-        try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            
-            // Interior Images
-            if (loggedSalon.getInteriorImagesJson() != null && !loggedSalon.getInteriorImagesJson().isEmpty()) {
-                java.util.List<String> images = mapper.readValue(loggedSalon.getInteriorImagesJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>(){});
-                model.addAttribute("interiorImagesList", images);
-            }
-            
-            // Preferences
-            if (loggedSalon.getPreferencesJson() != null && !loggedSalon.getPreferencesJson().isEmpty()) {
-                java.util.Map<String, String> prefsMap = mapper.readValue(loggedSalon.getPreferencesJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
-                model.addAttribute("salonPrefs", prefsMap);
-            }
-            
-            // Social Media
-            if (loggedSalon.getSocialMediaJson() != null && !loggedSalon.getSocialMediaJson().isEmpty()) {
-                java.util.Map<String, String> socialMap = mapper.readValue(loggedSalon.getSocialMediaJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
-                model.addAttribute("salonSocial", socialMap);
-            }
-            
-            // Hours Display
-            java.util.Map<String, String> hoursMap = null;
-            if (loggedSalon.getOperatingHoursJson() != null && !loggedSalon.getOperatingHoursJson().isEmpty()) {
-                hoursMap = mapper.readValue(loggedSalon.getOperatingHoursJson(), new com.fasterxml.jackson.core.type.TypeReference<java.util.Map<String, String>>(){});
-            }
-            if (hoursMap != null) {
-                java.util.Map<String, String> hoursDisplay = new java.util.HashMap<>();
-                java.time.format.DateTimeFormatter format12 = java.time.format.DateTimeFormatter.ofPattern("hh:mm a");
-                for (java.util.Map.Entry<String, String> entry : hoursMap.entrySet()) {
-                    String val = entry.getValue();
-                    if (val != null && val.contains(" - ")) {
-                        try {
-                            String[] parts = val.split(" - ");
-                            hoursDisplay.put(entry.getKey(), java.time.LocalTime.parse(parts[0]).format(format12) + " - " + java.time.LocalTime.parse(parts[1]).format(format12));
-                        } catch(Exception e) { hoursDisplay.put(entry.getKey(), val); }
-                    } else { hoursDisplay.put(entry.getKey(), val); }
-                }
-                model.addAttribute("salonHoursDisplay", hoursDisplay);
-            }
-        } catch(Exception e) {}
-        
-        return "salon/salon-preview";
+    public String previewProfile(HttpSession session) {
+        return "redirect:/salons/profile";
     }
 
     @PostMapping("/salons/updateProfile")
@@ -965,7 +916,8 @@ public class SalonController {
             salonRepository.save(salon);
             session.setAttribute("loggedSalon", salon);
         }
-        return "redirect:/salons/profile";
+        redirectAttributes.addFlashAttribute("message", "Profile saved successfully! Please sign in to access your dashboard.");
+        return "redirect:/salons/login";
 
     }
 

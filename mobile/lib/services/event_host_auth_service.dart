@@ -79,6 +79,21 @@ class EventHostAuthService {
         body: {'ticketCode': ticketCode.trim()},
       );
 
+  Future<Map<String, dynamic>> toggleAttendance(int eventId, int registrationId) =>
+      _api.post(
+        '/api/women-events/host/events/$eventId/registrations/$registrationId/toggle-attendance',
+        eventHostAuth: true,
+      );
+
+  Future<Map<String, dynamic>> uploadEventBanner(int eventId, String bannerPath) async {
+    final file = await http.MultipartFile.fromPath('bannerImage', bannerPath);
+    return _api.postMultipart(
+      '/api/women-events/host/events/$eventId/banner',
+      files: [file],
+      eventHostAuth: true,
+    );
+  }
+
   Future<Map<String, dynamic>> organizerTypes() =>
       _api.get('/api/women-events/host/organizer-types', eventHostAuth: true);
 

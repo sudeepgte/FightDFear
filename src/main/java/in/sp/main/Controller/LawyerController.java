@@ -227,7 +227,7 @@ public class LawyerController {
         cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
         response.addCookie(cookie);
         
-        if (p.getPartnerProfileStatus() == in.sp.main.Entities.PartnerProfileStatus.REGISTERED || p.getProfileCompletionPct() == null || p.getProfileCompletionPct() < 100) {
+        if (p.getPartnerProfileStatus() == in.sp.main.Entities.PartnerProfileStatus.REGISTERED && (p.getProfileCompletionPct() == null || p.getProfileCompletionPct() < 10)) {
             return "redirect:/lawyer/profile-completion";
         }
         return "redirect:/lawyer/dashboard";

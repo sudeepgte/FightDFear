@@ -87,6 +87,12 @@ class FitnessTrainerAuthService {
       _api.post('/api/fitness/trainer/bookings/$id/status',
           fitnessTrainerAuth: true, body: {'status': status});
 
+  Future<Map<String, dynamic>> rescheduleBooking(int id,
+          {required String newDate, required String newTime}) =>
+      _api.post('/api/fitness/trainer/bookings/$id/reschedule',
+          fitnessTrainerAuth: true,
+          body: {'newDate': newDate, 'newTime': newTime});
+
   Future<Map<String, dynamic>> requestPayout() =>
       _api.post('/api/fitness/trainer/payout/request', fitnessTrainerAuth: true);
 
