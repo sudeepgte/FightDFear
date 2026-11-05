@@ -62,7 +62,7 @@
   3. Add port 80 HTTP-to-HTTPS permanent redirect (`return 301 https://$host$request_uri;`).
   4. Enable HSTS headers (`Strict-Transport-Security "max-age=31536000; includeSubDomains" always;`).
 - **Dependencies:** DNS domain resolution and Certbot on host.
-- **Verification Criteria:** `curl -I http://fightdfire.chethancodehub.com` returns `HTTP/1.1 301 Moved Permanently` to `https://...`.
+- **Verification Criteria:** `curl -I http://YOUR_PRODUCTION_DOMAIN` returns `HTTP/1.1 301 Moved Permanently` to `https://...`.
 
 ---
 

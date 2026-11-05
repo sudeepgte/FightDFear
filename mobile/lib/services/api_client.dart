@@ -43,11 +43,8 @@ class ApiClient {
   }
 
   static bool _isObsoleteHost(String url) {
-    // Obsolete hardcoded hosts from past configurations that fail on physical devices
-    return url == 'http://10.0.2.2:8084' ||
-        url == 'http://10.222.42.179:8084' ||
-        url == 'http://10.0.2.2:8084/' ||
-        url == 'http://10.222.42.179:8084/';
+    // Emulator loopback is not reachable from a physical phone.
+    return url == 'http://10.0.2.2:8084' || url == 'http://10.0.2.2:8084/';
   }
 
   final String _defaultBaseUrl;

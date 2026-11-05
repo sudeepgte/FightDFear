@@ -159,14 +159,6 @@ class _ServerConfigDialogState extends State<ServerConfigDialog> {
                     _testConnection();
                   },
                 ),
-                ActionChip(
-                  label: const Text('Cloud Server', style: TextStyle(fontSize: 11)),
-                  avatar: const Icon(Icons.cloud_outlined, size: 14),
-                  onPressed: () {
-                    _urlCtrl.text = ApiConfig.productionHost;
-                    _testConnection();
-                  },
-                ),
               ],
             ),
             const SizedBox(height: 12),

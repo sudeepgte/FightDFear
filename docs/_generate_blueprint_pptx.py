@@ -178,7 +178,7 @@ def build():
     t4 = s.shapes.add_textbox(Inches(0.9), Inches(5.4), Inches(11.5), Inches(1.2))
     tf4 = t4.text_frame
     tf4.word_wrap = True
-    set_run(tf4.paragraphs[0].add_run(), "Source of truth: KishorDfire repository (Spring Boot 3.4.3 · Java 17 · Flutter · JSP · MySQL 8 · Flyway V45)\nProduction: fightdfire.chethancodehub.com    ·    14 August 2026    ·    Internal — engineering, product, investors", 13, False, GOLD)
+    set_run(tf4.paragraphs[0].add_run(), "Source of truth: FightDFear repository (Spring Boot 3.4.3 · Java 17 · Flutter · JSP · MySQL 8 · Flyway)\nProduction URL is set via APP_BASE_URL    ·    14 August 2026    ·    Internal — engineering, product, investors", 13, False, GOLD)
 
     # 2 How to read
     s = keep(content_slide(prs, "How to read this blueprint", "Youthian used only for section depth. Content is FightDFear-only."))

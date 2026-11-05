@@ -1,106 +1,96 @@
 # Deployment Guide — Fight D Fear
 
+Deploy from an **empty MySQL database**. Flyway creates the schema on first boot.
+Do not import an old production dump.
+
 ## Environments
 
-| Environment | Branch | Compose | Env file |
-|-------------|--------|---------|----------|
-| **Local dev** | any | `docker compose` optional | `.env` from `.env.example` |
-| **Staging** | `cursor/production-readiness` | `docker-compose.yml` + `docker-compose.staging.yml` | `.env` from `.env.staging.example` |
-| **Production** | tagged release on `main` (after review) | `docker-compose.yml` | `.env` (never commit) |
+| Environment | How to run | Env file | Database |
+|-------------|------------|----------|----------|
+| **Local** | `mvn spring-boot:run` or Docker | `application-local.properties` or `.env` | empty `womenbesafety` |
+| **Staging** | `docker-compose.yml` + `docker-compose.staging.yml` | `.env` from `.env.staging.example` | empty `womenbesafety_staging` |
+| **Production** | `docker-compose.yml` after staging sign-off | `.env` from `.env.example` | empty `womenbesafety` |
 
-## Staging bootstrap
+Set `APP_BASE_URL` to the public hostname of **this** environment. Do not hardcode old server URLs.
 
-1. Copy `.env.staging.example` → `.env` on the staging VPS.
-2. Fill Razorpay **test** keys, mail, JWT secret, and `APP_BASE_URL`.
+## Local from scratch
+
+1. Create an empty MySQL 8 database (or let the JDBC URL create it):
+
+```sql
+CREATE DATABASE womenbesafety CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+2. Copy `src/main/resources/application-local.properties.example` to `application-local.properties` if you need local overrides.
+3. Start the app. Flyway applies `db/migration/V1` onward automatically.
+
+If a previous local run left a half-migrated schema, drop and recreate:
+
+```sql
+DROP DATABASE IF EXISTS womenbesafety;
+CREATE DATABASE womenbesafety CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+## Staging
+
+1. Copy `.env.staging.example` → `.env` and fill secrets (Razorpay **test** keys, mail, JWT, `APP_BASE_URL`).
+2. Start from an empty database volume (do not restore an old dump).
 3. Deploy:
 
 ```bash
-cd /root/FightDFire
-git fetch origin
-git checkout cursor/production-readiness
-git pull origin cursor/production-readiness
 docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env up -d --build
 ```
 
 4. Verify health:
 
 ```bash
-curl -sf http://127.0.0.1:8084/actuator/health | head
+curl -sf http://127.0.0.1:8084/actuator/health
 ```
 
-5. Flyway migrations run automatically on boot (`spring.jpa.hibernate.ddl-auto=validate` in prod profile).
+5. Point Flutter at staging:
+
+```bash
+cd mobile
+flutter run --dart-define=API_BASE=https://YOUR_STAGING_DOMAIN
+```
+
+## Production
+
+Only after staging is verified:
+
+1. Copy `.env.example` → `.env` with live secrets.
+2. Use a new empty MySQL database.
+3. Set `APP_BASE_URL` and nginx `server_name` to the new production domain.
+4. Start:
+
+```bash
+docker compose --env-file .env up -d --build
+curl -sf http://127.0.0.1:8084/actuator/health
+```
 
 ## Health-gated rollout
 
 `deploy/deploy.sh` waits for `/actuator/health` before declaring success:
 
 ```bash
-export DEPLOY_BRANCH=cursor/production-readiness
+export DEPLOY_BRANCH=main
 ./deploy/deploy.sh
 ```
 
-The script:
+## Rollback
 
-1. Fetches and checks out `DEPLOY_BRANCH` (default: `cursor/production-readiness`).
-2. Runs `docker compose up -d --build`.
-3. Polls `http://127.0.0.1:8084/actuator/health` for up to 120s.
-4. Exits non-zero if health never becomes UP.
+Flyway migrations are forward-only.
 
-## Rollback procedure
-
-1. **Identify last good commit:**
-
-```bash
-git log --oneline -5
-```
-
-2. **Check out previous commit or tag:**
-
-```bash
-git checkout <good-sha>
-docker compose --env-file .env up -d --build
-```
-
-3. **Verify health** (same curl as above).
-
-4. **Database:** Flyway migrations are forward-only. If a bad migration shipped:
-   - Restore MySQL from the latest pre-deploy snapshot, **or**
-   - Ship a corrective forward migration (preferred).
-
-5. **Re-pin branch** after hotfix:
-
-```bash
-git checkout cursor/production-readiness
-git reset --hard <good-sha>   # only on staging; coordinate before production
-```
-
-## Razorpay sandbox end-to-end (staging)
-
-1. Use dashboard **Test Mode** keys in `.env`.
-2. Configure webhook URL: `https://<staging-host>/payment/webhook/razorpay`
-3. Set `RAZORPAY_WEBHOOK_SECRET` to match dashboard.
-4. Flutter against staging:
-
-```bash
-cd mobile
-flutter run --dart-define=API_BASE_URL=https://staging.fightdfire.example.com
-```
-
-5. Complete a test payment; verify `/payment/verify` returns success and booking/enrollment row is created.
-
-## Multi-instance staging (optional)
-
-1. Run two app containers on ports 8084 and 8085 (duplicate `app` service or second compose project).
-2. Apply `deploy/nginx-fightdfire.conf` (`ip_hash` upstream).
-3. Run multi-instance checks from Phase 11 load test doc.
+1. Check out the last good commit and rebuild.
+2. If a bad migration shipped, restore MySQL from the pre-deploy snapshot **or** ship a new forward migration.
+3. Do not edit already-applied `V*.sql` files on a live database.
 
 ## Secrets
 
 - Never commit `.env`, Razorpay secrets, or JWT keys.
-- Rotate `JWT_SECRET` if leaked; users must re-login (30-day token expiry).
+- Rotate `JWT_SECRET` if leaked; users must re-login.
 
 ## Related docs
 
-- `docs/REALTIME_MULTI_INSTANCE.md` — WebSocket sticky sessions + polling fallback
+- `docs/REALTIME_MULTI_INSTANCE.md` — WebSocket sticky sessions
 - `docs/STORAGE_MIGRATION.md` — S3 migration runbook
-- `docs/LOAD_TEST_RESULTS.md` — load/concurrency evidence (Phase 11)

@@ -2,7 +2,7 @@
 # Health-gated deploy for Fight D Fear staging/production-readiness branch.
 set -euo pipefail
 
-REPO_DIR="${REPO_DIR:-/root/FightDFire}"
+REPO_DIR="${REPO_DIR:-.}"
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8084/actuator/health}"
 HEALTH_TIMEOUT_SEC="${HEALTH_TIMEOUT_SEC:-120}"

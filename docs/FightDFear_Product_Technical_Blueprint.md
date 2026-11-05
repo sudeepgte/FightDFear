@@ -2,8 +2,8 @@
 
 **Document type:** Product + technical blueprint (implementation-true)  
 **Codebase audited:** KishorDfire / FightDFear repository (Spring Boot 3.4.3, Java 17, Flutter, JSP web, MySQL 8, Flyway). A second pass from [Audit FightDFear codebase](4708a5d0-6e42-4249-8f3b-3536ea5d1181) corrected stack and status labels.  
-**Production URL:** `https://fightdfire.chethancodehub.com`  
-**Release mobile API host:** `ApiConfig.productionHost` → same origin  
+**Production URL:** set via `APP_BASE_URL` (no hardcoded host)  
+**Release mobile API host:** `--dart-define=API_BASE=...`  
 **Document date:** 14 August 2026  
 **Classification:** Internal — suitable for engineering, product, management, and investors  
 

@@ -6,14 +6,14 @@
 services:
   db:
     environment:
-      MYSQL_DATABASE: womenbesafe_staging
+      MYSQL_DATABASE: womenbesafety_staging
     volumes:
       - db_data_staging:/var/lib/mysql
 
   app:
     environment:
-      APP_BASE_URL: ${APP_BASE_URL:-https://staging.fightdfire.example.com}
-      DB_URL: ${DB_URL:-jdbc:mysql://db:3306/womenbesafe_staging?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:8084}
+      DB_URL: ${DB_URL:-jdbc:mysql://db:3306/womenbesafety_staging?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
 
 volumes:
   db_data_staging:

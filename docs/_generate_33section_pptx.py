@@ -195,7 +195,7 @@ def build():
        18, False, RGBColor(0xE2, 0xE8, 0xF0))
     tb(s, Inches(0.7), Inches(4.55), Inches(11.5), Inches(1.4),
        "Stack: Spring Boot 3.4.3 · Java 17 · Flutter · JSP · MySQL 8 · Flyway V45 · Razorpay\n"
-       "Production: fightdfire.chethancodehub.com    ·    14 August 2026    ·    Internal\n"
+       "Production URL is set via APP_BASE_URL    ·    14 August 2026    ·    Internal\n"
        "Youthian PPT used only as structural template. FightDFear content, brand (#F43F5E / #1E1B4B) and facts are original.",
        13, False, RGBColor(0xCB, 0xD5, 0xE1))
     tb(s, Inches(0.7), Inches(6.72), Inches(12), Inches(0.5),

@@ -64,7 +64,7 @@ void main() {
       expect(await api.getCustomBaseUrl(), isNull);
     });
 
-    test('Obsolete cached host URLs (10.0.2.2 and 10.222.42.179) are scrubbed on init', () async {
+    test('Cached emulator loopback URL is scrubbed on init', () async {
       SharedPreferences.setMockInitialValues({
         'custom_api_base_url': 'http://10.0.2.2:8084',
       });
@@ -79,17 +79,16 @@ void main() {
   });
 
   group('ApiConfig Resolution Tests', () {
-    test('Android resolves to defaultLocalLanHost (192.168.0.4:8084) for physical phones and emulators', () {
+    test('Android resolves to defaultLocalLanHost for physical phones and emulators', () {
       final resolved = ApiConfig.resolve(isAndroid: true);
-      expect(resolved, 'http://192.168.0.4:8084');
+      expect(resolved, ApiConfig.defaultLocalLanHost);
     });
 
-    test('getCandidateUrls includes active laptop LAN, emulator, localhost, and cloud', () {
+    test('getCandidateUrls includes laptop LAN, emulator, and localhost', () {
       final candidates = ApiConfig.getCandidateUrls(isAndroid: true);
-      expect(candidates.contains('http://192.168.0.4:8084'), isTrue);
-      expect(candidates.contains('http://10.0.2.2:8084'), isTrue);
-      expect(candidates.contains('http://localhost:8084'), isTrue);
-      expect(candidates.contains('https://fightdfire.chethancodehub.com'), isTrue);
+      expect(candidates.contains(ApiConfig.defaultLocalLanHost), isTrue);
+      expect(candidates.contains(ApiConfig.androidEmulatorHost), isTrue);
+      expect(candidates.contains(ApiConfig.localhostHost), isTrue);
     });
   });
 

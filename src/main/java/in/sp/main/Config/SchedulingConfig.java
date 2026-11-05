@@ -18,8 +18,6 @@ public class SchedulingConfig {
     @Bean
     public LockProvider lockProvider(DataSource dataSource) {
         JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-        // Existing Hibernate-era DBs were Flyway-baselined at the latest version,
-        // which skipped V41. CREATE IF NOT EXISTS is safe on frozen schemas.
         jdbc.execute("""
                 CREATE TABLE IF NOT EXISTS shedlock (
                     name VARCHAR(64) NOT NULL,

@@ -85,7 +85,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Schema migrations (MySQL 8). Existing DBs are baselined; see FlywayExistingSchemaConfig. -->
+        <!-- Schema migrations (MySQL 8). Fresh databases are created by Flyway on first boot. -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>

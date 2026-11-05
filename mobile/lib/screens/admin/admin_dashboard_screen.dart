@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../config/api_config.dart';
 import '../../services/admin_service.dart';
 import '../../services/auth_state.dart';
 
@@ -1777,20 +1778,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     children: [
                       ActionChip(
                         avatar: const Icon(Icons.laptop_chromebook_rounded, size: 16),
-                        label: const Text('Laptop Wi-Fi (10.10.100.108:8084)'),
+                        label: Text('Laptop Wi-Fi (${Uri.parse(ApiConfig.defaultLocalLanHost).host}:8084)'),
                         onPressed: () {
                           setModalState(() {
-                            controller.text = 'http://10.10.100.108:8084';
-                            pingResult = null;
-                          });
-                        },
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.cloud_done_rounded, size: 16),
-                        label: const Text('Cloud (fightdfire.chethancodehub.com)'),
-                        onPressed: () {
-                          setModalState(() {
-                            controller.text = 'https://fightdfire.chethancodehub.com';
+                            controller.text = ApiConfig.defaultLocalLanHost;
                             pingResult = null;
                           });
                         },
@@ -1810,10 +1801,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   const SizedBox(height: 12),
                   TextField(
                     controller: controller,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Server URL (with port)',
-                      hintText: 'http://10.10.100.108:8084',
-                      border: OutlineInputBorder(),
+                      hintText: ApiConfig.localhostHost,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 10),
