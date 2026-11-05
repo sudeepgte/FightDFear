@@ -53,6 +53,9 @@ public class BookingController {
     @Autowired
     private SalonMembershipRepository salonMembershipRepository;
 
+    @Autowired
+    private in.sp.main.Service.GlowBookingNotificationService glowBookingNotificationService;
+
     // Show booking form
     @GetMapping("/new")
     public String showBookingForm(@RequestParam(value = "serviceId", required = false) Long serviceId,
@@ -179,6 +182,12 @@ public class BookingController {
             booking.setAddress(null);
         }
         booking1Repository.save(booking);
+        try {
+            if (glowBookingNotificationService != null) {
+                glowBookingNotificationService.notifyBookingCreated(booking);
+            }
+        } catch (Exception ignored) {}
+
         SalonNotification notif = new SalonNotification();
         notif.setSalon(booking.getSalon());
         notif.setTitle("New Booking Alert");
@@ -318,6 +327,11 @@ public class BookingController {
                 } else {
                     booking.setStatus(status.toUpperCase());
                     booking1Repository.save(booking);
+                    try {
+                        if (glowBookingNotificationService != null) {
+                            glowBookingNotificationService.notifyBookingStatusUpdated(booking, status);
+                        }
+                    } catch (Exception ignored) {}
                 }
             }
         }

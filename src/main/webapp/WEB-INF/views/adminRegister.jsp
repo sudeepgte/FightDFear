@@ -210,7 +210,7 @@
 
         <div class="form-card">
             <c:if test="${not empty error}">
-                <div class="alert alert-error" id="serverError"><i class="bi bi-exclamation-circle me-1"></i> ${error}</div>
+                <div class="alert alert-error" id="serverError"><i class="bi bi-exclamation-circle me-1"></i> <c:out value="${error}"/></div>
             </c:if>
             <div class="alert alert-error" id="formError" style="display:none;"></div>
 

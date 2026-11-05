@@ -212,21 +212,24 @@ public class SalonController {
                 session.removeAttribute("loggedCentre");
                 session.removeAttribute("loggedSeller");
                 session.removeAttribute("admin");
-                session.setAttribute("loggedSalon", salon);
+                Salon freshSalon = salonRepository.findById(salon.getId()).orElse(salon);
+                session.setAttribute("loggedSalon", freshSalon);
                 
                 // Generate JWT and add to response
-                String token = jwtUtil.generateToken(salon.getUsername(), "SALON");
+                String token = jwtUtil.generateToken(freshSalon.getUsername(), "SALON");
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+                cookie.setMaxAge(24 * 60 * 60); // 24 hours
                 response.addCookie(cookie);
                 
-                boolean isApproved = salon.isApproved() || salon.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
-                if (isApproved) {
-                    return "redirect:/salon/salon-dashboard";
+                List<String> missing = salonProfileService.missingItems(freshSalon);
+                PartnerProfileStatus status = freshSalon.getPartnerProfileStatus();
+
+                if ((missing != null && !missing.isEmpty()) || status == PartnerProfileStatus.REGISTERED || status == PartnerProfileStatus.PROFILE_INCOMPLETE) {
+                    return "redirect:/salons/profile";
                 }
-                return "redirect:/salons/profile";
+                return "redirect:/salons/dashboard";
             } else {
                 model.addAttribute("error", "Invalid password");
                 return "salon/salon-login";
@@ -255,14 +258,21 @@ public class SalonController {
         return "redirect:/salons/login";
     }
 
-    @GetMapping("/salons/dashboard")
+    @GetMapping({"/salons/dashboard", "/salon/salon-dashboard"})
     public String showDashboard(HttpSession session, Model model) {
-        Salon loggedSalon = (Salon) session.getAttribute("loggedSalon");
-        if (loggedSalon == null) {
+        Salon sessionSalon = (Salon) session.getAttribute("loggedSalon");
+        if (sessionSalon == null) {
             return "redirect:/salons/login";
         }
         
+        Salon loggedSalon = salonRepository.findById(sessionSalon.getId()).orElse(sessionSalon);
+        session.setAttribute("loggedSalon", loggedSalon);
         Long salonId = loggedSalon.getId();
+
+        boolean isApproved = loggedSalon.isApproved() || loggedSalon.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
+        model.addAttribute("isApproved", isApproved);
+        model.addAttribute("partnerProfileStatus", loggedSalon.getPartnerProfileStatus());
+        model.addAttribute("salon", loggedSalon);
         
         // Today's date
         java.time.LocalDate today = java.time.LocalDate.now();
@@ -475,10 +485,6 @@ public class SalonController {
         Optional<Salon> salonOpt = salonRepository.findById(loggedSalon.getId());
         if (salonOpt.isEmpty()) { session.invalidate(); return "redirect:/salons/login"; }
         Salon salon = salonOpt.get();
-        boolean isApproved = salon.isApproved() || salon.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED;
-        if (isApproved) {
-            return "redirect:/salon/salon-dashboard";
-        }
         model.addAttribute("salon", salon);
         populateProfileModel(model, salon);
         addProfileImageUploadHints(model);
@@ -627,10 +633,15 @@ public class SalonController {
             }
         }
 
+        salonProfileService.refreshCompletion(salon);
+        if (salonProfileService.missingItems(salon).isEmpty() && salon.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+            salonProfileService.setLifecycleStatus(salon, PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+            salon.setSubmittedForVerificationAt(java.time.LocalDateTime.now());
+        }
         salonRepository.save(salon);
         session.setAttribute("loggedSalon", salon);
-        redirectAttributes.addFlashAttribute("message", "Profile saved successfully! Please sign in to access your dashboard.");
-        return "redirect:/salons/login";
+        redirectAttributes.addFlashAttribute("message", "Profile saved successfully and submitted for admin review!");
+        return "redirect:/salons/dashboard";
     }
 
     private String profileFormError(Model model, Salon salon, String error) {
@@ -913,11 +924,16 @@ public class SalonController {
                 if (hygieneCertificate != null && !hygieneCertificate.isEmpty()) salon.setHygieneCertificateUrl(fileUploadService.saveFile(hygieneCertificate));
             } catch (Exception e) {}
 
+            salonProfileService.refreshCompletion(salon);
+            if (salonProfileService.missingItems(salon).isEmpty() && salon.getPartnerProfileStatus() != PartnerProfileStatus.APPROVED) {
+                salonProfileService.setLifecycleStatus(salon, PartnerProfileStatus.PENDING_ADMIN_APPROVAL);
+                salon.setSubmittedForVerificationAt(java.time.LocalDateTime.now());
+            }
             salonRepository.save(salon);
             session.setAttribute("loggedSalon", salon);
         }
-        redirectAttributes.addFlashAttribute("message", "Profile saved successfully! Please sign in to access your dashboard.");
-        return "redirect:/salons/login";
+        redirectAttributes.addFlashAttribute("message", "Profile saved successfully and submitted for admin review!");
+        return "redirect:/salons/dashboard";
 
     }
 
@@ -1097,24 +1113,70 @@ public class SalonController {
  // Handle Add Service
     @PostMapping("/salon/addService")
     public String addService(@ModelAttribute Service1 service,
-                             @RequestParam("photo") MultipartFile photo,
+                             @RequestParam(value = "photo", required = false) MultipartFile photo,
                              HttpSession session, Model model) throws IOException {
- 
+
         Salon salon = (Salon) session.getAttribute("loggedSalon");
-        if (salon != null) {
-            service.setSalon(salon);
- 
-            if (photo != null && !photo.isEmpty()) {
-                String photoUrl = fileUploadService.saveFile(photo);
-                service.setPhotoUrl(photoUrl);
-            }
- 
-            serviceRepository.save(service);
-            return "redirect:/salon/viewServices";
+        if (salon == null) {
+            return "redirect:/salons/login";
         }
- 
-        model.addAttribute("error", "Salon not logged in");
-        return "salon/add-services";
+
+        service.setSalon(salon);
+        model.addAttribute("categories", ServiceCategory.values());
+
+        // Name validation
+        if (service.getName() == null || service.getName().trim().length() < 3 || service.getName().trim().length() > 100) {
+            model.addAttribute("error", "Service name must be between 3 and 100 characters.");
+            return "salon/add-services";
+        }
+
+        // Category validation
+        if (service.getCategory() == null) {
+            model.addAttribute("error", "Please select a valid service category.");
+            return "salon/add-services";
+        }
+
+        // Price validation
+        if (service.getPrice() <= 0 || service.getPrice() > 100000) {
+            model.addAttribute("error", "Price must be greater than ₹0 and up to ₹1,00,000.");
+            return "salon/add-services";
+        }
+
+        // Duration validation
+        if (service.getDurationMinutes() < 5 || service.getDurationMinutes() > 480) {
+            model.addAttribute("error", "Duration must be between 5 and 480 minutes.");
+            return "salon/add-services";
+        }
+
+        // Ingredients & Allergen max length validation
+        if (service.getIngredients() != null && service.getIngredients().trim().length() > 250) {
+            model.addAttribute("error", "Ingredients text cannot exceed 250 characters.");
+            return "salon/add-services";
+        }
+        if (service.getAllergenInfo() != null && service.getAllergenInfo().trim().length() > 250) {
+            model.addAttribute("error", "Allergen information cannot exceed 250 characters.");
+            return "salon/add-services";
+        }
+
+        // Photo validation & upload
+        if (photo != null && !photo.isEmpty()) {
+            String validationError = fileUploadService.validatePngOrJpegImage(photo, 5 * 1024 * 1024L);
+            if (validationError != null) {
+                model.addAttribute("error", validationError);
+                return "salon/add-services";
+            }
+            String photoUrl = fileUploadService.saveFile(photo);
+            service.setPhotoUrl(photoUrl);
+        } else if (service.getId() != null) {
+            serviceRepository.findById(service.getId()).ifPresent(existing -> {
+                if (service.getPhotoUrl() == null || service.getPhotoUrl().isBlank()) {
+                    service.setPhotoUrl(existing.getPhotoUrl());
+                }
+            });
+        }
+
+        serviceRepository.save(service);
+        return "redirect:/salon/viewServices";
     }
  
  

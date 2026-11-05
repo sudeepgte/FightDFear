@@ -5,7 +5,7 @@ SET @exists = (
 );
 SET @sql = IF(@exists > 0,
     'ALTER TABLE job_applications CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
-    'DO 0');
+    'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

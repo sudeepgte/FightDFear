@@ -96,6 +96,7 @@ class WomenProductsModuleTest {
 
         p.setActive(true);
         p.setDeleted(false);
+        p.setApprovalStatus("APPROVED");
         assertFalse(p.isListedForShop());
 
         WomenProductSeller seller = new WomenProductSeller();
@@ -109,6 +110,7 @@ class WomenProductsModuleTest {
         seller.setPartnerProfileStatus(null);
         seller.setVerificationStatus(VerificationStatus.VERIFIED);
         assertTrue(seller.isApprovedForCatalog());
+        p.setApprovalStatus("APPROVED");
         assertTrue(p.isListedForShop());
     }
 

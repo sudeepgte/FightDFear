@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/seller_catalog.dart';
 import '../../services/auth_state.dart';
@@ -43,6 +46,8 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
   List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _cartItems = [];
   double _cartTotal = 0;
+  List<Map<String, dynamic>> _wishlistItems = [];
+  bool _loadingWishlist = false;
   List<Map<String, dynamic>> _orders = [];
 
   @override
@@ -55,18 +60,22 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
       onSuccess: (r) => _checkout.handleSuccess(context, r),
       onError: (r) => _checkout.handleError(r),
     );
-    _tabs = TabController(length: 3, vsync: this, initialIndex: widget.initialTab.clamp(0, 2));
+    _tabs = TabController(length: 4, vsync: this, initialIndex: widget.initialTab.clamp(0, 3));
     _tabs.addListener(() {
       if (_tabs.indexIsChanging) return;
       if (_tabs.index == 1) {
         _loadCart();
       } else if (_tabs.index == 2) {
+        _loadWishlist();
+      } else if (_tabs.index == 3) {
         _loadOrders();
       }
     });
     if (widget.initialTab == 1) {
       _loadCart();
     } else if (widget.initialTab == 2) {
+      _loadWishlist();
+    } else if (widget.initialTab == 3) {
       _loadOrders();
     }
     _loadProducts();
@@ -146,9 +155,27 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
     if (mounted) setState(() => _loadingOrders = false);
   }
 
+  Future<void> _loadWishlist() async {
+    setState(() => _loadingWishlist = true);
+    try {
+      final res = await _api.wishlist();
+      if (!mounted) return;
+      if (res['success'] == true) {
+        final raw = res['items'];
+        _wishlistItems = raw is List
+            ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+            : [];
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loadingWishlist = false);
+  }
+
   Future<void> _toggleWishlist(int productId) async {
     await _api.toggleWishlist(productId);
     await _loadProducts();
+    if (_tabs.index == 2) {
+      await _loadWishlist();
+    }
   }
 
   Future<void> _addToCart(int productId) async {
@@ -161,68 +188,477 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
     await _loadCart();
   }
 
-  Future<void> _placeOrder() async {
-    final ctrl = TextEditingController();
-    String method = 'COD';
-    final ok = await showDialog<bool>(
+  Future<List<Map<String, String>>> _loadAddresses() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rawJson = prefs.getString('fdf_user_addresses');
+    List<Map<String, String>> addresses = [];
+    if (rawJson != null && rawJson.isNotEmpty) {
+      try {
+        final List decoded = jsonDecode(rawJson);
+        addresses = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
+      } catch (_) {}
+    }
+
+    if (addresses.isEmpty) {
+      String rawHome = '';
+      try {
+        final res = await context.read<AuthState>().api.get('/api/auth/me');
+        if (res['success'] == true && res['homeAddress'] != null) {
+          rawHome = res['homeAddress'].toString().trim();
+        }
+      } catch (_) {}
+
+      if (rawHome.isNotEmpty) {
+        final defaultAddr = {
+          'id': '${DateTime.now().millisecondsSinceEpoch}',
+          'flat': 'Home Address',
+          'pin': 'N/A',
+          'house': '',
+          'full': rawHome,
+          'landmark': 'N/A',
+        };
+        addresses.add(defaultAddr);
+        await prefs.setString('fdf_user_addresses', jsonEncode(addresses));
+      }
+    }
+    return addresses;
+  }
+
+  Future<void> _saveAddressesList(List<Map<String, String>> addresses) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('fdf_user_addresses', jsonEncode(addresses));
+  }
+
+  String _formatShippingAddress(Map<String, String> addr) {
+    final flat = addr['flat'] ?? 'Home Address';
+    final house = addr['house'] ?? '';
+    final full = addr['full'] ?? '';
+    final landmark = addr['landmark'] ?? 'N/A';
+    final pin = addr['pin'] ?? 'N/A';
+
+    var out = 'Flat: $flat, ';
+    if (house.isNotEmpty) out += 'House: $house, ';
+    if (full.isNotEmpty) out += 'Address: $full, ';
+    out += 'Landmark: $landmark, Pincode: $pin';
+    return out;
+  }
+
+  Future<Map<String, String>?> _openAddressEditDialog({Map<String, String>? initial}) async {
+    final flatCtrl = TextEditingController(text: initial?['flat'] ?? '');
+    final pinCtrl = TextEditingController(text: initial?['pin'] ?? '');
+    final houseCtrl = TextEditingController(text: initial?['house'] ?? '');
+    final fullCtrl = TextEditingController(text: initial?['full'] ?? '');
+    final landmarkCtrl = TextEditingController(text: initial?['landmark'] ?? '');
+    String? localError;
+
+    final isEdit = initial != null && initial['id'] != null;
+
+    final result = await showDialog<Map<String, String>>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Checkout'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: ctrl,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter full shipping address',
-                    border: OutlineInputBorder(),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isEdit ? 'Edit Address' : 'Add New Address',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: WomenProductsScreen.navy,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment(value: 'COD', label: Text('Cash on delivery')),
-                    ButtonSegment(value: 'ONLINE', label: Text('Pay online')),
+                  if (localError != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFECDD3)),
+                      ),
+                      child: Text(
+                        localError!,
+                        style: const TextStyle(color: Color(0xFFDC2626), fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ),
                   ],
-                  selected: {method},
-                  onSelectionChanged: (s) => setLocal(() => method = s.first),
-                ),
-                const Text(
-                  SellerCatalog.cancelPolicy,
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  const Text('FLAT NO / BUILDING *', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: flatCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Flat 101 / Home Address',
+                      filled: true,
+                      fillColor: const Color(0xFFFFF5F7),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('PINCODE *', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: pinCtrl,
+                    keyboardType: TextInputType.text,
+                    maxLength: 6,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. 560001 or N/A',
+                      counterText: '',
+                      filled: true,
+                      fillColor: const Color(0xFFFFF5F7),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('HOUSE NAME (OPTIONAL)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: houseCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Rose Villa',
+                      filled: true,
+                      fillColor: const Color(0xFFFFF5F7),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('FULL ADDRESS / AREA *', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: fullCtrl,
+                    maxLines: 2,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. 12th Main, Indiranagar, Bangalore',
+                      filled: true,
+                      fillColor: const Color(0xFFFFF5F7),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('LANDMARK *', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  const SizedBox(height: 4),
+                  TextField(
+                    controller: landmarkCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Near City Park',
+                      filled: true,
+                      fillColor: const Color(0xFFFFF5F7),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    height: 50,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: WomenProductsScreen.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                      ),
+                      onPressed: () {
+                        final flat = flatCtrl.text.trim();
+                        final pin = pinCtrl.text.trim();
+                        final house = houseCtrl.text.trim();
+                        final full = fullCtrl.text.trim();
+                        final landmark = landmarkCtrl.text.trim();
+
+                        if (flat.isEmpty || pin.isEmpty || full.isEmpty || landmark.isEmpty) {
+                          setDialogState(() => localError = 'Please fill in Flat No, Full Address, Pincode, and Landmark.');
+                          return;
+                        }
+
+                        final fakePins = ['111111', '222222', '333333', '444444', '555555', '666666', '777777', '888888', '999999', '123456', '654321', '000000'];
+                        if (pin.toUpperCase() != 'N/A') {
+                          if (!RegExp(r'^[1-8]\d{5}$').hasMatch(pin) || fakePins.contains(pin)) {
+                            setDialogState(() => localError = 'Please enter a valid 6-digit pincode.');
+                            return;
+                          }
+                        }
+
+                        Navigator.pop(ctx, {
+                          'id': initial?['id'] ?? '${DateTime.now().millisecondsSinceEpoch}',
+                          'flat': flat,
+                          'pin': pin,
+                          'house': house,
+                          'full': full,
+                          'landmark': landmark,
+                        });
+                      },
+                      child: const Text('Save Address', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(method == 'ONLINE' ? 'Place & pay' : 'Place COD'),
-            ),
-          ],
         ),
       ),
     );
-    if (ok != true) return;
-    final address = ctrl.text.trim();
-    if (address.length < 10) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Delivery address must be at least 10 characters long.')),
-      );
-      return;
-    }
-    final res = await _api.placeCodOrder(shippingAddress: address, paymentMethod: method);
+
+    flatCtrl.dispose();
+    pinCtrl.dispose();
+    houseCtrl.dispose();
+    fullCtrl.dispose();
+    landmarkCtrl.dispose();
+
+    return result;
+  }
+
+  Future<void> _placeOrder() async {
+    final addresses = await _loadAddresses();
+    String? selectedId = addresses.isNotEmpty ? addresses.first['id'] : null;
+    String method = 'COD';
+
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          final selectedAddr = addresses.firstWhere(
+            (a) => a['id'] == selectedId,
+            orElse: () => addresses.isNotEmpty ? addresses.first : <String, String>{},
+          );
+
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+              top: 20,
+              left: 16,
+              right: 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Checkout',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: WomenProductsScreen.navy),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx, false),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.location_on, color: WomenProductsScreen.primary, size: 20),
+                          SizedBox(width: 6),
+                          Text('Delivery Address', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                        ],
+                      ),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final newAddr = await _openAddressEditDialog();
+                          if (newAddr != null) {
+                            setLocal(() {
+                              addresses.add(newAddr);
+                              selectedId = newAddr['id'];
+                            });
+                            await _saveAddressesList(addresses);
+                          }
+                        },
+                        icon: const Icon(Icons.add, size: 16),
+                        label: const Text('Add New'),
+                      ),
+                    ],
+                  ),
+                  if (addresses.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text('No delivery address found. Please tap "+ Add New".'),
+                    )
+                  else
+                    Column(
+                      children: addresses.map((addr) {
+                        final isSel = addr['id'] == selectedId;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isSel ? const Color(0xFFFFF1F2) : Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSel ? WomenProductsScreen.primary : Colors.grey.shade300,
+                              width: isSel ? 1.5 : 1,
+                            ),
+                          ),
+                          child: InkWell(
+                            onTap: () => setLocal(() => selectedId = addr['id']),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Radio<String>(
+                                  value: addr['id']!,
+                                  groupValue: selectedId,
+                                  activeColor: WomenProductsScreen.primary,
+                                  onChanged: (v) => setLocal(() => selectedId = v),
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${addr['flat'] ?? ''}${addr['house'] != null && addr['house']!.isNotEmpty ? ', ' + addr['house']! : ''}',
+                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(addr['full'] ?? '', style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
+                                      const SizedBox(height: 2),
+                                      Text('Landmark: ${addr['landmark'] ?? 'N/A'}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                      Text('Pincode: ${addr['pin'] ?? 'N/A'}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: WomenProductsScreen.navy)),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blue),
+                                  onPressed: () async {
+                                    final updated = await _openAddressEditDialog(initial: addr);
+                                    if (updated != null) {
+                                      setLocal(() {
+                                        final idx = addresses.indexWhere((a) => a['id'] == addr['id']);
+                                        if (idx != -1) addresses[idx] = updated;
+                                      });
+                                      await _saveAddressesList(addresses);
+                                    }
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                                  onPressed: () async {
+                                    setLocal(() {
+                                      addresses.removeWhere((a) => a['id'] == addr['id']);
+                                      if (selectedId == addr['id']) {
+                                        selectedId = addresses.isNotEmpty ? addresses.first['id'] : null;
+                                      }
+                                    });
+                                    await _saveAddressesList(addresses);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  const SizedBox(height: 16),
+                  const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'COD', label: Text('Cash on delivery')),
+                      ButtonSegment(value: 'ONLINE', label: Text('Pay online')),
+                    ],
+                    selected: {method},
+                    onSelectionChanged: (s) => setLocal(() => method = s.first),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Subtotal:'),
+                            Text('₹${_cartTotal.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Delivery Fee:'),
+                            Text('FREE', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.green)),
+                          ],
+                        ),
+                        const Divider(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total to Pay:', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                            Text('₹${_cartTotal.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: WomenProductsScreen.primary)),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 50,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: WomenProductsScreen.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: selectedAddr.isEmpty
+                          ? null
+                          : () => Navigator.pop(ctx, true),
+                      child: Text(
+                        method == 'ONLINE' ? 'Place Order & Pay Online' : 'Place Order (COD)',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (ok != true || selectedId == null) return;
+
+    final selectedAddr = addresses.firstWhere(
+      (a) => a['id'] == selectedId,
+      orElse: () => <String, String>{},
+    );
+    if (selectedAddr.isEmpty) return;
+
+    final formattedAddress = _formatShippingAddress(selectedAddr);
+
+    final res = await _api.placeCodOrder(shippingAddress: formattedAddress, paymentMethod: method);
     if (!mounted) return;
     if (res['success'] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message']?.toString() ?? 'Order placed')),
+        SnackBar(content: Text(res['message']?.toString() ?? 'Order placed successfully!')),
       );
-      _tabs.animateTo(2);
+      _tabs.animateTo(3);
       await _loadCart();
       await _loadOrders();
       if (res['paymentRequired'] == true) {
@@ -342,6 +778,7 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
           tabs: const [
             Tab(text: 'Shop'),
             Tab(text: 'Cart'),
+            Tab(text: 'Wishlist'),
             Tab(text: 'Orders'),
           ],
         ),
@@ -351,6 +788,7 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
         children: [
           _buildShop(),
           _buildCart(),
+          _buildWishlist(),
           _buildOrders(),
         ],
       ),
@@ -642,6 +1080,95 @@ class _WomenProductsScreenState extends State<WomenProductsScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildWishlist() {
+    if (_loadingWishlist) return const Center(child: CircularProgressIndicator());
+    if (_wishlistItems.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _loadWishlist,
+        child: ListView(
+          children: const [
+            SizedBox(height: 140),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.favorite_border, size: 48, color: Colors.grey),
+                  SizedBox(height: 12),
+                  Text('Your Wishlist is empty', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                  SizedBox(height: 4),
+                  Text('Tap the heart icon on any product to save it here.', style: TextStyle(color: WomenProductsScreen.textGray, fontSize: 13)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadWishlist,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(12),
+        itemCount: _wishlistItems.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        itemBuilder: (context, i) {
+          final p = _wishlistItems[i];
+          final id = p['id'] is int ? p['id'] as int : int.tryParse('${p['id']}');
+          final name = p['name']?.toString() ?? 'Product';
+          final price = p['price'] ?? 0;
+          final img = _mediaUrl(p['imagePath']?.toString());
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: img.isNotEmpty
+                      ? Image.network(img, width: 60, height: 60, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(width: 60, height: 60, color: Colors.grey.shade200, child: const Icon(Icons.image)))
+                      : Container(width: 60, height: 60, color: Colors.grey.shade200, child: const Icon(Icons.image)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text('₹$price', style: const TextStyle(fontWeight: FontWeight.w800, color: WomenProductsScreen.primary)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Add to Cart',
+                  icon: const Icon(Icons.add_shopping_cart, color: WomenProductsScreen.primary),
+                  onPressed: id == null
+                      ? null
+                      : () async {
+                          await _addToCart(id);
+                          await _loadCart();
+                        },
+                ),
+                IconButton(
+                  tooltip: 'Remove',
+                  icon: const Icon(Icons.delete_outline, color: Colors.grey),
+                  onPressed: id == null
+                      ? null
+                      : () async {
+                          await _toggleWishlist(id);
+                        },
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

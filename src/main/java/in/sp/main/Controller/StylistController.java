@@ -189,7 +189,7 @@ public class StylistController {
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+                cookie.setMaxAge(24 * 60 * 60); // 24 hours
                 response.addCookie(cookie);
                 
                 return "redirect:/stylists/dashboard";

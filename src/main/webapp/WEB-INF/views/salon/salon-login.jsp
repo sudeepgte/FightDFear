@@ -265,7 +265,13 @@
             <% } %>
             <c:if test="${not empty message}">
                 <div class="alert-box alert-success">
-                    <i class="bi bi-check-circle-fill"></i> ${message}
+                    <i class="bi bi-check-circle-fill"></i> <c:out value="${message}"/>
+                </div>
+            </c:if>
+
+            <c:if test="${param.reset eq 'success'}">
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> Password reset successful! Please log in with your new password.
                 </div>
             </c:if>
 
@@ -293,7 +299,7 @@
                         <input type="checkbox" id="rememberMe" style="width:16px; height:16px; accent-color:var(--primary);">
                         Remember me
                     </label>
-                    <a href="${pageContext.request.contextPath}/auth/forgot-password" class="forgot-pass">Forgot Password?</a>
+                    <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/salons/login" class="forgot-pass">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="btn-submit">

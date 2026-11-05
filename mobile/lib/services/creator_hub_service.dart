@@ -30,6 +30,47 @@ class CreatorHubService {
 
   Future<Map<String, dynamic>> creatorProfile(int id) => _api.get('/api/creator-hub/creators/$id');
 
+  Future<Map<String, dynamic>> me() => _api.get('/api/creator-hub/me');
+
+  Future<Map<String, dynamic>> editProfile({
+    required String fullName,
+    required String creatorHandle,
+    String creatorBio = '',
+    String creatorCity = '',
+  }) =>
+      _api.post('/api/creator-hub/profile/edit', body: {
+        'fullName': fullName,
+        'creatorHandle': creatorHandle,
+        'creatorBio': creatorBio,
+        'creatorCity': creatorCity,
+      });
+
+  Future<Map<String, dynamic>> uploadPhoto(File file) async {
+    return _api.postMultipart(
+      '/api/creator-hub/profile/upload-photo',
+      files: [await http.MultipartFile.fromPath('file', file.path)],
+    );
+  }
+
+  Future<Map<String, dynamic>> chatInbox() => _api.get('/api/chat/inbox');
+
+  Future<Map<String, dynamic>> chatMessages(int peerId, {String? since}) {
+    final q = since == null || since.isEmpty
+        ? '?peerId=$peerId'
+        : '?peerId=$peerId&since=${Uri.encodeComponent(since)}';
+    return _api.get('/api/chat/messages$q');
+  }
+
+  Future<Map<String, dynamic>> sendChat({required int peerId, required String message}) =>
+      _api.post('/api/chat/send', body: {'peerId': peerId, 'message': message});
+
+  Future<Map<String, dynamic>> uploadChatFile(File file) async {
+    return _api.postMultipart(
+      '/api/chat/upload',
+      files: [await http.MultipartFile.fromPath('file', file.path)],
+    );
+  }
+
   Future<Map<String, dynamic>> comments(int postId) =>
       _api.get('/api/creator-hub/posts/$postId/comments');
 

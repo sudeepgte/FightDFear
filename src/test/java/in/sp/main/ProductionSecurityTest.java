@@ -161,6 +161,39 @@ public class ProductionSecurityTest {
     }
 
     @Test
+    void testProductionValidator_FailsWhenDatabaseIsLocalhostOrRoot() {
+        ProductionEnvironmentValidator localhost = createValidator(
+                false,
+                "StrongProductionSecretKeyThatHasMoreThan32Characters!!",
+                "rzp_live_abc123",
+                "rzp_secret_def456",
+                "webhook_sec_789",
+                "jdbc:mysql://localhost:3306/db?useSSL=true",
+                "prod_user",
+                "prod_pass",
+                "prod_mail_user@example.com",
+                "prod_mail_password");
+        Exception localhostEx = assertThrows(Exception.class, () -> invokeValidate(localhost));
+        assertTrue(localhostEx.getCause() instanceof IllegalStateException);
+        assertTrue(localhostEx.getCause().getMessage().contains("localhost"));
+
+        ProductionEnvironmentValidator root = createValidator(
+                false,
+                "StrongProductionSecretKeyThatHasMoreThan32Characters!!",
+                "rzp_live_abc123",
+                "rzp_secret_def456",
+                "webhook_sec_789",
+                "jdbc:mysql://prod-db:3306/db?useSSL=true",
+                "root",
+                "root",
+                "prod_mail_user@example.com",
+                "prod_mail_password");
+        Exception rootEx = assertThrows(Exception.class, () -> invokeValidate(root));
+        assertTrue(rootEx.getCause() instanceof IllegalStateException);
+        assertTrue(rootEx.getCause().getMessage().contains("root"));
+    }
+
+    @Test
     void testDiagnosticRunners_AreDisabledInProduction() {
         Profile profile1 = TestRunner.class.getAnnotation(Profile.class);
         assertNotNull(profile1, "TestRunner must have @Profile annotation");

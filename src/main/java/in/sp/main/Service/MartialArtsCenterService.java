@@ -224,6 +224,12 @@ public class MartialArtsCenterService {
         return getApprovedCentersForDiscovery();
     }
 
+    /** Cheap count for dashboards — does not initialize lazy collections. */
+    @Transactional(readOnly = true)
+    public long countApprovedCenters() {
+        return centerRepository.countByApproved(true);
+    }
+
     /** Approved centres with programs and batches loaded for user browse/enroll UI. */
     @Transactional(readOnly = true)
     public List<MartialArtsCenter> getApprovedCentersForDiscovery() {

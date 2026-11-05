@@ -246,7 +246,7 @@ public class MobileAdminController {
                 "id", admin.getId(),
                 "name", admin.getName() != null ? admin.getName() : "Administrator",
                 "email", admin.getEmail(),
-                "role", "SUPER_ADMIN"
+                "role", admin.getRole() != null ? admin.getRole() : "ADMIN"
         ));
         return ResponseEntity.ok(res);
     }
@@ -262,7 +262,7 @@ public class MobileAdminController {
                 "id", admin.getId(),
                 "name", admin.getName() != null ? admin.getName() : "Administrator",
                 "email", admin.getEmail(),
-                "role", "SUPER_ADMIN"
+                "role", admin.getRole() != null ? admin.getRole() : "ADMIN"
         ));
         return ResponseEntity.ok(res);
     }

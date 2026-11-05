@@ -5,6 +5,10 @@
 -keep class io.flutter.view.** { *; }
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.github.dart_lang.jni.**
+-keep class com.github.dart_lang.jni.** { *; }
 
 # Pigeon and SharedPreferences
 -keep class dev.flutter.pigeon.** { *; }

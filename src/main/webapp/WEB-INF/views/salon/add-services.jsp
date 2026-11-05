@@ -348,7 +348,14 @@
             </div>
 
             <div class="form-card">
-                <form action="${pageContext.request.contextPath}/salon/addService${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data">
+                <c:if test="${not empty error}">
+                    <div class="alert alert-danger alert-dismissible fade show rounded-4 mb-4 shadow-sm" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> ${error}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </c:if>
+
+                <form id="serviceForm" action="${pageContext.request.contextPath}/salon/addService${not empty _csrf ? '?'.concat(_csrf.parameterName).concat('=').concat(_csrf.token) : ''}" method="post" enctype="multipart/form-data" onsubmit="return validateServiceForm(event)" novalidate>
                     <c:if test="${not empty _csrf}">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
                     </c:if>
@@ -356,64 +363,70 @@
 
                     <div class="row g-4">
                         <div class="col-md-6">
-                            <label class="form-label">Service Category</label>
-                            <select name="category" class="form-select form-control-custom" required>
+                            <label class="form-label" for="inputCategory">Service Category <span class="text-danger">*</span></label>
+                            <select name="category" id="inputCategory" class="form-select form-control-custom" required>
+                                <option value="" disabled <c:if test="${empty service.category}">selected</c:if>>-- Select Category --</option>
                                 <c:forEach var="cat" items="${categories}">
                                     <option value="${cat}" <c:if test="${service.category == cat}">selected</c:if>>${cat}</option>
                                 </c:forEach>
                             </select>
+                            <div class="invalid-feedback" id="categoryFeedback">Please select a valid service category.</div>
                             <div class="small text-muted mt-1">Select the most relevant category for your service.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Service Name</label>
-                            <input type="text" name="name" class="form-control form-control-custom" value="${service.name}" placeholder="e.g. Premium Hair Spa" required>
+                            <label class="form-label" for="inputName">Service Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="inputName" class="form-control form-control-custom" value="${service.name}" placeholder="e.g. Premium Hair Spa" required maxlength="100">
+                            <div class="invalid-feedback" id="nameFeedback">Service name must be between 3 and 100 characters.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Price (₹)</label>
-                            <div class="input-group">
+                            <label class="form-label" for="inputPrice">Price (₹) <span class="text-danger">*</span></label>
+                            <div class="input-group has-validation">
                                 <span class="input-group-text bg-light border-2 border-end-0" style="border-radius: 12px 0 0 12px;">₹</span>
-                                <input type="number" step="0.01" name="price" class="form-control form-control-custom border-start-0" style="border-radius: 0 12px 12px 0;" value="${service.price}" required>
+                                <input type="number" step="0.01" min="1" max="100000" name="price" id="inputPrice" class="form-control form-control-custom border-start-0" style="border-radius: 0 12px 12px 0;" value="${service.price}" placeholder="e.g. 499" required>
+                                <div class="invalid-feedback" id="priceFeedback">Please enter a valid price greater than ₹0.</div>
                             </div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Duration (Minutes)</label>
-                            <input type="number" name="durationMinutes" class="form-control form-control-custom" value="${service.durationMinutes}" placeholder="e.g. 45" required>
+                            <label class="form-label" for="inputDuration">Duration (Minutes) <span class="text-danger">*</span></label>
+                            <input type="number" min="5" max="480" name="durationMinutes" id="inputDuration" class="form-control form-control-custom" value="${service.durationMinutes}" placeholder="e.g. 45" required>
+                            <div class="invalid-feedback" id="durationFeedback">Duration must be between 5 and 480 minutes.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Ingredients Used</label>
-                            <input type="text" name="ingredients" class="form-control form-control-custom" value="${service.ingredients}" placeholder="e.g. Argan oil, Keratin">
+                            <label class="form-label" for="inputIngredients">Ingredients Used</label>
+                            <input type="text" name="ingredients" id="inputIngredients" class="form-control form-control-custom" value="${service.ingredients}" placeholder="e.g. Argan oil, Keratin" maxlength="250">
+                            <div class="invalid-feedback" id="ingredientsFeedback">Ingredients text cannot exceed 250 characters.</div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Allergen Information</label>
-                            <input type="text" name="allergenInfo" class="form-control form-control-custom" value="${service.allergenInfo}" placeholder="e.g. Contains nut extracts">
+                            <label class="form-label" for="inputAllergen">Allergen Information</label>
+                            <input type="text" name="allergenInfo" id="inputAllergen" class="form-control form-control-custom" value="${service.allergenInfo}" placeholder="e.g. Contains nut extracts" maxlength="250">
+                            <div class="invalid-feedback" id="allergenFeedback">Allergen info cannot exceed 250 characters.</div>
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label">Service Visuals (Photo)</label>
+                            <label class="form-label" for="inputPhoto">Service Visuals (Photo)</label>
                             <div class="border-2 border-dashed p-4 text-center rounded-4 bg-light">
                                 <i class="bi bi-cloud-upload text-purple" style="font-size: 2rem;"></i>
                                 <div class="mt-2 fw-semibold">Click to upload or drag and drop</div>
-                                <div class="small text-muted mb-3">JPG, PNG (Max 5MB)</div>
-                                <input type="file" name="photo" class="form-control w-50 mx-auto">
+                                <div class="small text-muted mb-3">JPG, JPEG, PNG, WEBP (Max 5MB)</div>
+                                <input type="file" name="photo" id="inputPhoto" class="form-control w-50 mx-auto" accept="image/jpeg,image/png,image/jpg,image/webp" onchange="previewServiceImage(this)">
+                                <div class="invalid-feedback d-block text-danger fw-semibold mt-2" id="photoFeedback" style="display:none !important;"></div>
                                 
-                                <c:if test="${not empty service.photoUrl}">
-                                    <div class="mt-3">
-                                        <p class="small fw-bold text-uppercase">Current Image:</p>
-                                        <img src="${pageContext.request.contextPath}${service.photoUrl}" class="service-preview-img">
-                                    </div>
-                                </c:if>
+                                <div id="imagePreviewContainer" class="mt-3" style="${not empty service.photoUrl ? '' : 'display:none;'}">
+                                    <p class="small fw-bold text-uppercase text-muted mb-1">Image Preview:</p>
+                                    <img id="servicePreviewImg" src="${not empty service.photoUrl ? pageContext.request.contextPath.concat(service.photoUrl) : ''}" class="service-preview-img">
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="d-flex justify-content-center gap-3 mt-5">
                         <a href="${pageContext.request.contextPath}/salon/viewServices" class="btn btn-cancel">Discard</a>
-                        <button type="submit" class="btn btn-submit">
+                        <button type="submit" class="btn btn-submit" id="btnSubmitService">
                             <i class="bi bi-check2-circle me-2"></i> ${service.id == null ? 'Publish Service' : 'Update Service'}
                         </button>
                     </div>
@@ -426,6 +439,146 @@
     <!-- Bootstrap Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="${pageContext.request.contextPath}/resources/js/csrf-sync.js"></script>
+    <script>
+        function previewServiceImage(input) {
+            const photoErr = document.getElementById('photoFeedback');
+            const previewContainer = document.getElementById('imagePreviewContainer');
+            const previewImg = document.getElementById('servicePreviewImg');
+
+            if (photoErr) {
+                photoErr.style.setProperty('display', 'none', 'important');
+                photoErr.textContent = '';
+            }
+
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+                const maxBytes = 5 * 1024 * 1024; // 5 MB
+
+                if (!validTypes.includes(file.type.toLowerCase())) {
+                    if (photoErr) {
+                        photoErr.textContent = 'Please select a valid image file (JPG, PNG, WEBP).';
+                        photoErr.style.setProperty('display', 'block', 'important');
+                    }
+                    input.value = '';
+                    return false;
+                }
+
+                if (file.size > maxBytes) {
+                    if (photoErr) {
+                        photoErr.textContent = 'File size exceeds 5MB limit. Please choose a smaller image.';
+                        photoErr.style.setProperty('display', 'block', 'important');
+                    }
+                    input.value = '';
+                    return false;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (previewImg) previewImg.src = e.target.result;
+                    if (previewContainer) previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+            return true;
+        }
+
+        function validateServiceForm(e) {
+            let isValid = true;
+
+            const category = document.getElementById('inputCategory');
+            const name = document.getElementById('inputName');
+            const price = document.getElementById('inputPrice');
+            const duration = document.getElementById('inputDuration');
+            const ingredients = document.getElementById('inputIngredients');
+            const allergen = document.getElementById('inputAllergen');
+            const photo = document.getElementById('inputPhoto');
+
+            // Reset field states
+            [category, name, price, duration, ingredients, allergen].forEach(el => {
+                if (el) el.classList.remove('is-invalid');
+            });
+
+            // Validate Category
+            if (!category || !category.value || category.value.trim() === '') {
+                category.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate Name
+            if (!name || !name.value || name.value.trim().length < 3 || name.value.trim().length > 100) {
+                name.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate Price
+            const priceVal = parseFloat(price ? price.value : '0');
+            if (isNaN(priceVal) || priceVal <= 0 || priceVal > 100000) {
+                price.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate Duration
+            const durVal = parseInt(duration ? duration.value : '0', 10);
+            if (isNaN(durVal) || durVal < 5 || durVal > 480) {
+                duration.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate Ingredients max length
+            if (ingredients && ingredients.value && ingredients.value.trim().length > 250) {
+                ingredients.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate Allergen max length
+            if (allergen && allergen.value && allergen.value.trim().length > 250) {
+                allergen.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Validate Photo if selected
+            if (photo && photo.files && photo.files[0]) {
+                if (!previewServiceImage(photo)) {
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                if (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                const firstInvalid = document.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalid.focus();
+                }
+                return false;
+            }
+
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['inputCategory', 'inputName', 'inputPrice', 'inputDuration', 'inputIngredients', 'inputAllergen'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', function() {
+                        if (this.classList.contains('is-invalid')) {
+                            this.classList.remove('is-invalid');
+                        }
+                    });
+                    el.addEventListener('change', function() {
+                        if (this.classList.contains('is-invalid')) {
+                            this.classList.remove('is-invalid');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
 

@@ -37,6 +37,8 @@ public class MobileGlowSpaceController {
     private GlowCareService glowCareService;
     @Autowired
     private in.sp.main.Repository.SalonNotificationRepository salonNotificationRepo;
+    @Autowired
+    private in.sp.main.Service.GlowBookingNotificationService glowBookingNotificationService;
 
     @GetMapping("/salons")
     public ResponseEntity<Map<String, Object>> salons(
@@ -411,6 +413,12 @@ public class MobileGlowSpaceController {
         bookingRepo.save(booking);
 
         try {
+            if (glowBookingNotificationService != null) {
+                glowBookingNotificationService.notifyBookingCreated(booking);
+            }
+        } catch (Exception ignored) {}
+
+        try {
             in.sp.main.Entities.SalonNotification notif = new in.sp.main.Entities.SalonNotification();
             notif.setSalon(salon);
             notif.setTitle("New Booking Request");
@@ -446,6 +454,11 @@ public class MobileGlowSpaceController {
         }
         b.setStatus("CANCELLED");
         bookingRepo.save(b);
+        try {
+            if (glowBookingNotificationService != null) {
+                glowBookingNotificationService.notifyBookingStatusUpdated(b, "CANCELLED");
+            }
+        } catch (Exception ignored) {}
         return ResponseEntity.ok(ok(Map.of(
                 "message", "Booking cancelled",
                 "status", "CANCELLED",

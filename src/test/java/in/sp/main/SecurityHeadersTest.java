@@ -45,6 +45,7 @@ class SecurityHeadersTest {
                 .andExpect(header().string("Permissions-Policy", containsString("camera=(self)")))
                 .andExpect(header().string("Permissions-Policy", containsString("geolocation=(self)")))
                 .andExpect(header().string("Content-Security-Policy", containsString("default-src 'self'")))
-                .andExpect(header().string("Content-Security-Policy", containsString("https://checkout.razorpay.com")));
+                .andExpect(header().string("Content-Security-Policy", containsString("https://checkout.razorpay.com")))
+                .andExpect(header().string("Strict-Transport-Security", containsString("max-age=31536000")));
     }
 }

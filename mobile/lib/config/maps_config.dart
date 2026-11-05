@@ -3,7 +3,7 @@ class MapsConfig {
   /// Override: flutter run --dart-define=GOOGLE_MAPS_API_KEY=your_key
   static const String fromEnv = String.fromEnvironment('GOOGLE_MAPS_API_KEY');
 
-  static const String defaultKey = 'AIzaSyCr_gUF2YzV16dICNphMfnkyjBFurYLKaM';
+  static const String defaultKey = '';
 
   static String get apiKey =>
       fromEnv.isNotEmpty ? fromEnv : defaultKey;

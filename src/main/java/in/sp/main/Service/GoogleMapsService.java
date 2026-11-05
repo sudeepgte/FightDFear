@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class GoogleMapsService {
 
-    private static final String FALLBACK_KEY = "AIzaSyCr_gUF2YzV16dICNphMfnkyjBFurYLKaM";
     private static final Pattern MAPS_Q = Pattern.compile("[?&]q=(-?\\d+(?:\\.\\d+)?),(-?\\d+(?:\\.\\d+)?)");
     private static final Pattern MAPS_AT = Pattern.compile("@(-?\\d+(?:\\.\\d+)?),(-?\\d+(?:\\.\\d+)?)");
 
@@ -37,7 +36,7 @@ public class GoogleMapsService {
 
     public String apiKey() {
         if (configuredKey != null && !configuredKey.isBlank()) return configuredKey.trim();
-        return FALLBACK_KEY;
+        return "";
     }
 
     public Optional<LatLng> geocode(String address) {

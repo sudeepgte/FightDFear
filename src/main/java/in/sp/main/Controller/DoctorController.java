@@ -247,7 +247,7 @@ public class DoctorController {
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+        cookie.setMaxAge(24 * 60 * 60); // 24 hours
         response.addCookie(cookie);
 
         if (isApprovedDoctor(d)) {
@@ -434,6 +434,32 @@ public class DoctorController {
         } catch (Exception ex) {
             redirectAttributes.addFlashAttribute("error", "Unable to save profile. Please try again.");
             return "redirect:/doctors/profile-completion";
+        }
+    }
+
+    @PostMapping("/profile-completion/documents/{type}/delete")
+    @org.springframework.web.bind.annotation.ResponseBody
+    public ResponseEntity<Map<String, Object>> deleteProfileCompletionDocument(
+            @PathVariable("type") String type,
+            HttpSession session) {
+        Doctor d = requireLoggedDoctor(session);
+        if (d == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "error", "Unauthorized"));
+        }
+        d = doctorRepo.findById(d.getId()).orElse(d);
+        try {
+            DoctorDocumentType docType = doctorDocumentService.parseType(type);
+            doctorDocumentService.deleteDocument(d, docType);
+            doctorRepo.save(d);
+            session.setAttribute("loggedDoctor", d);
+            Map<String, Object> res = new LinkedHashMap<>();
+            res.put("success", true);
+            res.put("message", "Document removed");
+            return ResponseEntity.ok(res);
+        } catch (ResponseStatusException ex) {
+            return ResponseEntity.status(ex.getStatusCode()).body(Map.of(
+                    "success", false,
+                    "error", ex.getReason() != null ? ex.getReason() : "Unable to remove document"));
         }
     }
 

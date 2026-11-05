@@ -61,7 +61,10 @@
             <p>Sign in to view assigned Women Products deliveries.</p>
         </div>
         <div class="form-card">
-            <c:if test="${not empty error}"><div class="alert">${error}</div></c:if>
+            <c:if test="${not empty error}"><div class="alert"><c:out value="${error}"/></div></c:if>
+            <c:if test="${param.reset eq 'success'}">
+                <div class="alert" style="background:#DCFCE7; color:#166534; border:1px solid #BBF7D0;">Password reset successful! Please log in with your new password.</div>
+            </c:if>
             <form action="${pageContext.request.contextPath}/women-products/delivery/login" method="post">
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group">
@@ -75,6 +78,9 @@
                         <input class="form-input" type="password" name="password" id="password" required>
                         <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Show password"><i class="bi bi-eye-slash"></i></button>
                     </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 14px;">
+                    <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/women-products/delivery/login" style="color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600;">Forgot Password?</a>
                 </div>
                 <button class="btn-submit" type="submit">Sign In</button>
             </form>

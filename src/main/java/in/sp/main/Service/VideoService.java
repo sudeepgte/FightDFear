@@ -19,9 +19,7 @@ public class VideoService {
 
     @Transactional
     public void uploadVideo(Video video) {
-    	 System.out.println("Saving video: " + video.getTitle() + " | Category: " + video.getCategory());
         videoRepository.save(video);
-        System.out.println("video saved");
     }
 
     public List<Video> getVideosByCategory(Category category) {

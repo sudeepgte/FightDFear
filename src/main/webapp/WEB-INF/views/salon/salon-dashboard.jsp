@@ -1233,13 +1233,16 @@
                 </div>
             </div>
 
-            <c:if test="${!sessionScope.loggedSalon.approved}">
-                <div class="alert-box alert-error" style="background: #FEF2F2; border: 1px solid #FECACA; color: #DC2626; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; font-weight: 600; box-shadow: 0 4px 12px rgba(220,38,38,0.08);">
-                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 1.4rem;"></i>
-                    <div>
-                        <div style="font-size: 1.05rem;">Your account is pending admin approval.</div>
-                        <div style="font-size: 0.85rem; font-weight: 500; margin-top: 2px;">Please wait for the physical business audit before you can manage appointments and settings.</div>
+            <c:if test="${!isApproved && !sessionScope.loggedSalon.approved}">
+                <div class="alert-box alert-error" style="background: #FFF8E6; border: 1px solid #FCD34D; color: #92400E; padding: 16px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; box-shadow: 0 4px 12px rgba(217,119,6,0.08);">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i class="bi bi-clock-history" style="font-size: 1.5rem; color: #D97706;"></i>
+                        <div>
+                            <div style="font-size: 1.05rem; font-weight: 700; color: #92400E;">Your profile is pending admin approval.</div>
+                            <div style="font-size: 0.85rem; font-weight: 500; color: #B45309; margin-top: 2px;">Your profile details have been submitted for review. Once approved by admin, you will receive an automated email notification and gain full active access to your dashboard and client bookings.</div>
+                        </div>
                     </div>
+                    <a href="${pageContext.request.contextPath}/salons/profile" class="btn btn-sm btn-outline-warning text-dark fw-bold rounded-pill ms-2" style="white-space: nowrap;">Edit Profile</a>
                 </div>
             </c:if>
 

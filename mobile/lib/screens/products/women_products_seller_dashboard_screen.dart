@@ -7,7 +7,6 @@ import '../../services/auth_state.dart';
 import '../../services/women_products_seller_auth_service.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/ux_feedback.dart';
-import '../landing/landing_screen.dart';
 import 'order_live_tracking_screen.dart';
 import 'women_products_seller_login_screen.dart';
 import 'women_products_seller_profile_completion_screen.dart';
@@ -144,9 +143,12 @@ class _WomenProductsSellerDashboardScreenState
     final weight = TextEditingController(text: existing?['weightSize']?.toString() ?? '');
     final badge = TextEditingController(text: existing?['offerBadge']?.toString() ?? '');
     final desc = TextEditingController(text: existing?['description']?.toString() ?? '');
+    final fullDesc = TextEditingController(text: existing?['fullDescription']?.toString() ?? '');
+    final manufacturer = TextEditingController(text: existing?['manufacturer']?.toString() ?? '');
     final ingredients = TextEditingController(text: existing?['ingredients']?.toString() ?? '');
     final benefits = TextEditingController(text: existing?['benefits']?.toString() ?? '');
     final usage = TextEditingController(text: existing?['usageInstructions']?.toString() ?? '');
+    final tags = TextEditingController(text: existing?['tags']?.toString() ?? '');
 
     final codes = SellerCatalog.categories.map((c) => c.code).toList();
     String cat = existing?['category']?.toString() ?? codes.first;
@@ -154,6 +156,7 @@ class _WomenProductsSellerDashboardScreenState
 
     bool active = existing?['active'] != false;
     bool featured = existing?['featured'] == true;
+    bool trackInventory = existing?['trackInventory'] != false;
     String? pickedPath;
 
     final ok = await showDialog<bool>(
@@ -288,9 +291,30 @@ class _WomenProductsSellerDashboardScreenState
                   TextField(
                     controller: desc,
                     maxLines: 2,
+                    maxLength: 255,
                     decoration: const InputDecoration(
-                      labelText: 'Short Description',
-                      hintText: 'Brief summary for store catalog',
+                      labelText: 'Short Description *',
+                      hintText: 'Brief summary for store catalog (max 255 chars)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: fullDesc,
+                    maxLines: 3,
+                    maxLength: 5000,
+                    decoration: const InputDecoration(
+                      labelText: 'Full Description',
+                      hintText: 'Detailed product information (max 5000 chars)',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: manufacturer,
+                    decoration: const InputDecoration(
+                      labelText: 'Manufacturer Name',
+                      hintText: 'e.g. Herbal Remedies Ltd',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -325,19 +349,41 @@ class _WomenProductsSellerDashboardScreenState
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Row(
+                  TextField(
+                    controller: tags,
+                    decoration: const InputDecoration(
+                      labelText: 'Search Tags',
+                      hintText: 'Comma-separated, e.g. ayurvedic, herbal, organic',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Column(
                     children: [
-                      Checkbox(
-                        value: active,
-                        onChanged: (v) => setLocal(() => active = v ?? true),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: active,
+                            onChanged: (v) => setLocal(() => active = v ?? true),
+                          ),
+                          const Text('Active (Visible on store)'),
+                          const Spacer(),
+                          Checkbox(
+                            value: featured,
+                            onChanged: (v) => setLocal(() => featured = v ?? false),
+                          ),
+                          const Text('Featured'),
+                        ],
                       ),
-                      const Text('Active / Listed'),
-                      const Spacer(),
-                      Checkbox(
-                        value: featured,
-                        onChanged: (v) => setLocal(() => featured = v ?? false),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: trackInventory,
+                            onChanged: (v) => setLocal(() => trackInventory = v ?? true),
+                          ),
+                          const Text('Track Inventory'),
+                        ],
                       ),
-                      const Text('Featured Product'),
                     ],
                   ),
                   const SizedBox(height: 10),
@@ -395,24 +441,30 @@ class _WomenProductsSellerDashboardScreenState
         ? name.text.trim()
         : desc.text.trim();
 
+    final pPrice = double.tryParse(price.text.trim()) ?? 0;
+    final pOrigPrice = double.tryParse(origPrice.text.trim());
+
     final payload = {
       'name': name.text.trim(),
       'brand': brand.text.trim().isEmpty ? 'Own Brand' : brand.text.trim(),
       'category': cat,
-      'price': double.tryParse(price.text.trim()) ?? 0,
-      'originalPrice': double.tryParse(origPrice.text.trim()),
+      'price': pPrice,
+      if (pOrigPrice != null && pOrigPrice > 0) 'originalPrice': pOrigPrice,
       'stock': int.tryParse(stock.text.trim()) ?? 0,
       'lowStockAlertLevel': int.tryParse(lowStock.text.trim()) ?? 5,
-      'sku': sku.text.trim(),
-      'weightSize': weight.text.trim(),
-      'offerBadge': badge.text.trim(),
+      if (sku.text.trim().isNotEmpty) 'sku': sku.text.trim(),
+      if (weight.text.trim().isNotEmpty) 'weightSize': weight.text.trim(),
+      if (badge.text.trim().isNotEmpty) 'offerBadge': badge.text.trim(),
       'description': shortDesc,
-      'fullDescription': desc.text.trim(),
-      'ingredients': ingredients.text.trim(),
-      'benefits': benefits.text.trim(),
-      'usageInstructions': usage.text.trim(),
+      if (fullDesc.text.trim().isNotEmpty) 'fullDescription': fullDesc.text.trim(),
+      if (manufacturer.text.trim().isNotEmpty) 'manufacturer': manufacturer.text.trim(),
+      if (ingredients.text.trim().isNotEmpty) 'ingredients': ingredients.text.trim(),
+      if (benefits.text.trim().isNotEmpty) 'benefits': benefits.text.trim(),
+      if (usage.text.trim().isNotEmpty) 'usageInstructions': usage.text.trim(),
+      if (tags.text.trim().isNotEmpty) 'tags': tags.text.trim(),
       'active': active,
       'featured': featured,
+      'trackInventory': trackInventory,
     };
 
     Map<String, dynamic> res;

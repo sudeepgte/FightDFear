@@ -3,21 +3,21 @@ package in.sp.main.Config;
 import in.sp.main.Entities.Admin;
 import in.sp.main.Repository.AdminRepository;
 import in.sp.main.Service.PasswordService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * Optional development/test administrator seeder.
- * Strictly restricted to 'dev' and 'test' profiles.
- * Never executes in 'prod' or unprofiled environments.
- * Only provisions an account if DEV_ADMIN_EMAIL and DEV_ADMIN_PASSWORD are provided via environment.
+ * Default administrator seeder.
+ * Provisions initial Super Admin account when no administrators exist in the database.
  */
 @Component
-@Profile({"dev", "test"})
 public class DevAdminSeeder implements CommandLineRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DevAdminSeeder.class);
 
     @Autowired
     private AdminRepository adminRepository;
@@ -25,10 +25,10 @@ public class DevAdminSeeder implements CommandLineRunner {
     @Autowired
     private PasswordService passwordService;
 
-    @Value("${dev.admin.email:}")
+    @Value("${dev.admin.email:admin@gmail.com}")
     private String devAdminEmail;
 
-    @Value("${dev.admin.password:}")
+    @Value("${dev.admin.password:Admin@123}")
     private String devAdminPassword;
 
     public DevAdminSeeder() {}
@@ -47,7 +47,7 @@ public class DevAdminSeeder implements CommandLineRunner {
             if (adminRepository.count() == 0) {
                 Admin admin = new Admin("Super Admin", devAdminEmail.trim().toLowerCase(), passwordService.encode(devAdminPassword.trim()), "SUPER_ADMIN");
                 adminRepository.save(admin);
-                System.out.println("Controlled Dev Super Admin seeded for email: " + devAdminEmail.trim().toLowerCase());
+                log.info("Default Super Admin seeded for email: {}", devAdminEmail.trim().toLowerCase());
             }
         }
     }

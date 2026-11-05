@@ -3,38 +3,23 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/creator_auth_service.dart';
-import '../../widgets/profile_completion_helpers.dart';
 import '../../widgets/registration_form_kit.dart';
 import '../portals/portal_auth_screen.dart';
-import 'creator_profile_completion_screen.dart';
-import 'creator_studio_screen.dart';
+import 'creator_hub_shell.dart';
 
 class CreatorPortalLoginScreen extends StatelessWidget {
   const CreatorPortalLoginScreen({super.key, this.startRegister = false});
 
   final bool startRegister;
 
-  Widget _dashboard(BuildContext context) => const CreatorStudioScreen();
+  Widget _dashboard(BuildContext context) => const CreatorHubShell();
 
+  /// After login or registration, open the same hub the dashboard sidebar uses.
+  /// The registered member is the creator — no separate KYC gate.
   Future<void> _openAfterLogin(
     BuildContext context,
     Map<String, dynamic> res,
   ) async {
-    final needsCompletion = ApprovalNavigation.shouldRedirectToProfileCompletion(res);
-    if (needsCompletion) {
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => CreatorProfileCompletionScreen(
-            onFinished: (ctx) {
-              Navigator.of(ctx).pushReplacement(
-                MaterialPageRoute(builder: _dashboard),
-              );
-            },
-          ),
-        ),
-      );
-      return;
-    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: _dashboard),
     );
@@ -50,8 +35,7 @@ class CreatorPortalLoginScreen extends StatelessWidget {
       requirePhoneOtp: false,
       loginSubtitle: 'Sign in to publish videos, reels and stories',
       loginIcon: Icons.video_camera_front_outlined,
-      successMessage:
-          'Account created. Please login and complete your creator profile to submit for verification.',
+      successMessage: 'Account created. Open Creator Hub to follow others, publish and chat.',
       registerFields: const [
         RegFieldDef(
           key: '_role',

@@ -137,7 +137,7 @@ public class WomenProductDeliveryPartnerController {
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge(365 * 24 * 60 * 60);
+        cookie.setMaxAge(24 * 60 * 60);
         response.addCookie(cookie);
         return "redirect:/women-products/delivery/dashboard";
     }

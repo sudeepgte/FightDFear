@@ -987,7 +987,7 @@ public class FitnessController {
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+                cookie.setMaxAge(24 * 60 * 60); // 24 hours
                 response.addCookie(cookie);
 
                 if (in.sp.main.Service.FitnessTrainerProfileService.isApproved(trainer)) {

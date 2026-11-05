@@ -18,7 +18,7 @@ class ApiConfig {
   static const String productionHost = 'https://fightdfire.chethancodehub.com';
   static const String androidEmulatorHost = 'http://10.0.2.2:8084';
   static const String localhostHost = 'http://localhost:8084';
-  static const String defaultLocalLanHost = 'http://192.168.0.4:8084';
+  static const String defaultLocalLanHost = 'http://192.168.0.3:8084';
 
   /// Override at build time:
   /// flutter run --dart-define=API_BASE=http://192.168.x.x:8084
@@ -30,11 +30,11 @@ class ApiConfig {
     if (fromEnv.isNotEmpty) {
       urls.add(fromEnv.trim());
     }
+    // Laptop LAN host works for physical devices AND emulators connected to the same Wi-Fi
+    urls.add(defaultLocalLanHost);
     if (isAndroid) {
       urls.add(androidEmulatorHost);
     }
-    // Laptop LAN host works for physical devices AND emulators connected to the same Wi-Fi
-    urls.add(defaultLocalLanHost);
     urls.add(localhostHost);
     urls.add(productionHost);
     return urls.toSet().toList();

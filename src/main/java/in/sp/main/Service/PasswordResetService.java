@@ -64,6 +64,10 @@ public class PasswordResetService {
     private static final int EXPIRATION_TIME = 15;
 
     public String createPasswordResetToken(String email) {
+        return createPasswordResetToken(email, null);
+    }
+
+    public String createPasswordResetToken(String email, String redirectUrl) {
         String normEmail = email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
         if (normEmail.isBlank()) {
             return "Email is required";
@@ -96,23 +100,25 @@ public class PasswordResetService {
         else if (investor.isPresent()) userType = UserType.INVESTOR;
         else if (fitnessTrainer.isPresent()) userType = UserType.FITNESS_TRAINER;
         else if (eventHost.isPresent()) userType = UserType.EVENT_HOST;
-        else return "If an account with that email exists, a password reset link has been sent";
+        else return "No account found with this email address";
 
         String token = UUID.randomUUID().toString();
         PasswordResetToken resetToken = new PasswordResetToken(normEmail, token, userType, EXPIRATION_TIME);
         tokenRepository.save(resetToken);
 
-        sendResetEmail(normEmail, token, userType);
+        sendResetEmail(normEmail, token, userType, redirectUrl);
         return "Reset email sent successfully";
     }
 
-    private void sendResetEmail(String email, String token, UserType userType) {
-        String resetUrl = UriComponentsBuilder.fromHttpUrl(trimTrailingSlash(baseUrl))
+    private void sendResetEmail(String email, String token, UserType userType, String redirectUrl) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(trimTrailingSlash(baseUrl))
                 .path("/auth/reset-password")
                 .queryParam("token", token)
-                .queryParam("type", userType.name())
-                .build()
-                .toUriString();
+                .queryParam("type", userType.name());
+        if (redirectUrl != null && !redirectUrl.isBlank()) {
+            builder.queryParam("redirect", redirectUrl);
+        }
+        String resetUrl = builder.build().toUriString();
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);

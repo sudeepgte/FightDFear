@@ -18,6 +18,8 @@ import in.sp.main.Entities.User;
 import in.sp.main.Repository.UserRepository;
 import in.sp.main.Service.ChatService;
 import in.sp.main.Service.ContactMessageService;
+import in.sp.main.Service.RateLimitService;
+import in.sp.main.Util.FormSanitizer;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
@@ -34,6 +36,9 @@ public class ContactController {
 
     @Autowired
     private ContactMessageService contactMessageService;
+
+    @Autowired
+    private RateLimitService rateLimitService;
 
     @Value("${spring.mail.username:}")
     private String adminEmail;
@@ -60,6 +65,12 @@ public class ContactController {
                               @RequestParam(value = "message", required = false) String message,
                               HttpServletRequest request,
                               RedirectAttributes redirectAttributes) {
+        String ip = request.getRemoteAddr() != null ? request.getRemoteAddr() : "unknown";
+        if (!rateLimitService.tryAcquire("contact:" + ip, 8, java.time.Duration.ofMinutes(15))) {
+            return contactResponse(request, redirectAttributes, false,
+                    "Too many messages from this network. Please try again in 15 minutes.");
+        }
+
         String trimmedEmail = email != null ? email.trim() : "";
         // Improved email validation regex
         if (trimmedEmail.isEmpty() || !trimmedEmail.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")) {
@@ -92,7 +103,11 @@ public class ContactController {
         }
 
         try {
-            contactMessageService.save(cleanedName, trimmedEmail, cleanedSubject, cleanedMessage);
+            contactMessageService.save(
+                    FormSanitizer.sanitize(cleanedName),
+                    trimmedEmail,
+                    FormSanitizer.sanitize(cleanedSubject),
+                    FormSanitizer.sanitize(cleanedMessage));
             try {
                 if (adminEmail != null && !adminEmail.isBlank()) {
                     SimpleMailMessage mail = new SimpleMailMessage();

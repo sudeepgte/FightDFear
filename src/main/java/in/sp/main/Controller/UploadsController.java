@@ -128,8 +128,20 @@ public class UploadsController {
         response.setHeader("Cache-Control", "public, max-age=86400");
         String safeName = file.getName().replaceAll("[^a-zA-Z0-9._-]", "_");
         response.setHeader("Content-Disposition", "inline; filename=\"" + safeName + "\"");
-        Files.copy(filePath, response.getOutputStream());
-        response.getOutputStream().flush();
+        copyIgnoringClientAbort(filePath, response);
+    }
+
+    private void copyIgnoringClientAbort(Path filePath, HttpServletResponse response) throws IOException {
+        try {
+            Files.copy(filePath, response.getOutputStream());
+            response.getOutputStream().flush();
+        } catch (IOException e) {
+            if (ApiExceptionHandler.isClientDisconnect(e)) {
+                log.debug("Client aborted file download {}", filePath.getFileName());
+                return;
+            }
+            throw e;
+        }
     }
 
     private void serveResource(String fileName, Resource resource, HttpServletResponse response) throws IOException {
@@ -155,8 +167,16 @@ public class UploadsController {
         response.setContentType(mimeType);
         String safeName = Paths.get(fileName).getFileName().toString().replaceAll("[^a-zA-Z0-9._-]", "_");
         response.setHeader("Content-Disposition", "inline; filename=\"" + safeName + "\"");
-        StreamUtils.copy(resource.getInputStream(), response.getOutputStream());
-        response.getOutputStream().flush();
+        try {
+            StreamUtils.copy(resource.getInputStream(), response.getOutputStream());
+            response.getOutputStream().flush();
+        } catch (IOException e) {
+            if (ApiExceptionHandler.isClientDisconnect(e)) {
+                log.debug("Client aborted resource download {}", fileName);
+                return;
+            }
+            throw e;
+        }
     }
 
     private void writeNotFoundPage(String fileName, HttpServletResponse response) throws IOException {

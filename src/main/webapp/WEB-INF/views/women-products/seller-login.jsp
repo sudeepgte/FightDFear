@@ -188,34 +188,39 @@
         </div>
         <div class="form-card">
             <c:if test="${not empty error}">
-                <div class="alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> ${error}</div>
+                <div class="alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> <c:out value="${error}"/></div>
             </c:if>
             <c:if test="${not empty success}">
                 <div class="confirm-card" style="background:#fff;border:1px solid #BBF7D0;border-radius:16px;padding:24px;text-align:center;margin-bottom:20px;">
                     <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">Registration successful</h2>
-                    <p style="color:#64748B;font-size:0.9rem;margin-bottom:14px;">${success}</p>
+                    <p style="color:#64748B;font-size:0.9rem;margin-bottom:14px;"><c:out value="${success}"/></p>
                     <p style="background:#FFE4E6;border-radius:12px;padding:10px;font-weight:600;font-size:0.85rem;">Next: sign in now to complete your shop profile.</p>
                 </div>
             </c:if>
 
+            <c:if test="${param.reset eq 'success'}">
+                <div class="alert-box alert-success" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#16A34A; padding:12px 14px; border-radius:10px; margin-bottom:16px;">
+                    <i class="bi bi-check-circle-fill"></i> Password reset successful! Please log in with your new password.
+                </div>
+            </c:if>
             <div id="js-login-error" class="alert-box alert-error" style="display:none;"><i class="bi bi-exclamation-circle-fill"></i> <span id="js-login-error-msg"></span></div>
             <form id="sellerLoginForm" action="${pageContext.request.contextPath}/women-products/seller/login" method="post">
   <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input class="form-input" type="email" name="email" id="email" required placeholder="you@gmail.com" value="${registeredEmail}">
+                    <input class="form-input" type="email" name="email" id="email" required placeholder="you@gmail.com" value="<c:out value='${registeredEmail}'/>">
                     <div id="emailError" style="display:none; color: #DC2626; font-size: 0.8rem; margin-top: 6px; font-weight: 500;"></div>
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-wrapper password-field">
-                        <input class="form-input" type="password" name="password" id="password" required placeholder="Enter your password" value="${registeredPassword}">
+                        <input class="form-input" type="password" name="password" id="password" required placeholder="Enter your password" value="" autocomplete="current-password">
                         <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Show password"><i class="bi bi-eye-slash"></i></button>
                     </div>
                 </div>
                 <div class="form-options">
                     <span></span>
-                    <a href="${pageContext.request.contextPath}/auth/forgot-password">Forgot password?</a>
+                    <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/women-products/seller/login">Forgot password?</a>
                 </div>
                 <button type="submit" class="btn-submit">Sign in</button>
             </form>

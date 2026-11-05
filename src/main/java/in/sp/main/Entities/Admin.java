@@ -87,7 +87,6 @@ public class Admin {
 	}
 
 	public boolean isSuperAdmin() {
-		return "SUPER_ADMIN".equalsIgnoreCase(this.role) 
-			|| "Super Admin".equalsIgnoreCase(this.name);
+		return "SUPER_ADMIN".equalsIgnoreCase(this.role);
 	}
 }

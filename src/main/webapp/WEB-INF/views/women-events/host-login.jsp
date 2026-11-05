@@ -299,7 +299,7 @@
 
             <c:if test="${not empty error}">
                 <div class="alert-box alert-error">
-                    <i class="bi bi-exclamation-circle-fill"></i> ${error}
+                    <i class="bi bi-exclamation-circle-fill"></i> <c:out value="${error}"/>
                 </div>
             </c:if>
             <c:if test="${param.registered}">
@@ -314,7 +314,12 @@
             </c:if>
             <c:if test="${not empty success}">
                 <div class="alert-box alert-success">
-                    <i class="bi bi-check-circle-fill"></i> ${success}
+                    <i class="bi bi-check-circle-fill"></i> <c:out value="${success}"/>
+                </div>
+            </c:if>
+            <c:if test="${param.reset eq 'success'}">
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> Password reset successful! Please log in with your new password.
                 </div>
             </c:if>
 
@@ -339,7 +344,7 @@
                 </div>
 
                 <div class="form-group" style="text-align: right; margin-top: -8px; margin-bottom: 14px;">
-                    <a href="${pageContext.request.contextPath}/auth/forgot-password" style="color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none;">Forgot Password?</a>
+                    <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/women-events/host/login" style="color: var(--primary); font-size: 0.85rem; font-weight: 600; text-decoration: none;">Forgot Password?</a>
                 </div>
 
                 <button type="submit" class="btn-submit">

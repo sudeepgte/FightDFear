@@ -140,6 +140,39 @@ class SecretConfigurationSecurityTest {
     }
 
     @Test
+    void testProductionRejectsInsecureDatabaseDefaults() {
+        ProductionEnvironmentValidator noSsl = createValidator(
+                "production-secure-jwt-secret-minimum-32-characters",
+                "rzp_live_realKeyId12345",
+                "realRazorpayKeySecret12345",
+                false,
+                "jdbc:mysql://prod-db:3306/womenbesafe?useSSL=false",
+                "prod_user",
+                "prod_password",
+                "notifications@fightdfear.com",
+                "smtp-app-password"
+        );
+        IllegalStateException sslEx = assertThrows(IllegalStateException.class,
+                () -> ReflectionTestUtils.invokeMethod(noSsl, "validate"));
+        assertTrue(sslEx.getMessage().contains("useSSL=false"));
+
+        ProductionEnvironmentValidator rootUser = createValidator(
+                "production-secure-jwt-secret-minimum-32-characters",
+                "rzp_live_realKeyId12345",
+                "realRazorpayKeySecret12345",
+                false,
+                "jdbc:mysql://prod-db:3306/womenbesafe",
+                "root",
+                "prod_password",
+                "notifications@fightdfear.com",
+                "smtp-app-password"
+        );
+        IllegalStateException rootEx = assertThrows(IllegalStateException.class,
+                () -> ReflectionTestUtils.invokeMethod(rootUser, "validate"));
+        assertTrue(rootEx.getMessage().contains("root"));
+    }
+
+    @Test
     void testProductionRejectsMissingMailCredentials() {
         ProductionEnvironmentValidator validator = createValidator(
                 "production-secure-jwt-secret-minimum-32-characters",

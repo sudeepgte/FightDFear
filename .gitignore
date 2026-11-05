@@ -43,3 +43,6 @@ uploads/
 *.apk
 *.bak
 *.tmp
+bin/
+trace.txt
+temp_error.txt

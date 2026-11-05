@@ -343,7 +343,7 @@ class _InvestorDashboardScreenState extends State<InvestorDashboardScreen> {
       _pendingProposalTitle = proposal['title']?.toString() ?? 'Proposal';
 
       _razorpay.open({
-        'key': orderRes['keyId'] ?? orderRes['key'] ?? 'rzp_test_RIlD5bEKRjyn3h',
+        'key': orderRes['keyId'] ?? orderRes['key'] ?? '',
         'amount': orderRes['amount'],
         'currency': orderRes['currency'] ?? 'INR',
         'name': 'Fight D Fear Admin Escrow',

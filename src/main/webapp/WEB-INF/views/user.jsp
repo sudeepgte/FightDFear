@@ -624,7 +624,9 @@
                 <div class="form-group">
                     <label for="emergencyContactName">Emergency Contact Name <span class="req-star">*</span></label>
                     <input type="text" name="emergencyContactName" id="emergencyContactName" class="form-input" required
-                           minlength="2" maxlength="70" placeholder="e.g. Ananya Sen" autocomplete="off" spellcheck="false"
+                           minlength="2" maxlength="70" pattern="[A-Za-z][A-Za-z\s.'\-]{1,69}"
+                           title="Letters, spaces, hyphens, apostrophes and dots only"
+                           placeholder="e.g. Ananya Sen" autocomplete="off" spellcheck="false"
                            value="${param.emergencyContactName}">
                     <div class="field-error" id="emergencyContactNameError" role="alert"></div>
                 </div>
@@ -633,7 +635,8 @@
                 <div class="form-group">
                     <label for="emergencyContactPhone">Emergency Contact Phone Number <span class="req-star">*</span></label>
                     <input type="tel" name="emergencyContactPhone" id="emergencyContactPhone" class="form-input" required
-                           maxlength="10" pattern="\d{10}" inputmode="numeric" placeholder="e.g. 9876543210"
+                           maxlength="10" minlength="10" pattern="\d{10}" inputmode="numeric" placeholder="e.g. 9876543210"
+                           title="Enter a 10-digit mobile number that is different from yours"
                            autocomplete="off" value="${param.emergencyContactPhone}">
                     <div class="field-error" id="emergencyContactPhoneError" role="alert"></div>
                 </div>
@@ -642,7 +645,9 @@
                 <div class="form-group">
                     <label for="emergencyContactEmail">Emergency Contact Email <span class="req-star">*</span></label>
                     <input type="email" name="emergencyContactEmail" id="emergencyContactEmail" class="form-input" required
-                           maxlength="100" placeholder="e.g. contact@example.com" autocomplete="off" spellcheck="false"
+                           maxlength="100" pattern="[A-Za-z0-9._%+\-]+@gmail\.com"
+                           title="Must be a Gmail address different from your own"
+                           placeholder="e.g. ananya.sen@gmail.com" autocomplete="off" spellcheck="false"
                            value="${param.emergencyContactEmail}">
                     <div class="field-error" id="emergencyContactEmailError" role="alert"></div>
                 </div>
@@ -1078,8 +1083,8 @@
             setFieldError('emergencyContactName', 'Emergency contact name must be between 2 and 70 characters.');
             return false;
         }
-        if (!/^[a-zA-Z\s.'\-]+$/.test(val)) {
-            setFieldError('emergencyContactName', 'Emergency contact name can only contain letters and spaces.');
+        if (!/^[a-zA-Z][a-zA-Z\s.'\-]*$/.test(val)) {
+            setFieldError('emergencyContactName', 'Emergency contact name can only contain letters, spaces, hyphens, and dots.');
             return false;
         }
         clearFieldError('emergencyContactName');
@@ -1101,6 +1106,16 @@
             setFieldError('emergencyContactPhone', 'Please enter a valid 10-digit emergency contact phone number.');
             return false;
         }
+        var userPhone = (document.getElementById('phoneNumber') && document.getElementById('phoneNumber').value || '').trim();
+        if (userPhone && val === userPhone) {
+            setFieldError('emergencyContactPhone', 'Emergency contact phone number cannot be the same as your phone number.');
+            return false;
+        }
+        var wa = (document.getElementById('whatsappNumber') && document.getElementById('whatsappNumber').value || '').replace(/\D/g, '');
+        if (wa.length >= 10 && wa.slice(-10) === val) {
+            setFieldError('emergencyContactPhone', 'Emergency contact phone number cannot be the same as your WhatsApp number.');
+            return false;
+        }
         clearFieldError('emergencyContactPhone');
         return true;
     }
@@ -1118,6 +1133,11 @@
         }
         if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(val)) {
             setFieldError('emergencyContactEmail', 'Enter a valid mail id (must be @gmail.com)');
+            return false;
+        }
+        var userEmail = (document.getElementById('email') && document.getElementById('email').value || '').trim().toLowerCase();
+        if (userEmail && val.toLowerCase() === userEmail) {
+            setFieldError('emergencyContactEmail', 'Emergency contact email cannot be the same as your email address.');
             return false;
         }
         clearFieldError('emergencyContactEmail');
@@ -1163,8 +1183,12 @@
         if (this.value.trim().length >= 8 || this.classList.contains('is-invalid')) {
             validateWhatsappNumber();
         }
+        refreshSubmit();
     });
-    document.getElementById('whatsappNumber').addEventListener('blur', validateWhatsappNumber);
+    document.getElementById('whatsappNumber').addEventListener('blur', function() {
+        validateWhatsappNumber();
+        refreshSubmit();
+    });
 
     document.getElementById('city').addEventListener('input', function() {
         if (this.value.trim().length >= 2) validateCity();
@@ -1186,26 +1210,39 @@
     document.getElementById('confirmPassword').addEventListener('blur', validateConfirmPassword);
 
     document.getElementById('emergencyContactName').addEventListener('input', function() {
+        this.value = this.value.replace(/[^a-zA-Z\s.'\-]/g, '');
         if (this.value.trim().length >= 2 || this.classList.contains('is-invalid')) {
             validateEmergencyContactName();
         }
+        refreshSubmit();
     });
-    document.getElementById('emergencyContactName').addEventListener('blur', validateEmergencyContactName);
+    document.getElementById('emergencyContactName').addEventListener('blur', function() {
+        validateEmergencyContactName();
+        refreshSubmit();
+    });
 
     document.getElementById('emergencyContactPhone').addEventListener('input', function() {
         this.value = this.value.replace(/\D/g, '').slice(0, 10);
         if (this.value.length === 10 || this.classList.contains('is-invalid')) {
             validateEmergencyContactPhone();
         }
+        refreshSubmit();
     });
-    document.getElementById('emergencyContactPhone').addEventListener('blur', validateEmergencyContactPhone);
+    document.getElementById('emergencyContactPhone').addEventListener('blur', function() {
+        validateEmergencyContactPhone();
+        refreshSubmit();
+    });
 
     document.getElementById('emergencyContactEmail').addEventListener('input', function() {
         if ((this.value.includes('@') && this.value.includes('.')) || this.classList.contains('is-invalid')) {
             validateEmergencyContactEmail();
         }
+        refreshSubmit();
     });
-    document.getElementById('emergencyContactEmail').addEventListener('blur', validateEmergencyContactEmail);
+    document.getElementById('emergencyContactEmail').addEventListener('blur', function() {
+        validateEmergencyContactEmail();
+        refreshSubmit();
+    });
 
     // -------------------------------------------------------------
     // OTP & Verification Logic
@@ -1238,8 +1275,26 @@
         el.className = 'otp-status' + (kind ? ' ' + kind : '');
     }
 
+    function isEmergencySectionValid() {
+        var name = (document.getElementById('emergencyContactName') && document.getElementById('emergencyContactName').value || '').trim();
+        var phone = (document.getElementById('emergencyContactPhone') && document.getElementById('emergencyContactPhone').value || '').trim();
+        var email = (document.getElementById('emergencyContactEmail') && document.getElementById('emergencyContactEmail').value || '').trim();
+        var whatsapp = (document.getElementById('whatsappNumber') && document.getElementById('whatsappNumber').value || '').trim();
+        var userPhone = (document.getElementById('phoneNumber') && document.getElementById('phoneNumber').value || '').trim();
+        var userEmail = (document.getElementById('email') && document.getElementById('email').value || '').trim().toLowerCase();
+        var waDigits = whatsapp.replace(/\D/g, '');
+        if (!/^[a-zA-Z][a-zA-Z\s.'\-]{1,69}$/.test(name)) return false;
+        if (!/^\d{10}$/.test(phone) || /^(\d)\1{9}$/.test(phone)) return false;
+        if (userPhone && phone === userPhone) return false;
+        if (waDigits.length >= 10 && waDigits.slice(-10) === phone) return false;
+        if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/i.test(email)) return false;
+        if (userEmail && email.toLowerCase() === userEmail) return false;
+        if (!whatsapp) return false;
+        return true;
+    }
+
     function refreshSubmit() {
-        var ready = emailVerified && document.getElementById('acceptedTerms').checked;
+        var ready = emailVerified && document.getElementById('acceptedTerms').checked && isEmergencySectionValid();
         if (phoneOtpRequired) {
             ready = ready && phoneVerified;
         }
@@ -1254,6 +1309,8 @@
             hint.textContent = 'Verify your phone OTP to enable account creation.';
         } else if (!document.getElementById('acceptedTerms').checked) {
             hint.textContent = 'Accept the Terms & Conditions to continue.';
+        } else if (!isEmergencySectionValid()) {
+            hint.textContent = 'Fill valid emergency contact details to enable account creation.';
         } else {
             hint.textContent = 'Complete verification steps above.';
         }

@@ -6,10 +6,9 @@ import '../../services/auth_state.dart';
 import '../../services/creator_auth_service.dart';
 import '../../services/creator_hub_service.dart';
 import '../../widgets/module_theme.dart';
-import '../../widgets/ux_feedback.dart';
 import '../landing/landing_screen.dart';
-import 'creator_hub_screen.dart';
-import 'creator_profile_completion_screen.dart';
+import 'creator_hub_shell.dart';
+import 'creator_my_profile_screen.dart';
 import 'creator_upload_screen.dart';
 
 class CreatorStudioScreen extends StatefulWidget {
@@ -49,12 +48,6 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
   Map<String, dynamic>? get _user =>
       _data?['user'] is Map ? Map<String, dynamic>.from(_data!['user'] as Map) : null;
 
-  bool get _approved =>
-      _data?['approved'] == true ||
-      _user?['approved'] == true ||
-      _user?['partnerProfileStatus']?.toString() == 'APPROVED' ||
-      _user?['verifiedCreator'] == true;
-
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
@@ -77,17 +70,19 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
     );
   }
 
-  void _openProfile() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const CreatorProfileCompletionScreen()))
-        .then((_) => _load());
+  Future<void> _openProfile() async {
+    final saved = await showCreatorProfileEditDialog(
+      context,
+      _api,
+      fullName: _user?['fullName']?.toString() ?? _name,
+      handle: _user?['handle']?.toString() ?? _user?['creatorHandle']?.toString(),
+      bio: _user?['bio']?.toString() ?? _user?['creatorBio']?.toString(),
+      city: _user?['city']?.toString() ?? _user?['creatorCity']?.toString(),
+    );
+    if (saved) _load();
   }
 
   Future<void> _openUpload() async {
-    if (!_approved) {
-      _openProfile();
-      return;
-    }
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const CreatorUploadScreen()),
     );
@@ -137,7 +132,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
               tooltip: 'Open feed',
               icon: const Icon(Icons.dynamic_feed_outlined),
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CreatorHubScreen()),
+                MaterialPageRoute(builder: (_) => const CreatorHubShell(initialIndex: 1)),
               ),
             ),
             IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
@@ -176,23 +171,6 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
     );
   }
 
-  Widget _gateCard() {
-    if (_approved) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: ProfileCompletionCard(
-        percent: (_user?['profileCompletionPct'] is num)
-            ? (_user!['profileCompletionPct'] as num).toDouble()
-            : 0,
-        statusLabel: _user?['partnerProfileStatusLabel']?.toString() ?? 'Pending',
-        hint: _user?['nextStepGuidance']?.toString() ??
-            'Complete your profile and wait for admin approval before publishing.',
-        actionLabel: 'Complete profile',
-        onAction: _openProfile,
-      ),
-    );
-  }
-
   Widget _contentTab() {
     final drafts = ModuleTheme.toList(_data?['drafts']);
     final published = ModuleTheme.toList(_data?['published']);
@@ -201,7 +179,6 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _gateCard(),
           _statRow('Total views', '${_data?['totalViews'] ?? 0}'),
           _statRow('Total likes', '${_data?['totalLikes'] ?? 0}'),
           _statRow('Subscribers', '${_data?['subscriberCount'] ?? 0}'),
@@ -233,10 +210,6 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
                 onPressed: _acting
                     ? null
                     : () async {
-                        if (!_approved) {
-                          _snack('Wait for admin approval before publishing.');
-                          return;
-                        }
                         setState(() => _acting = true);
                         final res = await _api.publishDraft(id.toInt());
                         if (mounted) setState(() => _acting = false);
@@ -269,7 +242,6 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _gateCard(),
         _statRow('Reward points', '${user?['rewardPoints'] ?? 0}'),
         _statRow('Wallet balance', '₹${user?['walletBalance'] ?? 0}'),
         _statRow('Est. ad revenue', '₹${_data?['estAdRevenue'] ?? 0}'),
@@ -279,7 +251,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
             leading: const Icon(Icons.account_balance_wallet_outlined, color: CreatorStudioScreen.primary),
             title: const Text('Payout balance'),
             subtitle: Text((_data?['upiId'] ?? user?['upiId'] ?? '').toString().isEmpty
-                ? 'Add UPI in Complete Profile to withdraw'
+                ? 'UPI payout is optional'
                 : 'UPI: ${_data?['upiId'] ?? user?['upiId']}'),
             trailing: Text(
               '₹${((_data?['payoutBalance'] ?? user?['payoutBalance'] ?? 0) is num) ? ((_data?['payoutBalance'] ?? user?['payoutBalance']) as num).round() : 0}',
@@ -302,9 +274,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
         Text(CreatorCatalog.cancelPolicy, style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12)),
         const SizedBox(height: 12),
         FilledButton(
-          onPressed: !_approved
-              ? null
-              : () async {
+          onPressed: () async {
                   final res = await _api.claimAdRevenue();
                   _snack(res['success'] == true ? 'Ad revenue claimed' : res['error']?.toString() ?? '');
                   _load();
@@ -313,9 +283,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
         ),
         const SizedBox(height: 8),
         FilledButton(
-          onPressed: !_approved
-              ? null
-              : () async {
+          onPressed: () async {
                   final pointsCtrl = TextEditingController(text: '100');
                   final ok = await showDialog<bool>(
                     context: context,
@@ -355,15 +323,12 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
         const SizedBox(height: 16),
         TextField(
           controller: priceCtrl,
-          enabled: _approved,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(labelText: 'Monthly subscription price (Rs)', border: OutlineInputBorder()),
         ),
         const SizedBox(height: 8),
         FilledButton(
-          onPressed: !_approved
-              ? null
-              : () async {
+          onPressed: () async {
                   final p = double.tryParse(priceCtrl.text) ?? 0;
                   final res = await _api.setSubscriptionPrice(p);
                   _snack(res['success'] == true ? 'Price updated' : res['error']?.toString() ?? '');
@@ -373,14 +338,11 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
         const SizedBox(height: 16),
         TextField(
           controller: affiliateCtrl,
-          enabled: _approved,
           decoration: const InputDecoration(labelText: 'Creator Affiliate Code', border: OutlineInputBorder()),
         ),
         const SizedBox(height: 8),
         FilledButton(
-          onPressed: !_approved
-              ? null
-              : () async {
+          onPressed: () async {
                   final code = affiliateCtrl.text.trim();
                   final res = await _api.setAffiliateCode(code);
                   _snack(res['success'] == true ? 'Affiliate code updated' : res['error']?.toString() ?? '');
@@ -398,15 +360,9 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _gateCard(),
           const Text('Active Brand Campaigns', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           const SizedBox(height: 8),
-          if (!_approved)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text('Brand campaigns become available after admin approval.', style: TextStyle(color: ModuleTheme.textGray)),
-            )
-          else if (campaigns.isEmpty)
+          if (campaigns.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 16),
               child: Center(child: Text('No active brand campaigns right now.', style: TextStyle(color: ModuleTheme.textGray))),
@@ -495,7 +451,6 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _gateCard(),
         SwitchListTile(
           title: const Text('Private profile'),
           subtitle: const Text('Require follow approval'),
@@ -508,7 +463,7 @@ class _CreatorStudioScreenState extends State<CreatorStudioScreen> with SingleTi
         ),
         ListTile(
           leading: const Icon(Icons.person_outline),
-          title: const Text('Edit creator profile'),
+          title: const Text('Edit profile'),
           trailing: const Icon(Icons.chevron_right),
           onTap: _openProfile,
         ),

@@ -66,6 +66,10 @@ public class MobileWomenProductsSellerAuthController {
     private WomenProductOrderLifecycleService orderLifecycle;
     @Autowired
     private in.sp.main.Service.SellerNotificationService sellerNotificationService;
+    @Autowired
+    private in.sp.main.Service.EmailService emailService;
+    @Autowired
+    private jakarta.servlet.http.HttpServletRequest httpRequest;
 
     @PostMapping("/otp/send-email")
     public ResponseEntity<Map<String, Object>> sendEmailOtp(@RequestBody(required = false) Map<String, Object> body) {
@@ -333,6 +337,17 @@ public class MobileWomenProductsSellerAuthController {
         try {
             WomenProductSeller seller = sellerRepo.findById(s.getId()).orElse(s);
             sellerRegistrationService.submitForVerification(seller);
+            if (seller.getEmail() != null && !seller.getEmail().isBlank()) {
+                try {
+                    if (emailService != null) {
+                        emailService.sendEmail(
+                                seller.getEmail(),
+                                "Shop Profile Submitted for Verification - Fight D Fear",
+                                "Hello " + (seller.getFullName() != null ? seller.getFullName() : "Seller") + ",\n\nYour shop profile for '" + (seller.getBusinessName() != null ? seller.getBusinessName() : "your shop") + "' has been submitted for admin verification. We will review and notify you via email once approved.\n\nThank you,\nFight D Fear"
+                        );
+                    }
+                } catch (Exception ignored) {}
+            }
             Map<String, Object> res = new LinkedHashMap<>();
             res.put("success", true);
             res.put("message", "Submitted for admin verification");
@@ -489,7 +504,7 @@ public class MobileWomenProductsSellerAuthController {
                 : trim(Objects.toString(body.get("fullDescription"), ""));
         String category = trim(Objects.toString(body.get("category"), ""));
         Double price = parseDoubleOrNull(body.get("price"));
-        Double originalPrice = body.containsKey("originalPrice") ? parseDoubleOrNull(body.get("originalPrice")) : null;
+        Double originalPrice = parsePositiveDoubleOrNull(body.get("originalPrice"));
         String offerBadge = body.get("offerBadge") == null ? null : trim(Objects.toString(body.get("offerBadge"), ""));
         Integer stock = body.get("stock") == null ? 0 : parseInt(body.get("stock"), Integer.MIN_VALUE);
         if (stock == Integer.MIN_VALUE) return badRequest("Stock quantity must be between 0 and " + WomenProduct.STOCK_MAX + ".");
@@ -518,10 +533,15 @@ public class MobileWomenProductsSellerAuthController {
         applyValidatedProductFields(p, name, brand, description, fullDescription, price, originalPrice,
                 offerBadge, stock, lowStockAlertLevel, sku, category, weightSize, manufacturer,
                 ingredients, benefits, usageInstructions, tags);
-        p.setActive(true);
-        p.setFeatured(false);
-        p.setTrackInventory(true);
+        boolean active = body.get("active") == null || Boolean.parseBoolean(String.valueOf(body.get("active")));
+        boolean featured = body.get("featured") != null && Boolean.parseBoolean(String.valueOf(body.get("featured")));
+        boolean trackInventory = body.get("trackInventory") == null || Boolean.parseBoolean(String.valueOf(body.get("trackInventory")));
+
+        p.setActive(active);
+        p.setFeatured(featured);
+        p.setTrackInventory(trackInventory);
         p.setDeleted(false);
+        p.setApprovalStatus("APPROVED");
         p.setSeller(s);
         productRepo.save(p);
 
@@ -560,7 +580,7 @@ public class MobileWomenProductsSellerAuthController {
                 : trim(Objects.toString(body.get("category"), ""));
         Double price = body.get("price") == null ? p.getPrice() : parseDoubleOrNull(body.get("price"));
         Double originalPrice = body.containsKey("originalPrice")
-                ? parseDoubleOrNull(body.get("originalPrice"))
+                ? parsePositiveDoubleOrNull(body.get("originalPrice"))
                 : p.getOriginalPrice();
         String offerBadge = body.get("offerBadge") == null ? p.getOfferBadge()
                 : trim(Objects.toString(body.get("offerBadge"), ""));
@@ -749,7 +769,29 @@ public class MobileWomenProductsSellerAuthController {
 
     private WomenProductSeller requireSeller(HttpSession session) {
         Object s = session == null ? null : session.getAttribute("loggedSeller");
-        return s instanceof WomenProductSeller ? (WomenProductSeller) s : null;
+        if (s instanceof WomenProductSeller) {
+            return (WomenProductSeller) s;
+        }
+        String authHeader = httpRequest == null ? null : httpRequest.getHeader("Authorization");
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7).trim();
+        } else if (httpRequest != null && httpRequest.getParameter("token") != null) {
+            token = httpRequest.getParameter("token").trim();
+        }
+        if (token != null && !token.isEmpty() && jwtUtil.validateToken(token)) {
+            String email = jwtUtil.extractUsername(token);
+            if (email != null && !email.isEmpty()) {
+                WomenProductSeller seller = sellerRepo.findByEmail(email.toLowerCase().trim()).orElse(null);
+                if (seller != null) {
+                    if (session != null) {
+                        session.setAttribute("loggedSeller", seller);
+                    }
+                    return seller;
+                }
+            }
+        }
+        return null;
     }
 
     private WomenProductSeller requireApprovedSeller(HttpSession session) {
@@ -841,6 +883,11 @@ public class MobileWomenProductsSellerAuthController {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static Double parsePositiveDoubleOrNull(Object value) {
+        Double val = parseDoubleOrNull(value);
+        return (val != null && val > 0) ? val : null;
     }
 
     private void restoreStock(WomenProductOrder order) {

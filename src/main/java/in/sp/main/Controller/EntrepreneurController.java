@@ -4,6 +4,7 @@ import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.FileUploadService;
 import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.PasswordResetService;
 import in.sp.main.Config.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -144,7 +145,7 @@ public class EntrepreneurController {
                 Cookie cookie = new Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60);
+                cookie.setMaxAge(24 * 60 * 60);
                 response.addCookie(cookie);
 
                 session.setAttribute("loggedEntrepreneur", e);
@@ -166,6 +167,8 @@ public class EntrepreneurController {
         return "entrepreneur/login";
     }
 
+    @Autowired private PasswordResetService passwordResetService;
+
     @GetMapping("/forgot-password")
     public String showForgotPasswordForm() {
         return "entrepreneur/forgotPassword";
@@ -173,13 +176,17 @@ public class EntrepreneurController {
 
     @PostMapping("/forgot-password")
     public String handleForgotPassword(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
-        Optional<Entrepreneur> opt = entrepreneurRepository.findByEmail(email.toLowerCase().trim());
-        if (opt.isPresent()) {
-            redirectAttributes.addFlashAttribute("success",
-                    "Password reset instructions have been sent to your email!");
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        if (normalizedEmail.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Please enter your email address.");
             return "redirect:/entrepreneur/forgot-password";
         }
-        redirectAttributes.addFlashAttribute("error", "No account found with this email.");
+        String result = passwordResetService.createPasswordResetToken(normalizedEmail, "/entrepreneur/login");
+        if ("No account found with this email address".equals(result)) {
+            redirectAttributes.addFlashAttribute("error", "No account found with this email address.");
+        } else {
+            redirectAttributes.addFlashAttribute("success", "Password reset instructions have been sent to your email!");
+        }
         return "redirect:/entrepreneur/forgot-password";
     }
 

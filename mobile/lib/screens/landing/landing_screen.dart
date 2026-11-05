@@ -7,7 +7,7 @@ import '../../services/module_services.dart';
 import '../../widgets/module_theme.dart';
 import '../../widgets/server_config_dialog.dart';
 import '../safety/contacts_screen.dart';
-import '../creator/creator_hub_screen.dart';
+import '../creator/creator_hub_shell.dart';
 import '../creator/creator_portal_login_screen.dart';
 import '../safety/danger_map_screen.dart';
 import '../doctors/doctor_portal_login_screen.dart';
@@ -36,7 +36,7 @@ import '../events/women_events_screen.dart';
 import '../marketplace/women_jobs_portal_login_screen.dart';
 import '../marketplace/women_lawyer_portal_login_screen.dart';
 import '../marketplace/women_marketplace_screen.dart';
-import '../products/delivery_portal_login_screen.dart';
+// import '../products/delivery_portal_login_screen.dart';
 import '../products/women_products_screen.dart';
 import '../products/women_products_seller_login_screen.dart';
 
@@ -157,7 +157,7 @@ class _LandingScreenState extends State<LandingScreen> {
               case 'community':
                 _requireLoginThen(() {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CreatorHubScreen()),
+                    MaterialPageRoute(builder: (_) => const CreatorHubShell()),
                   );
                 });
               case 'glow':
@@ -216,7 +216,7 @@ class _LandingScreenState extends State<LandingScreen> {
       case 'community':
         _requireLoginThen(() {
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const CreatorHubScreen()),
+            MaterialPageRoute(builder: (_) => const CreatorHubShell()),
           );
         });
       default:
@@ -301,8 +301,12 @@ class _LandingScreenState extends State<LandingScreen> {
         );
         return;
       case 'delivery':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen(startRegister: true)),
+        // FUTURE UPDATE: Delivery Guy registration is reserved for a future update.
+        // Navigator.of(context).push(
+        //   MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen(startRegister: true)),
+        // );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Delivery Guy registration is reserved for a future update.')),
         );
         return;
       case 'creator':
@@ -409,8 +413,12 @@ class _LandingScreenState extends State<LandingScreen> {
         );
         return;
       case 'delivery':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen()),
+        // FUTURE UPDATE: Delivery Guy login is reserved for a future update.
+        // Navigator.of(context).push(
+        //   MaterialPageRoute(builder: (_) => const DeliveryPortalLoginScreen()),
+        // );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Delivery Guy portal is reserved for a future update.')),
         );
         return;
       case 'creator':
@@ -2055,7 +2063,8 @@ class _LoginDropdown {
     _LoginOption(value: 'investor', label: 'Investor Login', icon: Icons.trending_up, available: true),
     _LoginOption(value: 'event_host', label: 'Event Host Login', icon: Icons.event_available_outlined, available: true),
     _LoginOption(value: 'fitness_trainer', label: 'Fitness Trainer Login', icon: Icons.fitness_center_outlined, available: true),
-    _LoginOption(value: 'delivery', label: 'Delivery Guy Login', icon: Icons.delivery_dining_outlined, available: true),
+    // FUTURE UPDATE: Delivery Guy login is reserved for a future update.
+    // _LoginOption(value: 'delivery', label: 'Delivery Guy Login', icon: Icons.delivery_dining_outlined, available: true),
     _LoginOption(value: 'creator', label: 'Creator Hub Login', icon: Icons.video_camera_front_outlined, available: true),
     // FUTURE UPDATE: Financial Educator login is reserved for a future update.
     // _LoginOption(value: 'financial', label: 'Financial Educator Login', icon: Icons.menu_book_outlined, available: true),
@@ -2117,14 +2126,15 @@ class _JoinUsDropdown {
     _JoinUsOption(value: 'glow', label: 'Glow Space', icon: Icons.spa_outlined, available: true),
     _JoinUsOption(value: 'women_lawyer', label: 'Women Lawyer', subtitle: 'Dedicated lawyer registration — consultations & advocacy', icon: Icons.gavel_outlined, available: true),
     _JoinUsOption(value: 'marketplace_seller', label: 'Product Seller', subtitle: 'List products, photos, stock & orders', icon: Icons.storefront_outlined, available: true),
-    _JoinUsOption(value: 'delivery', label: 'Delivery Guy', subtitle: 'Pick up and deliver Women Products orders', icon: Icons.delivery_dining_outlined, available: true),
+    // FUTURE UPDATE: Delivery Guy registration is reserved for a future update.
+    // _JoinUsOption(value: 'delivery', label: 'Delivery Guy', subtitle: 'Pick up and deliver Women Products orders', icon: Icons.delivery_dining_outlined, available: true),
     // FUTURE UPDATE: Women Jobs registration is reserved for a future update.
     // _JoinUsOption(value: 'women_jobs', label: 'Women Jobs', icon: Icons.work_outline, available: true),
     _JoinUsOption(value: 'entrepreneur', label: 'Entrepreneur', icon: Icons.lightbulb_outline, available: true),
     _JoinUsOption(value: 'investor', label: 'Investor', icon: Icons.trending_up, available: true),
     _JoinUsOption(value: 'event_host', label: 'Event Host', icon: Icons.event_available_outlined, available: true),
     _JoinUsOption(value: 'fitness_trainer', label: 'Fitness Trainer', subtitle: 'Gym, Zumba, Yoga & wellness coaching', icon: Icons.fitness_center_outlined, available: true),
-    _JoinUsOption(value: 'creator', label: 'Creator Hub', subtitle: 'Publish videos, reels & stories after admin approval', icon: Icons.video_camera_front_outlined, available: true),
+    _JoinUsOption(value: 'creator', label: 'Creator Hub', subtitle: 'Publish videos, reels and stories, follow others and chat', icon: Icons.video_camera_front_outlined, available: true),
     // FUTURE UPDATE: Financial Educator registration is reserved for a future update.
     // _JoinUsOption(value: 'financial', label: 'Financial Educator', subtitle: 'Publish videos, live sessions & workshops after admin approval', icon: Icons.menu_book_outlined, available: true),
   ];

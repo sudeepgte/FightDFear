@@ -65,11 +65,7 @@ public class LoginController {
                 session.removeAttribute("regPrefillEmail");
             }
         }
-        Object prefillPassword = session.getAttribute("regPrefillPassword");
-        if (prefillPassword != null) {
-            model.addAttribute("prefillPassword", prefillPassword.toString());
-            session.removeAttribute("regPrefillPassword");
-        }
+        session.removeAttribute("regPrefillPassword");
         return "login"; // login.jsp
     }
 
@@ -141,7 +137,7 @@ public class LoginController {
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60);
+                cookie.setMaxAge(24 * 60 * 60);
                 response.addCookie(cookie);
 
                 String redirect = (String) session.getAttribute("redirectAfterLogin");
@@ -169,7 +165,7 @@ public class LoginController {
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60);
+                cookie.setMaxAge(24 * 60 * 60);
                 response.addCookie(cookie);
 
                 boolean needsCompletion = centre.getCentreProfileStatus() == in.sp.main.Entities.CentreProfileStatus.REGISTERED
@@ -206,7 +202,7 @@ public class LoginController {
                 jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60);
+                cookie.setMaxAge(24 * 60 * 60);
                 response.addCookie(cookie);
 
                 if (in.sp.main.Service.FitnessTrainerProfileService.isApproved(trainer)) {

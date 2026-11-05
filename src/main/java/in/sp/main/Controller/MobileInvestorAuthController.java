@@ -56,10 +56,10 @@ public class MobileInvestorAuthController {
     @Autowired
     private in.sp.main.Service.EmailService emailService;
 
-    @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:rzp_test_RIlD5bEKRjyn3h}")
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:}")
     private String razorpayKeyId;
 
-    @org.springframework.beans.factory.annotation.Value("${razorpay.key.secret:Ltg6uo9vI8TiFMVfj2cGm4I8}")
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.secret:}")
     private String razorpayKeySecret;
 
     @PostMapping("/otp/send-email")

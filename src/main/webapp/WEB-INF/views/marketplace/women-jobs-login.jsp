@@ -244,12 +244,17 @@
             
             <c:if test="${not empty success}">
                 <div class="alert-box" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#16A34A;">
-                    <i class="bi bi-check-circle-fill"></i> ${success}
+                    <i class="bi bi-check-circle-fill"></i> <c:out value="${success}"/>
+                </div>
+            </c:if>
+            <c:if test="${param.reset eq 'success'}">
+                <div class="alert-box" style="background:#F0FDF4; border:1px solid #BBF7D0; color:#16A34A;">
+                    <i class="bi bi-check-circle-fill"></i> Password reset successful! Please log in with your new password.
                 </div>
             </c:if>
 
             <c:if test="${not empty error}">
-                <div class="error-alert alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> ${error}</div>
+                <div class="error-alert alert-box alert-error"><i class="bi bi-exclamation-circle-fill"></i> <c:out value="${error}"/></div>
             </c:if>
             <div id="js-login-error" class="error-alert alert-box alert-error" style="display:none;">
                 <i class="bi bi-exclamation-circle-fill"></i> <span id="js-login-error-msg"></span>
@@ -268,7 +273,7 @@
                 <div class="form-group">
                     <div class="pw-row">
                         <label style="margin-bottom: 0;">Password</label>
-                        <a href="${pageContext.request.contextPath}/auth/forgot-password">Forgot Password?</a>
+                        <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/women-jobs/login">Forgot Password?</a>
                     </div>
                     <div class="input-wrapper password-field">
                         <i class="bi bi-shield-lock prefix-icon"></i>

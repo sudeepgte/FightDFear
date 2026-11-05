@@ -3,6 +3,7 @@ package in.sp.main.Controller;
 import in.sp.main.Entities.*;
 import in.sp.main.Repository.*;
 import in.sp.main.Service.PasswordService;
+import in.sp.main.Service.PasswordResetService;
 import in.sp.main.Service.InvestorRegistrationService;
 import in.sp.main.Service.InvestorProfileService;
 import in.sp.main.Config.JwtUtil;
@@ -66,10 +67,10 @@ public class InvestorController {
     @Autowired
     private in.sp.main.Service.FileUploadService fileUploadService;
 
-    @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:rzp_test_RIlD5bEKRjyn3h}")
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.id:}")
     private String razorpayKeyId;
 
-    @org.springframework.beans.factory.annotation.Value("${razorpay.key.secret:Ltg6uo9vI8TiFMVfj2cGm4I8}")
+    @org.springframework.beans.factory.annotation.Value("${razorpay.key.secret:}")
     private String razorpayKeySecret;
 
     // --- Authentication ---
@@ -125,6 +126,8 @@ public class InvestorController {
         return "investor/login";
     }
 
+    @Autowired private PasswordResetService passwordResetService;
+
     @GetMapping("/forgot-password")
     public String showForgotPasswordForm() {
         return "investor/forgotPassword";
@@ -132,11 +135,16 @@ public class InvestorController {
 
     @PostMapping("/forgot-password")
     public String handleForgotPassword(@RequestParam("email") String email, RedirectAttributes redirectAttributes) {
-        Optional<Investor> opt = investorRepository.findByEmail(email.toLowerCase().trim());
-        if (opt.isPresent()) {
-            redirectAttributes.addFlashAttribute("success", "If an account exists with that email, a password reset link has been sent.");
+        String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
+        if (normalizedEmail.isBlank()) {
+            redirectAttributes.addFlashAttribute("error", "Please enter your email address.");
+            return "redirect:/investor/forgot-password";
+        }
+        String result = passwordResetService.createPasswordResetToken(normalizedEmail, "/investor/login");
+        if ("No account found with this email address".equals(result)) {
+            redirectAttributes.addFlashAttribute("error", "No account found with this email address.");
         } else {
-            redirectAttributes.addFlashAttribute("error", "Email address not found.");
+            redirectAttributes.addFlashAttribute("success", "A password reset link has been sent to your email.");
         }
         return "redirect:/investor/forgot-password";
     }
@@ -171,7 +179,7 @@ public class InvestorController {
                 Cookie cookie = new Cookie("JWT_TOKEN", token);
                 cookie.setPath("/");
                 cookie.setHttpOnly(true);
-                cookie.setMaxAge(365 * 24 * 60 * 60);
+                cookie.setMaxAge(24 * 60 * 60);
                 response.addCookie(cookie);
 
                 // Always refresh from DB so approval status is current

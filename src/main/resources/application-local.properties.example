@@ -1,10 +1,10 @@
-# Local-only overrides. Copy to application-local.properties (gitignored)
-# and optionally run with: --spring.profiles.active=local
+# Local-only overrides. Copied automatically as application-local.properties (gitignored).
+# spring.config.import loads that file without a special profile.
 #
 # spring.datasource.password=your-root
 # jwt.secret=LOCAL_DEV_ONLY_change_me_min_32_chars_abcdefgh
-# spring.mail.username=
-# spring.mail.password=
+# spring.mail.username=yourgmail@gmail.com
+# spring.mail.password=your-16-char-gmail-app-password
 # razorpay.key.id=
 # razorpay.key.secret=
 # razorpay.webhook.secret=

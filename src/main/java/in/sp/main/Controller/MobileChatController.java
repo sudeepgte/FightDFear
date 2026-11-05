@@ -2,12 +2,19 @@ package in.sp.main.Controller;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import in.sp.main.Entities.UserFollow;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -75,6 +82,79 @@ public class MobileChatController {
             }
         } catch (Exception ignored) {}
         return null;
+    }
+
+    @GetMapping("/inbox")
+    public ResponseEntity<Map<String, Object>> inbox(HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "error", "Unauthorized"));
+        }
+
+        List<UserFollow> myFollows = userFollowRepository.findByFollower(currentUser);
+        List<UserFollow> followsMe = userFollowRepository.findByFollowed_IdAndAcceptedTrue(currentUser.getId());
+
+        Set<User> chatUsersSet = new LinkedHashSet<>();
+        Set<Long> followingIds = new HashSet<>();
+
+        for (UserFollow uf : myFollows) {
+            if (uf.getFollowed() != null && !uf.getFollowed().getId().equals(currentUser.getId())) {
+                chatUsersSet.add(uf.getFollowed());
+                followingIds.add(uf.getFollowed().getId());
+            }
+        }
+        for (UserFollow uf : followsMe) {
+            if (uf.getFollower() != null && !uf.getFollower().getId().equals(currentUser.getId())) {
+                chatUsersSet.add(uf.getFollower());
+                followingIds.add(uf.getFollower().getId());
+            }
+        }
+
+        List<User> chatContacts = chatMessageRepository.findChatContacts(currentUser.getId());
+        if (chatContacts == null) chatContacts = Collections.emptyList();
+
+        Set<User> messageRequestsSet = new LinkedHashSet<>();
+        for (User contact : chatContacts) {
+            if (contact.getId().equals(currentUser.getId())) continue;
+            if (followingIds.contains(contact.getId())) {
+                chatUsersSet.add(contact);
+            } else {
+                messageRequestsSet.add(contact);
+            }
+        }
+
+        Map<Long, Long> unreadCounts = new HashMap<>();
+        try {
+            List<Object[]> unreadList = chatMessageRepository.countUnreadBySender(currentUser.getId());
+            if (unreadList != null) {
+                for (Object[] row : unreadList) {
+                    if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                        unreadCounts.put(((Number) row[0]).longValue(), ((Number) row[1]).longValue());
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("success", true);
+        response.put("chatUsers", chatUsersSet.stream().map(u -> chatUserDto(u, unreadCounts, followingIds)).collect(Collectors.toList()));
+        response.put("messageRequests", messageRequestsSet.stream().map(u -> chatUserDto(u, unreadCounts, followingIds)).collect(Collectors.toList()));
+        response.put("followingIds", new ArrayList<>(followingIds));
+        response.put("unreadCounts", unreadCounts);
+        return ResponseEntity.ok(response);
+    }
+
+    private Map<String, Object> chatUserDto(User u, Map<Long, Long> unreadCounts, Set<Long> followingIds) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", u.getId());
+        m.put("fullName", u.getFullName());
+        m.put("name", u.getFullName());
+        m.put("profilePhoto", u.getProfilePhoto());
+        m.put("handle", u.getCreatorHandle());
+        m.put("unreadCount", unreadCounts.getOrDefault(u.getId(), 0L));
+        m.put("isFollowing", followingIds.contains(u.getId()));
+        return m;
     }
 
     @GetMapping("/user-info")

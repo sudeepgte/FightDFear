@@ -802,7 +802,7 @@ public class VideoUploadController {
         report.setReason(reason);
 
         videoReportRepository.saveAndFlush(report); // <--- flush ensures DB write
-        System.out.println("Reported Video ID: " + video.getId() + " by " + user.getFullName());
+        log.debug("Reported video {} by {}", video.getId(), user.getFullName());
 
         return "SUCCESS";
     }

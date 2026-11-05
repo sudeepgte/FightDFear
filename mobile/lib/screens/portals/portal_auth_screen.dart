@@ -353,6 +353,113 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
     );
   }
 
+  Future<void> _openForgotPassword() async {
+    final emailCtrl = TextEditingController(text: _email.text.trim());
+    String? localError;
+    bool sending = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_reset, color: Color(0xFFF43F5E)),
+              SizedBox(width: 8),
+              Text('Forgot Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter your registered email address below. A password reset link will be sent to your email inbox.',
+                style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email Address',
+                  hintText: 'partner@gmail.com',
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  errorText: localError,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final email = emailCtrl.text.trim();
+                      if (email.isEmpty) {
+                        setDialogState(() => localError = 'Please enter your email address');
+                        return;
+                      }
+                      if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email)) {
+                        setDialogState(() => localError = 'Please enter a valid email address');
+                        return;
+                      }
+                      setDialogState(() {
+                        sending = true;
+                        localError = null;
+                      });
+                      try {
+                        final api = context.read<AuthState>().api;
+                        final res = await api.post(
+                          '/api/auth/forgot-password',
+                          auth: false,
+                          body: {'email': email},
+                        );
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (mounted) {
+                          final msg = res['message']?.toString() ??
+                              'If an account with that email exists, a password reset link has been sent to your inbox.';
+                          showDialog<void>(
+                            context: context,
+                            builder: (infoCtx) => AlertDialog(
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                              title: const Text('Password Reset Sent'),
+                              content: Text(msg),
+                              actions: [
+                                FilledButton(
+                                  style: FilledButton.styleFrom(backgroundColor: const Color(0xFFF43F5E)),
+                                  onPressed: () => Navigator.pop(infoCtx),
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() {
+                          sending = false;
+                          localError = 'Failed to send request: $e';
+                        });
+                      }
+                    },
+              child: sending
+                  ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Text('Send Link'),
+            ),
+          ],
+        ),
+      ),
+    );
+    emailCtrl.dispose();
+  }
+
   Future<void> _submit() async {
     setState(() {
       _touched = true;
@@ -902,7 +1009,26 @@ class _PortalAuthScreenState extends State<PortalAuthScreen> {
                 errorText: _fieldErrors['password'],
                 onChanged: (_) => _refreshValidation(),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: _openForgotPassword,
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Forgot password?',
+                    style: TextStyle(
+                      color: Color(0xFFF43F5E),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
               SizedBox(
                 height: 52,
                 child: FilledButton(

@@ -123,8 +123,7 @@ public class SosService {
             if (userName == null || userName.isEmpty()) userName = "User #" + userId;
             String userPhone = user.getPhoneNumber() != null ? user.getPhoneNumber() : "Unknown Number";
 
-            System.out.println("SOS Triggered by: " + userName + " (ID: " + userId + ")");
-            System.out.println("Location: " + userLat + ", " + userLon);
+            log.info("SOS triggered by {} (id={}) at {}, {}", userName, userId, userLat, userLon);
 
             // Create SOS Request
             SOSRequest sosRequest = new SOSRequest();
@@ -149,10 +148,9 @@ public class SosService {
 
             // If no contacts, warn but continue
             if (totalContacts == 0) {
-                System.out.println("⚠️ No contacts found for user " + userId);
-                System.out.println("💡 Please add emergency/trusted contacts in your profile for SOS to work");
+                log.warn("No emergency/trusted contacts found for user {}", userId);
             } else {
-                System.out.println("📱 Found " + totalContacts + " contact(s)");
+                log.debug("Found {} contact(s) for user {}", totalContacts, userId);
             }
 
             sosRequest.setTotalContactsNotified(totalContacts);
@@ -160,7 +158,7 @@ public class SosService {
 
             // Save SOS request first
             SOSRequest savedRequest = sosRequestRepository.save(sosRequest);
-            System.out.println("✅ SOS Request saved with ID: " + savedRequest.getId());
+            log.info("SOS request saved with id {}", savedRequest.getId());
 
         // === TIER 1: Prepare contact response records (notifications sent async after persist) ===
         List<SOSContactResponse> contactResponses = new ArrayList<>();
@@ -523,7 +521,7 @@ public class SosService {
                 wsPayload.put("sosId", sosId);
                 messagingTemplate.convertAndSend("/topic/sos-updates/user-" + userId, wsPayload);
 
-                System.out.println("✅ SOS #" + sosId + " cancelled by user");
+                log.info("SOS #{} cancelled by user", sosId);
                 return true;
             }
         }

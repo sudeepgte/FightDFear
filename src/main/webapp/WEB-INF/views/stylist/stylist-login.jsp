@@ -191,12 +191,17 @@
                 <p class="subtitle">Stylist Management Portal</p>
 
                 <c:if test="${not empty error}">
-                    <div class="alert"><i class="bi bi-exclamation-octagon-fill"></i> ${error}</div>
+                    <div class="alert"><i class="bi bi-exclamation-octagon-fill"></i> <c:out value="${error}"/></div>
                 </c:if>
                 
                 <c:if test="${not empty message}">
                     <div class="alert" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;">
-                        <i class="bi bi-patch-check-fill"></i> ${message}
+                        <i class="bi bi-patch-check-fill"></i> <c:out value="${message}"/>
+                    </div>
+                </c:if>
+                <c:if test="${param.reset eq 'success'}">
+                    <div class="alert" style="background: #f0fdf4; color: #15803d; border-color: #bbf7d0;">
+                        <i class="bi bi-patch-check-fill"></i> Password reset successful! Please log in with your new password.
                     </div>
                 </c:if>
 
@@ -223,7 +228,7 @@
                             <input type="checkbox" name="remember" style="width:18px; height:18px; accent-color:var(--brand-pink);">
                             Remember Me
                         </label>
-                        <a href="${pageContext.request.contextPath}/auth/forgot-password" class="forgot-pass">Forgot Password?</a>
+                        <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/stylists/login" class="forgot-pass">Forgot Password?</a>
                     </div>
 
                     <button type="submit" class="btn-fdf-login">

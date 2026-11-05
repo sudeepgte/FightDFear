@@ -801,7 +801,7 @@ public class PaymentController {
 
             boolean isValid;
             try {
-                if (doctorPaymentService.mockPaymentsEnabled() || (paymentId != null && paymentId.startsWith("mock_pay_"))) {
+                if (doctorPaymentService.mockPaymentsEnabled()) {
                     isValid = !orderId.isBlank() && !paymentId.isBlank();
                     if (paymentId.isBlank()) {
                         paymentId = "mock_pay_" + System.currentTimeMillis();
@@ -1382,21 +1382,19 @@ public class PaymentController {
             @RequestHeader(value = "X-Razorpay-Signature", required = false) String signature) {
         Map<String, Object> res = new HashMap<>();
         try {
-            boolean prodProfile = activeProfiles != null && activeProfiles.contains("prod");
-            if (razorpayWebhookSecret != null && !razorpayWebhookSecret.isBlank()) {
-                if (signature == null || signature.isBlank()) {
-                    res.put("error", "Missing webhook signature");
-                    return ResponseEntity.status(401).body(res);
-                }
-                boolean ok = Utils.verifyWebhookSignature(rawBody, signature, razorpayWebhookSecret);
-                if (!ok) {
-                    log.warn("[SECURITY-AUDIT] event=PAYMENT_WEBHOOK_SIGNATURE_INVALID result=FAILED");
-                    res.put("error", "Invalid webhook signature");
-                    return ResponseEntity.status(401).body(res);
-                }
-            } else if (prodProfile) {
-                res.put("error", "Webhook secret required in production");
+            if (razorpayWebhookSecret == null || razorpayWebhookSecret.isBlank()) {
+                res.put("error", "Webhook secret required");
                 return ResponseEntity.status(503).body(res);
+            }
+            if (signature == null || signature.isBlank()) {
+                res.put("error", "Missing webhook signature");
+                return ResponseEntity.status(401).body(res);
+            }
+            boolean ok = Utils.verifyWebhookSignature(rawBody, signature, razorpayWebhookSecret);
+            if (!ok) {
+                log.warn("[SECURITY-AUDIT] event=PAYMENT_WEBHOOK_SIGNATURE_INVALID result=FAILED");
+                res.put("error", "Invalid webhook signature");
+                return ResponseEntity.status(401).body(res);
             }
             JSONObject payload = new JSONObject(rawBody);
             String event = payload.optString("event");

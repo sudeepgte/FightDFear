@@ -18,7 +18,9 @@ import 'creator_studio_screen.dart';
 import 'creator_upload_screen.dart';
 
 class CreatorHubScreen extends StatefulWidget {
-  const CreatorHubScreen({super.key});
+  const CreatorHubScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   static const Color primary = Color(0xFFF43F5E);
   static const Color purple = Color(0xFF8B5CF6);
@@ -47,7 +49,6 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
   List<Map<String, dynamic>> _categories = [];
   int _unreadNotifs = 0;
   bool _canUpload = false;
-  bool _isCreatorApplicant = false;
 
   @override
   void initState() {
@@ -117,9 +118,7 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         _unreadNotifs = res['unreadNotificationCount'] is num
             ? (res['unreadNotificationCount'] as num).toInt()
             : 0;
-        _canUpload = res['canUpload'] == true;
-        final status = res['creatorProfileStatus']?.toString();
-        _isCreatorApplicant = status != null && status.isNotEmpty;
+        _canUpload = res['canUpload'] == true || context.read<AuthState>().loggedIn;
         final page = res['page'] is num ? (res['page'] as num).toInt() : 0;
         final totalPages = res['totalPages'] is num ? (res['totalPages'] as num).toInt() : 1;
         _page = page;
@@ -294,6 +293,7 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
     final creatorName = creator is Map ? creator['name']?.toString() ?? 'Creator' : 'Creator';
     if (creatorId is! num) return;
     final ctrl = TextEditingController(text: '50');
+    final msgCtrl = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -308,6 +308,11 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
               controller: ctrl,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: 'Amount (Rs)', border: OutlineInputBorder()),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: msgCtrl,
+              decoration: const InputDecoration(labelText: 'Encouragement message', border: OutlineInputBorder()),
             ),
           ],
         ),
@@ -324,9 +329,45 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
         amount: amount,
         description: 'Tip to $creatorName',
         type: 'CREATOR_TIP',
-        extra: {'creatorId': creatorId.toInt(), 'targetId': creatorId.toInt()},
+        extra: {
+          'creatorId': creatorId.toInt(),
+          'targetId': creatorId.toInt(),
+          'message': msgCtrl.text.trim(),
+        },
       );
     }
+    ctrl.dispose();
+    msgCtrl.dispose();
+  }
+
+  Future<void> _report(Map<String, dynamic> post) async {
+    final id = post['id'];
+    if (id is! num) return;
+    final reason = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Report post'),
+        content: TextField(
+          controller: reason,
+          maxLines: 3,
+          decoration: const InputDecoration(labelText: 'Reason', border: OutlineInputBorder()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Report')),
+        ],
+      ),
+    );
+    if (ok == true) {
+      final res = await _api.report(id.toInt(), reason.text.trim().isEmpty ? 'Reported from mobile' : reason.text.trim());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['success'] == true ? 'Report submitted' : res['error']?.toString() ?? 'Failed')),
+        );
+      }
+    }
+    reason.dispose();
   }
 
   Future<void> _openStoryUpload() async {
@@ -564,31 +605,32 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
               );
             },
           ),
-          Stack(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                onPressed: () => Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => const CreatorNotificationsScreen()))
-                    .then((_) => _load()),
-              ),
-              if (_unreadNotifs > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(color: CreatorHubScreen.primary, shape: BoxShape.circle),
-                    child: Text('$_unreadNotifs', style: const TextStyle(color: Colors.white, fontSize: 10)),
-                  ),
+          if (!widget.embedded)
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications_outlined),
+                  onPressed: () => Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => const CreatorNotificationsScreen()))
+                      .then((_) => _load()),
                 ),
-            ],
-          ),
+                if (_unreadNotifs > 0)
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(color: CreatorHubScreen.primary, shape: BoxShape.circle),
+                      child: Text('$_unreadNotifs', style: const TextStyle(color: Colors.white, fontSize: 10)),
+                    ),
+                  ),
+              ],
+            ),
           IconButton(
             icon: const Icon(Icons.dashboard_outlined),
             onPressed: () {
               final loggedIn = context.read<AuthState>().loggedIn;
-              if (_canUpload || _isCreatorApplicant || loggedIn) {
+              if (loggedIn) {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (_) => const CreatorStudioScreen()))
                     .then((_) => _load());
@@ -601,26 +643,24 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: CreatorHubScreen.primary,
-        onPressed: () {
-          final loggedIn = context.read<AuthState>().loggedIn;
-          if (_canUpload) {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (_) => const CreatorUploadScreen()))
-                .then((_) => _load());
-          } else if (_isCreatorApplicant || loggedIn) {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (_) => const CreatorStudioScreen()))
-                .then((_) => _load());
-          } else {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen(startRegister: true)),
-            );
-          }
-        },
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: widget.embedded
+          ? null
+          : FloatingActionButton(
+              backgroundColor: CreatorHubScreen.primary,
+              onPressed: () {
+                final loggedIn = context.read<AuthState>().loggedIn;
+                if (loggedIn) {
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => const CreatorUploadScreen()))
+                      .then((_) => _load());
+                } else {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CreatorPortalLoginScreen(startRegister: true)),
+                  );
+                }
+              },
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
       body: _loading
           ? ModuleTheme.loading()
           : _error != null
@@ -849,6 +889,7 @@ class _CreatorHubScreenState extends State<CreatorHubScreen> {
                                 }
                               },
                               onTip: () => _handleTip(_posts[i]),
+                              onReport: () => _report(_posts[i]),
                             ),
                             childCount: _posts.length,
                           ),
@@ -900,6 +941,7 @@ class _PostCard extends StatefulWidget {
     required this.onUnlock,
     required this.onView,
     required this.onTip,
+    required this.onReport,
   });
 
   final Map<String, dynamic> post;
@@ -911,6 +953,7 @@ class _PostCard extends StatefulWidget {
   final VoidCallback onUnlock;
   final VoidCallback onView;
   final VoidCallback onTip;
+  final VoidCallback onReport;
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -1078,6 +1121,11 @@ class _PostCardState extends State<_PostCard> {
                       tooltip: 'Send Tip',
                       icon: const Icon(Icons.volunteer_activism_outlined, color: CreatorHubScreen.primary),
                       onPressed: widget.onTip,
+                    ),
+                    IconButton(
+                      tooltip: 'Report',
+                      icon: const Icon(Icons.flag_outlined),
+                      onPressed: widget.onReport,
                     ),
                     const Spacer(),
                     Text('👁 ${post['viewCount'] ?? 0}', style: const TextStyle(fontSize: 12, color: ModuleTheme.textGray)),

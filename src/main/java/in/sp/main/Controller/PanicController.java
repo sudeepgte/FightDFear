@@ -3,6 +3,8 @@ package in.sp.main.Controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,6 +23,8 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/panic")
 public class PanicController {
+
+    private static final Logger log = LoggerFactory.getLogger(PanicController.class);
 
     @Autowired
     private PanicLogRepository panicLogRepository;
@@ -151,7 +155,7 @@ public class PanicController {
                     );
                     emailsSent++;
                 } catch (Exception e) {
-                    System.err.println("Failed to email contact: " + contact.getEmail() + " - " + e.getMessage());
+                    log.warn("Failed to email contact {}: {}", contact.getEmail(), e.getMessage());
                 }
             }
             if (contact.getPhone() != null && !contact.getPhone().isBlank()) {
@@ -162,8 +166,8 @@ public class PanicController {
             }
         }
 
-        System.out.println("PANIC ALERT: " + userName + " | Location: " + mapsLink
-                + " | Emails: " + emailsSent + " | SMS: " + smsSent);
+        log.info("PANIC ALERT: {} | Location: {} | Emails: {} | SMS: {}",
+                userName, mapsLink, emailsSent, smsSent);
 
         response.put("success", true);
         response.put("message", "Panic alert sent! " + emailsSent + " email(s), " + smsSent + " SMS.");

@@ -167,7 +167,10 @@
             </c:if>
 
             <c:if test="${not empty error}">
-                <div class="error-alert"><i class="bi bi-exclamation-circle-fill"></i> ${error}</div>
+                <div class="error-alert"><i class="bi bi-exclamation-circle-fill"></i> <c:out value="${error}"/></div>
+            </c:if>
+            <c:if test="${param.reset eq 'success'}">
+                <div class="success-alert" style="color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 12px; padding: 12px; margin-bottom: 20px; font-weight: 600;"><i class="bi bi-check-circle-fill"></i> Password reset successful! Please log in with your new password.</div>
             </c:if>
 
             <form id="loginForm" action="${pageContext.request.contextPath}/doctors/login" method="post" autocomplete="on" novalidate>
@@ -186,7 +189,7 @@
                 <div class="form-group">
                     <div class="label-row">
                         <label for="password">Password</label>
-                        <a class="forgot" href="${pageContext.request.contextPath}/auth/forgot-password">Forgot Password?</a>
+                        <a class="forgot" href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/doctors/login">Forgot Password?</a>
                     </div>
                     <div class="input-wrap password-field">
                         <i class="bi bi-lock prefix"></i>

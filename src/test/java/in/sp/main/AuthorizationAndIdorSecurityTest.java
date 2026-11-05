@@ -140,8 +140,7 @@ class AuthorizationAndIdorSecurityTest {
         session.setAttribute("user", userA);
 
         mockMvc.perform(get("/admin/saferoutes/list").session(session))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/admin/loginAdmin"));
+                .andExpect(status().isForbidden());
     }
 
     @Test

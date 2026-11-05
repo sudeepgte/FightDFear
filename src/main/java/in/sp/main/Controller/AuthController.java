@@ -17,12 +17,20 @@ public class AuthController {
     private PasswordResetService passwordResetService;
 
     @RequestMapping(value = "/forgot-password", method = GET)
-    public String showForgotPasswordPage() {
+    public String showForgotPasswordPage(@RequestParam(value = "redirect", required = false) String redirect, Model model) {
+        if (redirect != null && !redirect.isBlank()) {
+            model.addAttribute("redirect", redirect);
+        }
         return "forgotPassword"; 
     }
 
     @RequestMapping(value = "/forgot-password", method = POST)
-    public String forgotPassword(@RequestParam(value = "email", required = false) String email, Model model) {
+    public String forgotPassword(@RequestParam(value = "email", required = false) String email,
+                                 @RequestParam(value = "redirect", required = false) String redirect,
+                                 Model model) {
+        if (redirect != null && !redirect.isBlank()) {
+            model.addAttribute("redirect", redirect);
+        }
         if (email == null || email.trim().isEmpty()) {
             model.addAttribute("error", "Please enter your email address.");
             return "forgotPassword";
@@ -35,8 +43,12 @@ public class AuthController {
         }
 
         try {
-            passwordResetService.createPasswordResetToken(normalizedEmail);
-            model.addAttribute("message", "If an account with that email exists, a password reset link has been sent.");
+            String result = passwordResetService.createPasswordResetToken(normalizedEmail, redirect);
+            if ("No account found with this email address".equals(result)) {
+                model.addAttribute("error", "No account found with this email address. Please check your email or register.");
+            } else {
+                model.addAttribute("message", "A password reset link has been sent to your registered email inbox.");
+            }
         } catch (Exception ex) {
             model.addAttribute("error", "Unable to process your request right now. Please try again later.");
         }
@@ -44,9 +56,13 @@ public class AuthController {
     }
 
     @RequestMapping(value = "/reset-password", method = GET)
-    public String showResetPasswordPage(@RequestParam("token") String token, @RequestParam("type") String type, Model model) {
+    public String showResetPasswordPage(@RequestParam("token") String token,
+                                        @RequestParam(value = "type", required = false) String type,
+                                        @RequestParam(value = "redirect", required = false) String redirect,
+                                        Model model) {
         model.addAttribute("token", token);
         model.addAttribute("userType", type);
+        model.addAttribute("redirect", redirect);
         return "resetPassword";
     }
 
@@ -54,40 +70,54 @@ public class AuthController {
     private in.sp.main.Repository.PasswordResetTokenRepository tokenRepository;
 
     @RequestMapping(value = "/reset-password", method = POST)
-    public String resetPassword(@RequestParam("token") String token, @RequestParam("newPassword") String newPassword, Model model) {
-        String loginView = "login";
+    public String resetPassword(@RequestParam("token") String token,
+                                @RequestParam("newPassword") String newPassword,
+                                @RequestParam(value = "redirect", required = false) String redirect,
+                                Model model) {
+        String defaultRedirectUrl = "/login";
         java.util.Optional<in.sp.main.Entities.PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
         if (tokenOpt.isPresent()) {
             in.sp.main.Entities.UserType type = tokenOpt.get().getUserType();
             if (type == in.sp.main.Entities.UserType.FITNESS_TRAINER) {
-                loginView = "fitnessTrainerLogin";
+                defaultRedirectUrl = "/fitness/trainer/login";
             } else if (type == in.sp.main.Entities.UserType.CENTRE) {
-                loginView = "centreLogin";
+                defaultRedirectUrl = "/centres/login";
             } else if (type == in.sp.main.Entities.UserType.DOCTOR) {
-                loginView = "doctorLogin";
+                defaultRedirectUrl = "/doctors/login";
             } else if (type == in.sp.main.Entities.UserType.STYLIST) {
-                loginView = "stylistLogin";
+                defaultRedirectUrl = "/stylists/login";
             } else if (type == in.sp.main.Entities.UserType.SALON) {
-                loginView = "salonLogin";
+                defaultRedirectUrl = "/salons/login";
             } else if (type == in.sp.main.Entities.UserType.PROVIDER) {
-                loginView = "providerLogin";
+                defaultRedirectUrl = "/marketplace/provider/login";
             } else if (type == in.sp.main.Entities.UserType.SELLER) {
-                loginView = "sellerLogin";
+                defaultRedirectUrl = "/women-products/seller/login";
             } else if (type == in.sp.main.Entities.UserType.ENTREPRENEUR) {
-                loginView = "entrepreneurLogin";
+                defaultRedirectUrl = "/entrepreneur/login";
             } else if (type == in.sp.main.Entities.UserType.INVESTOR) {
-                loginView = "investorLogin";
+                defaultRedirectUrl = "/investor/login";
             } else if (type == in.sp.main.Entities.UserType.EVENT_HOST) {
-                loginView = "women-events/host-login";
+                defaultRedirectUrl = "/women-events/host/login";
+            } else if (type == in.sp.main.Entities.UserType.ADMIN) {
+                defaultRedirectUrl = "/admin/login";
+            } else if (type == in.sp.main.Entities.UserType.USER) {
+                defaultRedirectUrl = "/login";
             }
         }
-        
+
+        String targetUrl = (redirect != null && !redirect.isBlank()) ? redirect : defaultRedirectUrl;
+        if (!targetUrl.startsWith("/")) {
+            targetUrl = "/" + targetUrl;
+        }
+
         String response = passwordResetService.resetPassword(token, newPassword);
         if ("Password reset successful".equals(response)) {
-            model.addAttribute("success", response);
+            return "redirect:" + targetUrl + "?reset=success";
         } else {
             model.addAttribute("error", response);
+            model.addAttribute("token", token);
+            model.addAttribute("redirect", redirect);
+            return "resetPassword";
         }
-        return loginView;
     }
 }

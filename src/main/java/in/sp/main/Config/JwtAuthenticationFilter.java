@@ -73,33 +73,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String token = extractBearerToken(request);
+        boolean tokenFromCookie = false;
         if (token == null) {
             Cookie[] cookies = request.getCookies();
             if (cookies != null) {
                 for (Cookie cookie : cookies) {
                     if ("JWT_TOKEN".equals(cookie.getName())) {
                         token = cookie.getValue();
+                        tokenFromCookie = true;
                         break;
                     }
                 }
             }
         }
 
-        if (token != null && jwtUtil.validateToken(token)) {
-            String email = jwtUtil.extractUsername(token);
-            String role = jwtUtil.extractRole(token);
+        if (token != null) {
+            if (jwtUtil.validateToken(token)) {
+                String email = jwtUtil.extractUsername(token);
+                String role = jwtUtil.extractRole(token);
 
-            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Create Spring Security Authentication
-                UserDetails userDetails = User.withUsername(email).password("").roles(role).build();
-                UsernamePasswordAuthenticationToken authToken = 
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    // Create Spring Security Authentication
+                    UserDetails userDetails = User.withUsername(email).password("").roles(role).build();
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
 
-                // Hydrate traditional HttpSession so legacy controllers keep working
-                HttpSession session = request.getSession(true);
-                hydrateSession(session, email, role);
+                    // Hydrate traditional HttpSession so legacy controllers keep working
+                    HttpSession session = request.getSession(true);
+                    hydrateSession(session, email, role);
+                }
+            } else if (tokenFromCookie) {
+                Cookie expired = new Cookie("JWT_TOKEN", "");
+                expired.setPath("/");
+                expired.setHttpOnly(true);
+                expired.setMaxAge(0);
+                response.addCookie(expired);
             }
         }
 

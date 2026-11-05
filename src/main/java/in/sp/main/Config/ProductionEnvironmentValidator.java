@@ -65,6 +65,16 @@ public class ProductionEnvironmentValidator {
         requireNonBlank(dbUrl, "DB_URL");
         requireNonBlank(dbUsername, "DB_USERNAME");
         requireNonBlank(dbPassword, "DB_PASSWORD");
+        String url = dbUrl.toLowerCase();
+        if (url.contains("localhost") || url.contains("127.0.0.1")) {
+            throw new IllegalStateException("Production DB_URL must not point at localhost");
+        }
+        if (url.contains("usessl=false")) {
+            throw new IllegalStateException("Production DB_URL must not set useSSL=false");
+        }
+        if ("root".equalsIgnoreCase(dbUsername) || "root".equals(dbPassword)) {
+            throw new IllegalStateException("Production must not use the MySQL root account");
+        }
         requireNonBlank(mailUsername, "MAIL_USERNAME");
         requireNonBlank(mailPassword, "MAIL_PASSWORD");
     }

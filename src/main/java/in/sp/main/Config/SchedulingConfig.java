@@ -17,9 +17,28 @@ public class SchedulingConfig {
 
     @Bean
     public LockProvider lockProvider(DataSource dataSource) {
+        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
+        // Existing Hibernate-era DBs were Flyway-baselined at the latest version,
+        // which skipped V41. CREATE IF NOT EXISTS is safe on frozen schemas.
+        jdbc.execute("""
+                CREATE TABLE IF NOT EXISTS shedlock (
+                    name VARCHAR(64) NOT NULL,
+                    lock_until TIMESTAMP(3) NOT NULL,
+                    locked_at TIMESTAMP(3) NOT NULL,
+                    locked_by VARCHAR(255) NOT NULL,
+                    PRIMARY KEY (name)
+                )
+                """);
+        jdbc.execute("""
+                CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+                    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    bucket_key VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)
+                )
+                """);
         return new JdbcTemplateLockProvider(
                 JdbcTemplateLockProvider.Configuration.builder()
-                        .withJdbcTemplate(new JdbcTemplate(dataSource))
+                        .withJdbcTemplate(jdbc)
                         .usingDbTime()
                         .build());
     }

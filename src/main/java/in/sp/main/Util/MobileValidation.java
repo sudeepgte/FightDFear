@@ -133,7 +133,30 @@ public final class MobileValidation {
             return "Emergency contact email must not exceed 100 characters.";
         }
         if (!isEmail(e)) {
-            return "Enter a valid emergency contact email address (e.g. name@example.com).";
+            return "Enter a valid mail id (must be @gmail.com)";
+        }
+        return null;
+    }
+
+    public static String requireEmergencyContactDistinctFromUser(String userPhone, String userEmail,
+                                                                String userWhatsapp, String emergencyPhone,
+                                                                String emergencyEmail) {
+        String phone = trim(userPhone);
+        String ecPhone = trim(emergencyPhone);
+        if (!phone.isEmpty() && phone.equals(ecPhone)) {
+            return "Emergency contact phone number cannot be the same as your phone number.";
+        }
+        String waDigits = trim(userWhatsapp).replaceAll("\\D", "");
+        if (waDigits.length() >= 10) {
+            String last10 = waDigits.substring(waDigits.length() - 10);
+            if (last10.equals(ecPhone)) {
+                return "Emergency contact phone number cannot be the same as your WhatsApp number.";
+            }
+        }
+        String email = normalizeEmail(userEmail);
+        String ecEmail = normalizeEmail(emergencyEmail);
+        if (!email.isEmpty() && email.equals(ecEmail)) {
+            return "Emergency contact email cannot be the same as your email address.";
         }
         return null;
     }

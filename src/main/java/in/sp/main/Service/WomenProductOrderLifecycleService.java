@@ -288,103 +288,51 @@ public class WomenProductOrderLifecycleService {
                 ? seller.getFullName() : (seller != null && seller.getBusinessName() != null ? seller.getBusinessName() : "Seller");
         String clientName = user != null && user.getFullName() != null && !user.getFullName().isBlank()
                 ? user.getFullName() : "Customer";
+        String displayStatus = displayLabel(next);
 
-        if (CONFIRMED.equals(next)) {
-            if (user != null && pushNotificationService != null) {
-                pushNotificationService.notifyUser(
-                        user.getId(),
-                        "Order Confirmed!",
-                        "Seller " + sellerName + " confirmed your order for " + productName + ".",
-                        Map.of("type", "PRODUCT_ORDER_CONFIRMED", "orderId", String.valueOf(order.getId()))
+        // 1. Send Email to User on order status update
+        if (emailService != null && user != null && user.getEmail() != null && !user.getEmail().isBlank()) {
+            try {
+                emailService.sendEmail(
+                        user.getEmail(),
+                        "Order Update #" + order.getId() + ": " + displayStatus,
+                        "Hello " + clientName + ",\n\nYour order #" + order.getId() + " for '" + productName
+                                + "' is now: " + displayStatus + ".\n\nThank you,\nFight D Fear"
                 );
-                if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
-                    try {
-                        emailService.sendEmail(
-                                user.getEmail(),
-                                "Order Confirmed: #" + order.getId(),
-                                "Hello " + clientName + ",\n\nGreat news! Your order #" + order.getId()
-                                        + " for " + productName + " has been confirmed by " + sellerName
-                                        + " and is now being prepared.\n\nThank you,\nFight D Fear"
-                        );
-                    } catch (Exception ignored) {}
-                }
-            }
-            if (seller != null && sellerNotificationService != null) {
-                sellerNotificationService.notifySeller(
-                        seller,
-                        "ORDER_CONFIRMED",
-                        "Order Confirmed: #" + order.getId(),
-                        "You confirmed order #" + order.getId() + " for " + productName + ".",
-                        order.getId(),
-                        false
+            } catch (Exception ignored) {}
+        }
+
+        // 2. Send Email to Seller on order status update
+        if (emailService != null && seller != null && seller.getEmail() != null && !seller.getEmail().isBlank()) {
+            try {
+                emailService.sendEmail(
+                        seller.getEmail(),
+                        "Order #" + order.getId() + " Status Update: " + displayStatus,
+                        "Hello " + sellerName + ",\n\nOrder #" + order.getId() + " for '" + productName
+                                + "' status has been updated to: " + displayStatus + ".\n\nThank you,\nFight D Fear"
                 );
-            }
-        } else if (PACKED.equals(next)) {
-            if (user != null && pushNotificationService != null) {
-                pushNotificationService.notifyUser(
-                        user.getId(),
-                        "Order Packed",
-                        "Your order #" + order.getId() + " (" + productName + ") is packed and ready for dispatch.",
-                        Map.of("type", "PRODUCT_ORDER_PACKED", "orderId", String.valueOf(order.getId()))
-                );
-            }
-        } else if (READY_FOR_PICKUP.equals(next) || SHIPPED.equals(next)) {
-            if (user != null && pushNotificationService != null) {
-                pushNotificationService.notifyUser(
-                        user.getId(),
-                        "Order Shipped!",
-                        "Your order #" + order.getId() + " for " + productName + " has been shipped.",
-                        Map.of("type", "PRODUCT_ORDER_SHIPPED", "orderId", String.valueOf(order.getId()))
-                );
-                if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
-                    try {
-                        emailService.sendEmail(
-                                user.getEmail(),
-                                "Order Shipped: #" + order.getId(),
-                                "Hello " + clientName + ",\n\nYour order #" + order.getId()
-                                        + " for " + productName + " is on its way!\n\nOpen the app to track your delivery.\n\nThank you,\nFight D Fear"
-                        );
-                    } catch (Exception ignored) {}
-                }
-            }
-        } else if (OUT_FOR_DELIVERY.equals(next)) {
-            if (user != null && pushNotificationService != null) {
-                pushNotificationService.notifyUser(
-                        user.getId(),
-                        "Out for Delivery",
-                        "Your order #" + order.getId() + " for " + productName + " is out for delivery today.",
-                        Map.of("type", "PRODUCT_ORDER_OUT_FOR_DELIVERY", "orderId", String.valueOf(order.getId()))
-                );
-            }
-        } else if (DELIVERED.equals(next)) {
-            if (user != null && pushNotificationService != null) {
-                pushNotificationService.notifyUser(
-                        user.getId(),
-                        "Order Delivered!",
-                        "Your order #" + order.getId() + " has been delivered. Tap to leave a rating and review.",
-                        Map.of("type", "PRODUCT_ORDER_DELIVERED", "orderId", String.valueOf(order.getId()))
-                );
-                if (emailService != null && user.getEmail() != null && !user.getEmail().isBlank()) {
-                    try {
-                        emailService.sendEmail(
-                                user.getEmail(),
-                                "Order Delivered: #" + order.getId(),
-                                "Hello " + clientName + ",\n\nYour order #" + order.getId()
-                                        + " for " + productName + " has been delivered.\n\nWe hope you love your purchase! Open the app to rate and review.\n\nThank you,\nFight D Fear"
-                        );
-                    } catch (Exception ignored) {}
-                }
-            }
-            if (seller != null && sellerNotificationService != null) {
-                sellerNotificationService.notifySeller(
-                        seller,
-                        "ORDER_DELIVERED",
-                        "Order Delivered: #" + order.getId(),
-                        "Order #" + order.getId() + " for " + productName + " was delivered successfully.",
-                        order.getId(),
-                        false
-                );
-            }
+            } catch (Exception ignored) {}
+        }
+
+        // 3. In-App Notifications
+        if (seller != null && sellerNotificationService != null) {
+            sellerNotificationService.notifySeller(
+                    seller,
+                    "ORDER_STATUS_UPDATE",
+                    "Order #" + order.getId() + ": " + displayStatus,
+                    "Order #" + order.getId() + " for " + productName + " status changed to " + displayStatus + ".",
+                    order.getId(),
+                    false
+            );
+        }
+
+        if (user != null && pushNotificationService != null) {
+            pushNotificationService.notifyUser(
+                    user.getId(),
+                    "Order Update: " + displayStatus,
+                    "Your order #" + order.getId() + " (" + productName + ") is now " + displayStatus + ".",
+                    Map.of("type", "PRODUCT_ORDER_UPDATE", "orderId", String.valueOf(order.getId()), "status", next)
+            );
         }
     }
 

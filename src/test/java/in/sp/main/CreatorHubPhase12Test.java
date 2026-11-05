@@ -377,6 +377,51 @@ public class CreatorHubPhase12Test {
         assertEquals(0, creatorNotificationRepository.countByUser_IdAndIsReadFalse(creator.getId()));
     }
 
+    @Test
+    @DisplayName("Registered member is a hub creator: me, edit profile, and ungated upload")
+    public void testRegisteredUserIsCreatorWithoutApproval() {
+        User member = createUser("member.hub@example.com", "Asha Verma");
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("user", member);
+
+        ResponseEntity<Map<String, Object>> meRes = creatorHubController.myProfile(session);
+        assertEquals(200, meRes.getStatusCode().value());
+        assertTrue((Boolean) meRes.getBody().get("success"));
+        assertTrue((Boolean) meRes.getBody().get("canUpload"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> meCreator = (Map<String, Object>) meRes.getBody().get("creator");
+        assertEquals("Asha Verma", meCreator.get("name"));
+        assertTrue((Boolean) meCreator.get("isOwnProfile"));
+
+        ResponseEntity<Map<String, Object>> editRes = creatorHubController.editProfile(
+                null, null, null, null,
+                Map.of(
+                        "fullName", "Asha V",
+                        "creatorHandle", "asha_v",
+                        "creatorBio", "Safety storyteller",
+                        "creatorCity", "Pune"
+                ),
+                session);
+        assertEquals(200, editRes.getStatusCode().value());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> edited = (Map<String, Object>) editRes.getBody().get("creator");
+        assertEquals("Asha V", edited.get("name"));
+        assertEquals("asha_v", edited.get("handle"));
+        assertEquals("Safety storyteller", edited.get("bio"));
+        assertEquals("Pune", edited.get("city"));
+
+        byte[] validJpegBytes = new byte[] {
+                (byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0,
+                0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01
+        };
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "story.jpg", "image/jpeg", validJpegBytes);
+        ResponseEntity<Map<String, Object>> storyRes = creatorHubController.uploadStory(
+                file, "From a regular member", session);
+        assertEquals(200, storyRes.getStatusCode().value());
+        assertTrue((Boolean) storyRes.getBody().get("success"));
+    }
+
     private User createApprovedCreator(String email, String name, String category) {
         User u = new User();
         u.setEmail(email);

@@ -431,6 +431,12 @@ public class UserController {
                 return "user";
             }
             String normWhatsapp = in.sp.main.Util.MobileValidation.normalizeWhatsappNumber(whatsappNumber);
+            String ecDistinctErr = in.sp.main.Util.MobileValidation.requireEmergencyContactDistinctFromUser(
+                    phone, normEmail, normWhatsapp, ecPhone, ecEmail);
+            if (ecDistinctErr != null) {
+                model.addAttribute("error", ecDistinctErr);
+                return "user";
+            }
 
             if (userRepository.findByEmail(normEmail).isPresent()) {
                 redirectAttributes.addFlashAttribute("error", "Email already registered. Please sign in.");
@@ -484,7 +490,6 @@ public class UserController {
             session.removeAttribute("REG_VERIFIED_EMAIL");
 
             session.setAttribute("regPrefillEmail", normEmail);
-            session.setAttribute("regPrefillPassword", password);
             redirectAttributes.addFlashAttribute("success", "Registration successful! Please sign in with your email.");
             return "redirect:/login?registered=true&email=" + java.net.URLEncoder.encode(normEmail, java.nio.charset.StandardCharsets.UTF_8);
 

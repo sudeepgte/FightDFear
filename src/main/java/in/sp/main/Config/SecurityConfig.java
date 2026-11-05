@@ -23,7 +23,9 @@ import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.HstsHeaderWriter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -152,7 +154,6 @@ public class SecurityConfig {
             "/users/register",
             "/users/register/**",
             "/admin/loginAdmin",
-            "/admin/registerAdmin",
             "/centres/**",
             "/doctors/login",
             "/doctors/logout",
@@ -237,6 +238,10 @@ public class SecurityConfig {
                 .dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ERROR, DispatcherType.INCLUDE, DispatcherType.ASYNC).permitAll()
                 .requestMatchers("/actuator/prometheus", "/actuator/prometheus/**")
                     .access((authentication, context) -> allowLocalhostOnly(context))
+                .requestMatchers("/admin/loginAdmin", "/admin/loginAdmin/**",
+                        "/admin/registerAdmin", "/admin/registerAdmin/**",
+                        "/api/admin/login", "/api/admin/login/**").permitAll()
+                .requestMatchers("/admin/**", "/api/admin/**", "/women-events/admin/**").hasRole("ADMIN")
                 .requestMatchers(PUBLIC_URLS).permitAll()
                 .requestMatchers(request -> {
                     String path = request.getRequestURI();
@@ -319,6 +324,7 @@ public class SecurityConfig {
                     request -> {
                         String path = request.getRequestURI();
                         if (path == null) return false;
+                        if (path.startsWith("/admin/registerAdmin")) return true;
                         return path.startsWith("/api/")
                                 || path.equals("/payment/webhook/razorpay")
                                 || path.startsWith("/actuator/")
@@ -334,14 +340,16 @@ public class SecurityConfig {
                                 || path.startsWith("/creator-hub/")
                                 || path.endsWith("/login")
                                 || path.endsWith("/loginAdmin")
-                                || path.endsWith("/register")
-                                || path.endsWith("/profile-completion");
+                                || path.endsWith("/register");
                     }
                 )
             )
             .headers(headers -> {
                 headers.contentTypeOptions(Customizer.withDefaults());
                 headers.frameOptions(frame -> frame.sameOrigin());
+                HstsHeaderWriter hstsWriter = new HstsHeaderWriter(31536000, true, false);
+                hstsWriter.setRequestMatcher(AnyRequestMatcher.INSTANCE);
+                headers.addHeaderWriter(hstsWriter);
                 headers.referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
                 headers.permissionsPolicy(permissions -> permissions.policy(
                     "camera=(self), microphone=(self), geolocation=(self), payment=*"

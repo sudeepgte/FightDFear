@@ -1,40 +1,44 @@
 package `in`.sp.fight_d_fear
 
+import android.os.Build
 import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.android.RenderMode
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugins.GeneratedPluginRegistrant
 
-/**
- * Use TextureView instead of the default SurfaceView.
- *
- * On some Android emulators (ranchu / virtgpu), Flutter's SurfaceView can
- * leave a black screen even though the Dart widget tree is alive
- * (accessibility nodes present). TextureView + optional software rendering
- * (see AndroidManifest meta-data) restores visible pixels.
- */
 class MainActivity : FlutterActivity() {
+    private val isEmulator: Boolean
+        get() = (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.HARDWARE.contains("goldfish")
+                || Build.HARDWARE.contains("ranchu")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || Build.PRODUCT.contains("sdk_gphone")
+                || Build.PRODUCT.contains("google_sdk")
+                || Build.PRODUCT.contains("sdk")
+
     override fun getRenderMode(): RenderMode {
-        Log.i(TAG, "Flutter render mode = texture")
-        return RenderMode.texture
+        if (isEmulator) {
+            Log.i(TAG, "Flutter render mode = texture (emulator)")
+            return RenderMode.texture
+        }
+        Log.i(TAG, "Flutter render mode = default surface (physical device)")
+        return super.getRenderMode()
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        try {
-            GeneratedPluginRegistrant.registerWith(flutterEngine)
-            Log.i(TAG, "GeneratedPluginRegistrant registered successfully")
-        } catch (e: Throwable) {
-            Log.e(TAG, "GeneratedPluginRegistrant registration warning", e)
-        }
         try {
             if (!flutterEngine.plugins.has(com.razorpay.razorpay_flutter.RazorpayFlutterPlugin::class.java)) {
                 flutterEngine.plugins.add(com.razorpay.razorpay_flutter.RazorpayFlutterPlugin())
                 Log.i(TAG, "Explicitly registered RazorpayFlutterPlugin")
             }
         } catch (e: Throwable) {
-            Log.e(TAG, "RazorpayFlutterPlugin explicit registration info", e)
+            Log.i(TAG, "RazorpayFlutterPlugin already handled", e)
         }
     }
 

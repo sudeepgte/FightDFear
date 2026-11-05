@@ -36,7 +36,7 @@ SET @women_events_exists = (
 );
 SET @sql = IF(@women_events_exists > 0,
     'ALTER TABLE women_events CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
-    'DO 0');
+    'SELECT 1');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

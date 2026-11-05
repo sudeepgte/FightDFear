@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.io.IOException;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -76,6 +78,13 @@ public class ErrorHandlingSecurityTest {
         assertFalse(errorMsg.contains("fk_user"), "Response must not contain constraint names");
         assertFalse(errorMsg.contains("secret"), "Response must not contain credential data");
         assertTrue(errorMsg.contains("database error"), "Response must contain generic database error message");
+    }
+
+    @Test
+    void testApiExceptionHandler_ClientAbortIsIgnored() throws Exception {
+        Exception abort = new IOException("An established connection was aborted by the software in your host machine");
+        var response = apiExceptionHandler.handleGenericException(abort);
+        org.junit.jupiter.api.Assertions.assertNull(response, "Client abort must not produce a JSON error body");
     }
 
     @Test

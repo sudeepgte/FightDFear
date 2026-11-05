@@ -308,8 +308,7 @@ public class UserFollowController {
         if (currentUser == null) return Collections.emptyList();
 
         List<User> friends = followService.getFriends(currentUser.getId());
-        System.out.println("Friends count for " + currentUser.getFullName() + " = " + friends.size());
-        log.info("Friends fetched for {}: {}", currentUser.getFullName(), friends.size());
+        log.debug("Friends fetched for {}: {}", currentUser.getFullName(), friends.size());
         List<Map<String, Object>> response = new ArrayList<>();
         for (User u : friends) {
             Map<String, Object> map = new HashMap<>();

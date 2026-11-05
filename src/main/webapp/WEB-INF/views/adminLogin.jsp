@@ -201,10 +201,14 @@
             </div>
 
             <c:if test="${not empty error}">
-                <div class="error-alert"><i class="bi bi-exclamation-circle"></i><span>${error}</span></div>
+                <div class="error-alert"><i class="bi bi-exclamation-circle"></i><span><c:out value="${error}"/></span></div>
             </c:if>
             <c:if test="${not empty success}">
-                <div class="success-alert"><i class="bi bi-check-circle"></i> ${success}</div>
+                <div class="success-alert"><i class="bi bi-check-circle"></i> <c:out value="${success}"/></div>
+            </c:if>
+
+            <c:if test="${param.reset eq 'success'}">
+                <div class="success-alert"><i class="bi bi-check-circle"></i> Password reset successful! Please log in with your new password.</div>
             </c:if>
 
             <form action="${pageContext.request.contextPath}/admin/loginAdmin" method="post">
@@ -226,7 +230,7 @@
                         <i class="bi bi-lock"></i>
                         <input type="password" id="adminPassword" name="password" class="form-input"
                                placeholder="Enter your password" required autocomplete="current-password"
-                               value="<c:out value='${prefillPassword}'/>">
+                               value="">
                         <button type="button" class="password-toggle-btn" data-toggle-password="adminPassword" aria-label="Show password" aria-pressed="false">
                             <span class="icon-eye-show" aria-hidden="true">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -240,14 +244,14 @@
 
                 <div class="form-options">
                     <span></span>
-                    <!-- No forgot password in original admin login, skipping it -->
+                    <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/admin/login" class="forgot-link">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="btn-login">Sign in</button>
             </form>
 
             <p class="register-link">
-                Need an admin account? <a href="${pageContext.request.contextPath}/admin/registerAdmin">Register here</a>
+                Admin accounts are created by a Super Admin only.
             </p>
         </div>
     </div>

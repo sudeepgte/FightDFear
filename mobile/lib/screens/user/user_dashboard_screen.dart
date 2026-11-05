@@ -22,7 +22,7 @@ import 'profile_screen.dart';
 import '../marketplace/provider_catalog_screen.dart';
 import '../fitness/fitness_wellness_screen.dart';
 import '../safety/reminders_screen.dart';
-import '../creator/creator_hub_screen.dart';
+import '../creator/creator_hub_shell.dart';
 import '../creator/video_feed_screen.dart';
 import '../wallet/wallet_screen.dart';
 import '../events/women_events_screen.dart';
@@ -80,27 +80,30 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     final api = auth.api;
     try {
       final results = await Future.wait([
-        api.get('/api/me/dashboard'),
-        DoctorService(api).myAppointments(),
-        api.get('/api/me/trusted-contacts'),
-        SosService(api).getActive(),
-        JourneyService(api).getActive(),
+        api.get('/api/me/dashboard').catchError((_) => <String, dynamic>{'success': false}),
+        DoctorService(api).myAppointments().catchError((_) => <String, dynamic>{'success': false}),
+        api.get('/api/me/trusted-contacts').catchError((_) => <String, dynamic>{'success': false}),
+        SosService(api).getActive().catchError((_) => <String, dynamic>{'success': false}),
+        JourneyService(api).getActive().catchError((_) => <String, dynamic>{'success': false}),
       ]);
       if (!mounted) return;
 
       final dash = results[0];
-      if (dash['success'] != true) {
-        setState(() {
-          _error = dash['error']?.toString() ?? 'Failed to load dashboard';
-          _loading = false;
-        });
-        return;
+      if (dash['success'] == true) {
+        _dashboard = dash;
+      } else {
+        _dashboard = {
+          'success': true,
+          'name': auth.name ?? 'there',
+          'unreadBroadcastCount': 0,
+          'pendingRequestCount': 0,
+          'isWorker': false,
+          'recentBroadcasts': const [],
+        };
       }
-
-      _dashboard = dash;
-      _isWorker = dash['isWorker'] == true;
-      _unread = _asInt(dash['unreadBroadcastCount']);
-      _broadcasts = _asMaps(dash['recentBroadcasts']);
+      _isWorker = _dashboard?['isWorker'] == true;
+      _unread = _asInt(_dashboard?['unreadBroadcastCount']);
+      _broadcasts = _asMaps(_dashboard?['recentBroadcasts']);
 
       final appts = results[1];
       _appointments = appts['success'] == true ? _asMaps(appts['appointments']) : [];
@@ -114,11 +117,22 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       final journey = results[4];
       _journeyActive = journey['success'] == true && journey['active'] == true;
 
-      setState(() => _loading = false);
+      setState(() {
+        _error = null;
+        _loading = false;
+      });
     } catch (e) {
       if (!mounted) return;
+      _dashboard ??= {
+        'success': true,
+        'name': auth.name ?? 'there',
+        'unreadBroadcastCount': 0,
+        'pendingRequestCount': 0,
+        'isWorker': false,
+        'recentBroadcasts': const [],
+      };
       setState(() {
-        _error = '$e';
+        _error = null;
         _loading = false;
       });
     }
@@ -217,7 +231,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               case 'events':
                 _push(const WomenEventsScreen());
               case 'community':
-                _push(const CreatorHubScreen());
+                _push(const CreatorHubShell());
               case 'glow':
                 _push(const GlowSpaceScreen());
               case 'martial_arts':
@@ -291,7 +305,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       _DashLink('Women Products', Icons.shopping_bag_outlined, () => _push(const WomenProductsScreen())),
       // FUTURE UPDATE: Financial Literacy module navigation is reserved for a future update.
       // _DashLink('Financial Literacy', Icons.menu_book_outlined, () => _push(const FinancialLiteracyScreen())),
-      _DashLink('Creator Hub', Icons.video_camera_front_outlined, () => _push(const CreatorHubScreen())),
+      _DashLink('Creator Hub', Icons.video_camera_front_outlined, () => _push(const CreatorHubShell())),
       _DashLink('Videos', Icons.play_circle_outline, () => _push(const VideoFeedScreen(title: 'View Videos', mode: VideoFeedMode.videos))),
       _DashLink('Reels', Icons.movie_creation_outlined, () => _push(const VideoFeedScreen(title: 'Reels', mode: VideoFeedMode.reels))),
       _DashLink('Wallet', Icons.account_balance_wallet_outlined, () => _push(const WalletScreen())),

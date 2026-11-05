@@ -214,7 +214,6 @@ public class WomenProductController {
             ra.addFlashAttribute("success",
                     "Your seller account has been created. You can sign in now to complete your profile.");
             ra.addFlashAttribute("registeredEmail", cleanedEmail);
-            ra.addFlashAttribute("registeredPassword", password);
             return "redirect:/women-products/seller/login";
         } catch (IOException e) {
             model.addAttribute("error", "Registration failed: could not upload files. Please try again.");
@@ -272,7 +271,7 @@ public class WomenProductController {
         jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
-        cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+        cookie.setMaxAge(24 * 60 * 60); // 24 hours
         response.addCookie(cookie);
         
         boolean isApproved = s.getPartnerProfileStatus() == PartnerProfileStatus.APPROVED || s.getVerificationStatus() == VerificationStatus.VERIFIED;

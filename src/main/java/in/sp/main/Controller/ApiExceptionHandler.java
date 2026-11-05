@@ -1,5 +1,6 @@
 package in.sp.main.Controller;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -10,6 +11,7 @@ import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
@@ -17,6 +19,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,6 +27,7 @@ import in.sp.main.Config.CorrelationIdFilter;
 import in.sp.main.Exception.RateLimitExceededException;
 import in.sp.main.Util.LogSanitizer;
 import jakarta.persistence.PersistenceException;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -146,8 +150,33 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
-    @ExceptionHandler(Exception.class)
+    /**
+     * Browser/emulator cancelled an image or file download. Not an application failure;
+     * writing JSON over a committed image/png response causes a second exception.
+     */
+    @ExceptionHandler({
+            org.apache.catalina.connector.ClientAbortException.class,
+            AsyncRequestNotUsableException.class,
+            HttpMessageNotWritableException.class
+    })
+    public void handleUnwritableOrAbortedResponse(Exception ex) {
+        if (isClientDisconnect(ex)) {
+            log.debug("Client disconnected while writing response: {}", ex.getMessage());
+            return;
+        }
+        log.debug("Could not write response body: {}", ex.getMessage());
+    }
+
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
+        return handleGenericException(ex, null);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex, HttpServletResponse response) {
+        if (isClientDisconnect(ex) || isCommittedBinaryResponse(response)) {
+            log.debug("Ignoring client-abort / committed binary response: {}", ex.getClass().getSimpleName());
+            return null;
+        }
         String correlationId = getCorrelationId();
         log.error("Unexpected server error correlationId={}: ", correlationId, ex);
         Map<String, Object> body = new LinkedHashMap<>();
@@ -155,5 +184,43 @@ public class ApiExceptionHandler {
         body.put("error", "An unexpected error occurred.");
         body.put("correlationId", correlationId);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
+
+    static boolean isClientDisconnect(Throwable ex) {
+        while (ex != null) {
+            String name = ex.getClass().getName();
+            String msg = ex.getMessage() != null ? ex.getMessage() : "";
+            if (name.contains("ClientAbortException")
+                    || name.contains("AsyncRequestNotUsableException")
+                    || msg.contains("Broken pipe")
+                    || msg.contains("Connection reset")
+                    || msg.contains("aborted by the software")
+                    || (ex instanceof HttpMessageNotWritableException && msg.contains("image/"))) {
+                return true;
+            }
+            if (ex instanceof IOException && (msg.contains("aborted") || msg.contains("Broken pipe"))) {
+                return true;
+            }
+            ex = ex.getCause();
+        }
+        return false;
+    }
+
+    private static boolean isCommittedBinaryResponse(HttpServletResponse response) {
+        if (response == null) {
+            return false;
+        }
+        if (response.isCommitted()) {
+            return true;
+        }
+        String ct = response.getContentType();
+        if (ct == null) {
+            return false;
+        }
+        String lower = ct.toLowerCase();
+        return lower.startsWith("image/")
+                || lower.startsWith("video/")
+                || lower.startsWith("audio/")
+                || lower.contains("octet-stream");
     }
 }

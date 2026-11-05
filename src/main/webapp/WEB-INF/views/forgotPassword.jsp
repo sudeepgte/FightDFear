@@ -222,14 +222,17 @@
         <h2>Forgot Password</h2>
         <p style="font-weight: normal; color: #555;">Enter your registered email to reset your password</p>
         <c:if test="${not empty error}">
-            <p class="message-error">${error}</p>
+            <p class="message-error"><c:out value="${error}"/></p>
         </c:if>
         <c:if test="${not empty message}">
-            <p class="message-success">${message}</p>
+            <p class="message-success"><c:out value="${message}"/></p>
         </c:if>
         <form action="${pageContext.request.contextPath}/auth/forgot-password" method="POST">
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
-            <input type="email" name="email" placeholder="Enter your email" pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" required>
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <c:if test="${not empty redirect}">
+                <input type="hidden" name="redirect" value="<c:out value='${redirect}'/>">
+            </c:if>
+            <input type="email" name="email" placeholder="Enter your registered email" pattern="[a-zA-Z0-9._+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}" required>
             <button type="submit">Reset Password</button>
         </form>
     </div>

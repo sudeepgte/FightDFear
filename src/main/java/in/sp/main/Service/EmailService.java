@@ -8,6 +8,7 @@ import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,12 +22,35 @@ public class EmailService {
     @Value("${spring.mail.username:}")
     private String mailFrom;
 
+    @Value("${spring.mail.password:}")
+    private String mailPassword;
+
+    @jakarta.annotation.PostConstruct
+    void logMailConfig() {
+        if (emailSender instanceof JavaMailSenderImpl impl) {
+            if (mailFrom != null && !mailFrom.isBlank()) {
+                impl.setUsername(mailFrom.trim());
+            }
+            if (mailPassword != null && !mailPassword.isBlank()) {
+                impl.setPassword(mailPassword.trim());
+            }
+        }
+        log.info("Mail SMTP user={} passwordSet={}",
+                (mailFrom == null || mailFrom.isBlank()) ? "(empty)" : mailFrom.trim(),
+                mailPassword != null && !mailPassword.isBlank());
+    }
+
+    public boolean isConfigured() {
+        return mailFrom != null && !mailFrom.isBlank()
+                && mailPassword != null && !mailPassword.isBlank();
+    }
+
     public void sendEmail(String to, String subject, String text) {
         if (to == null || to.isBlank()) {
             throw new IllegalStateException("Recipient email is required");
         }
         if (mailFrom == null || mailFrom.isBlank()) {
-            log.error("Mail send aborted: spring.mail.username is empty (set MAIL_USERNAME / spring.mail.username)");
+            log.warn("Mail send skipped: MAIL_USERNAME / spring.mail.username is not set");
             throw new IllegalStateException(
                     "Email service is not configured. Set MAIL_USERNAME and MAIL_PASSWORD.");
         }

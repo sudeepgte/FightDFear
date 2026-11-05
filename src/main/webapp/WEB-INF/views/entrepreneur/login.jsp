@@ -244,12 +244,17 @@
 
             <c:if test="${not empty error}">
                 <div class="alert-box alert-error">
-                    <i class="bi bi-exclamation-circle-fill"></i> ${error}
+                    <i class="bi bi-exclamation-circle-fill"></i> <c:out value="${error}"/>
                 </div>
             </c:if>
             <c:if test="${not empty message}">
                 <div class="alert-box alert-success">
-                    <i class="bi bi-check-circle-fill"></i> ${message}
+                    <i class="bi bi-check-circle-fill"></i> <c:out value="${message}"/>
+                </div>
+            </c:if>
+            <c:if test="${param.reset eq 'success'}">
+                <div class="alert-box alert-success">
+                    <i class="bi bi-check-circle-fill"></i> Password reset successful! Please log in with your new password.
                 </div>
             </c:if>
 
@@ -265,7 +270,7 @@
                 <div class="form-group">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                         <label for="password" style="margin-bottom: 0;">Password</label>
-                        <a href="${pageContext.request.contextPath}/auth/forgot-password" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 600;">Forgot Password?</a>
+                        <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/entrepreneur/login" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 600;">Forgot Password?</a>
                     </div>
                     <div class="input-wrapper password-field">
                         <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required>

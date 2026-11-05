@@ -57,6 +57,12 @@ public class MobileWomenProductController {
     private WomenProductDeliveryService deliveryService;
     @Autowired
     private in.sp.main.Service.WomenProductOrderService womenProductOrderService;
+    @Autowired
+    private in.sp.main.Config.JwtUtil jwtUtil;
+    @Autowired
+    private in.sp.main.Repository.UserRepository userRepository;
+    @Autowired
+    private jakarta.servlet.http.HttpServletRequest httpRequest;
 
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> categories(HttpSession session) {
@@ -121,7 +127,6 @@ public class MobileWomenProductController {
     @GetMapping("/{id}")
     public ResponseEntity<Map<String, Object>> productDetail(@PathVariable("id") Long id, HttpSession session) {
         User user = requireUser(session);
-        if (user == null) return unauthorized();
 
         WomenProduct p = productRepo.findById(id).orElse(null);
         if (p == null || !p.isListedForShop()) {
@@ -145,8 +150,8 @@ public class MobileWomenProductController {
         }
 
         Map<String, Object> dto = productDto(p);
-        dto.put("inWishlist", wishlistRepo.existsByUserAndProduct_Id(user, id));
-        dto.put("inCart", cartRepo.findByUserAndProduct_Id(user, id).isPresent());
+        dto.put("inWishlist", user != null && wishlistRepo.existsByUserAndProduct_Id(user, id));
+        dto.put("inCart", user != null && cartRepo.findByUserAndProduct_Id(user, id).isPresent());
         dto.put("reviews", reviewDtos);
         dto.put("avgRating", avgRating);
         dto.put("reviewCount", reviewDtos.size());
@@ -478,9 +483,30 @@ public class MobileWomenProductController {
     }
 
     private User requireUser(HttpSession session) {
-        if (session == null) return null;
-        Object u = session.getAttribute("user");
-        return u instanceof User ? (User) u : null;
+        Object u = session == null ? null : session.getAttribute("user");
+        if (u instanceof User) {
+            return (User) u;
+        }
+        String authHeader = httpRequest == null ? null : httpRequest.getHeader("Authorization");
+        String token = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7).trim();
+        } else if (httpRequest != null && httpRequest.getParameter("token") != null) {
+            token = httpRequest.getParameter("token").trim();
+        }
+        if (token != null && !token.isEmpty() && jwtUtil.validateToken(token)) {
+            String email = jwtUtil.extractUsername(token);
+            if (email != null && !email.isEmpty()) {
+                User user = userRepository.findByEmail(email.toLowerCase().trim()).orElse(null);
+                if (user != null) {
+                    if (session != null) {
+                        session.setAttribute("user", user);
+                    }
+                    return user;
+                }
+            }
+        }
+        return null;
     }
 
     private static Long asLong(Object v) {

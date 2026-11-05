@@ -179,12 +179,15 @@
           <p class="subtitle">Account type: <strong>${userType}</strong></p>
 
           <c:if test="${not empty message}">
-            <div class="alert alert-info reset-message" role="alert">${message}</div>
+            <div class="alert alert-info reset-message" role="alert"><c:out value="${message}"/></div>
           </c:if>
 
           <form action="${pageContext.request.contextPath}/auth/reset-password" method="POST">
-  <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}">
             <input type="hidden" name="token" value="${token}">
+            <c:if test="${not empty redirect}">
+              <input type="hidden" name="redirect" value="<c:out value='${redirect}'/>">
+            </c:if>
             <div class="mb-3">
               <label for="newPassword" class="form-label">New password</label>
               <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="Enter new password" required>

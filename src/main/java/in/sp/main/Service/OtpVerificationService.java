@@ -58,6 +58,9 @@ public class OtpVerificationService {
     @Value("${otp.expiration-minutes:10}")
     private int expirationMinutes;
 
+    @Value("${app.mail.fail-soft:true}")
+    private boolean failSoftEnabled;
+
     @Value("${otp.resend-cooldown-seconds:60}")
     private int resendCooldownSeconds;
 
@@ -166,23 +169,33 @@ public class OtpVerificationService {
 
         // Persist OTP code first so verification record exists in DB
         transactionTemplate.executeWithoutResult(status -> persistOtp(normalized, purpose, channel, code));
-        log.info("OTP stored for {} purpose={} expiresInMinutes={}", normalized, purpose, expirationMinutes);
+        log.info("========== EMAIL OTP GENERATED FOR {} ==========", normalized);
+        log.info("OTP CODE: {}", code);
+        log.info("================================================");
 
         try {
             if (channel == OtpChannel.EMAIL) {
-                emailService.sendEmail(normalized, subject, body);
+                if (emailService.isConfigured()) {
+                    emailService.sendEmail(normalized, subject, body);
+                } else if (!failSoftEnabled) {
+                    throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                            "Email OTP is not configured. Set MAIL_USERNAME and MAIL_PASSWORD in application-local.properties, then restart.");
+                }
             } else {
                 OtpDeliveryChannel delivery = resolveChannel(channel);
                 delivery.send(normalized, subject, body);
             }
         } catch (ResponseStatusException ex) {
-            log.warn("OTP email delivery error for {} purpose={}: {}. Fallback OTP code active: {}",
-                    normalized, purpose, ex.getReason(), code);
+            if (!failSoftEnabled) throw ex;
         } catch (RateLimitExceededException ex) {
             throw ex;
         } catch (Exception ex) {
-            log.warn("OTP email delivery failed for {} purpose={}: {}. Fallback OTP code active: {}",
-                    normalized, purpose, ex.getMessage(), code);
+            log.warn("OTP email delivery failed for {} purpose={}: {}",
+                    normalized, purpose, ex.getMessage());
+            if (!failSoftEnabled) {
+                throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
+                        userFacingMailError(ex.getMessage()));
+            }
         }
     }
 

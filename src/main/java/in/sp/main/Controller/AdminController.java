@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -285,6 +286,8 @@ public class AdminController {
                                 @RequestParam(value = "confirmPassword", required = false) String confirmPassword,
                                 HttpSession session,
                                 RedirectAttributes redirectAttributes) {
+        name = in.sp.main.Util.FormSanitizer.stripTags(name);
+        email = in.sp.main.Util.FormSanitizer.stripTags(email);
         if (email == null || email.isBlank() || password == null || password.isBlank()) {
             redirectAttributes.addFlashAttribute("error", "Email and Password are required!");
             return "redirect:/admin/registerAdmin";
@@ -302,7 +305,8 @@ public class AdminController {
                     "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.");
             return "redirect:/admin/registerAdmin";
         }
-        Admin admin = new Admin(name.trim(), email.trim().toLowerCase(), password, "ADMIN");
+        String role = (adminRepository.count() == 0) ? "SUPER_ADMIN" : "ADMIN";
+        Admin admin = new Admin(name.trim(), email.trim().toLowerCase(), password, role);
         try {
             if (adminService.registerAdmin(admin)) {
                 redirectAttributes.addFlashAttribute("success", "Admin registered successfully. Please sign in.");
@@ -365,7 +369,7 @@ public class AdminController {
             jakarta.servlet.http.Cookie cookie = new jakarta.servlet.http.Cookie("JWT_TOKEN", token);
             cookie.setPath("/");
             cookie.setHttpOnly(true);
-            cookie.setMaxAge(365 * 24 * 60 * 60); // 1 year
+            cookie.setMaxAge(24 * 60 * 60);
             response.addCookie(cookie);
             
             return "redirect:/admin/adminDashboard"; 
@@ -1944,6 +1948,15 @@ public class AdminController {
             s.setRejectionReason(null);
             s.setChangesRequestedNote(null);
             womenSellerRepo.save(s);
+            if (emailService != null && s.getEmail() != null && !s.getEmail().isBlank()) {
+                try {
+                    emailService.sendEmail(
+                            s.getEmail(),
+                            "Shop Profile Approved! - Fight D Fear",
+                            "Hello " + (s.getFullName() != null ? s.getFullName() : "Seller") + ",\n\nGreat news! Your shop profile for '" + (s.getBusinessName() != null ? s.getBusinessName() : "your shop") + "' has been approved by admin.\n\nYou can now start listing products and accepting orders on Fight D Fear!\n\nThank you,\nFight D Fear"
+                    );
+                } catch (Exception ignored) {}
+            }
         }
         ra.addFlashAttribute("message", "Seller verified.");
         return "redirect:/admin/pending-sellers";
@@ -1965,6 +1978,15 @@ public class AdminController {
             womenProductSellerProfileService.setLifecycleStatus(s, PartnerProfileStatus.REJECTED);
             s.setRejectionReason(reason.trim());
             womenSellerRepo.save(s);
+            if (emailService != null && s.getEmail() != null && !s.getEmail().isBlank()) {
+                try {
+                    emailService.sendEmail(
+                            s.getEmail(),
+                            "Shop Profile Application Status Update - Fight D Fear",
+                            "Hello " + (s.getFullName() != null ? s.getFullName() : "Seller") + ",\n\nYour shop profile application was not approved.\n\nReason: " + reason.trim() + "\n\nThank you,\nFight D Fear"
+                    );
+                } catch (Exception ignored) {}
+            }
         }
         ra.addFlashAttribute("message", "Seller rejected.");
         return "redirect:/admin/pending-sellers";
@@ -1982,6 +2004,15 @@ public class AdminController {
             s.setChangesRequestedNote(note == null || note.isBlank() ? null : note.trim());
             s.setRejectionReason(null);
             womenSellerRepo.save(s);
+            if (emailService != null && s.getEmail() != null && !s.getEmail().isBlank()) {
+                try {
+                    emailService.sendEmail(
+                            s.getEmail(),
+                            "Shop Profile Changes Requested - Fight D Fear",
+                            "Hello " + (s.getFullName() != null ? s.getFullName() : "Seller") + ",\n\nAdmin has requested changes for your shop profile.\n\nNote: " + (note != null ? note.trim() : "Please update your profile details") + "\n\nThank you,\nFight D Fear"
+                    );
+                } catch (Exception ignored) {}
+            }
         }
         ra.addFlashAttribute("message", "Changes requested from seller.");
         return "redirect:/admin/pending-sellers";
@@ -2433,6 +2464,15 @@ public class AdminController {
             s.setRejectionReason(null);
             s.setChangesRequestedNote(null);
             salonRepository.save(s);
+            if (emailService != null && s.getEmail() != null && !s.getEmail().isBlank()) {
+                try {
+                    emailService.sendEmail(
+                        s.getEmail(),
+                        "Glow Space Profile Approved! - Fight D Fear",
+                        "Hello " + (s.getName() != null ? s.getName() : "Partner") + ",\n\nGreat news! Your Glow Space (Beauty & Wellness) profile has been approved by admin.\n\nYou now have full access to your dashboard, appointments, and service management on Fight D Fear!\n\nThank you,\nFight D Fear"
+                    );
+                } catch (Exception ignored) {}
+            }
         });
         ra.addFlashAttribute("message", "Salon approved successfully.");
         return "redirect:/admin/salons";
@@ -2451,6 +2491,15 @@ public class AdminController {
         s.setApproved(false);
         s.setRejectionReason(reason == null || reason.isBlank() ? null : reason.trim());
         salonRepository.save(s);
+        if (emailService != null && s.getEmail() != null && !s.getEmail().isBlank()) {
+            try {
+                emailService.sendEmail(
+                    s.getEmail(),
+                    "Glow Space Profile Application Update - Fight D Fear",
+                    "Hello " + (s.getName() != null ? s.getName() : "Partner") + ",\n\nYour Glow Space profile application was not approved.\n\nReason: " + (reason != null && !reason.isBlank() ? reason.trim() : "Please update your profile details and resubmit.") + "\n\nThank you,\nFight D Fear"
+                );
+            } catch (Exception ignored) {}
+        }
         ra.addFlashAttribute("message", "Salon rejected. They can update their profile and resubmit.");
         return "redirect:/admin/salons";
     }

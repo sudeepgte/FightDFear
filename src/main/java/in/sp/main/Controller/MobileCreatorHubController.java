@@ -79,8 +79,7 @@ public class MobileCreatorHubController {
 
         List<Videoupload> allContent = feedPage.getContent().stream()
                 .filter(v -> v.getUser() != null && !blockedUserIds.contains(v.getUser().getId()))
-                .filter(v -> v.getUser().getId().equals(currentUser.getId())
-                        || CreatorProfileService.isApprovedCreator(v.getUser()))
+                .filter(v -> canUseHub(v.getUser()))
                 .filter(v -> canViewUploader(currentUser, v.getUser()))
                 .collect(Collectors.toList());
 
@@ -134,15 +133,10 @@ public class MobileCreatorHubController {
                 .map(v -> postDto(v, currentUser))
                 .toList();
 
-        List<Map<String, Object>> recommended = userRepository
-                .findApprovedCreators(PartnerProfileStatus.APPROVED, PageRequest.of(0, 5))
-                .getContent().stream()
-                .filter(u -> !u.getId().equals(currentUser.getId()))
-                .map(this::creatorSummary)
-                .toList();
+        List<Map<String, Object>> recommended = suggestedUsers(currentUser, 8);
 
         int unreadNotifCount = creatorNotificationRepository.countByUser_IdAndIsReadFalse(currentUser.getId());
-        boolean canUpload = CreatorProfileService.isApprovedCreator(currentUser);
+        boolean canUpload = canUseHub(currentUser);
 
         Map<String, Object> feed = new LinkedHashMap<>();
         feed.put("posts", posts);
@@ -169,40 +163,17 @@ public class MobileCreatorHubController {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
         User creator = userRepository.findById(id).orElse(null);
-        if (creator == null) return badRequest("Creator not found");
-        if (!creator.getId().equals(currentUser.getId()) && !CreatorProfileService.isApprovedCreator(creator)) {
-            return badRequest("Creator not found");
-        }
+        if (creator == null || !canUseHub(creator)) return badRequest("Creator not found");
 
         boolean blocked = userBlockRepository.existsByUser_IdAndBlockedUser_Id(currentUser.getId(), creator.getId())
                 || userBlockRepository.existsByUser_IdAndBlockedUser_Id(creator.getId(), currentUser.getId());
 
-        Map<String, Object> profile = creatorSummary(creator);
+        Map<String, Object> profile = creatorDetail(creator, currentUser);
         profile.put("blocked", blocked);
         if (blocked) {
-            return ok(Map.of("creator", profile, "posts", List.of(), "stories", List.of()));
+            return ok(Map.of("creator", profile, "posts", List.of(), "stories", List.of(),
+                    "followers", List.of(), "following", List.of()));
         }
-
-        int followersCount = userFollowRepository.findByFollowed(creator).size();
-        int followingCount = userFollowRepository.findByFollower(creator).size();
-        boolean isFollowing = userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedTrue(currentUser.getId(), creator.getId());
-        boolean isRequested = userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedFalse(currentUser.getId(), creator.getId());
-        boolean isSubscribed = creatorSubscriptionRepository.existsBySubscriber_IdAndCreator_IdAndEndDateAfter(
-                currentUser.getId(), creator.getId(), LocalDateTime.now());
-
-        profile.put("followersCount", followersCount);
-        profile.put("followingCount", followingCount);
-        profile.put("isFollowing", isFollowing);
-        profile.put("isRequested", isRequested);
-        profile.put("isSubscribed", isSubscribed);
-        profile.put("subscriptionPrice", creator.getCreatorSubscriptionPrice());
-        profile.put("walletBalance", creator.getWalletBalance());
-        profile.put("isOwnProfile", creator.getId().equals(currentUser.getId()));
-        profile.put("canReview", creatorCareService.canReview(currentUser, creator));
-        profile.put("canCancelSub", isSubscribed);
-        profile.put("cancelPolicy", in.sp.main.Service.CreatorCareService.CANCEL_POLICY);
-        profile.put("rating", creator.getCreatorRating());
-        profile.put("reviewCount", creator.getCreatorReviewCount());
 
         List<Map<String, Object>> posts = videoUploadRepository.findByUser_Id(creator.getId()).stream()
                 .filter(v -> !v.isBlocked() && !v.isDraft() && "APPROVED".equals(v.getStatus()))
@@ -216,7 +187,120 @@ public class MobileCreatorHubController {
                 .map(s -> storyDto(s, creator))
                 .toList();
 
-        return ok(Map.of("creator", profile, "posts", posts, "stories", stories));
+        return ok(Map.of(
+                "creator", profile,
+                "posts", posts,
+                "stories", stories,
+                "followers", followUserCards(userFollowRepository.findByFollowed(creator), true),
+                "following", followUserCards(userFollowRepository.findByFollower(creator), false)
+        ));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<Map<String, Object>> myProfile(HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+
+        List<Videoupload> allUploads = videoUploadRepository.findByUser_Id(currentUser.getId()).stream()
+                .filter(v -> !v.isDraft() && !v.isBlocked())
+                .sorted((a, b) -> {
+                    if (a.getUploadTime() == null && b.getUploadTime() == null) return 0;
+                    if (a.getUploadTime() == null) return 1;
+                    if (b.getUploadTime() == null) return -1;
+                    return b.getUploadTime().compareTo(a.getUploadTime());
+                })
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> posts = allUploads.stream()
+                .filter(v -> !v.isReel() && "IMAGE".equalsIgnoreCase(v.getFileType()))
+                .map(v -> postDto(v, currentUser))
+                .toList();
+        List<Map<String, Object>> reels = allUploads.stream()
+                .filter(Videoupload::isReel)
+                .map(v -> postDto(v, currentUser))
+                .toList();
+        List<Map<String, Object>> saved = videoBookmarkRepository.findByUser_Id(currentUser.getId()).stream()
+                .map(VideoBookmark::getVideo)
+                .filter(v -> v != null && !v.isBlocked())
+                .map(v -> postDto(v, currentUser))
+                .toList();
+
+        LocalDateTime since = LocalDateTime.now().minusHours(24);
+        List<Map<String, Object>> stories = creatorStoryRepository
+                .findByUser_IdAndIsDraftFalseAndUploadTimeAfter(currentUser.getId(), since)
+                .stream()
+                .map(s -> storyDto(s, currentUser))
+                .toList();
+
+        Map<String, Object> profile = creatorDetail(currentUser, currentUser);
+        profile.put("postsCount", posts.size());
+        profile.put("reelsCount", reels.size());
+        profile.put("savedCount", saved.size());
+        profile.put("uploadsCount", allUploads.size());
+
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("creator", profile);
+        body.put("posts", posts);
+        body.put("reels", reels);
+        body.put("saved", saved);
+        body.put("stories", stories);
+        body.put("followers", followUserCards(userFollowRepository.findByFollowed(currentUser), true));
+        body.put("following", followUserCards(userFollowRepository.findByFollower(currentUser), false));
+        body.put("suggestedUsers", suggestedUsers(currentUser, 8));
+        body.put("unreadNotificationCount", creatorNotificationRepository.countByUser_IdAndIsReadFalse(currentUser.getId()));
+        body.put("canUpload", canUseHub(currentUser));
+        return ok(body);
+    }
+
+    @PostMapping("/profile/edit")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> editProfile(
+            @RequestParam(value = "fullName", required = false) String fullNameParam,
+            @RequestParam(value = "creatorHandle", required = false) String handleParam,
+            @RequestParam(value = "creatorBio", required = false) String bioParam,
+            @RequestParam(value = "creatorCity", required = false) String cityParam,
+            @RequestBody(required = false) Map<String, Object> body,
+            HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+
+        String fullName = firstNonBlank(fullNameParam, body == null ? null : str(body.get("fullName")));
+        String handle = firstNonBlank(handleParam, body == null ? null : str(body.get("creatorHandle")),
+                body == null ? null : str(body.get("handle")));
+        String bio = firstNonBlank(bioParam, body == null ? null : str(body.get("creatorBio")),
+                body == null ? null : str(body.get("bio")));
+        String city = firstNonBlank(cityParam, body == null ? null : str(body.get("creatorCity")),
+                body == null ? null : str(body.get("city")));
+
+        if (fullName == null || fullName.isBlank()) return badRequest("fullName is required");
+        if (handle == null || handle.isBlank()) return badRequest("creatorHandle is required");
+
+        currentUser.setFullName(fullName.trim());
+        currentUser.setCreatorHandle(handle.trim());
+        currentUser.setCreatorBio(bio == null ? "" : bio.trim());
+        currentUser.setCreatorCity(city == null ? "" : city.trim());
+        userRepository.save(currentUser);
+        session.setAttribute("user", currentUser);
+        return ok(Map.of("creator", creatorDetail(currentUser, currentUser)));
+    }
+
+    @PostMapping("/profile/upload-photo")
+    @Transactional
+    public ResponseEntity<Map<String, Object>> uploadProfilePhoto(
+            @RequestParam("file") MultipartFile file,
+            HttpSession session) {
+        User currentUser = requireUser(session);
+        if (currentUser == null) return unauthorized();
+        if (file == null || file.isEmpty()) return badRequest("Photo file is required");
+        try {
+            String url = fileUploadService.saveFile(file);
+            currentUser.setProfilePhoto(url);
+            userRepository.save(currentUser);
+            session.setAttribute("user", currentUser);
+            return ok(Map.of("url", url, "profilePhoto", url));
+        } catch (IOException e) {
+            return badRequest("Upload failed: " + e.getMessage());
+        }
     }
 
     @GetMapping("/posts/{id}/comments")
@@ -288,6 +372,13 @@ public class MobileCreatorHubController {
         userStats.put("affiliateCode", user.getCreatorAffiliateCode());
         userStats.put("verifiedCreator", user.isVerifiedCreator());
         userStats.putAll(creatorProfileService.profilePayload(user));
+        userStats.put("fullName", user.getFullName());
+        userStats.put("handle", user.getCreatorHandle());
+        userStats.put("creatorHandle", user.getCreatorHandle());
+        userStats.put("bio", user.getCreatorBio());
+        userStats.put("creatorBio", user.getCreatorBio());
+        userStats.put("city", user.getCreatorCity());
+        userStats.put("creatorCity", user.getCreatorCity());
 
         Map<String, Object> dash = new LinkedHashMap<>();
         dash.put("drafts", drafts);
@@ -302,8 +393,8 @@ public class MobileCreatorHubController {
         dash.put("blockedUsers", blocked);
         dash.put("categories", List.of(CREATOR_CATEGORIES));
         dash.put("user", userStats);
-        dash.put("approved", CreatorProfileService.isApprovedCreator(user));
-        dash.put("canUpload", CreatorProfileService.isApprovedCreator(user));
+        dash.put("approved", canUseHub(user));
+        dash.put("canUpload", canUseHub(user));
         dash.put("payoutBalance", user.getCreatorPayoutBalance());
         dash.put("upiId", user.getCreatorUpiId());
         dash.put("cancelPolicy", in.sp.main.Service.CreatorCareService.CANCEL_POLICY);
@@ -365,10 +456,10 @@ public class MobileCreatorHubController {
             HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
-        if (!CreatorProfileService.isApprovedCreator(user)) {
+        if (!canUseHub(user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
-                    "error", "Your creator profile must be approved by admin before you can upload."));
+                    "error", "Your account cannot publish in Creator Hub."));
         }
         if (file.isEmpty()) return badRequest("Media file is required");
 
@@ -758,10 +849,10 @@ public class MobileCreatorHubController {
     public ResponseEntity<Map<String, Object>> publishDraft(@RequestBody Map<String, Object> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
-        if (!CreatorProfileService.isApprovedCreator(user)) {
+        if (!canUseHub(user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
-                    "error", "Your creator profile must be approved by admin before you can publish."));
+                    "error", "Your account cannot publish in Creator Hub."));
         }
         Long videoId = longVal(body.get("videoId"));
         Videoupload video = videoUploadRepository.findById(videoId).orElse(null);
@@ -802,10 +893,10 @@ public class MobileCreatorHubController {
     public ResponseEntity<Map<String, Object>> applyCollab(@RequestBody Map<String, Object> body, HttpSession session) {
         User user = requireUser(session);
         if (user == null) return unauthorized();
-        if (!CreatorProfileService.isApprovedCreator(user)) {
+        if (!canUseHub(user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
-                    "error", "Your creator profile must be approved before applying to campaigns."));
+                    "error", "Your account cannot apply to campaigns."));
         }
         Long campaignId = longVal(body.get("campaignId"));
         String pitch = str(body.get("pitch"));
@@ -857,10 +948,10 @@ public class MobileCreatorHubController {
             HttpSession session) {
         User currentUser = requireUser(session);
         if (currentUser == null) return unauthorized();
-        if (!CreatorProfileService.isApprovedCreator(currentUser)) {
+        if (!canUseHub(currentUser)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "success", false,
-                    "error", "Your creator profile must be approved by admin before you can upload stories."));
+                    "error", "Your account cannot publish stories."));
         }
         if (file.isEmpty()) return badRequest("File is required");
         try {
@@ -966,8 +1057,7 @@ public class MobileCreatorHubController {
     private List<Map<String, Object>> buildStoryGroups(User currentUser, List<Long> blockedUserIds, LocalDateTime since) {
         List<CreatorStory> active = creatorStoryRepository.findByIsDraftFalseAndUploadTimeAfter(since).stream()
                 .filter(s -> s.getUser() != null && !blockedUserIds.contains(s.getUser().getId()))
-                .filter(s -> s.getUser().getId().equals(currentUser.getId())
-                        || CreatorProfileService.isApprovedCreator(s.getUser()))
+                .filter(s -> canUseHub(s.getUser()))
                 .filter(s -> canViewUploader(currentUser, s.getUser()))
                 .toList();
         Map<Long, List<CreatorStory>> byUser = active.stream()
@@ -1037,19 +1127,85 @@ public class MobileCreatorHubController {
         return m;
     }
 
+    private boolean canUseHub(User user) {
+        return user != null && !user.isBanned() && !user.isBannedCreator();
+    }
+
     private Map<String, Object> creatorSummary(User u) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", u.getId());
         m.put("name", u.getFullName());
+        m.put("fullName", u.getFullName());
+        m.put("handle", u.getCreatorHandle());
+        m.put("creatorHandle", u.getCreatorHandle());
+        m.put("bio", u.getCreatorBio());
+        m.put("creatorBio", u.getCreatorBio());
         m.put("profilePhoto", u.getProfilePhoto());
         m.put("verifiedCreator", u.isVerifiedCreator());
         m.put("isPrivate", u.isPrivate());
         m.put("city", u.getCreatorCity());
+        m.put("creatorCity", u.getCreatorCity());
         m.put("category", u.getCreatorCategory());
         m.put("rating", u.getCreatorRating());
         m.put("reviewCount", u.getCreatorReviewCount());
-        m.put("approved", CreatorProfileService.isApprovedCreator(u));
+        m.put("approved", canUseHub(u));
         return m;
+    }
+
+    private Map<String, Object> creatorDetail(User creator, User currentUser) {
+        Map<String, Object> profile = creatorSummary(creator);
+        int followersCount = userFollowRepository.findByFollowed(creator).size();
+        int followingCount = userFollowRepository.findByFollower(creator).size();
+        boolean isFollowing = userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedTrue(
+                currentUser.getId(), creator.getId());
+        boolean isRequested = userFollowRepository.existsByFollower_IdAndFollowed_IdAndAcceptedFalse(
+                currentUser.getId(), creator.getId());
+        boolean isSubscribed = creatorSubscriptionRepository.existsBySubscriber_IdAndCreator_IdAndEndDateAfter(
+                currentUser.getId(), creator.getId(), LocalDateTime.now());
+        profile.put("followersCount", followersCount);
+        profile.put("followingCount", followingCount);
+        profile.put("isFollowing", isFollowing);
+        profile.put("isRequested", isRequested);
+        profile.put("isSubscribed", isSubscribed);
+        profile.put("subscriptionPrice", creator.getCreatorSubscriptionPrice());
+        profile.put("walletBalance", creator.getWalletBalance());
+        profile.put("isOwnProfile", creator.getId().equals(currentUser.getId()));
+        profile.put("canReview", creatorCareService.canReview(currentUser, creator));
+        profile.put("canCancelSub", isSubscribed);
+        profile.put("cancelPolicy", in.sp.main.Service.CreatorCareService.CANCEL_POLICY);
+        profile.put("canUpload", canUseHub(creator));
+        return profile;
+    }
+
+    private List<Map<String, Object>> followUserCards(List<UserFollow> relations, boolean followers) {
+        return relations.stream()
+                .map(r -> followers ? r.getFollower() : r.getFollowed())
+                .filter(Objects::nonNull)
+                .map(this::creatorSummary)
+                .toList();
+    }
+
+    private List<Map<String, Object>> suggestedUsers(User currentUser, int limit) {
+        Set<Long> alreadyFollowing = userFollowRepository.findByFollower(currentUser).stream()
+                .map(UserFollow::getFollowed)
+                .filter(Objects::nonNull)
+                .map(User::getId)
+                .collect(Collectors.toSet());
+        return userRepository.findAll().stream()
+                .filter(u -> !u.getId().equals(currentUser.getId()))
+                .filter(this::canUseHub)
+                .filter(u -> !alreadyFollowing.contains(u.getId()))
+                .limit(Math.max(limit, 1))
+                .map(this::creatorSummary)
+                .toList();
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) return null;
+        for (String v : values) {
+            if (v != null && !v.isBlank()) return v;
+        }
+        return null;
     }
 
     private String performAISafetyScan(String text) {

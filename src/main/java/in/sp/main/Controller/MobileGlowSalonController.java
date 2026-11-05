@@ -38,6 +38,8 @@ public class MobileGlowSalonController {
     @Autowired
     private GlowCareService glowCareService;
     @Autowired
+    private in.sp.main.Service.GlowBookingNotificationService glowBookingNotificationService;
+    @Autowired
     private SalonProfileService salonProfileService;
     @Autowired
     private FileUploadService fileUploadService;
@@ -125,6 +127,11 @@ public class MobileGlowSalonController {
         }
         booking.setStatus(status);
         bookingRepo.save(booking);
+        try {
+            if (glowBookingNotificationService != null) {
+                glowBookingNotificationService.notifyBookingStatusUpdated(booking, status);
+            }
+        } catch (Exception ignored) {}
 
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("success", true);

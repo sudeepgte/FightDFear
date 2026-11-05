@@ -428,7 +428,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     if (_medicalReg.text.trim().isEmpty) return '1.4 Medical registration number is required';
     if (expStr.isEmpty) return '1.5 Years of experience is required';
     if (_hospital.text.trim().isEmpty) return '2.1 Hospital / clinic name is required';
-    if (_clinicAddress.text.trim().isEmpty) return '2.2 Clinic address is required';
+    if (_clinicAddress.text.trim().isEmpty) return '2.2 Full address is required';
     if (_city.text.trim().isEmpty) return '2.3 City is required';
     if (_resolvedState.isEmpty) return '2.4 State is required';
     if (pin.isEmpty || !RegExp(r'^\d{6}$').hasMatch(pin)) return '2.5 Pincode must be exactly 6 digits';
@@ -607,22 +607,123 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     return File(result.files.single.path!);
   }
 
-  Future<void> _uploadDoc(String type, {bool imagesOnly = false}) async {
-    final file = await _pickDocument(imagesOnly: imagesOnly);
-    if (file == null) return;
+  List<String> _clinicPhotoPaths() {
+    final raw = _profile['clinicPhotos'];
+    if (raw is List) {
+      return raw.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+    }
+    if (raw == null) return const [];
+    return raw
+        .toString()
+        .split(RegExp(r'[,|]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+  }
 
+  void _mergeDocumentState(Map<String, dynamic> res, {String? type, dynamic path}) {
+    final profile = res['profile'] is Map ? Map<String, dynamic>.from(res['profile'] as Map) : null;
+    const keys = [
+      'profilePhotoPath',
+      'idProofPath',
+      'identityDocumentPath',
+      'degreeCertificatePath',
+      'medicalLicensePath',
+      'additionalCertificatePath',
+      'clinicPhotos',
+      'profileCompletionPct',
+      'missingItems',
+      'canSubmitForVerification',
+      'doctorProfileStatus',
+      'doctorProfileStatusLabel',
+      'nextStepGuidance',
+    ];
+    setState(() {
+      if (profile != null) {
+        for (final key in keys) {
+          if (profile.containsKey(key)) {
+            _profile[key] = profile[key];
+          }
+        }
+      } else {
+        if (res.containsKey('profileCompletionPct')) {
+          _profile['profileCompletionPct'] = res['profileCompletionPct'];
+        }
+        if (res.containsKey('missingItems')) {
+          _profile['missingItems'] = res['missingItems'];
+        }
+        if (res.containsKey('canSubmitForVerification')) {
+          _profile['canSubmitForVerification'] = res['canSubmitForVerification'];
+        }
+        if (res.containsKey('doctorProfileStatus')) {
+          _profile['doctorProfileStatus'] = res['doctorProfileStatus'];
+        }
+      }
+      if (type != null) {
+        final keepClinicList = type == 'CLINIC_PHOTO'
+            && path != null
+            && profile != null
+            && profile.containsKey('clinicPhotos');
+        if (!keepClinicList) {
+          _applyLocalDocPath(type, path);
+        }
+      }
+    });
+  }
+
+  void _applyLocalDocPath(String type, dynamic path) {
+    switch (type) {
+      case 'PROFILE_PHOTO':
+        _profile['profilePhotoPath'] = path;
+        break;
+      case 'GOVERNMENT_ID':
+        _profile['idProofPath'] = path;
+        _profile['identityDocumentPath'] = path;
+        break;
+      case 'MEDICAL_REGISTRATION':
+        _profile['degreeCertificatePath'] = path;
+        break;
+      case 'MEDICAL_LICENSE':
+        _profile['medicalLicensePath'] = path;
+        break;
+      case 'ADDITIONAL_CERTIFICATE':
+        _profile['additionalCertificatePath'] = path;
+        break;
+      case 'CLINIC_PHOTO':
+        _profile['clinicPhotos'] = path;
+        break;
+    }
+  }
+
+  Future<bool> _uploadFileForType(String type, File file) async {
     final name = file.path.toLowerCase();
     final ext = name.contains('.') ? name.substring(name.lastIndexOf('.')) : '';
     if (!_allowedExt.contains(ext)) {
-      setState(() => _error = 'Only JPG, PNG, or PDF files are allowed');
-      return;
+      throw Exception('Only JPG, PNG, or PDF files are allowed');
     }
     final size = await file.length();
     if (size > _maxUploadBytes) {
-      setState(() => _error = 'File must be 5 MB or smaller');
-      return;
+      throw Exception('File must be 5 MB or smaller');
     }
+    final res = await _svc.uploadDocument(
+      type: type,
+      file: file,
+      onProgress: (p) {
+        if (mounted) setState(() => _uploadProgress = p);
+      },
+    );
+    if (res['success'] != true) {
+      throw Exception(res['error']?.toString() ?? 'Upload failed');
+    }
+    if (mounted) {
+      _mergeDocumentState(res, type: type, path: res['path']);
+    }
+    return true;
+  }
 
+  Future<void> _uploadDoc(String type, {bool imagesOnly = false}) async {
+    final file = await _pickDocument(imagesOnly: imagesOnly);
+    if (file == null) return;
     if (!mounted) return;
 
     try {
@@ -636,17 +737,50 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
             _uploadProgress = 0;
             _error = null;
           });
-          final res = await _svc.uploadDocument(
-            type: type,
-            file: file,
-            onProgress: (p) {
-              if (mounted) setState(() => _uploadProgress = p);
-            },
-          );
-          if (res['success'] != true) {
-            throw Exception(res['error']?.toString() ?? 'Upload failed');
+          await _uploadFileForType(type, file);
+        },
+      );
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _uploadingType = null;
+          _uploadProgress = 0;
+        });
+      }
+    }
+  }
+
+  Future<void> _uploadClinicPhotos() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['jpg', 'jpeg', 'png'],
+      allowMultiple: true,
+      withData: false,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final files = result.files
+        .where((f) => f.path != null && f.path!.trim().isNotEmpty)
+        .map((f) => File(f.path!))
+        .toList();
+    if (files.isEmpty) return;
+    if (!mounted) return;
+
+    try {
+      await ActionFeedback.run(
+        context,
+        loadingLabel: files.length == 1 ? 'Uploading…' : 'Uploading ${files.length} photos…',
+        doneLabel: 'Uploaded',
+        action: () async {
+          setState(() {
+            _uploadingType = 'CLINIC_PHOTO';
+            _uploadProgress = 0;
+            _error = null;
+          });
+          for (final file in files) {
+            await _uploadFileForType('CLINIC_PHOTO', file);
           }
-          await _load();
         },
       );
     } catch (e) {
@@ -677,7 +811,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     final res = await _svc.deleteDocument(type);
     if (!mounted) return;
     if (res['success'] == true) {
-      await _load();
+      _mergeDocumentState(res, type: type, path: null);
     } else {
       setState(() => _error = res['error']?.toString() ?? 'Delete failed');
     }
@@ -685,16 +819,92 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
 
   Future<void> _preview(String? path) async {
     final url = _docUrl(path);
-    if (url == null) return;
-    final uri = Uri.parse(url);
-    if (!await canLaunchUrl(uri)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to open document preview')),
-      );
-      return;
-    }
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (url == null || !mounted) return;
+    final isImage = _isImage(path);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(ctx).size.height * 0.82,
+              maxWidth: 520,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Document preview',
+                          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: isImage
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: InteractiveViewer(
+                              child: Image.network(
+                                url,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, _, _) => const Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: Text('Preview unavailable'),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.picture_as_pdf, size: 64, color: Color(0xFFDC2626)),
+                              const SizedBox(height: 12),
+                              Text(
+                                path!.split(RegExp(r'[\\/]')).last,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 16),
+                              FilledButton.icon(
+                                onPressed: () async {
+                                  final uri = Uri.parse(url);
+                                  try {
+                                    final ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                                    if (!ok) {
+                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                    }
+                                  } catch (_) {
+                                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                  }
+                                },
+                                icon: const Icon(Icons.open_in_new),
+                                label: const Text('Open document'),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _section(String number, String title, List<Widget> children) {
@@ -889,36 +1099,83 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
     );
   }
 
-  String _statusLabel(String? status) {
-    switch ((status ?? '').toUpperCase()) {
-      case 'REGISTERED':
-      case 'PROFILE_INCOMPLETE':
-        return 'Profile Incomplete';
-      case 'READY_FOR_VERIFICATION':
-        return 'Ready for Verification';
-      case 'PENDING_ADMIN_APPROVAL':
-        return 'Pending Admin Approval';
-      case 'CHANGES_REQUESTED':
-        return 'Changes Requested';
-      case 'APPROVED':
-        return 'Approved';
-      case 'REJECTED':
-        return 'Rejected';
-      case 'SUSPENDED':
-        return 'Suspended';
-      default:
-        return status ?? 'Profile Incomplete';
-    }
+  Widget _profilePhotoCard() {
+    final photoPath = _profile['profilePhotoPath']?.toString();
+    final imgUrl = _docUrl(photoPath);
+    final initial = _fullName.text.trim().isNotEmpty ? _fullName.text.trim()[0].toUpperCase() : 'D';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: ModuleTheme.primary.withValues(alpha: 0.1),
+            backgroundImage: (imgUrl != null && imgUrl.isNotEmpty) ? NetworkImage(imgUrl) : null,
+            child: (imgUrl == null || imgUrl.isEmpty)
+                ? Text(initial, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: ModuleTheme.primary))
+                : null,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '1.0 Profile Photo',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: Color(0xFF0F172A)),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Upload a clear headshot photo (JPG or PNG up to 5MB)',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: ModuleTheme.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () => _uploadDoc('PROFILE_PHOTO', imagesOnly: true),
+                      icon: const Icon(Icons.camera_alt_outlined, size: 14),
+                      label: Text(photoPath != null ? 'Change Photo' : 'Upload Photo', style: const TextStyle(fontSize: 12)),
+                    ),
+                    if (photoPath != null) ...[
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () => _deleteDoc('PROFILE_PHOTO'),
+                        child: const Text('Delete', style: TextStyle(fontSize: 12, color: Colors.red)),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _statusHeader() {
     final pctInt = (_profile['profileCompletionPct'] is num)
         ? (_profile['profileCompletionPct'] as num).toInt()
         : (int.tryParse('${_profile['profileCompletionPct']}') ?? _calculateClientProgress());
-    final status = _profile['doctorProfileStatus']?.toString() ?? 'PROFILE_INCOMPLETE';
-    final statusLabel = (_profile['doctorProfileStatusLabel'] ?? _statusLabel(status)).toString();
-    final missing = ModuleTheme.toList(_profile['missingItems']).map((e) => e.toString()).toList();
-    final guidance = _profile['nextStepGuidance']?.toString() ?? '';
     final rejection = _profile['rejectionReason']?.toString();
     final changes = _profile['changesRequestedNote']?.toString();
     final hasPending = _profile['hasPendingReverification'] == true;
@@ -985,18 +1242,8 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Text('Status: ', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              Text(
-                statusLabel,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
-              ),
-            ],
-          ),
           if (hasPending) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               draftStatus == 'PENDING_REVIEW'
                   ? 'Your edits are pending admin approval. Approved live data is unchanged.'
@@ -1005,100 +1252,13 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
             ),
           ],
           if (rejection != null && rejection.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text('Rejection reason: $rejection', style: const TextStyle(color: Colors.red, fontSize: 12)),
+            const SizedBox(height: 8),
+            Text('Rejection reason: $rejection', style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.w600)),
           ],
           if (changes != null && changes.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Text('Changes requested: $changes', style: const TextStyle(color: Color(0xFFB45309), fontSize: 12)),
-          ],
-          if (guidance.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(guidance, style: const TextStyle(color: Color(0xFF475569), fontSize: 12, height: 1.4)),
+            Text('Changes requested: $changes', style: const TextStyle(color: Color(0xFFB45309), fontSize: 12, fontWeight: FontWeight.w600)),
           ],
-          const SizedBox(height: 14),
-
-          if (missing.isNotEmpty || pctInt < 100) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFDE68A)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
-                      SizedBox(width: 6),
-                      Text(
-                        'Profile Incomplete',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF92400E)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Complete the remaining required items below to activate your account for verification.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFFB45309), height: 1.35),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-          ],
-
-          const Text(
-            'Completion Checklist',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF334155)),
-          ),
-          const SizedBox(height: 10),
-
-          ..._allChecklistDefs.map((def) {
-            final isMissing = _isChecklistItemMissing(def, missing);
-            final isDone = !isMissing;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    isDone ? Icons.check_circle_rounded : Icons.cancel_outlined,
-                    size: 18,
-                    color: isDone ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '${def.code} ',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: isDone ? const Color(0xFF334155) : const Color(0xFF0F172A),
-                            ),
-                          ),
-                          TextSpan(
-                            text: def.label,
-                            style: TextStyle(
-                              fontWeight: isDone ? FontWeight.w400 : FontWeight.w600,
-                              fontSize: 13,
-                              color: isDone ? const Color(0xFF64748B) : const Color(0xFF1E293B),
-                              height: 1.35,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
 
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -1396,7 +1556,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
               OutlinedButton.icon(
                 onPressed: uploading ? null : () => _uploadDoc(type, imagesOnly: imagesOnly),
                 icon: Icon(uploaded ? Icons.swap_horiz : Icons.upload_file),
-                label: Text(uploaded ? 'Replace' : 'Upload'),
+                label: Text(uploaded ? 'Replace' : 'Browse'),
               ),
               if (uploaded)
                 OutlinedButton.icon(
@@ -1407,6 +1567,98 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
               if (uploaded)
                 OutlinedButton.icon(
                   onPressed: uploading ? null : () => _deleteDoc(type),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Delete'),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _clinicPhotosTile() {
+    final photos = _clinicPhotoPaths();
+    final uploading = _uploadingType == 'CLINIC_PHOTO';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '10.6 Clinic photos (waiting room / signage)',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            photos.isEmpty
+                ? 'Browse and select multiple JPG or PNG images · max 5 MB each'
+                : '${photos.length} photo${photos.length == 1 ? '' : 's'} uploaded',
+            style: const TextStyle(color: ModuleTheme.textGray, fontSize: 12),
+          ),
+          if (photos.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: photos.map((path) {
+                return GestureDetector(
+                  onTap: () => _preview(path),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      _docUrl(path) ?? '',
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        width: 72,
+                        height: 72,
+                        color: const Color(0xFFF1F5F9),
+                        child: const Icon(Icons.image_outlined),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+          if (uploading) ...[
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: _uploadProgress <= 0 ? null : _uploadProgress),
+            const SizedBox(height: 4),
+            Text('Uploading ${(_uploadProgress * 100).round()}%'),
+          ],
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: uploading ? null : _uploadClinicPhotos,
+                icon: const Icon(Icons.photo_library_outlined),
+                label: Text(photos.isEmpty ? 'Browse photos' : 'Add more photos'),
+              ),
+              if (photos.isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: uploading ? null : () => _preview(photos.last),
+                  icon: const Icon(Icons.visibility_outlined),
+                  label: const Text('Preview'),
+                ),
+              if (photos.isNotEmpty)
+                OutlinedButton.icon(
+                  onPressed: uploading ? null : () => _deleteDoc('CLINIC_PHOTO'),
                   icon: const Icon(Icons.delete_outline),
                   label: const Text('Delete'),
                 ),
@@ -1643,6 +1895,7 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                 ],
                 _statusHeader(),
                 _section('1', 'Professional Information', [
+                  _profilePhotoCard(),
                   _field(_fullName, '1.1', 'Doctor name', required: true),
                   _dropdown(
                     number: '1.2',
@@ -1668,21 +1921,34 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                 ]),
                 _section('2', 'Clinic / Hospital Information', [
                   _field(_hospital, '2.1', 'Hospital / clinic name', required: true),
-                  _field(_clinicAddress, '2.2', 'Clinic address', required: true, maxLines: 2),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      '2.2 Full address *',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF334155)),
+                    ),
+                  ),
                   DynamicLocationHierarchyPicker(
                     api: context.read<AuthState>().api,
                     initialCountry: 'India',
                     initialState: _state,
                     initialCity: _city.text.isNotEmpty ? _city.text : null,
+                    initialFullAddress: _clinicAddress.text.isNotEmpty ? _clinicAddress.text : null,
                     isRequired: true,
                     onLocationChanged: ({required country, required state, required district, String? city, String? fullAddress}) {
                       setState(() {
                         _state = state;
-                        if (city != null && city.isNotEmpty) _city.text = city;
+                        if (fullAddress != null) {
+                          _clinicAddress.text = fullAddress.trim();
+                        }
+                        if (city != null && city.isNotEmpty) {
+                          _city.text = city.trim();
+                        } else if (district.isNotEmpty) {
+                          _city.text = district.trim();
+                        }
                       });
                     },
                   ),
-                  _field(_city, '2.3', 'City / Town', required: true),
                   _field(
                     _pincode,
                     '2.4',
@@ -1825,45 +2091,30 @@ class _DoctorProfileCompletionScreenState extends State<DoctorProfileCompletionS
                   ),
                   const SizedBox(height: 10),
                   _documentTile(
-                    title: '10.1 Profile Photo',
-                    type: 'PROFILE_PHOTO',
-                    path: _profile['profilePhotoPath']?.toString(),
-                    requiredDoc: false,
-                    imagesOnly: true,
-                  ),
-                  _documentTile(
-                    title: '10.2 Government ID',
+                    title: '10.1 Government ID',
                     type: 'GOVERNMENT_ID',
                     path: (_profile['idProofPath'] ?? _profile['identityDocumentPath'])?.toString(),
                     requiredDoc: false,
                   ),
                   _documentTile(
-                    title: '10.3 Medical Registration Certificate',
+                    title: '10.2 Medical Registration Certificate',
                     type: 'MEDICAL_REGISTRATION',
                     path: _profile['degreeCertificatePath']?.toString(),
                     requiredDoc: false,
                   ),
                   _documentTile(
-                    title: '10.4 Medical License',
+                    title: '10.3 Medical License',
                     type: 'MEDICAL_LICENSE',
                     path: _profile['medicalLicensePath']?.toString(),
                     requiredDoc: false,
                   ),
                   _documentTile(
-                    title: '10.5 Extra certificates',
+                    title: '10.4 Extra certificates',
                     type: 'ADDITIONAL_CERTIFICATE',
                     path: _profile['additionalCertificatePath']?.toString(),
                     requiredDoc: false,
                   ),
-                  _documentTile(
-                    title: '10.6 Clinic photos (waiting room / signage)',
-                    type: 'CLINIC_PHOTO',
-                    path: (_profile['clinicPhotos'] is List && (_profile['clinicPhotos'] as List).isNotEmpty)
-                        ? (_profile['clinicPhotos'] as List).last.toString()
-                        : _profile['clinicPhotos']?.toString(),
-                    requiredDoc: false,
-                    imagesOnly: true,
-                  ),
+                  _clinicPhotosTile(),
                 ]),
                 _section('11', 'Review & Submit', [
                   Text(

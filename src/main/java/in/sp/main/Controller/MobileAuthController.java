@@ -60,6 +60,9 @@ public class MobileAuthController {
     private in.sp.main.Service.GoogleMapsService googleMapsService;
 
     @Autowired
+    private in.sp.main.Service.PasswordResetService passwordResetService;
+
+    @Autowired
     private in.sp.main.Repository.EmergencyContactRepository emergencyContactRepository;
 
     @org.springframework.beans.factory.annotation.Value("${otp.expiration-minutes:10}")
@@ -119,7 +122,11 @@ public class MobileAuthController {
         } catch (org.springframework.web.server.ResponseStatusException ex) {
             return ResponseEntity.status(ex.getStatusCode()).body(error(ex.getReason()));
         } catch (IllegalStateException ex) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error(ex.getMessage()));
+            String msg = ex.getMessage() == null ? "" : ex.getMessage();
+            boolean mailError = msg.toLowerCase().contains("mail") || msg.toLowerCase().contains("smtp")
+                    || msg.toLowerCase().contains("email otp") || msg.toLowerCase().contains("email service");
+            HttpStatus status = mailError ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.TOO_MANY_REQUESTS;
+            return ResponseEntity.status(status).body(error(ex.getMessage()));
         }
     }
 
@@ -463,6 +470,11 @@ public class MobileAuthController {
             return ResponseEntity.badRequest().body(error(whatsappErr));
         }
         String normWhatsapp = MobileValidation.normalizeWhatsappNumber(whatsappNumber);
+        String ecDistinctErr = MobileValidation.requireEmergencyContactDistinctFromUser(
+                phone, email, normWhatsapp, ecPhone, ecEmail);
+        if (ecDistinctErr != null) {
+            return ResponseEntity.badRequest().body(error(ecDistinctErr));
+        }
         user.setWhatsappNumber(normWhatsapp);
 
         EmergencyContact contact = new EmergencyContact();
@@ -488,9 +500,6 @@ public class MobileAuthController {
             session.setAttribute("regSuccessEmail", email);
             session.setAttribute("regSuccessPhone", phone);
             session.setAttribute("regPrefillEmail", email);
-            if (password != null && !password.isBlank()) {
-                session.setAttribute("regPrefillPassword", password);
-            }
         }
 
         response.put("success", true);
@@ -521,6 +530,38 @@ public class MobileAuthController {
 
     private static String trim(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, Object>> forgotPassword(@RequestBody Map<String, String> body) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        String email = body == null ? null : body.get("email");
+        String normEmail = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
+        if (normEmail.isEmpty()) {
+            response.put("success", false);
+            response.put("error", "Please enter your email address");
+            return ResponseEntity.badRequest().body(response);
+        }
+        if (!normEmail.matches("^[a-zA-Z0-9._+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$")) {
+            response.put("success", false);
+            response.put("error", "Please enter a valid email address");
+            return ResponseEntity.badRequest().body(response);
+        }
+        try {
+            String result = passwordResetService.createPasswordResetToken(normEmail);
+            if ("No account found with this email address".equals(result)) {
+                response.put("success", false);
+                response.put("error", "No account found with this email address. Please check your email or register.");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            response.put("success", true);
+            response.put("message", "A password reset link has been sent to your registered email inbox.");
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            response.put("success", false);
+            response.put("error", "Unable to process request right now. Please try again later.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     @PostMapping("/login")

@@ -32,7 +32,7 @@ SET @exists = (
 );
 SET @sql = IF(@exists = 0,
     'ALTER TABLE women_product_orders ADD COLUMN delivery_partner_id BIGINT NULL',
-    'DO 0');
+    'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @exists = (
@@ -43,7 +43,7 @@ SET @exists = (
 );
 SET @sql = IF(@exists = 0,
     'ALTER TABLE women_product_orders ADD COLUMN assigned_at DATETIME NULL',
-    'DO 0');
+    'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @exists = (
@@ -54,7 +54,7 @@ SET @exists = (
 );
 SET @sql = IF(@exists = 0,
     'ALTER TABLE women_product_orders ADD COLUMN picked_up_at DATETIME NULL',
-    'DO 0');
+    'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @exists = (
@@ -65,7 +65,7 @@ SET @exists = (
 );
 SET @sql = IF(@exists = 0,
     'ALTER TABLE women_product_orders ADD COLUMN delivered_at DATETIME NULL',
-    'DO 0');
+    'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @exists = (
@@ -76,5 +76,5 @@ SET @exists = (
 );
 SET @sql = IF(@exists = 0,
     'ALTER TABLE women_product_orders ADD COLUMN tracking_note VARCHAR(500) NULL',
-    'DO 0');
+    'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

@@ -24,7 +24,7 @@ public class JwtUtil {
     @Value("${jwt.secret:}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration-ms:2592000000}")
+    @Value("${jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
 
     private Key secretKey;
@@ -34,6 +34,7 @@ public class JwtUtil {
         String secret = jwtSecret == null ? "" : jwtSecret.trim();
         if (secret.isBlank()) {
             secret = "LOCAL_DEV_ONLY_change_me_min_32_chars_abcdefgh";
+            log.warn("JWT_SECRET is not set; using the local-dev signing key. Set JWT_SECRET in production.");
         }
 
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
@@ -120,10 +121,13 @@ public class JwtUtil {
             return notExpired;
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             String sub = e.getClaims() != null ? e.getClaims().getSubject() : "unknown";
-            log.warn("[SECURITY-AUDIT] event=JWT_EXPIRED subject={}", in.sp.main.Util.LogSanitizer.sanitize(sub));
+            log.debug("[SECURITY-AUDIT] event=JWT_EXPIRED subject={}", in.sp.main.Util.LogSanitizer.sanitize(sub));
+            return false;
+        } catch (io.jsonwebtoken.security.SignatureException | io.jsonwebtoken.MalformedJwtException e) {
+            log.debug("[SECURITY-AUDIT] event=JWT_INVALID error={}", in.sp.main.Util.LogSanitizer.sanitize(e.getMessage()));
             return false;
         } catch (Exception e) {
-            log.warn("[SECURITY-AUDIT] event=JWT_INVALID error={}", in.sp.main.Util.LogSanitizer.sanitize(e.getMessage()));
+            log.debug("[SECURITY-AUDIT] event=JWT_INVALID error={}", in.sp.main.Util.LogSanitizer.sanitize(e.getMessage()));
             return false;
         }
     }

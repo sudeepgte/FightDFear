@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../services/auth_state.dart';
 import '../../services/landing_service.dart';
-import '../creator/creator_hub_screen.dart';
+import '../creator/creator_hub_shell.dart';
 import '../safety/home_screen.dart';
 import '../auth/login_screen.dart';
 import '../events/women_events_screen.dart';
@@ -97,7 +97,7 @@ class _LandingNotificationsScreenState extends State<LandingNotificationsScreen>
       case 'events':
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const WomenEventsScreen()));
       case 'community':
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreatorHubScreen()));
+        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CreatorHubShell()));
       case 'login':
         Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
       case 'lawyer':

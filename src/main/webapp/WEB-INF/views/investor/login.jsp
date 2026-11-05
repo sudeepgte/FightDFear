@@ -285,13 +285,18 @@
         <!-- Dynamic Success/Error Banners -->
         <c:if test="${not empty error}">
             <div class="rose-alert" role="alert">
-                <i class="bi bi-exclamation-circle"></i> ${error}
+                <i class="bi bi-exclamation-circle"></i> <c:out value="${error}"/>
             </div>
         </c:if>
 
         <c:if test="${not empty success}">
             <div class="rose-alert-success" role="alert">
-                <i class="bi bi-check-circle"></i> ${success}
+                <i class="bi bi-check-circle"></i> <c:out value="${success}"/>
+            </div>
+        </c:if>
+        <c:if test="${param.reset eq 'success'}">
+            <div class="rose-alert-success" role="alert">
+                <i class="bi bi-check-circle"></i> Password reset successful! Please log in with your new password.
             </div>
         </c:if>
 
@@ -314,7 +319,7 @@
                     <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
                     <i class="field-icon-right bi bi-eye-slash" id="togglePassword"></i>
                 </div>
-                <a href="${pageContext.request.contextPath}/investor/forgot-password" class="forgot-password">Forgot Password?</a>
+                <a href="${pageContext.request.contextPath}/auth/forgot-password?redirect=/investor/login" class="forgot-password">Forgot Password?</a>
             </div>
 
             <button type="submit" class="btn-login">

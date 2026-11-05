@@ -13,7 +13,8 @@
         android:label="Fight D Fear"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -37,16 +38,13 @@
             android:value="2" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCr_gUF2YzV16dICNphMfnkyjBFurYLKaM"/>
+            android:value=""/>
         <!-- Emulator GPU (ranchu/virtgpu) often fails to composite Flutter SurfaceView
              frames (widget tree/a11y live, pixels stay black). Prefer Skia + software
              rendering so the first frame always paints; TextureView is set in MainActivity. -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />
-        <meta-data
-            android:name="io.flutter.embedding.android.EnableSoftwareRendering"
-            android:value="true" />
         <service
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="location"

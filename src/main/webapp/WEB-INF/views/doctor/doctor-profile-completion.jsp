@@ -510,6 +510,115 @@
             min-width: 0;
             max-width: 100%;
         }
+        .doc-action-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .doc-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #CBD5E1;
+            background: #fff;
+            color: #0F172A;
+            font-weight: 700;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            padding: 7px 12px;
+            cursor: pointer;
+        }
+        .doc-action-btn:hover { background: #F8FAFC; border-color: #94A3B8; }
+        .doc-action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .doc-action-btn.danger { color: #DC2626; border-color: #FECACA; }
+        .doc-action-btn.danger:hover { background: #FEF2F2; }
+        .blocked-date-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .blocked-date-row input[type="date"] {
+            min-width: 180px;
+        }
+        .blocked-date-add {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+        .blocked-date-add:hover { background: var(--primary-hover); }
+        .blocked-date-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .blocked-date-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FFF1F2;
+            border: 1px solid #FECDD3;
+            color: #9F1239;
+            border-radius: 999px;
+            padding: 5px 10px 5px 12px;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .blocked-date-chip button {
+            border: none;
+            background: transparent;
+            color: #9F1239;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+            padding: 0;
+        }
+        .doc-preview-modal-card {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 860px;
+            width: 100%;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            padding: 18px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .doc-preview-modal-body {
+            min-height: 240px;
+            max-height: 72vh;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .doc-preview-modal-body img {
+            max-width: 100%;
+            max-height: 68vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        .doc-preview-modal-body iframe {
+            width: 100%;
+            height: 68vh;
+            border: 0;
+            border-radius: 8px;
+            background: #fff;
+        }
 
         /* Submitted Profile Snapshot Card (Kept after submitting) */
         .submitted-profile-card {
@@ -1252,8 +1361,13 @@
                                 </div>
                                 <div class="field full">
                                     <label>Blocked dates</label>
-                                    <input type="text" name="blockedDates" id="blockedDates" value="${doctor.blockedDates != null ? doctor.blockedDates : ''}" placeholder="e.g. 2026-09-01, 2026-09-15">
-                                    <div class="hint">Comma-separated YYYY-MM-DD dates you are unavailable.</div>
+                                    <div class="blocked-date-row">
+                                        <input type="date" id="blockedDatePicker" aria-label="Select a blocked date">
+                                        <button type="button" class="blocked-date-add" id="addBlockedDateBtn"><i class="bi bi-plus-lg"></i> Add date</button>
+                                    </div>
+                                    <div class="blocked-date-chips" id="blockedDatesChips"></div>
+                                    <input type="hidden" name="blockedDates" id="blockedDates" value="${doctor.blockedDates != null ? doctor.blockedDates : ''}">
+                                    <div class="hint">Pick dates you are unavailable. They are saved as YYYY-MM-DD.</div>
                                 </div>
                                 <div class="field full">
                                     <label class="switch-row">
@@ -1396,7 +1510,64 @@
                                             </div>
                                             <div class="field">
                                                 <label>Bank Name</label>
-                                                <input type="text" name="bankName" id="bankName" placeholder="e.g. State Bank of India, HDFC Bank" maxlength="100">
+                                                <select name="bankName" id="bankName">
+                                                    <option value="">Select bank</option>
+                                                    <option>Airtel Payments Bank</option>
+                                                    <option>AU Small Finance Bank</option>
+                                                    <option>Axis Bank</option>
+                                                    <option>Bandhan Bank</option>
+                                                    <option>Bank of Baroda</option>
+                                                    <option>Bank of India</option>
+                                                    <option>Bank of Maharashtra</option>
+                                                    <option>Barclays</option>
+                                                    <option>Canara Bank</option>
+                                                    <option>Capital Small Finance Bank</option>
+                                                    <option>Central Bank of India</option>
+                                                    <option>Citibank</option>
+                                                    <option>City Union Bank</option>
+                                                    <option>CSB Bank</option>
+                                                    <option>DBS Bank</option>
+                                                    <option>DCB Bank</option>
+                                                    <option>Deutsche Bank</option>
+                                                    <option>Dhanlaxmi Bank</option>
+                                                    <option>Equitas Small Finance Bank</option>
+                                                    <option>ESAF Small Finance Bank</option>
+                                                    <option>Federal Bank</option>
+                                                    <option>Fincare Small Finance Bank</option>
+                                                    <option>Fino Payments Bank</option>
+                                                    <option>HDFC Bank</option>
+                                                    <option>HSBC</option>
+                                                    <option>ICICI Bank</option>
+                                                    <option>IDBI Bank</option>
+                                                    <option>IDFC First Bank</option>
+                                                    <option>India Post Payments Bank</option>
+                                                    <option>Indian Bank</option>
+                                                    <option>Indian Overseas Bank</option>
+                                                    <option>IndusInd Bank</option>
+                                                    <option>Jana Small Finance Bank</option>
+                                                    <option>Jammu &amp; Kashmir Bank</option>
+                                                    <option>Jio Payments Bank</option>
+                                                    <option>Karnataka Bank</option>
+                                                    <option>Karur Vysya Bank</option>
+                                                    <option>Kotak Mahindra Bank</option>
+                                                    <option>Nainital Bank</option>
+                                                    <option>North East Small Finance Bank</option>
+                                                    <option>NSDL Payments Bank</option>
+                                                    <option>Paytm Payments Bank</option>
+                                                    <option>Punjab &amp; Sind Bank</option>
+                                                    <option>Punjab National Bank</option>
+                                                    <option>RBL Bank</option>
+                                                    <option>South Indian Bank</option>
+                                                    <option>Standard Chartered</option>
+                                                    <option>State Bank of India</option>
+                                                    <option>Suryoday Small Finance Bank</option>
+                                                    <option>Tamilnad Mercantile Bank</option>
+                                                    <option>UCO Bank</option>
+                                                    <option>Ujjivan Small Finance Bank</option>
+                                                    <option>Union Bank of India</option>
+                                                    <option>Utkarsh Small Finance Bank</option>
+                                                    <option>Yes Bank</option>
+                                                </select>
                                             </div>
                                             <div class="field">
                                                 <label>Account Number</label>
@@ -1435,9 +1606,10 @@
                                 <!-- Government ID -->
                                 <div class="field">
                                     <label>Government ID</label>
-                                    <input type="file" name="idProof" id="idProof" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="idProof">
+                                    <input type="file" name="idProof" id="idProof" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="idProof" style="display:none;">
                                     <div class="error-msg" id="err-idProof">Use JPG, PNG or PDF up to 5 MB.</div>
                                     <c:set var="docId" value="${not empty doctor.idProofPath ? doctor.idProofPath : (not empty doctor.identityDocumentPath ? doctor.identityDocumentPath : profile.idProofPath)}" />
+                                    <c:set var="docIdUrl" value="${pageContext.request.contextPath}${docId}" />
                                     <div class="doc-status-wrap" id="docWrap-idProof">
                                         <c:choose>
                                             <c:when test="${not empty docId}">
@@ -1445,16 +1617,12 @@
                                                 <div class="doc-preview-box" id="preview-idProof">
                                                     <c:choose>
                                                         <c:when test="${fn:endsWith(fn:toLowerCase(docId), '.pdf')}">
-                                                            <a href="${pageContext.request.contextPath}${docId}" target="_blank" class="doc-link">
-                                                                <i class="bi bi-file-earmark-pdf-fill text-danger"></i> View Document (PDF)
-                                                            </a>
+                                                            <span class="doc-link"><i class="bi bi-file-earmark-pdf-fill text-danger"></i> PDF document on file</span>
                                                         </c:when>
                                                         <c:otherwise>
                                                             <div class="doc-thumb-row">
                                                                 <img src="${pageContext.request.contextPath}${docId}" alt="Government ID" class="doc-thumb-img">
-                                                                <a href="${pageContext.request.contextPath}${docId}" target="_blank" class="doc-link">
-                                                                    <i class="bi bi-box-arrow-up-right"></i> View Full Image
-                                                                </a>
+                                                                <span class="doc-link">Image on file</span>
                                                             </div>
                                                         </c:otherwise>
                                                     </c:choose>
@@ -1465,15 +1633,21 @@
                                                 <div class="doc-preview-box" id="preview-idProof" style="display:none;"></div>
                                             </c:otherwise>
                                         </c:choose>
+                                        <div class="doc-action-row">
+                                            <button type="button" class="doc-action-btn" data-doc-action="preview" data-doc-id="idProof" data-doc-path="${not empty docId ? docIdUrl : ''}" ${empty docId ? 'disabled' : ''}><i class="bi bi-eye"></i> Preview</button>
+                                            <button type="button" class="doc-action-btn" data-doc-action="replace" data-doc-id="idProof"><i class="bi bi-folder2-open"></i> ${empty docId ? 'Browse' : 'Replace'}</button>
+                                            <button type="button" class="doc-action-btn danger" data-doc-action="delete" data-doc-id="idProof" data-doc-type="GOVERNMENT_ID" ${empty docId ? 'disabled' : ''}><i class="bi bi-trash"></i> Delete</button>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Medical Registration Certificate -->
                                 <div class="field">
                                     <label>Medical registration certificate</label>
-                                    <input type="file" name="degreeCertificate" id="degreeCertificate" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="degreeCertificate">
+                                    <input type="file" name="degreeCertificate" id="degreeCertificate" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="degreeCertificate" style="display:none;">
                                     <div class="error-msg" id="err-degreeCertificate">Use JPG, PNG or PDF up to 5 MB.</div>
                                     <c:set var="docDegree" value="${not empty doctor.degreeCertificatePath ? doctor.degreeCertificatePath : profile.degreeCertificatePath}" />
+                                    <c:set var="docDegreeUrl" value="${pageContext.request.contextPath}${docDegree}" />
                                     <div class="doc-status-wrap" id="docWrap-degreeCertificate">
                                         <c:choose>
                                             <c:when test="${not empty docDegree}">
@@ -1481,16 +1655,12 @@
                                                 <div class="doc-preview-box" id="preview-degreeCertificate">
                                                     <c:choose>
                                                         <c:when test="${fn:endsWith(fn:toLowerCase(docDegree), '.pdf')}">
-                                                            <a href="${pageContext.request.contextPath}${docDegree}" target="_blank" class="doc-link">
-                                                                <i class="bi bi-file-earmark-pdf-fill text-danger"></i> View Document (PDF)
-                                                            </a>
+                                                            <span class="doc-link"><i class="bi bi-file-earmark-pdf-fill text-danger"></i> PDF document on file</span>
                                                         </c:when>
                                                         <c:otherwise>
                                                             <div class="doc-thumb-row">
                                                                 <img src="${pageContext.request.contextPath}${docDegree}" alt="Medical Registration" class="doc-thumb-img">
-                                                                <a href="${pageContext.request.contextPath}${docDegree}" target="_blank" class="doc-link">
-                                                                    <i class="bi bi-box-arrow-up-right"></i> View Full Image
-                                                                </a>
+                                                                <span class="doc-link">Image on file</span>
                                                             </div>
                                                         </c:otherwise>
                                                     </c:choose>
@@ -1501,15 +1671,21 @@
                                                 <div class="doc-preview-box" id="preview-degreeCertificate" style="display:none;"></div>
                                             </c:otherwise>
                                         </c:choose>
+                                        <div class="doc-action-row">
+                                            <button type="button" class="doc-action-btn" data-doc-action="preview" data-doc-id="degreeCertificate" data-doc-path="${not empty docDegree ? docDegreeUrl : ''}" ${empty docDegree ? 'disabled' : ''}><i class="bi bi-eye"></i> Preview</button>
+                                            <button type="button" class="doc-action-btn" data-doc-action="replace" data-doc-id="degreeCertificate"><i class="bi bi-folder2-open"></i> ${empty docDegree ? 'Browse' : 'Replace'}</button>
+                                            <button type="button" class="doc-action-btn danger" data-doc-action="delete" data-doc-id="degreeCertificate" data-doc-type="MEDICAL_REGISTRATION" ${empty docDegree ? 'disabled' : ''}><i class="bi bi-trash"></i> Delete</button>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Medical License -->
                                 <div class="field">
                                     <label>Medical license</label>
-                                    <input type="file" name="medicalLicense" id="medicalLicense" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="medicalLicense">
+                                    <input type="file" name="medicalLicense" id="medicalLicense" accept="image/jpeg,image/png,application/pdf" class="doc-file-input" data-doc-id="medicalLicense" style="display:none;">
                                     <div class="error-msg" id="err-medicalLicense">Use JPG, PNG or PDF up to 5 MB.</div>
                                     <c:set var="docLicense" value="${not empty doctor.medicalLicensePath ? doctor.medicalLicensePath : profile.medicalLicensePath}" />
+                                    <c:set var="docLicenseUrl" value="${pageContext.request.contextPath}${docLicense}" />
                                     <div class="doc-status-wrap" id="docWrap-medicalLicense">
                                         <c:choose>
                                             <c:when test="${not empty docLicense}">
@@ -1517,16 +1693,12 @@
                                                 <div class="doc-preview-box" id="preview-medicalLicense">
                                                     <c:choose>
                                                         <c:when test="${fn:endsWith(fn:toLowerCase(docLicense), '.pdf')}">
-                                                            <a href="${pageContext.request.contextPath}${docLicense}" target="_blank" class="doc-link">
-                                                                <i class="bi bi-file-earmark-pdf-fill text-danger"></i> View Document (PDF)
-                                                            </a>
+                                                            <span class="doc-link"><i class="bi bi-file-earmark-pdf-fill text-danger"></i> PDF document on file</span>
                                                         </c:when>
                                                         <c:otherwise>
                                                             <div class="doc-thumb-row">
                                                                 <img src="${pageContext.request.contextPath}${docLicense}" alt="Medical License" class="doc-thumb-img">
-                                                                <a href="${pageContext.request.contextPath}${docLicense}" target="_blank" class="doc-link">
-                                                                    <i class="bi bi-box-arrow-up-right"></i> View Full Image
-                                                                </a>
+                                                                <span class="doc-link">Image on file</span>
                                                             </div>
                                                         </c:otherwise>
                                                     </c:choose>
@@ -1537,6 +1709,11 @@
                                                 <div class="doc-preview-box" id="preview-medicalLicense" style="display:none;"></div>
                                             </c:otherwise>
                                         </c:choose>
+                                        <div class="doc-action-row">
+                                            <button type="button" class="doc-action-btn" data-doc-action="preview" data-doc-id="medicalLicense" data-doc-path="${not empty docLicense ? docLicenseUrl : ''}" ${empty docLicense ? 'disabled' : ''}><i class="bi bi-eye"></i> Preview</button>
+                                            <button type="button" class="doc-action-btn" data-doc-action="replace" data-doc-id="medicalLicense"><i class="bi bi-folder2-open"></i> ${empty docLicense ? 'Browse' : 'Replace'}</button>
+                                            <button type="button" class="doc-action-btn danger" data-doc-action="delete" data-doc-id="medicalLicense" data-doc-type="MEDICAL_LICENSE" ${empty docLicense ? 'disabled' : ''}><i class="bi bi-trash"></i> Delete</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1657,6 +1834,20 @@
                 <button type="button" class="btn-ghost" id="modalSaveDraftBtn"><i class="bi bi-save"></i> Save Draft</button>
                 <button type="button" class="btn-modal-confirm" id="modalSubmitVerifyBtn"><i class="bi bi-check2-circle"></i> Confirm &amp; Submit for Verification</button>
             </div>
+        </div>
+    </div>
+
+    <div id="docPreviewModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="docPreviewTitle" style="display:none;">
+        <div class="doc-preview-modal-card">
+            <div class="modal-header">
+                <div class="icon-wrap"><i class="bi bi-eye"></i></div>
+                <div style="flex: 1;">
+                    <h3 id="docPreviewTitle">Document preview</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-gray); margin: 0;">Uploaded file preview</p>
+                </div>
+                <button type="button" class="btn-close-modal" id="btnCloseDocPreview" aria-label="Close document preview">&times;</button>
+            </div>
+            <div class="doc-preview-modal-body" id="docPreviewBody"></div>
         </div>
     </div>
 
@@ -2354,6 +2545,14 @@
             }
 
             function parseExistingBankDetails() {
+                const selInit = document.getElementById('bankName');
+                if (selInit) {
+                    Array.from(selInit.options).forEach(function(opt, idx) {
+                        if (idx > 0 && !opt.getAttribute('value')) {
+                            opt.value = opt.textContent.trim();
+                        }
+                    });
+                }
                 const raw = (document.getElementById('bankDetails')?.value || '').trim();
                 if (!raw) return;
                 const holderMatch = raw.match(/Account Holder:\s*([^|]+)/i);
@@ -2363,7 +2562,26 @@
                 const branchMatch = raw.match(/Branch:\s*([^|]+)/i);
 
                 if (holderMatch && document.getElementById('bankAccountHolder')) document.getElementById('bankAccountHolder').value = holderMatch[1].trim();
-                if (bankMatch && document.getElementById('bankName')) document.getElementById('bankName').value = bankMatch[1].trim();
+                if (bankMatch && document.getElementById('bankName')) {
+                    const sel = document.getElementById('bankName');
+                    const name = bankMatch[1].trim();
+                    if (name) {
+                        let found = false;
+                        for (let i = 0; i < sel.options.length; i++) {
+                            if (sel.options[i].value === name || sel.options[i].text === name) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            const opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            sel.appendChild(opt);
+                        }
+                        sel.value = name;
+                    }
+                }
                 if (acctMatch && document.getElementById('bankAccountNumber')) {
                     const num = acctMatch[1].trim();
                     document.getElementById('bankAccountNumber').value = num;
@@ -2375,6 +2593,169 @@
                 if (!holderMatch && !bankMatch && !acctMatch && !ifscMatch && !branchMatch) {
                     if (document.getElementById('bankAccountHolder')) document.getElementById('bankAccountHolder').value = raw;
                 }
+            }
+
+            function syncBlockedDatesValue() {
+                const hidden = document.getElementById('blockedDates');
+                const chips = document.getElementById('blockedDatesChips');
+                if (!hidden || !chips) return;
+                const dates = Array.from(chips.querySelectorAll('[data-date]')).map(el => el.getAttribute('data-date'));
+                hidden.value = dates.join(', ');
+            }
+
+            function renderBlockedDateChip(date) {
+                const chips = document.getElementById('blockedDatesChips');
+                if (!chips || !date || chips.querySelector('[data-date="' + date + '"]')) return;
+                const chip = document.createElement('span');
+                chip.className = 'blocked-date-chip';
+                chip.setAttribute('data-date', date);
+                chip.innerHTML = '<span>' + escapeHtml(date) + '</span><button type="button" aria-label="Remove ' + escapeHtml(date) + '">&times;</button>';
+                chip.querySelector('button').addEventListener('click', function() {
+                    chip.remove();
+                    syncBlockedDatesValue();
+                });
+                chips.appendChild(chip);
+                syncBlockedDatesValue();
+            }
+
+            function initBlockedDatesPicker() {
+                const picker = document.getElementById('blockedDatePicker');
+                const addBtn = document.getElementById('addBlockedDateBtn');
+                const hidden = document.getElementById('blockedDates');
+                if (!picker || !addBtn || !hidden) return;
+                const today = new Date().toISOString().slice(0, 10);
+                picker.min = today;
+                (hidden.value || '').split(',').map(function(v) { return v.trim(); }).filter(Boolean).forEach(renderBlockedDateChip);
+                function addSelected() {
+                    const date = (picker.value || '').trim();
+                    if (!date) {
+                        picker.focus();
+                        return;
+                    }
+                    renderBlockedDateChip(date);
+                    picker.value = '';
+                }
+                addBtn.addEventListener('click', addSelected);
+                picker.addEventListener('change', addSelected);
+            }
+
+            function csrfHeaders() {
+                const headers = { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' };
+                const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+                const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+                if (token) {
+                    headers[header] = token;
+                    headers['X-XSRF-TOKEN'] = token;
+                    headers['X-CSRF-TOKEN'] = token;
+                }
+                return headers;
+            }
+
+            function setDocButtonsState(docId, hasFile) {
+                const wrap = document.getElementById('docWrap-' + docId);
+                if (!wrap) return;
+                const previewBtn = wrap.querySelector('[data-doc-action="preview"]');
+                const replaceBtn = wrap.querySelector('[data-doc-action="replace"]');
+                const deleteBtn = wrap.querySelector('[data-doc-action="delete"]');
+                if (previewBtn) previewBtn.disabled = !hasFile;
+                if (deleteBtn) deleteBtn.disabled = !hasFile;
+                if (replaceBtn) {
+                    replaceBtn.innerHTML = hasFile
+                        ? '<i class="bi bi-arrow-repeat"></i> Replace'
+                        : '<i class="bi bi-folder2-open"></i> Browse';
+                }
+            }
+
+            function openDocPreview(src, filename) {
+                const modal = document.getElementById('docPreviewModal');
+                const body = document.getElementById('docPreviewBody');
+                if (!modal || !body || !src) return;
+                const lower = (filename || src).toLowerCase();
+                const isPdf = lower.indexOf('.pdf') !== -1 || lower.indexOf('application/pdf') !== -1;
+                if (isPdf) {
+                    body.innerHTML = '<iframe src="' + src + '" title="Document preview"></iframe>';
+                } else {
+                    body.innerHTML = '<img src="' + src + '" alt="Document preview">';
+                }
+                modal.style.display = 'flex';
+            }
+
+            function closeDocPreview() {
+                const modal = document.getElementById('docPreviewModal');
+                const body = document.getElementById('docPreviewBody');
+                if (body) body.innerHTML = '';
+                if (modal) modal.style.display = 'none';
+            }
+
+            function initDocActions() {
+                const closeBtn = document.getElementById('btnCloseDocPreview');
+                const modal = document.getElementById('docPreviewModal');
+                if (closeBtn) closeBtn.addEventListener('click', closeDocPreview);
+                if (modal) {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === modal) closeDocPreview();
+                    });
+                }
+                document.querySelectorAll('[data-doc-action]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        const action = btn.getAttribute('data-doc-action');
+                        const docId = btn.getAttribute('data-doc-id');
+                        const input = document.getElementById(docId);
+                        if (action === 'replace') {
+                            if (input) input.click();
+                            return;
+                        }
+                        if (action === 'preview') {
+                            if (input && input.files && input.files[0]) {
+                                const file = input.files[0];
+                                if (file.type && file.type.startsWith('image/')) {
+                                    const reader = new FileReader();
+                                    reader.onload = function(ev) { openDocPreview(ev.target.result, file.name); };
+                                    reader.readAsDataURL(file);
+                                } else {
+                                    openDocPreview(URL.createObjectURL(file), file.name);
+                                }
+                                return;
+                            }
+                            const existing = btn.getAttribute('data-doc-path');
+                            if (existing) openDocPreview(existing, existing);
+                            return;
+                        }
+                        if (action === 'delete') {
+                            const type = btn.getAttribute('data-doc-type');
+                            if (!type) return;
+                            if (!window.confirm('Remove this document from your profile?')) return;
+                            fetch(ctx + '/doctors/profile-completion/documents/' + encodeURIComponent(type) + '/delete', {
+                                method: 'POST',
+                                headers: csrfHeaders(),
+                                credentials: 'same-origin'
+                            }).then(function(res) { return res.json().catch(function() { return { success: false }; }); })
+                              .then(function(data) {
+                                  if (!data || data.success !== true) {
+                                      window.alert((data && data.error) ? data.error : 'Unable to remove document.');
+                                      return;
+                                  }
+                                  if (input) input.value = '';
+                                  btn.setAttribute('data-doc-path', '');
+                                  const previewBtn = document.querySelector('[data-doc-action="preview"][data-doc-id="' + docId + '"]');
+                                  if (previewBtn) previewBtn.setAttribute('data-doc-path', '');
+                                  const badge = document.getElementById('badge-' + docId);
+                                  const preview = document.getElementById('preview-' + docId);
+                                  if (badge) {
+                                      badge.className = 'doc-badge not-uploaded';
+                                      badge.innerHTML = '<i class="bi bi-dash-circle"></i> Not uploaded';
+                                  }
+                                  if (preview) {
+                                      preview.style.display = 'none';
+                                      preview.innerHTML = '';
+                                  }
+                                  setDocButtonsState(docId, false);
+                              }).catch(function() {
+                                  window.alert('Unable to remove document.');
+                              });
+                        }
+                    });
+                });
             }
 
             // Photo upload live preview
@@ -2649,6 +3030,22 @@
                         serializeBankDetails();
                     });
                 }
+
+                const bankName = document.getElementById('bankName');
+                if (bankName) {
+                    bankName.addEventListener('change', function () {
+                        serializeBankDetails();
+                        updateLivePreview();
+                    });
+                }
+                ['bankAccountHolder', 'bankBranch'].forEach(function (id) {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.addEventListener('input', function () {
+                            serializeBankDetails();
+                        });
+                    }
+                });
 
                 // UPI ID: Lowercase, no spaces, valid symbols only. Max 80 chars.
                 const upi = document.getElementById('upiId');
@@ -3391,6 +3788,7 @@
                     saving = true;
                     modalSaveDraftBtn.disabled = true;
                     modalSaveDraftBtn.textContent = 'Saving...';
+                    serializeBankDetails();
                     ensureCsrfOnForm();
                     form.submit();
                 });
@@ -3409,6 +3807,7 @@
                     saving = true;
                     modalSubmitVerifyBtn.disabled = true;
                     modalSubmitVerifyBtn.textContent = 'Submitting...';
+                    serializeBankDetails();
                     ensureCsrfOnForm();
                     form.submit();
                 });
@@ -3425,6 +3824,7 @@
                     if (intentField) intentField.value = 'submitVerification';
                     saving = true;
                     submitVerifyBtn.textContent = 'Submitting...';
+                    serializeBankDetails();
                     ensureCsrfOnForm();
                     form.submit();
                 });
@@ -3436,6 +3836,7 @@
                     saving = false;
                     return;
                 }
+                serializeBankDetails();
                 ensureCsrfOnForm();
             });
 
@@ -3493,6 +3894,13 @@
                                       '</div>' +
                                     '</div>';
                             }
+                            const previewBtn = document.querySelector('[data-doc-action="preview"][data-doc-id="' + docId + '"]');
+                            if (previewBtn) {
+                                previewBtn.disabled = false;
+                                previewBtn.setAttribute('data-doc-path', '');
+                            }
+                            const replaceBtn = document.querySelector('[data-doc-action="replace"][data-doc-id="' + docId + '"]');
+                            if (replaceBtn) replaceBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Replace';
                         }
                     });
                 });
@@ -3501,6 +3909,8 @@
             setupInputRestrictions();
             initLocationSelectors();
             parseExistingBankDetails();
+            initBlockedDatesPicker();
+            initDocActions();
             initDocUploadListeners();
             initMultiSelect({
                 containerId: 'languagesMultiselect',

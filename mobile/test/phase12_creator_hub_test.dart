@@ -126,6 +126,31 @@ void main() {
       service = CreatorHubService(mockApi);
     });
 
+    test('my profile, edit, and chat inbox use web-parity endpoints', () async {
+      await service.me();
+      expect(mockApi.lastGetPath, '/api/creator-hub/me');
+
+      await service.editProfile(
+        fullName: 'Asha V',
+        creatorHandle: 'asha_v',
+        creatorBio: 'Safety storyteller',
+        creatorCity: 'Pune',
+      );
+      expect(mockApi.lastPostPath, '/api/creator-hub/profile/edit');
+      expect(mockApi.lastBody?['fullName'], 'Asha V');
+      expect(mockApi.lastBody?['creatorHandle'], 'asha_v');
+      expect(mockApi.lastBody?['creatorBio'], 'Safety storyteller');
+      expect(mockApi.lastBody?['creatorCity'], 'Pune');
+
+      await service.chatInbox();
+      expect(mockApi.lastGetPath, '/api/chat/inbox');
+
+      await service.sendChat(peerId: 7, message: 'Hello');
+      expect(mockApi.lastPostPath, '/api/chat/send');
+      expect(mockApi.lastBody?['peerId'], 7);
+      expect(mockApi.lastBody?['message'], 'Hello');
+    });
+
     test('feed encodes query parameters properly', () async {
       await service.feed(
         search: 'safety demo',
